@@ -20,8 +20,6 @@ import { getApp, getApps, initializeApp, cert } from 'firebase-admin/app';
 
 if (getApps().length === 0) {
   if (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
-    console.log(process.env.FIREBASE_CLIENT_EMAIL,
-        process.env.FIREBASE_PRIVATE_KEY);
     initializeApp({
       credential: cert({
         projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
