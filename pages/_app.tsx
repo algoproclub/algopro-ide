@@ -12,7 +12,7 @@ import { UserProvider } from '../src/context/UserContext';
 import { SHOULD_USE_FIREBASE_EMULATOR } from '../src/dev_constants';
 
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
+  apiKey: 'AIzaSyDR-XvtT4_GYPAUslb-JTdueV68SfsERec',
   authDomain: 'planets-prog.firebaseapp.com',
   databaseURL:
     'https://planets-prog-default-rtdb.europe-west1.firebasedatabase.app',
