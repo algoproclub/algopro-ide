@@ -13,14 +13,14 @@ import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyBlzBGNIqAQSOjHZ1V7JJxZ3Nw70ld2EP0',
-  authDomain: 'cp-ide.firebaseapp.com',
-  databaseURL: 'https://cp-ide-default-rtdb.firebaseio.com',
-  projectId: 'cp-ide',
-  storageBucket: 'cp-ide.appspot.com',
-  messagingSenderId: '1068328460784',
-  appId: '1:1068328460784:web:9385b3f43a0e2604a9fd35',
-  measurementId: 'G-G22TZ5YCKV',
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: 'planets-prog.firebaseapp.com',
+  databaseURL: 'https://planets-prog-default-rtdb.europe-west1.firebasedatabase.app',
+  projectId: 'planets-prog',
+  storageBucket: 'planets-prog.appspot.com',
+  messagingSenderId: '858825023192',
+  appId: '1:858825023192:web:da967b9566bd204010c1ad',
+  // measurementId: 'G-G22TZ5YCKV',
 };
 
 if (typeof window !== 'undefined') {
