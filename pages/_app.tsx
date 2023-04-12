@@ -13,7 +13,7 @@ import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
 
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
+  apiKey: 'AIzaSyDR-XvtT4_GYPAUslb-JTdueV68SfsERec',
   authDomain: 'planets-prog.firebaseapp.com',
   databaseURL: 'https://planets-prog-default-rtdb.europe-west1.firebasedatabase.app',
   projectId: 'planets-prog',
