@@ -25,57 +25,13 @@ export default function DashboardPage(): JSX.Element {
           Real-Time Collaborative Online IDE
         </h1>
 
-        <div className="my-6">
-          <div className="rounded-md bg-blue-800/25 p-4 max-w-xl">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <InformationCircleIcon
-                  className="h-5 w-5 text-blue-400"
-                  aria-hidden="true"
-                />
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-100">
-                  Help Test the New IDE!
-                </h3>
-                <div className="mt-2 text-sm text-blue-200">
-                  <p>
-                    We're working on a new IDE that should have improved
-                    performance and reliability. Please help us test it!{' '}
-                    <a
-                      href="https://beta.ide.usaco.guide/"
-                      className="text-blue-100 underline"
-                    >
-                      Check out the new IDE
-                    </a>
-                    .
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* <div className="h-6"></div> */}
+        <div className="h-6"></div>
 
         {!firebaseUser || isUserSettingsLoading ? (
           <div className="text-gray-400 mt-6">Loading...</div>
         ) : (
           <Dashboard />
         )}
-      </div>
-      <div className="mt-6 text-gray-400">
-        Looking to get better at USACO? Check out the{' '}
-        <a
-          href="https://usaco.guide/"
-          target="_blank"
-          rel="noreferrer"
-          className="underline hover:text-white"
-        >
-          USACO Guide
-        </a>
-        !<br />
-        Not for commercial use.
       </div>
     </div>
   );

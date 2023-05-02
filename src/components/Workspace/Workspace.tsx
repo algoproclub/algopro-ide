@@ -37,7 +37,7 @@ import useFirebaseState from '../../hooks/useFirebaseState';
 import useJudgeResults from '../../hooks/useJudgeResults';
 
 export type ProblemData = {
-  id: number;
+  id: string;
   submittable: boolean;
   url: string;
   source: string;
