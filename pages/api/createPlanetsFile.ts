@@ -3,9 +3,12 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { fetchProblemData } from '../../src/components/Workspace/Workspace';
 import firebaseApp from '../../src/firebaseAdmin';
 import colorFromUserId from '../../src/scripts/colorFromUserId';
+import { getFirestore } from 'firebase-admin/firestore';
+import firebase from 'firebase';
+import DocumentData = firebase.firestore.DocumentData;
 
 type RequestData = {
-  usacoID: string;
+  planetsProblemID: string;
   userID: string;
   userName: string;
   defaultPermission: string;
@@ -31,7 +34,7 @@ export default async (
     !data.userName ||
     !data.defaultPermission ||
     !data.userID ||
-    !data.usacoID
+    !data.planetsProblemID
   ) {
     res.status(400).json({
       message: 'Bad data',
@@ -39,19 +42,35 @@ export default async (
     return;
   }
 
-  let problem = await fetchProblemData(data.usacoID);
-  if (problem === null) {
+  const firestore = getFirestore();
+  const problemDoc = await firestore
+    .collection('problems')
+    .doc(data.planetsProblemID)
+    .get();
+
+  if (!problemDoc.exists) {
     res.status(400).json({
       message: 'Could not identify problem ID.',
     });
     return;
   }
-  problem.id = problem.id.toString();
+  const problemData = problemDoc.data() as DocumentData;
+
+  const problem = {
+    id: data.planetsProblemID,
+    title: problemData.title['en'], // TODO: English for now
+    source: '',
+    url: '',
+    input: '',
+    output: '',
+    submittable: false,
+    samples: [],
+  };
 
   const idToURLRef = getDatabase(firebaseApp)
     .ref('users')
     .child(data.userID)
-    .child('usaco-id-to-file-id')
+    .child('planets-id-to-url')
     .child('' + problem.id);
 
   const idToURLSnap = await idToURLRef.get();
@@ -62,7 +81,7 @@ export default async (
     });
   } else {
     const resp = await getDatabase(firebaseApp)
-      .ref('/files')
+      .ref('/')
       .push({
         users: {
           [data.userID]: {
@@ -72,21 +91,14 @@ export default async (
           },
         },
         settings: {
-          workspaceName: problem.source + ': ' + problem.title,
+          workspaceName: problem.title,
           defaultPermission: data.defaultPermission,
           creationTime: ServerValue.TIMESTAMP,
-          language: 'cpp',
           problem,
-          compilerOptions: {
-            cpp: '-std=c++17 -O2 -Wall -Wextra -Wshadow -Wconversion -Wfloat-equal -Wduplicated-cond -Wlogical-op',
-            java: '',
-            py: '',
-          },
         },
       });
-    const fileID: string = resp.key!;
+    const fileID: string = resp.key!.substring(1);
     await idToURLRef.set(fileID);
-
     res.status(200).json({ fileID: fileID });
   }
 };

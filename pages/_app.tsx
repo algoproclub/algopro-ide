@@ -28,7 +28,7 @@ if (!firebase.apps?.length) {
     firebase.initializeApp({
       ...firebaseConfig,
       authDomain: 'localhost:9099',
-      databaseURL: 'http://localhost:9000/?ns=cp-ide-2-default-rtdb',
+      databaseURL: 'http://localhost:9000/?ns=planets-prog-default-rtdb',
     });
     firebase.auth().useEmulator('http://localhost:9099');
     firebase.database().useEmulator('localhost', 9000);

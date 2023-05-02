@@ -34,7 +34,7 @@ import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
 
 export type ProblemData = {
-  id: number;
+  id: string;
   submittable: boolean;
   url: string;
   source: string;
