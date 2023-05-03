@@ -20,7 +20,7 @@ export const tabsListAtom = atom(get => {
   const problem = get(problemAtom);
   return [
     { label: 'Input', value: 'input' },
-    ...(problem ? [{ label: 'Planets Judge', value: 'judge' }] : []),
+    ...(problem ? [{ label: 'Task overview', value: 'judge' }] : []),
     ...(problem?.samples ? getSamplesList(problem.samples.length) : []),
   ];
 });
