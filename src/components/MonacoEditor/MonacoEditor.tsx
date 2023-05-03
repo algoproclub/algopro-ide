@@ -86,6 +86,12 @@ export default function MonacoEditor({
     };
   }, []);
 
+  /*   useEffect(() => {
+    if (lspEnabled) {
+      return createLSPConnection();
+    }
+  }, [lspEnabled]); */
+
   useEffect(() => {
     if (vim) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
