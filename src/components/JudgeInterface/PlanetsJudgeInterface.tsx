@@ -1,16 +1,35 @@
 import { useAtomValue } from 'jotai/utils';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { currentLangAtom, mainMonacoEditorAtom } from '../../atoms/workspace';
 import USACOResults from './USACOResults';
 import { ProblemData, StatusData } from '../Workspace/Workspace';
 import SubmitButton from './SubmitButton';
 import { PlayCircleIcon } from '@heroicons/react/20/solid';
+import Markdown from './Markdown';
+import firebase from 'firebase/app';
+import 'firebase/firestore';
 
 export const judgePrefix = 'https://vjudge.usaco.guide';
 
 function encode(str: string | null) {
   return btoa(unescape(encodeURIComponent(str || '')));
 }
+
+const firestore = firebase.firestore();
+
+const getProblemStatement = async (id: string, language: string) => {
+  const docSnap = await firestore
+    .collection('problems')
+    .doc(id)
+    .collection('statements')
+    .doc(language)
+    .get();
+  if (docSnap.exists) {
+    return docSnap.data();
+  } else {
+    return { content: null };
+  }
+};
 
 export default function PlanetsJudgeInterface({
   problem,
@@ -25,6 +44,19 @@ export default function PlanetsJudgeInterface({
 }): JSX.Element {
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
   const lang = useAtomValue(currentLangAtom);
+
+  const [loading, setLoading] = useState(true);
+  const [mdText, setMdText] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      getProblemStatement(problem.id, 'en').then(data => {
+        setMdText(data?.content);
+        setLoading(false);
+      });
+    };
+    fetchData();
+  }, [problem.id]);
 
   const handleSubmit = async () => {
     if (!mainMonacoEditor || !lang) {
@@ -72,7 +104,16 @@ export default function PlanetsJudgeInterface({
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 pb-0">
           <>
-            <p className="text-gray-100 font-bold text-lg">{problem.title}</p>
+            {loading ? (
+              <div>
+                <p className="text-gray-100 font-bold text-lg">
+                  {problem.title}
+                </p>
+                <div className="text-gray-400 mt-6">Loading...</div>
+              </div>
+            ) : (
+              <Markdown className="text-base" children={mdText} />
+            )}
             {problem.samples?.length > 0 && (
               <button
                 type="button"
