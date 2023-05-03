@@ -12,9 +12,9 @@ export default function SubmitButton({
   onClick: React.MouseEventHandler<HTMLButtonElement>;
 }): JSX.Element {
   const loadingClasses =
-    'cursor-not-allowed bg-indigo-900 bg-opacity-50 text-indigo-200 opacity-50';
+    'cursor-not-allowed bg-custom-blue bg-opacity-50 text-white opacity-50';
   const normalClasses =
-    'text-indigo-200 hover:text-indigo-100 hover:bg-indigo-800 hover:bg-opacity-50 bg-indigo-900 bg-opacity-50';
+    'text-white hover:text-indigo-100 hover:bg-custom-blue hover:bg-opacity-50 bg-custom-blue bg-opacity-50';
   return (
     <button
       className={classNames(
