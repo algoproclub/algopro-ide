@@ -30,16 +30,21 @@ import { useNullableUserContext } from '../src/context/UserContext';
 import useUserPermission from '../src/hooks/useUserPermission';
 import { SettingsModal } from '../src/components/settings/SettingsModal';
 import { getSampleIndex } from '../src/components/JudgeInterface/Samples';
+import { signInWithGoogleAtom } from '../src/atoms/firebaseUserAtoms';
 import useJudgeResults from '../src/hooks/useJudgeResults';
 import { cleanJudgeResult } from '../src/editorUtils';
 import JudgeResult from '../src/types/judge';
 import useUserFileConnection from '../src/hooks/useUserFileConnection';
 import useUpdateUserDashboard from '../src/hooks/useUpdateUserDashboard';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
+import { useConnectionContext } from '../src/context/ConnectionContext';
 import Link from 'next/link';
 
 function EditorPage() {
   const { fileData, updateFileData } = useEditorContext();
+  const { firebaseUser } = useNullableUserContext();
+  const signInWithGoogle = useUpdateAtom(signInWithGoogleAtom);
+  const connectionContext = useConnectionContext();
   const permission = useUserPermission();
   const loading = useAtomValue(loadingAtom);
   const [showSidebar, setShowSidebar] = useAtom(showSidebarAtom);
@@ -233,6 +238,24 @@ function EditorPage() {
       }
     }
   };
+
+  if (!firebaseUser) {
+    return (
+      <div className="p-4 sm:p-6 md:p-8 lg:p-12 min-h-full flex flex-col max-w-6xl mx-auto">
+        <div className="flex-1">
+          <div className="text-gray-400 mt-6">
+            Not signed in.{' '}
+            <button
+              className="underline text-gray-200 focus:outline-none hover:bg-gray-700 p-1 leading-none transition"
+              onClick={() => signInWithGoogle(connectionContext)}
+            >
+              Sign in now
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full">

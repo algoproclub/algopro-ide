@@ -18,6 +18,8 @@ import { getApp, getApps, initializeApp, cert } from 'firebase-admin/app';
 //   firebaseAdmin.initializeApp({ projectId: 'cp-ide' });
 // }
 
+// import serviceAccount from './serviceAccountKey.json';
+
 if (getApps().length === 0) {
   if (process.env.NEW_NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
     initializeApp({
@@ -32,7 +34,10 @@ if (getApps().length === 0) {
   } else {
     initializeApp({
       projectId: 'planets-prog',
-      databaseURL: 'http://127.0.0.1:9000?ns=planets-prog-default-rtdb',
+      credential: cert(
+        'src/serviceAccountKey.json'
+      ),
+      databaseURL: 'http://127.0.0.1:9000?ns=planets-prog',
     });
   }
 }

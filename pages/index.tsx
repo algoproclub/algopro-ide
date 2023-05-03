@@ -1,18 +1,20 @@
 import React, { useEffect } from 'react';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
-import { useAtomValue } from 'jotai/utils';
-import Dashboard from '../src/components/Dashboard/Dashboard';
+import { useAtomValue, useUpdateAtom } from 'jotai/utils';
 import {
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-} from '@heroicons/react/20/solid';
+  signInWithGoogleAtom,
+} from '../src/atoms/firebaseUserAtoms';
+import Dashboard from '../src/components/Dashboard/Dashboard';
+import { useConnectionContext } from '../src/context/ConnectionContext';
 import {
   useNullableUserContext,
   useUserContext,
 } from '../src/context/UserContext';
 
 export default function DashboardPage(): JSX.Element {
-  const { userData } = useNullableUserContext();
+  const signInWithGoogle = useUpdateAtom(signInWithGoogleAtom);
+  const connectionContext = useConnectionContext();
+  const { firebaseUser, userData } = useNullableUserContext();
 
   useEffect(() => {
     document.title = 'Real-Time Collaborative Online IDE';
@@ -28,7 +30,17 @@ export default function DashboardPage(): JSX.Element {
 
         <div className="h-6"></div>
 
-        {!userData ? (
+        {!firebaseUser ? (
+          <div className="text-gray-400 mt-6">
+            Not signed in.{' '}
+            <button
+              className="underline text-gray-200 focus:outline-none hover:bg-gray-700 p-1 leading-none transition"
+              onClick={() => signInWithGoogle(connectionContext)}
+            >
+              Sign in now
+            </button>
+          </div>
+        ) : !userData ? (
           <div className="text-gray-400 mt-6">Loading...</div>
         ) : (
           <Dashboard />

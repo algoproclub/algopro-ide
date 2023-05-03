@@ -1,4 +1,5 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
 # dependencies
 /node_modules
 /.pnp
@@ -34,6 +35,8 @@ yarn-error.log*
 /test-results/
 /playwright-report/
 /playwright/.cache/
-# private folder where I store firebase admin key
-private
+
+# firebase service account key
+serviceAccountKey.json
+
 .env

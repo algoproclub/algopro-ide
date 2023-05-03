@@ -38,6 +38,8 @@ export const signInWithGoogleAtom = atom(
         confirmOverrideDataCallbackAtom,
         () => () => firebase.auth().signInWithPopup(provider)
       );
+    } else if (!prevUser) {
+      firebase.auth().signInWithPopup(provider);
     } else {
       prevUser
         ?.linkWithPopup(provider)

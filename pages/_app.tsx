@@ -22,7 +22,7 @@ const firebaseConfig = {
   appId: '1:858825023192:web:da967b9566bd204010c1ad',
   // measurementId: 'G-G22TZ5YCKV',
 };
-console.log(firebaseConfig);
+
 if (!firebase.apps?.length) {
   if (SHOULD_USE_FIREBASE_EMULATOR) {
     firebase.initializeApp({
