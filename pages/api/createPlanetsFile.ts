@@ -75,7 +75,7 @@ export default async (
     });
   } else {
     const resp = await getDatabase(firebaseApp)
-      .ref('/')
+      .ref('/files')
       .push({
         users: {
           [data.userID]: {

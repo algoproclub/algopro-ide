@@ -1,4 +1,5 @@
 const colors = require('tailwindcss/colors');
+const plugin = require('tailwindcss/plugin');
 
 module.exports = {
   content: [
@@ -23,5 +24,24 @@ module.exports = {
     require('@tailwindcss/forms'),
     require('@tailwindcss/typography'),
     require('@tailwindcss/aspect-ratio'),
+    plugin(function ({ addBase, theme }) {
+      addBase({
+        h1: {
+          fontSize: theme('fontSize.2xl'),
+          fontWeight: theme('fontWeight.semibold'),
+          margin: '1rem 0 1rem 0',
+        },
+        h2: {
+          fontSize: theme('fontSize.xl'),
+          fontWeight: theme('fontWeight.semibold'),
+          margin: '0.5rem 0 0.5rem 0',
+        },
+        h3: {
+          fontSize: theme('fontSize.lg'),
+          fontWeight: theme('fontWeight.semibold'),
+          margin: '0.5rem 0 0.25rem 0',
+        },
+      });
+    }),
   ],
 };
