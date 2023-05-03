@@ -21,8 +21,8 @@ export const tabsListAtom = atom(get => {
   const problem = get(problemAtom);
   return [
     { label: 'Input', value: 'input' },
-    ...(problem ? [{ label: 'USACO Judge', value: 'judge' }] : []),
-    ...(problem ? getSamplesList(problem.samples.length) : []),
+    ...(problem ? [{ label: 'Planets Judge', value: 'judge' }] : []),
+    ...(problem?.samples ? getSamplesList(problem.samples.length) : []),
   ];
 });
 export const inputTabIndexAtom = atom(get => {

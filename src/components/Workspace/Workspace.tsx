@@ -22,7 +22,9 @@ import {
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { Chat } from '../Chat';
 import { CodeInterface } from '../CodeInterface/CodeInterface';
-import JudgeInterface from '../JudgeInterface/JudgeInterface';
+import PlanetsJudgeInterface, {
+  judgePrefix,
+} from '../JudgeInterface/PlanetsJudgeInterface';
 import { LazyFirepadEditor } from '../LazyFirepadEditor';
 import { Output } from '../Output';
 import { useSettings } from '../SettingsContext';
@@ -30,7 +32,6 @@ import { TabBar } from '../TabBar';
 import { UserList } from '../UserList/UserList';
 import Samples, { Sample } from '../JudgeInterface/Samples';
 import JudgeResult from '../../types/judge';
-import { judgePrefix } from '../JudgeInterface/JudgeInterface';
 import { userSettingsAtomWithPersistence } from '../../atoms/userSettings';
 import { fileIdAtom } from '../../atoms/firebaseAtoms';
 import useFirebaseState from '../../hooks/useFirebaseState';
@@ -192,7 +193,7 @@ export default function Workspace({
                 />
               )}
               {inputTab === 'judge' && problem && (
-                <JudgeInterface
+                <PlanetsJudgeInterface
                   problem={problem}
                   statusData={statusData}
                   setStatusData={setStatusData}

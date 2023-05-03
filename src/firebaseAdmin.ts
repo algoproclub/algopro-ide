@@ -37,7 +37,8 @@ if (getApps().length === 0) {
       credential: cert(
         '/home/laci/prog/planets-ide/src/serviceAccountKey.json'
       ),
-      databaseURL: 'http://127.0.0.1:9000?ns=planets-prog',
+      databaseURL:
+        'https://planets-prog-default-rtdb.europe-west1.firebasedatabase.app',
     });
   }
 }
