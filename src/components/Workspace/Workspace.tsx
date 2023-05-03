@@ -21,13 +21,14 @@ import {
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { Chat } from '../Chat';
 import { CodeInterface } from '../CodeInterface/CodeInterface';
-import JudgeInterface from '../JudgeInterface/JudgeInterface';
+import PlanetsJudgeInterface, {
+  judgePrefix,
+} from '../JudgeInterface/PlanetsJudgeInterface';
 import { LazyRealtimeEditor } from '../RealtimeEditor/LazyRealtimeEditor';
 import { Output } from '../Output';
 import { TabBar } from '../TabBar';
 import { UserList } from '../UserList/UserList';
 import Samples, { Sample } from '../JudgeInterface/Samples';
-import { judgePrefix } from '../JudgeInterface/JudgeInterface';
 import useJudgeResults from '../../hooks/useJudgeResults';
 import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
@@ -188,7 +189,7 @@ export default function Workspace({
                 />
               )}
               {inputTab === 'judge' && problem && (
-                <JudgeInterface
+                <PlanetsJudgeInterface
                   problem={problem}
                   statusData={statusData}
                   setStatusData={setStatusData}
