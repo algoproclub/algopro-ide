@@ -93,6 +93,12 @@ export default function MonacoEditor({
     };
   }, []);
 
+  /*   useEffect(() => {
+    if (lspEnabled) {
+      return createLSPConnection();
+    }
+  }, [lspEnabled]); */
+
   useEffect(() => {
     if (!yjsInfo || !editor) return;
     const monacoBinding = new MonacoBinding(
