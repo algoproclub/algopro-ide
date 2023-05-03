@@ -1,15 +1,17 @@
 import React, { useEffect } from 'react';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
-import { useAtomValue } from 'jotai/utils';
-import { firebaseUserAtom } from '../src/atoms/firebaseUserAtoms';
+import { useAtomValue, useUpdateAtom } from 'jotai/utils';
+import {
+  firebaseUserAtom,
+  signInWithGoogleAtom,
+} from '../src/atoms/firebaseUserAtoms';
 import { isUserSettingsLoadingAtom } from '../src/atoms/userSettings';
 import Dashboard from '../src/components/Dashboard/Dashboard';
-import {
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-} from '@heroicons/react/20/solid';
+import { useConnectionContext } from '../src/context/ConnectionContext';
 
 export default function DashboardPage(): JSX.Element {
+  const signInWithGoogle = useUpdateAtom(signInWithGoogleAtom);
+  const connectionContext = useConnectionContext();
   const firebaseUser = useAtomValue(firebaseUserAtom);
   const isUserSettingsLoading = useAtomValue(isUserSettingsLoadingAtom);
 
@@ -27,7 +29,17 @@ export default function DashboardPage(): JSX.Element {
 
         <div className="h-6"></div>
 
-        {!firebaseUser || isUserSettingsLoading ? (
+        {!firebaseUser ? (
+          <div className="text-gray-400 mt-6">
+            Not signed in.{' '}
+            <button
+              className="underline text-gray-200 focus:outline-none hover:bg-gray-700 p-1 leading-none transition"
+              onClick={() => signInWithGoogle(connectionContext)}
+            >
+              Sign in now
+            </button>
+          </div>
+        ) : isUserSettingsLoading ? (
           <div className="text-gray-400 mt-6">Loading...</div>
         ) : (
           <Dashboard />

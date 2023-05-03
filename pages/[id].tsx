@@ -40,7 +40,10 @@ import {
 import { cleanJudgeResult, isFirebaseId } from '../src/editorUtils';
 
 import { getSampleIndex } from '../src/components/JudgeInterface/Samples';
-import { firebaseUserAtom } from '../src/atoms/firebaseUserAtoms';
+import {
+  firebaseUserAtom,
+  signInWithGoogleAtom,
+} from '../src/atoms/firebaseUserAtoms';
 import { useRouter } from 'next/router';
 import invariant from 'tiny-invariant';
 import { submitToJudge } from '../src/scripts/judge';
@@ -51,9 +54,12 @@ import { extractJavaFilename } from '../src/scripts/judge';
 import useFirebaseState from '../src/hooks/useFirebaseState';
 import useJudgeResults from '../src/hooks/useJudgeResults';
 import { useOnlineUsers } from '../src/hooks/useOnlineUsers';
+import { useConnectionContext } from '../src/context/ConnectionContext';
 
 export default function EditorPage(): JSX.Element {
   const [fileId, setFileId] = useAtom(fileIdAtom);
+  const signInWithGoogle = useUpdateAtom(signInWithGoogleAtom);
+  const connectionContext = useConnectionContext();
   const firebaseUser = useAtomValue(firebaseUserAtom);
   const layoutEditors = useUpdateAtom(layoutEditorsAtom);
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
@@ -367,6 +373,24 @@ export default function EditorPage(): JSX.Element {
     settings.creationTime,
     settings.defaultPermission,
   ]);
+
+  if (!firebaseUser) {
+    return (
+      <div className="p-4 sm:p-6 md:p-8 lg:p-12 min-h-full flex flex-col max-w-6xl mx-auto">
+        <div className="flex-1">
+          <div className="text-gray-400 mt-6">
+            Not signed in.{' '}
+            <button
+              className="underline text-gray-200 focus:outline-none hover:bg-gray-700 p-1 leading-none transition"
+              onClick={() => signInWithGoogle(connectionContext)}
+            >
+              Sign in now
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (permission === 'PRIVATE')
     return <MessagePage message="This file is private." />;

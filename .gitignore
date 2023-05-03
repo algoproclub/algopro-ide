@@ -35,3 +35,6 @@ yarn-error.log*
 /test-results/
 /playwright-report/
 /playwright/.cache/
+
+# firebase service account key
+serviceAccountKey.json

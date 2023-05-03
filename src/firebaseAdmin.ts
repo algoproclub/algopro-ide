@@ -18,6 +18,8 @@ import { getApp, getApps, initializeApp, cert } from 'firebase-admin/app';
 //   firebaseAdmin.initializeApp({ projectId: 'cp-ide' });
 // }
 
+// import serviceAccount from './serviceAccountKey.json';
+
 if (getApps().length === 0) {
   if (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
     initializeApp({
@@ -26,12 +28,16 @@ if (getApps().length === 0) {
         privateKey: process.env.FIREBASE_PRIVATE_KEY,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
       }),
-      databaseURL: 'https://planets-prog-default-rtdb.europe-west1.firebasedatabase.app',
+      databaseURL:
+        'https://planets-prog-default-rtdb.europe-west1.firebasedatabase.app',
     });
   } else {
     initializeApp({
       projectId: 'planets-prog',
-      databaseURL: 'http://127.0.0.1:9000?ns=planets-prog-default-rtdb',
+      credential: cert(
+        '/home/laci/prog/planets-ide/src/serviceAccountKey.json'
+      ),
+      databaseURL: 'http://127.0.0.1:9000?ns=planets-prog',
     });
   }
 }

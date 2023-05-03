@@ -37,9 +37,6 @@ firebaseUserAtom.onMount = setAtom => {
     ReactDOM.unstable_batchedUpdates(() => {
       setAtom(user);
     });
-    if (!user) {
-      signInAnonymously();
-    }
   });
 
   return () => {
@@ -78,9 +75,12 @@ export const signInWithGoogleAtom = atom(
       // a function returns a function because we want to set the atom to a callback function
       // but if you pass a function into set() then jotai will use the function *return* value
       // as the value of the atom
-      set(confirmOverrideDataCallbackAtom, () => () =>
-        firebase.auth().signInWithPopup(provider)
+      set(
+        confirmOverrideDataCallbackAtom,
+        () => () => firebase.auth().signInWithPopup(provider)
       );
+    } else if (!prevUser) {
+      firebase.auth().signInWithPopup(provider);
     } else {
       prevUser
         ?.linkWithPopup(provider)
@@ -98,8 +98,9 @@ export const signInWithGoogleAtom = atom(
             // a function returns a function because we want to set the atom to a callback function
             // but if you pass a function into set() then jotai will use the function *return* value
             // as the value of the atom
-            set(confirmOverrideDataCallbackAtom, () => () =>
-              firebase.auth().signInWithCredential(error.credential)
+            set(
+              confirmOverrideDataCallbackAtom,
+              () => () => firebase.auth().signInWithCredential(error.credential)
             );
           } else {
             alert('Error signing in: ' + error);
