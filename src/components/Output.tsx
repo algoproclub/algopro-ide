@@ -23,7 +23,6 @@ const tabs = [
   { label: 'stdout', value: 'stdout' },
   { label: 'stderr', value: 'stderr' },
   { label: 'compile output', value: 'compile_output' },
-  { label: 'scribble', value: 'scribble' },
 ];
 
 export const Output = ({ result, onMount }: OutputProps): JSX.Element => {
