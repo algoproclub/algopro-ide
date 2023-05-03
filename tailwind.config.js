@@ -14,6 +14,10 @@ module.exports = {
     extend: {
       colors: {
         gray: colors.neutral,
+        'custom-blue': 'rgb(53,103,118)',
+      },
+      backgroundColor: {
+        'custom-blue': 'rgb(53,103,118)',
       },
     },
   },
