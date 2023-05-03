@@ -55,7 +55,7 @@ export default async (
 
   const problem = {
     id: data.planetsProblemID,
-    title: problemDoc.data().title['en'], // TODO: English for now
+    title: problemDoc.data()?.title['en'], // TODO: English for now
     source: '',
     url: '',
     input: '',
