@@ -54,11 +54,10 @@ export default async (
     });
     return;
   }
-  const problemData = problemDoc.data() as DocumentData;
 
   const problem = {
     id: data.planetsProblemID,
-    title: problemData.title['en'], // TODO: English for now
+    title: problemDoc.data()?.title['en'], // TODO: English for now
     source: '',
     url: '',
     input: '',
