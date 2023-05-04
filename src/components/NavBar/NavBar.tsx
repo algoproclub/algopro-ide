@@ -47,7 +47,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
           </a>
         </Link>
         {props.fileMenu}
-        <button
+        {/*         <button
           type="button"
           className="relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 hover:bg-gray-800 focus:bg-gray-800 focus:outline-none"
           onClick={() => handleShare()}
@@ -57,7 +57,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
             aria-hidden="true"
           />
           {showCopied ? 'URL Copied!' : 'Share'}
-        </button>
+        </button> */}
       </div>
       {props.runButton}
       <div className="flex-1" />
