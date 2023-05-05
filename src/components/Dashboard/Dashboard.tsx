@@ -29,6 +29,29 @@ export default function Dashboard() {
   const [showHidden, setShowHidden] = useState<boolean>(false);
   const router = useRouter();
   const connectionContext = useConnectionContext();
+
+  const makeNewWorkspaceWithName = async (name: string) => {
+    if (!firebaseUser) return;
+    const resp = await fetch(`/api/createNewFile`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        workspaceName: name,
+        userID: firebaseUser.uid,
+        userName: firebaseUser.displayName,
+        defaultPermission: userData.defaultPermission,
+      }),
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      router.push(`/${data.fileID}`);
+    } else {
+      alert('Error: ' + data.message);
+    }
+  };
+
   // const makeNewClassroomWithName = async (name: string) => {
   //   if (!firebaseUser) return;
   //   const resp = await fetch(`/api/createNewClassroom`, {

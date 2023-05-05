@@ -5,6 +5,8 @@ const USACOTestCase = ({ data }: { data: any }) => {
   const containerClasses =
     data.title === 'Correct answer'
       ? 'bg-green-700 border-green-700'
+      : data.title === 'Did not run'
+      ? 'bg-gray-700 border-gray-700'
       : 'bg-red-700 border-red-700';
   const textColor =
     data.title === 'Correct answer' ? 'text-green-100' : 'text-red-100';
