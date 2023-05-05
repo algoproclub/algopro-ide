@@ -56,7 +56,7 @@ export default async (
   const problem = {
     id: data.planetsProblemID,
     title: problemDoc.data()?.title['en'], // TODO: English for now
-    submittable: false,
+    submittable: true,
   };
 
   const idToURLRef = getDatabase(firebaseApp)

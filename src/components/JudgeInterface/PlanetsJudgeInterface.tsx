@@ -8,6 +8,7 @@ import { PlayCircleIcon } from '@heroicons/react/20/solid';
 import Markdown from './Markdown';
 import firebase from 'firebase/app';
 import 'firebase/firestore';
+import 'firebase/functions';
 
 export const judgePrefix = 'https://vjudge.usaco.guide';
 
@@ -29,6 +30,41 @@ const getProblemStatement = async (id: string, language: string) => {
   } else {
     return { content: null };
   }
+};
+
+const mapVerdictToSymbol = (verdict: string): string => {
+  if (verdict == 'Accepted') return '✓';
+  if (verdict == 'Did not run') return '?';
+  return 'x';
+};
+
+const mapVerdictToTitle = (verdict: string): string => {
+  if (verdict == 'Accepted') return 'Correct answer';
+  if (verdict == 'Wrong answer') return 'Incorrect answer';
+  return verdict;
+};
+
+const mapVerdictToStatusCode = (verdict: string): number => {
+  if (verdict.startsWith('Sent') || verdict.startsWith('Running')) return -8;
+  return 0;
+};
+
+const convertPlanetsResultToStatusData = (result: any): StatusData => {
+  return {
+    statusText: 'status-working',
+    message: result.verdict,
+    statusCode: mapVerdictToStatusCode(result.verdict),
+    testCases:
+      result.test_results == undefined
+        ? []
+        : result.test_results.map((t: any) => ({
+            title: mapVerdictToTitle(t.verdict),
+            trialNum: t.index,
+            symbol: mapVerdictToSymbol(t.verdict),
+            memory: Math.round(t.memory / 10000) / 100 + 'MB',
+            time: Math.round(t.time / 1000000) + 'ms',
+          })),
+  };
 };
 
 export default function PlanetsJudgeInterface({
@@ -68,35 +104,28 @@ export default function PlanetsJudgeInterface({
       statusCode: -100,
     });
 
-    const data = {
-      problemID: problem.id,
-      language: { cpp: 'c++17', java: 'java', py: 'python3' }[lang],
-      base64Code: encode(mainMonacoEditor.getValue()),
+    const submissionData = {
+      problem_id: problem.id,
+      language: { cpp: 'cpp17', java: 'java', py: 'python3' }[lang],
+      solution: mainMonacoEditor.getValue(),
     };
 
-    const resp = await fetch(`${judgePrefix}/submit`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    const submissionID = await resp.text();
+    const submit = firebase
+      .app()
+      .functions('europe-west1')
+      .httpsCallable('submit');
 
-    const checkStatus = async () => {
-      const statusResp = await fetch(
-        `${judgePrefix}/submission/${submissionID}`
-      );
-      const data = await statusResp.json();
-      setStatusData(data);
-
-      if (data.statusCode && parseInt(data.statusCode) <= -8) {
-        // still working
-        setTimeout(checkStatus, 1000);
-      }
-    };
-
-    setTimeout(checkStatus, 1000);
+    const response = await submit(submissionData);
+    const id = response.data.id;
+    const unsubscribe = firestore
+      .collection('submissions')
+      .doc(id)
+      .onSnapshot(doc => {
+        setStatusData(convertPlanetsResultToStatusData(doc.data()));
+        if (doc.data()?.verdict.length <= 3) {
+          unsubscribe();
+        }
+      });
   };
 
   return (
