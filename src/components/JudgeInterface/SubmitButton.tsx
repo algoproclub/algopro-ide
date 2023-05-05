@@ -18,7 +18,7 @@ export default function SubmitButton({
   return (
     <button
       className={classNames(
-        'block w-full py-2 text-sm uppercase font-bold transition focus:outline-none',
+        'block w-full py-2 text-xl uppercase font-bold transition focus:outline-none',
         isLoading || isDisabled ? loadingClasses : normalClasses
       )}
       disabled={isLoading || isDisabled}
@@ -27,7 +27,7 @@ export default function SubmitButton({
       {isLoading ? (
         <>
           <LoadingIndicator className="h-5 w-5 p-0.5 mr-1.5" />
-          <span>Loading...</span>
+          <span>Sending data to server...</span>
         </>
       ) : isDisabled ? (
         'Cannot Submit'

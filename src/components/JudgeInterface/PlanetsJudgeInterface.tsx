@@ -1,7 +1,6 @@
 import { useAtomValue } from 'jotai/utils';
 import React, { useState, useEffect } from 'react';
 import { currentLangAtom, mainMonacoEditorAtom } from '../../atoms/workspace';
-import USACOResults from './USACOResults';
 import { ProblemData, StatusData } from '../Workspace/Workspace';
 import SubmitButton from './SubmitButton';
 import { PlayCircleIcon } from '@heroicons/react/20/solid';
@@ -150,13 +149,9 @@ export default function PlanetsJudgeInterface({
                 onClick={handleRunCode}
               >
                 <PlayCircleIcon className="mr-2 h-5 w-5" aria-hidden="true" />
-                <span className="text-center flex-1">Run Samples</span>
               </button>
             )}
           </>
-        </div>
-        <div className="px-4">
-          <USACOResults data={statusData} />
         </div>
       </div>
       <SubmitButton

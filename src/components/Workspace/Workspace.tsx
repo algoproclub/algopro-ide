@@ -36,6 +36,7 @@ import { userSettingsAtomWithPersistence } from '../../atoms/userSettings';
 import { fileIdAtom } from '../../atoms/firebaseAtoms';
 import useFirebaseState from '../../hooks/useFirebaseState';
 import useJudgeResults from '../../hooks/useJudgeResults';
+import USACOResults from '../JudgeInterface/USACOResults';
 
 export type ProblemData = {
   id: string;
@@ -131,6 +132,15 @@ export default function Workspace({
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
   const { lightMode } = useAtomValue(userSettingsAtomWithPersistence);
 
+  function resultsDisplay() {
+    setInputTab('results'); // TODO: switch to 'results' tab once this function is called.
+    return (
+      <div className="px-4">
+        <USACOResults data={statusData} />
+      </div>
+    );
+  }
+
   return (
     <Split
       onDragEnd={() => layoutEditors()}
@@ -200,17 +210,7 @@ export default function Workspace({
                   handleRunCode={handleRunCode}
                 />
               )}
-              {inputTab.startsWith('Sample') && problem && (
-                <div className="overflow-y-auto h-full">
-                  <div className="p-4 pb-0">
-                    <Samples
-                      samples={problem.samples}
-                      inputTab={inputTab}
-                      handleRunCode={handleRunCode}
-                    />
-                  </div>
-                </div>
-              )}
+              {inputTab === 'results' && statusData != null && resultsDisplay()}
             </div>
           </div>
           <div
