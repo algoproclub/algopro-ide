@@ -33,6 +33,7 @@ import useJudgeResults from '../../hooks/useJudgeResults';
 import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
+import USACOResults from '../JudgeInterface/USACOResults';
 
 export type ProblemData = {
   id: string;
@@ -121,6 +122,15 @@ export default function Workspace({
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
   const { lightMode } = useUserContext().userData;
 
+  function resultsDisplay() {
+    setInputTab('results'); // TODO: switch to 'results' tab once this function is called.
+    return (
+      <div className="px-4">
+        <USACOResults data={statusData} />
+      </div>
+    );
+  }
+
   return (
     <Split
       onDragEnd={() => layoutEditors()}
@@ -196,17 +206,7 @@ export default function Workspace({
                   handleRunCode={handleRunCode}
                 />
               )}
-              {inputTab.startsWith('Sample') && problem && (
-                <div className="overflow-y-auto h-full">
-                  <div className="p-4 pb-0">
-                    <Samples
-                      samples={problem.samples}
-                      inputTab={inputTab}
-                      handleRunCode={handleRunCode}
-                    />
-                  </div>
-                </div>
-              )}
+              {inputTab === 'results' && statusData != null && resultsDisplay()}
             </div>
           </div>
           <div
