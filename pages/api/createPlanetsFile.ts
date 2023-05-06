@@ -59,6 +59,7 @@ export default async (
     id: data.planetsProblemID,
     title: problemDoc.data()?.title['en'], // TODO: English for now
     submittable: true,
+    samples: problemDoc.data()?.samples,
   };
 
   const idToURLRef = getDatabase(firebaseApp)
