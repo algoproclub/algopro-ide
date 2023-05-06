@@ -143,9 +143,6 @@ export default function JudgeInterface({
             )}
           </>
         </div>
-        <div className="px-4">
-          <USACOResults data={statusData} />
-        </div>
       </div>
       <SubmitButton
         isLoading={(statusData?.statusCode ?? 0) <= -8}

@@ -31,12 +31,9 @@ import { useSettings } from '../SettingsContext';
 import { TabBar } from '../TabBar';
 import { UserList } from '../UserList/UserList';
 import Samples, { Sample } from '../JudgeInterface/Samples';
-import JudgeResult from '../../types/judge';
 import { userSettingsAtomWithPersistence } from '../../atoms/userSettings';
-import { fileIdAtom } from '../../atoms/firebaseAtoms';
-import useFirebaseState from '../../hooks/useFirebaseState';
 import useJudgeResults from '../../hooks/useJudgeResults';
-import USACOResults from '../JudgeInterface/USACOResults';
+import USACOJudgeInterface from '../JudgeInterface/USACOJudgeInterface';
 
 export type ProblemData = {
   id: string;
@@ -93,7 +90,6 @@ export default function Workspace({
 
   const permission = useAtomValue(actualUserPermissionAtom);
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
-  const authenticatedFirebaseRef = useAtomValue(authenticatedFirebaseRefAtom);
   const [judgeResults, setJudgeResults] = useJudgeResults();
   const firebaseRef = useAtomValue(authenticatedFirebaseRefAtom);
   const firebaseRefs = useMemo(
@@ -131,15 +127,6 @@ export default function Workspace({
 
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
   const { lightMode } = useAtomValue(userSettingsAtomWithPersistence);
-
-  function resultsDisplay() {
-    setInputTab('results'); // TODO: switch to 'results' tab once this function is called.
-    return (
-      <div className="px-4">
-        <USACOResults data={statusData} />
-      </div>
-    );
-  }
 
   return (
     <Split
@@ -202,15 +189,34 @@ export default function Workspace({
                   firebaseRef={firebaseRefs.input}
                 />
               )}
-              {inputTab === 'judge' && problem && (
-                <PlanetsJudgeInterface
-                  problem={problem}
-                  statusData={statusData}
-                  setStatusData={setStatusData}
-                  handleRunCode={handleRunCode}
-                />
+              {inputTab === 'judge' &&
+                problem &&
+                (isNaN(Number(problem.id)) ? (
+                  <PlanetsJudgeInterface
+                    problem={problem}
+                    statusData={statusData}
+                    setStatusData={setStatusData}
+                    handleRunCode={handleRunCode}
+                  />
+                ) : (
+                  <USACOJudgeInterface
+                    problem={problem}
+                    statusData={statusData}
+                    setStatusData={setStatusData}
+                    handleRunCode={handleRunCode}
+                  />
+                ))}
+              {inputTab.startsWith('Sample') && problem && (
+                <div className="overflow-y-auto h-full">
+                  <div className="p-4 pb-0">
+                    <Samples
+                      samples={problem.samples}
+                      inputTab={inputTab}
+                      handleRunCode={handleRunCode}
+                    />
+                  </div>
+                </div>
               )}
-              {inputTab === 'results' && statusData != null && resultsDisplay()}
             </div>
           </div>
           <div
@@ -245,6 +251,7 @@ export default function Workspace({
           >
             <Output
               result={judgeResults[inputTabIndex]}
+              statusData={statusData}
               onMount={e => {
                 setOutputEditor(e);
                 setTimeout(() => {

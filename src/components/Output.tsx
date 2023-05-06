@@ -1,31 +1,33 @@
 import { TabBar } from './TabBar';
-import React, { useState, useEffect, useMemo } from 'react';
-import { authenticatedFirebaseRefAtom } from '../atoms/firebaseAtoms';
-import { LazyFirepadEditor } from './LazyFirepadEditor';
-
-import { actualUserPermissionAtom } from '../atoms/workspace';
+import React, { useState, useEffect } from 'react';
 import { useAtomValue } from 'jotai/utils';
 import JudgeResult from '../types/judge';
 import { userSettingsAtomWithPersistence } from '../atoms/userSettings';
 import { EditorProps } from './MonacoEditor/monaco-editor-types';
 import LazyMonacoEditor from './MonacoEditor/LazyMonacoEditor';
+import USACOResults from './JudgeInterface/USACOResults';
+import { StatusData } from './Workspace/Workspace';
 
 export interface OutputProps {
   result: JudgeResult | null;
+  statusData: StatusData | null;
   onMount: EditorProps['onMount'];
 }
 
-type JudgeOutputTab = 'stdout' | 'stderr' | 'compile_output';
-
-type OutputTab = 'stdout' | 'stderr' | 'compile_output' | 'scribble';
+type OutputTab = 'stdout' | 'stderr' | 'compile_output' | 'results';
 
 const tabs = [
   { label: 'stdout', value: 'stdout' },
   { label: 'stderr', value: 'stderr' },
   { label: 'compile output', value: 'compile_output' },
+  { label: 'results', value: 'results' },
 ];
 
-export const Output = ({ result, onMount }: OutputProps): JSX.Element => {
+export const Output = ({
+  result,
+  statusData,
+  onMount,
+}: OutputProps): JSX.Element => {
   const [option, setOption] = useState<OutputTab>('stdout');
 
   useEffect(() => {
@@ -37,22 +39,15 @@ export const Output = ({ result, onMount }: OutputProps): JSX.Element => {
       option = 'compile_output';
     else if (result?.stdout) option = 'stdout';
     else if (result?.stderr) option = 'stderr';
-    if (option) setOption(option as JudgeOutputTab);
+    if (option) setOption(option as OutputTab);
   }, [result]);
 
-  const permission = useAtomValue(actualUserPermissionAtom);
-  const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
-
-  const firebaseRef = useAtomValue(authenticatedFirebaseRefAtom);
-  const firebaseRefs = useMemo(
-    () => ({
-      scribble: firebaseRef?.child('scribble'),
-    }),
-    [firebaseRef]
-  );
+  useEffect(() => {
+    if (statusData) setOption('results');
+  }, [statusData]);
 
   let outputText;
-  if (option !== 'scribble') {
+  if (option !== 'results') {
     if (result?.status === 'internal_error') {
       outputText =
         'Internal Error: ' +
@@ -82,27 +77,10 @@ export const Output = ({ result, onMount }: OutputProps): JSX.Element => {
         }}
       />
       <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden tw-forms-disable tw-forms-disable-all-descendants">
-        {option === 'scribble' ? (
-          <LazyFirepadEditor
-            theme={lightMode ? 'light' : 'vs-dark'}
-            language={'plaintext'}
-            saveViewState={false}
-            path="scribble"
-            dataTestId="scribble-editor"
-            options={{
-              minimap: { enabled: false },
-              automaticLayout: false,
-              insertSpaces: false,
-              readOnly,
-            }}
-            onMount={e => {
-              setTimeout(() => {
-                e.layout();
-              }, 0);
-            }}
-            defaultValue=""
-            firebaseRef={firebaseRefs.scribble}
-          />
+        {option === 'results' && statusData != null ? (
+          <div className="px-4">
+            <USACOResults data={statusData} />
+          </div>
         ) : (
           <LazyMonacoEditor
             theme={lightMode ? 'light' : 'vs-dark'}

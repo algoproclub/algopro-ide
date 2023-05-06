@@ -27,7 +27,7 @@ export default function SubmitButton({
       {isLoading ? (
         <>
           <LoadingIndicator className="h-5 w-5 p-0.5 mr-1.5" />
-          <span>Sending data to server...</span>
+          <span>Waiting for results...</span>
         </>
       ) : isDisabled ? (
         'Cannot Submit'

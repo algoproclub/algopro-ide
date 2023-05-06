@@ -7,11 +7,22 @@ export const showSidebarAtom = atom<boolean>(false);
 export const inputTabAtom = atom<string>('input');
 export const problemAtom = atom<ProblemData | null | undefined>(undefined);
 export const tabsListAtom = atom(get => {
+  const getSamplesList = (length: number) => {
+    const res = [];
+    if (length === 1) {
+      res.push({ label: `Sample`, value: `Sample` });
+    } else {
+      // only number samples if >1
+      for (let i = 1; i <= length; ++i)
+        res.push({ label: `Sample ${i}`, value: `Sample ${i}` });
+    }
+    return res;
+  };
   const problem = get(problemAtom);
   return [
     { label: 'Input', value: 'input' },
     ...(problem ? [{ label: 'Task Overview', value: 'judge' }] : []),
-    ...(problem ? [{ label: 'Results', value: 'results' }] : []),
+    ...(problem?.samples ? getSamplesList(problem.samples.length) : []),
   ];
 });
 export const inputTabIndexAtom = atom(get => {

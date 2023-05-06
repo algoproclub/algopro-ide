@@ -146,18 +146,20 @@ export default function EditorPage(): JSX.Element {
   }, [tabsList, inputTab, setInputTab, inputTabIndex]);
 
   const handleRunCode = () => {
-    if (inputTab === 'input') {
-      if (inputEditor) runWithInput(inputEditor.getValue());
-    } else if (inputTab === 'judge') {
-      runAllSamples();
-    } else {
-      const samples = problem?.samples;
-      if (samples) {
-        const index = getSampleIndex(inputTab);
-        const sample = samples[index - 1];
-        runWithInput(sample.input, sample.output, inputTab + ': ');
-      }
-    }
+    // if (inputTab === 'input') {
+    //   if (inputEditor) runWithInput(inputEditor.getValue());
+    // } else if (inputTab === 'judge') {
+    //   runAllSamples();
+    // } else {
+    //   const samples = problem?.samples;
+    //   if (samples) {
+    //     const index = getSampleIndex(inputTab);
+    //     const sample = samples[index - 1];
+    //     runWithInput(sample.input, sample.output, inputTab + ': ');
+    //   }
+    // }
+    // TODO: add sample inputs coming from planets and use the above code.
+    if (inputEditor) runWithInput(inputEditor.getValue());
   };
 
   const setResultAt = (index: number, data: JudgeResult | null) => {
