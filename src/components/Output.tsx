@@ -102,7 +102,7 @@ export const Output = ({
         className="text-sm font-mono text-right pr-4 text-gray-200"
         data-test-id="code-execution-output-status"
       >
-        {result && (
+        {option !== 'results' && result && (
           <>
             {result.statusDescription}, {result.time ?? '-'}s,{' '}
             {result.memory ?? '-'}KB
