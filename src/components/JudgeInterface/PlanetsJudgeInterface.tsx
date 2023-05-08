@@ -44,7 +44,8 @@ const mapVerdictToTitle = (verdict: string): string => {
 };
 
 const mapVerdictToStatusCode = (verdict: string): number => {
-  if (verdict.startsWith('Sent') || verdict.startsWith('Running')) return -8;
+  if (verdict.startsWith('Starting') || verdict.startsWith('Running'))
+    return -8;
   return 0;
 };
 
@@ -121,7 +122,7 @@ export default function PlanetsJudgeInterface({
       .doc(id)
       .onSnapshot(doc => {
         setStatusData(convertPlanetsResultToStatusData(doc.data()));
-        if (doc.data()?.verdict.length <= 3) {
+        if (mapVerdictToStatusCode(doc.data()?.verdict) == 0) {
           unsubscribe();
         }
       });
