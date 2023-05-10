@@ -55,6 +55,17 @@ export default async (
     return;
   }
 
+  const problemProgressRef = firestore
+    .collection('users')
+    .doc(data.userID)
+    .collection('problem_progress')
+    .doc(data.planetsProblemID);
+  problemProgressRef.get().then(doc => {
+    if (!doc.exists || doc?.data()?.state == 'UNOPENED') {
+      problemProgressRef.set({ state: 'OPENED', hint_count: 0 });
+    }
+  });
+
   const problem = {
     id: data.planetsProblemID,
     title: problemDoc.data()?.title['en'], // TODO: English for now
