@@ -15,7 +15,7 @@ export default function useUpdateUserDashboard() {
   useEffect(() => {
     document.title = `${
       settings.workspaceName ? settings.workspaceName + ' · ' : ''
-    }Real-Time Collaborative Online IDE`;
+    }Planets IDE`;
   }, [settings.workspaceName]);
 
   const fileOwner = useMemo(() => {
