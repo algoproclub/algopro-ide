@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { ProblemData } from '../../src/components/Workspace/Workspace';
-
-import firebase from 'firebase/app';
 import { useAtomValue, useUpdateAtom } from 'jotai/utils';
-import { useAtom } from 'jotai';
-
-import { fileIdAtom } from '../../src/atoms/firebaseAtoms';
-import { firebaseUserAtom } from '../../src/atoms/firebaseUserAtoms';
-import { WorkspaceSettings } from '../../src/components/SettingsContext';
-import { fetchProblemData } from '../../src/components/Workspace/Workspace';
+import {
+  firebaseUserAtom,
+  signInWithGoogleAtom,
+} from '../../src/atoms/firebaseUserAtoms';
+import { useConnectionContext } from '../../src/context/ConnectionContext';
 import { useRouter } from 'next/router';
 import invariant from 'tiny-invariant';
 import { MessagePage } from '../../src/components/MessagePage';
@@ -21,6 +17,8 @@ import {
 export default function CreatePlanets(): JSX.Element {
   const router = useRouter();
 
+  const signInWithGoogle = useUpdateAtom(signInWithGoogleAtom);
+  const connectionContext = useConnectionContext();
   const firebaseUser = useAtomValue(firebaseUserAtom);
   const userSettings = useAtomValue(userSettingsAtomWithPersistence);
   const isUserSettingsLoading = useAtomValue(isUserSettingsLoadingAtom);
@@ -71,6 +69,24 @@ export default function CreatePlanets(): JSX.Element {
 
   if (error) {
     return <MessagePage message={'Error: ' + error} />;
+  }
+
+  if (!firebaseUser) {
+    return (
+      <div className="p-4 sm:p-6 md:p-8 lg:p-12 min-h-full flex flex-col max-w-6xl mx-auto">
+        <div className="flex-1">
+          <div className="text-gray-400 mt-6">
+            Not signed in to the development environment.{' '}
+            <button
+              className="underline text-gray-200 focus:outline-none hover:bg-gray-700 p-1 leading-none transition"
+              onClick={() => signInWithGoogle(connectionContext)}
+            >
+              Sign in now
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return <MessagePage message="Loading File..." showHomeButton={false} />;
