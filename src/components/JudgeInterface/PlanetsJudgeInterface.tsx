@@ -147,7 +147,7 @@ export default function PlanetsJudgeInterface({
             {problem.samples?.length > 0 && problem.samples[0].output && (
               <button
                 type="button"
-                className="relative flex-shrink-0 inline-flex items-center px-4 py-2 w-40 shadow-sm text-sm font-medium text-white bg-indigo-900 hover:bg-indigo-800 focus:bg-indigo-800 focus:outline-none"
+                className="relative flex-shrink-0 mt-4 mb-8 inline-flex items-center px-4 py-2 w-40 shadow-sm text-sm font-medium text-white bg-indigo-900 hover:bg-indigo-800 focus:bg-indigo-800 focus:outline-none"
                 onClick={handleRunCode}
               >
                 <PlayCircleIcon className="mr-2 h-5 w-5" aria-hidden="true" />
