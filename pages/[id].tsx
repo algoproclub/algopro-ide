@@ -327,7 +327,7 @@ export default function EditorPage(): JSX.Element {
   useEffect(() => {
     document.title = `${
       settings.workspaceName ? settings.workspaceName + ' · ' : ''
-    }Real-Time Collaborative Online IDE`;
+    }Planets IDE`;
   }, [settings.workspaceName]);
 
   const fileOwner = useMemo(() => {
@@ -381,7 +381,7 @@ export default function EditorPage(): JSX.Element {
       <div className="p-4 sm:p-6 md:p-8 lg:p-12 min-h-full flex flex-col max-w-6xl mx-auto">
         <div className="flex-1">
           <div className="text-gray-400 mt-6">
-            Not signed in.{' '}
+            Not signed in to the development environment.{' '}
             <button
               className="underline text-gray-200 focus:outline-none hover:bg-gray-700 p-1 leading-none transition"
               onClick={() => signInWithGoogle(connectionContext)}

@@ -44,7 +44,8 @@ const mapVerdictToTitle = (verdict: string): string => {
 };
 
 const mapVerdictToStatusCode = (verdict: string): number => {
-  if (verdict.startsWith('Sent') || verdict.startsWith('Running')) return -8;
+  if (verdict.startsWith('Starting') || verdict.startsWith('Running'))
+    return -8;
   return 0;
 };
 
@@ -53,6 +54,7 @@ const convertPlanetsResultToStatusData = (result: any): StatusData => {
     statusText: 'status-working',
     message: result.verdict,
     statusCode: mapVerdictToStatusCode(result.verdict),
+    output: result.compiler_output ?? '',
     testCases:
       result.test_results == undefined
         ? []
@@ -121,7 +123,7 @@ export default function PlanetsJudgeInterface({
       .doc(id)
       .onSnapshot(doc => {
         setStatusData(convertPlanetsResultToStatusData(doc.data()));
-        if (doc.data()?.verdict.length <= 3) {
+        if (mapVerdictToStatusCode(doc.data()?.verdict) == 0) {
           unsubscribe();
         }
       });
