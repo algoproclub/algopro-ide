@@ -8,7 +8,7 @@ int main() {
 `,
   java: `import java.io.*;
 
-public class Main {
+public class main {
 \tpublic static void main(String[] args) {
 \t\tSystem.out.println("Hello world!");
 \t}
