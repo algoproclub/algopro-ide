@@ -55,6 +55,7 @@ const convertPlanetsResultToStatusData = (result: any): StatusData => {
     statusText: 'status-working',
     message: result.verdict,
     statusCode: mapVerdictToStatusCode(result.verdict),
+    output: result.compiler_output ?? '',
     testCases:
       result.test_results == undefined
         ? []
