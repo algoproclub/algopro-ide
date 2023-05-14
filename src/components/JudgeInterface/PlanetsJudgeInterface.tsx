@@ -149,7 +149,7 @@ export default function PlanetsJudgeInterface({
                 onClick={handleRunCode}
               >
                 <PlayCircleIcon className="mr-2 h-5 w-5" aria-hidden="true" />
-                <span className="text-center flex-1">Run Samples</span>
+                <span className="text-center flex-1 m-2">Run Samples</span>
               </button>
             )}
           </>
