@@ -26,12 +26,13 @@ if (getApps().length === 0) {
         privateKey: process.env.NEW_FIREBASE_PRIVATE_KEY,
         clientEmail: process.env.NEW_FIREBASE_CLIENT_EMAIL,
       }),
-      databaseURL: 'https://cp-ide-2-default-rtdb.firebaseio.com',
+      databaseURL:
+        'https://planets-prog-default-rtdb.europe-west1.firebasedatabase.app',
     });
   } else {
     initializeApp({
-      projectId: 'cp-ide-2',
-      databaseURL: 'http://127.0.0.1:9000?ns=cp-ide-2-default-rtdb',
+      projectId: 'planets-prog',
+      databaseURL: 'http://127.0.0.1:9000?ns=planets-prog-default-rtdb',
     });
   }
 }
