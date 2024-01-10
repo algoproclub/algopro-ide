@@ -13,11 +13,12 @@ import { ChatMessage } from '../components/Chat';
 import { useUserContext } from './UserContext';
 import { Sample } from '../components/JudgeInterface/Samples';
 
-export type Language = 'cpp' | 'java' | 'py';
+export type Platform = 'CF' | 'CSES' | 'AtCoder' | 'USACO';
 
 export type ProblemData = {
   id: string;
   submittable: boolean;
+  platform: Platform;
   url: string;
   source: string;
   title: string;
@@ -25,6 +26,8 @@ export type ProblemData = {
   output: string;
   samples: Sample[];
 };
+
+export type Language = 'cpp' | 'java' | 'py';
 
 export interface FileSettings {
   compilerOptions: { [key in Language]: string };

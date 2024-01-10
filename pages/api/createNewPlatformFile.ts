@@ -1,11 +1,13 @@
-import { getDatabase, ServerValue } from 'firebase-admin/database';
+import { Platform } from '../../src/context/EditorContext';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { fetchProblemData } from '../../src/components/Workspace/Workspace';
+import { fetchProblemData } from '../../src/scripts/fetchProblemData';
+import { getDatabase, ServerValue } from 'firebase-admin/database';
 import firebaseApp from '../../src/firebaseAdmin';
 import colorFromUserId from '../../src/scripts/colorFromUserId';
 
 type RequestData = {
-  usacoID: string;
+  platform: Platform;
+  problemID: string;
   userID: string;
   userName: string;
   defaultPermission: string;
@@ -31,7 +33,8 @@ export default async (
     !data.userName ||
     !data.defaultPermission ||
     !data.userID ||
-    !data.usacoID
+    !data.problemID ||
+    !data.platform
   ) {
     res.status(400).json({
       message: 'Bad data',
@@ -39,7 +42,7 @@ export default async (
     return;
   }
 
-  let problem = await fetchProblemData(data.usacoID);
+  let problem = await fetchProblemData(data.problemID, data.platform);
   if (problem === null) {
     res.status(400).json({
       message: 'Could not identify problem ID.',
@@ -51,7 +54,8 @@ export default async (
   const idToURLRef = getDatabase(firebaseApp)
     .ref('users')
     .child(data.userID)
-    .child('usaco-id-to-file-id')
+    .child('platform-' + data.platform)
+    .child('problem-id-to-file-id')
     .child('' + problem.id);
 
   const idToURLSnap = await idToURLRef.get();
@@ -75,7 +79,7 @@ export default async (
           workspaceName: problem.source + ': ' + problem.title,
           defaultPermission: data.defaultPermission,
           creationTime: ServerValue.TIMESTAMP,
-          language: 'cpp',
+          language: 'cpp', //TODO think about how do we support other languages with this method?
           problem,
           compilerOptions: {
             cpp: '-std=c++17 -O2 -Wall -Wextra -Wshadow -Wconversion -Wfloat-equal -Wduplicated-cond -Wlogical-op',
