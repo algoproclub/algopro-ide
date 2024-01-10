@@ -5,12 +5,16 @@ export async function fetchProblemData(
   problemID: string,
   platform: Platform = 'USACO'
 ): Promise<ProblemData | null> {
-  //TODO do something depending on the platform
   const url = `${judgePrefix}/problem/${problemID}`;
   const response = await fetch(url);
   if (response.status !== 200) return null;
 
-  const res = await response.json();
-  res.platform = platform;
-  return res;
+  return (async function (): Promise<ProblemData | null> {
+    const res = await response.json();
+    res.platform = platform;
+    if (platform == 'CF') {
+      res.source += 'LOLzzz'; // just for testing, replace this entire thing with something meaningful
+    }
+    return res;
+  })();
 }
