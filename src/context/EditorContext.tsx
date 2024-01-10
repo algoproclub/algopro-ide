@@ -1,10 +1,7 @@
 import firebase from 'firebase/app';
-import invariant from 'tiny-invariant';
 import {
   createContext,
   MutableRefObject,
-  Ref,
-  RefObject,
   useCallback,
   useContext,
   useEffect,
@@ -12,11 +9,22 @@ import {
   useRef,
   useState,
 } from 'react';
-import { ProblemData } from '../components/Workspace/Workspace';
 import { ChatMessage } from '../components/Chat';
 import { useUserContext } from './UserContext';
+import { Sample } from '../components/JudgeInterface/Samples';
 
 export type Language = 'cpp' | 'java' | 'py';
+
+export type ProblemData = {
+  id: string;
+  submittable: boolean;
+  url: string;
+  source: string;
+  title: string;
+  input: string;
+  output: string;
+  samples: Sample[];
+};
 
 export interface FileSettings {
   compilerOptions: { [key in Language]: string };

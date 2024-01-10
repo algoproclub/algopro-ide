@@ -6,17 +6,17 @@ import React, { useEffect, useState } from 'react';
 /// <reference path="./types/react-split-grid.d.ts" />
 import Split from 'react-split-grid';
 import {
-  layoutEditorsAtom,
-  inputMonacoEditorAtom,
-  outputMonacoEditorAtom,
   inputCodemirrorEditorAtom,
+  inputMonacoEditorAtom,
+  layoutEditorsAtom,
+  outputMonacoEditorAtom,
 } from '../../atoms/workspace';
 import {
-  mobileActiveTabAtom,
-  showSidebarAtom,
   inputTabAtom,
-  problemAtom,
   inputTabIndexAtom,
+  mobileActiveTabAtom,
+  problemAtom,
+  showSidebarAtom,
 } from '../../atoms/workspaceUI';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { Chat } from '../Chat';
@@ -31,20 +31,9 @@ import { UserList } from '../UserList/UserList';
 import Samples, { Sample } from '../JudgeInterface/Samples';
 import useJudgeResults from '../../hooks/useJudgeResults';
 import USACOJudgeInterface from '../JudgeInterface/USACOJudgeInterface';
-import { useEditorContext } from '../../context/EditorContext';
+import { ProblemData, useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
-
-export type ProblemData = {
-  id: string;
-  submittable: boolean;
-  url: string;
-  source: string;
-  title: string;
-  input: string;
-  output: string;
-  samples: Sample[];
-};
 
 interface TestCase {
   title: string;
