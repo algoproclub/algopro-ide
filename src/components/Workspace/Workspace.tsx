@@ -176,6 +176,7 @@ export default function Workspace({
 
   return (
     <>
+      {/*for testing purposes*/}
       <div className="flex flex-col items-center mb-4 space-y-2">
         <input id="platform" type="text" placeholder="platform" />
         <input id="user" type="text" placeholder="user" />

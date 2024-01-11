@@ -260,8 +260,8 @@ const getResultsCF = async (username, submissionID, resultJSON = undefined) => {
     if (formatted === 'ok') {
       return 'correct answer';
     }
+    console.log(`>${formatted}<`);
     if (
-      formatted in
       [
         'wrong answer',
         'runtime error',
@@ -269,7 +269,7 @@ const getResultsCF = async (username, submissionID, resultJSON = undefined) => {
         'presentation error',
         'memory limit exceeded',
         'idleness limit exceeded',
-      ]
+      ].includes(formatted)
     ) {
       formatted += ` on test ${submission['passedTestCount']}`;
     }
