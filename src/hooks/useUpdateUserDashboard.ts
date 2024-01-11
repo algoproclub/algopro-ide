@@ -15,7 +15,7 @@ export default function useUpdateUserDashboard() {
   useEffect(() => {
     document.title = `${
       settings.workspaceName ? settings.workspaceName + ' · ' : ''
-    }Planets IDE`;
+    }AlgoPro IDE`;
   }, [settings.workspaceName]);
 
   const fileOwner = useMemo(() => {

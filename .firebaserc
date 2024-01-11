@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "planets-prog"
-  }
+    "default": "algopro-app",
+    "dev": "algopro-app"
+  },
+  "targets": {},
+  "etags": {}
 }
