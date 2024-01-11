@@ -79,12 +79,8 @@ test.describe('Basic Functionality', () => {
     expect(await page2.$('text=Successful')).toBeTruthy();
     await page.locator('button:has-text("stdout")').click();
     await page2.locator('button:has-text("stdout")').click();
-    expect(
-      await page.$('text="The sum of these three numbers is 6"')
-    ).toBeTruthy();
-    expect(
-      await page2.$('text="The sum of these three numbers is 6"')
-    ).toBeTruthy();
+    expect(await page.$('text="Hello world!"')).toBeTruthy();
+    expect(await page2.$('text="Hello world!"')).toBeTruthy();
 
     await page2.close();
     await context2.close();
