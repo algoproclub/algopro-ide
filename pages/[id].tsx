@@ -238,25 +238,7 @@ function EditorPage() {
         runWithInput(sample.input, sample.output, inputTab + ': ');
       }
     }
-  }
-
-  if (!firebaseUser) {
-    return (
-      <div className="p-4 sm:p-6 md:p-8 lg:p-12 min-h-full flex flex-col max-w-6xl mx-auto">
-        <div className="flex-1">
-          <div className="text-gray-400 mt-6">
-            Not signed in to the development environment.{' '}
-            <button
-              className="underline text-gray-200 focus:outline-none hover:bg-gray-700 p-1 leading-none transition"
-              onClick={() => signInWithGoogle(connectionContext)}
-            >
-              Sign in now
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  };
 
   return (
     <div className="h-full">
