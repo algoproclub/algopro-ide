@@ -195,6 +195,7 @@ const getResultsAtCoder = async (problemID, submissionID, sessionCookie) => {
     WA: 'incorrect answer',
     RTE: 'runtime error',
     TLE: 'time limit exceeded',
+    MLE: 'memory limit exceeded',
   };
   const headers = {
     Cookie: sessionCookie,
@@ -237,6 +238,7 @@ const getResultsAtCoder = async (problemID, submissionID, sessionCookie) => {
     });
   }
   data.testCases = testCases;
+  console.log(data);
   return data;
 };
 
@@ -250,7 +252,7 @@ const getResultsCF = async (username, submissionID, resultJSON = undefined) => {
     return submission['verdict'] === 'TESTING' ? -8 : 0;
   };
   const getMessage = submission => {
-    if (['TESTING', 'COMPILATION_ERROR'].includes(submission['verdict'])) {
+    if (['TESTING'].includes(submission['verdict'])) {
       return submission['verdict'];
     }
     let formatted = submission['verdict'].replaceAll('_', ' ').toLowerCase();
@@ -260,7 +262,6 @@ const getResultsCF = async (username, submissionID, resultJSON = undefined) => {
     if (formatted === 'ok') {
       return 'correct answer';
     }
-    console.log(`>${formatted}<`);
     if (
       [
         'wrong answer',

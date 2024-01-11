@@ -4,27 +4,27 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
 const capitalize = (text: string): string => {
-  return text[0].toUpperCase() + text.substring(1);
+  if (text) {
+    return text[0].toUpperCase() + text.substring(1);
+  }
 };
 const USACOTestCase = ({ data }: { data: any }) => {
   const containerClasses =
-    data.title.toLowerCase() === 'correct answer'
+    data?.title?.toLowerCase() === 'correct answer'
       ? 'bg-green-700 border-green-700'
       : data.title === 'Did not run'
       ? 'bg-gray-700 border-gray-700'
       : 'bg-red-700 border-red-700';
   const textColor =
-    data.title.toLowerCase() === 'correct answer'
+    data?.title?.toLowerCase() === 'correct answer'
       ? 'text-green-100'
       : 'text-red-100';
   return (
     <div
-      className={`m-1 inline-block w-[76px] h-[60px] bg-opacity-50 border ${containerClasses} relative rounded`}
+      className={`m-1 p-1 inline-block w-[4.5rem] bg-opacity-50 border ${containerClasses} relative rounded`}
       title={capitalize(data.title)}
     >
-      <div
-        className={`font-semibold text-center ${textColor} leading-[2.75rem]`}
-      >
+      <div className={`font-semibold text-center ${textColor} p-1`}>
         {data.symbol === '✓' && (
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'check' }}
@@ -38,18 +38,19 @@ const USACOTestCase = ({ data }: { data: any }) => {
           />
         )}
       </div>
-      <span
-        className={`absolute bottom-0 left-[4px] ${textColor} text-[0.8125rem] font-bold`}
-      >
-        {data.trialNum}
-      </span>
-      <span
-        className={`absolute bottom-0 right-0 text-right ${textColor} leading-3 p-1 text-[0.625rem]`}
-      >
-        {data.memory}
-        <br />
-        {data.time}
-      </span>
+      <div>
+        <div className="flex justify-end">
+          {data.memory && (
+            <span className={`text-[0.625rem]`}>{data.memory}</span>
+          )}
+        </div>
+        <div className="flex items-center justify-between">
+          <span className={`${textColor} text-[0.8125rem] font-bold leading-3`}>
+            {data.trialNum}
+          </span>
+          <span className={`text-[0.625rem] leading-3`}>{data.time}</span>
+        </div>
+      </div>
     </div>
   );
 };
@@ -104,6 +105,12 @@ export default function USACOResults({
                   : 'text-red-500'
               }`}
             >
+              {data.statusCode === -8 && (
+                <FontAwesomeIcon
+                  icon={{ prefix: 'fas', iconName: 'gear' }}
+                  className="mr-2 w-4 h-4 text-gray-400 animate-spin-slow"
+                />
+              )}
               {data.statusCode === 0 &&
                 data.message.toLowerCase() === 'correct answer' && (
                   <FontAwesomeIcon
