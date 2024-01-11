@@ -137,30 +137,32 @@ export default function USACOResults({
             {data.link}
           </a>
         )}
-        {output && (
-          <>
-            <pre className="font-mono text-red-300 leading-tight mt-2 text-sm">
-              {output}
-            </pre>
-            {equalUpToTrim && (
-              <p className="font-bold text-gray-200 mt-3">
-                Your output contains extra whitespace. This is an error; see{' '}
-                <a
-                  href="https://usaco.guide/general/io?lang=cpp#usaco-note---extra-whitespace"
-                  className="text-indigo-300"
-                >
-                  here
-                </a>{' '}
-                for details.
-              </p>
-            )}
-          </>
-        )}
       </div>
+      {(output || data.testCases) && (
+        <div className="border-t -mx-4 border-gray-600 " />
+      )}
+      {output && (
+        <div className="pt-3">
+          <pre className="font-mono text-gray-300 leading-tight mt-2 text-sm bg-gray-900 rounded p-3 border border-gray-700 overflow-auto">
+            {output}
+          </pre>
+          {equalUpToTrim && (
+            <p className="font-bold text-gray-200 mt-3">
+              Your output contains extra whitespace. This is an error; see{' '}
+              <a
+                href="https://usaco.guide/general/io?lang=cpp#usaco-note---extra-whitespace"
+                className="text-indigo-300"
+              >
+                here
+              </a>{' '}
+              for details.
+            </p>
+          )}
+        </div>
+      )}
       {data.testCases && (
         <>
-          <div className="border-t -mx-4 border-gray-600 " />
-          <div className="mt-1 pt-3 -mx-1">
+          <div className="mt-3 -mx-1">
             {data.testCases.map((tc: any) => (
               <USACOTestCase data={tc} key={tc.trialNum} />
             ))}

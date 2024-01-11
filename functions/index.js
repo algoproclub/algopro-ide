@@ -303,6 +303,7 @@ const updateResults = async pending => {
     );
     const resultJSON = (await resp.json())['result'];
 
+    console.log(idPairs);
     idPairs.forEach(pair => {
       getResultsCF(username, pair.submissionID, resultJSON).then(data =>
         updateData(pair.fileID, data)
@@ -348,8 +349,9 @@ const updateResults = async pending => {
     return;
   }
   const id = ids[0];
-  const platformName = (await db.ref(`files/${id}/platform/name`).get()).val();
-  const username = (await db.ref(`files/${id}/platform/user`).get()).val();
+  const platform = (await db.ref(`files/${id}/platform`).get()).val();
+  const platformName = platform.name;
+  const username = platform.user;
   const problemID = (await db.ref(`files/${id}/problem/id`).get()).val();
   const submissionID = (await db.ref(`files/${id}/submission/id`).get()).val();
   const sessionCookie = (
