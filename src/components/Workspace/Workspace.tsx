@@ -34,6 +34,7 @@ import USACOJudgeInterface from '../JudgeInterface/USACOJudgeInterface';
 import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
+import firebase from 'firebase/app';
 
 export type ProblemData = {
   id: string;
@@ -92,6 +93,7 @@ export default function Workspace({
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
   const [judgeResults, setJudgeResults] = useJudgeResults();
+  const db = firebase.database();
 
   useEffect(() => {
     function handleResize() {
@@ -119,172 +121,236 @@ export default function Workspace({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileData.settings.problem?.id]);
 
+  useEffect(() => {
+    const id = fileData.id;
+    db.ref(`submissions/${id}/statusData`).on('value', snapshot => {
+      const data = snapshot.val();
+      setStatusData(data);
+    });
+  }, []);
+
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
   const { lightMode } = useUserContext().userData;
 
+  const updateSubmissionData = () => {
+    const defaultStatusData = {
+      statusCode: -8,
+      statusText: 'status-working',
+      message: 'starting',
+    };
+    const platform = (document.getElementById('platform') as HTMLInputElement)
+      .value;
+    const user = (document.getElementById('user') as HTMLInputElement).value;
+    const problemID = (document.getElementById('problemID') as HTMLInputElement)
+      .value;
+    const submissionID = (
+      document.getElementById('submissionID') as HTMLInputElement
+    ).value;
+
+    const fileUpdates: { [k: string]: any } = {};
+    fileUpdates[`files/${fileData.id}/problem`] = { id: problemID };
+    fileUpdates[`files/${fileData.id}/platform`] = {
+      user: user,
+      name: platform,
+    };
+    fileUpdates[`files/${fileData.id}/submission`] = { id: submissionID };
+
+    db.ref()
+      .update(fileUpdates)
+      .then(() => {
+        db.ref('submissions')
+          .update({
+            [fileData.id]: {
+              statusData: defaultStatusData,
+            },
+          })
+          .then(() => {
+            db.ref('submissions/pending').update({
+              [fileData.id]: {
+                creationTime: Date.now(),
+              },
+            });
+          });
+      });
+  };
+
   return (
-    <Split
-      onDragEnd={() => layoutEditors()}
-      render={({ getGridProps, getGutterProps }) => (
-        <div
-          className={`grid grid-cols-[3fr,3px,2fr,3px,1fr] grid-rows-[1fr,3px,1fr] h-full overflow-hidden`}
-          {...getGridProps()}
+    <>
+      <div className="flex flex-col items-center mb-4 space-y-2">
+        <input id="platform" type="text" placeholder="platform" />
+        <input id="user" type="text" placeholder="user" />
+        <input id="problemID" type="text" placeholder="problem ID" />
+        <input id="submissionID" type="text" placeholder="submission ID" />
+        <button
+          className="text-white bg-indigo-500 px-4 py-2 rounded"
+          onClick={updateSubmissionData}
         >
-          <CodeInterface
-            className={classNames(
-              'row-span-full min-w-0 overflow-hidden border-t border-black',
-              !isDesktop && 'col-span-full',
-              !isDesktop && mobileActiveTab !== 'code' && 'hidden'
-            )}
-          />
+          update
+        </button>
+      </div>
+      <Split
+        onDragEnd={() => layoutEditors()}
+        render={({ getGridProps, getGutterProps }) => (
           <div
-            className={classNames(
-              'row-span-full col-start-2 cursor-[col-resize] mx-[-6px] group relative z-10',
-              !isDesktop && 'hidden'
-            )}
-            {...getGutterProps('column', 1)}
+            className={`grid grid-cols-[3fr,3px,2fr,3px,1fr] grid-rows-[1fr,3px,1fr] h-full overflow-hidden`}
+            {...getGridProps()}
           >
-            <div className="absolute h-full left-[6px] right-[6px] bg-black group-hover:bg-gray-600 group-active:bg-gray-600 pointer-events-none transition" />
-          </div>
-          <div
-            className={classNames(
-              'flex flex-col min-w-0 min-h-0 overflow-hidden',
-              !isDesktop && 'col-span-full mb-[6px]',
-              !isDesktop && mobileActiveTab !== 'io' && 'hidden',
-              isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
-            )}
-          >
-            <TabBar
-              tabs={tabsList}
-              activeTab={inputTab}
-              onTabSelect={x => setInputTab(x.value)}
+            <CodeInterface
+              className={classNames(
+                'row-span-full min-w-0 overflow-hidden border-t border-black',
+                !isDesktop && 'col-span-full',
+                !isDesktop && mobileActiveTab !== 'code' && 'hidden'
+              )}
             />
-            <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden">
-              {inputTab === 'input' && (
-                <LazyRealtimeEditor
-                  theme={lightMode ? 'light' : 'vs-dark'}
-                  language={'plaintext'}
-                  saveViewState={false}
-                  path="input"
-                  dataTestId="input-editor"
-                  options={{
-                    minimap: { enabled: false },
-                    automaticLayout: false,
-                    insertSpaces: false,
-                    readOnly,
-                  }}
-                  onMount={e => {
-                    setInputEditor(e);
-                    setTimeout(() => {
-                      e.layout();
-                    }, 0);
-                  }}
-                  onCodemirrorMount={(view, state) => {
-                    // this is used by e2e/helpers.ts to set the value of the input codemirror editor
-                    // @ts-ignore
-                    window['TEST_inputCodemirrorEditor'] = view;
-                    setCodemirrorInputEditor(view);
-                  }}
-                  defaultValue="1 2 3"
-                  yjsDocumentId={`${fileData.id}.input`}
-                />
-              )}
-              {inputTab === 'judge' &&
-                problem &&
-                (isNaN(Number(problem.id)) ? (
-                  <PlanetsJudgeInterface
-                    problem={problem}
-                    statusData={statusData}
-                    setStatusData={setStatusData}
-                    handleRunCode={handleRunCode}
-                  />
-                ) : (
-                  <USACOJudgeInterface
-                    problem={problem}
-                    statusData={statusData}
-                    setStatusData={setStatusData}
-                    handleRunCode={handleRunCode}
-                  />
-                ))}
-              {inputTab.startsWith('Sample') && problem && (
-                <div className="overflow-y-auto h-full">
-                  <div className="p-4 pb-0">
-                    <Samples
-                      samples={problem.samples}
-                      inputTab={inputTab}
-                      handleRunCode={handleRunCode}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          <div
-            className={classNames(
-              'cursor-[row-resize] group relative z-10 my-[-6px]',
-              !isDesktop && 'col-span-full',
-              !isDesktop && mobileActiveTab !== 'io' && 'hidden',
-              isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
-            )}
-            {...getGutterProps('row', 1)}
-          >
             <div
               className={classNames(
-                'absolute w-full bg-black group-hover:bg-gray-600 group-active:bg-gray-600 group-focus:bg-gray-600 pointer-events-none transition',
-                isDesktop
-                  ? 'top-[6px] bottom-[6px]'
-                  : 'inset-y-0 bg-gray-800 flex items-center justify-center'
+                'row-span-full col-start-2 cursor-[col-resize] mx-[-6px] group relative z-10',
+                !isDesktop && 'hidden'
+              )}
+              {...getGutterProps('column', 1)}
+            >
+              <div className="absolute h-full left-[6px] right-[6px] bg-black group-hover:bg-gray-600 group-active:bg-gray-600 pointer-events-none transition" />
+            </div>
+            <div
+              className={classNames(
+                'flex flex-col min-w-0 min-h-0 overflow-hidden',
+                !isDesktop && 'col-span-full mb-[6px]',
+                !isDesktop && mobileActiveTab !== 'io' && 'hidden',
+                isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
               )}
             >
-              {!isDesktop && (
-                <EllipsisHorizontalIcon className="h-5 w-5 text-gray-200" />
-              )}
+              <TabBar
+                tabs={tabsList}
+                activeTab={inputTab}
+                onTabSelect={x => setInputTab(x.value)}
+              />
+              <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden">
+                {inputTab === 'input' && (
+                  <LazyRealtimeEditor
+                    theme={lightMode ? 'light' : 'vs-dark'}
+                    language={'plaintext'}
+                    saveViewState={false}
+                    path="input"
+                    dataTestId="input-editor"
+                    options={{
+                      minimap: { enabled: false },
+                      automaticLayout: false,
+                      insertSpaces: false,
+                      readOnly,
+                    }}
+                    onMount={e => {
+                      setInputEditor(e);
+                      setTimeout(() => {
+                        e.layout();
+                      }, 0);
+                    }}
+                    onCodemirrorMount={(view, state) => {
+                      // this is used by e2e/helpers.ts to set the value of the input codemirror editor
+                      // @ts-ignore
+                      window['TEST_inputCodemirrorEditor'] = view;
+                      setCodemirrorInputEditor(view);
+                    }}
+                    defaultValue="1 2 3"
+                    yjsDocumentId={`${fileData.id}.input`}
+                  />
+                )}
+                {inputTab === 'judge' &&
+                  problem &&
+                  (isNaN(Number(problem.id)) ? (
+                    <PlanetsJudgeInterface
+                      problem={problem}
+                      statusData={statusData}
+                      setStatusData={setStatusData}
+                      handleRunCode={handleRunCode}
+                    />
+                  ) : (
+                    <USACOJudgeInterface
+                      problem={problem}
+                      statusData={statusData}
+                      setStatusData={setStatusData}
+                      handleRunCode={handleRunCode}
+                    />
+                  ))}
+                {inputTab.startsWith('Sample') && problem && (
+                  <div className="overflow-y-auto h-full">
+                    <div className="p-4 pb-0">
+                      <Samples
+                        samples={problem.samples}
+                        inputTab={inputTab}
+                        handleRunCode={handleRunCode}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          <div
-            className={classNames(
-              'flex flex-col min-w-0 min-h-0 overflow-hidden',
-              !isDesktop && 'col-span-full mt-[6px]',
-              !isDesktop && mobileActiveTab !== 'io' && 'hidden',
-              isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
+            <div
+              className={classNames(
+                'cursor-[row-resize] group relative z-10 my-[-6px]',
+                !isDesktop && 'col-span-full',
+                !isDesktop && mobileActiveTab !== 'io' && 'hidden',
+                isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
+              )}
+              {...getGutterProps('row', 1)}
+            >
+              <div
+                className={classNames(
+                  'absolute w-full bg-black group-hover:bg-gray-600 group-active:bg-gray-600 group-focus:bg-gray-600 pointer-events-none transition',
+                  isDesktop
+                    ? 'top-[6px] bottom-[6px]'
+                    : 'inset-y-0 bg-gray-800 flex items-center justify-center'
+                )}
+              >
+                {!isDesktop && (
+                  <EllipsisHorizontalIcon className="h-5 w-5 text-gray-200" />
+                )}
+              </div>
+            </div>
+            <div
+              className={classNames(
+                'flex flex-col min-w-0 min-h-0 overflow-hidden',
+                !isDesktop && 'col-span-full mt-[6px]',
+                !isDesktop && mobileActiveTab !== 'io' && 'hidden',
+                isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
+              )}
+            >
+              <Output
+                result={judgeResults[inputTabIndex]}
+                statusData={statusData}
+                onMount={e => {
+                  setOutputEditor(e);
+                  setTimeout(() => {
+                    e.layout();
+                  }, 0);
+                }}
+              />
+            </div>
+            {((showSidebar && isDesktop) ||
+              (!isDesktop && mobileActiveTab === 'users')) && (
+              <>
+                <div
+                  className={classNames(
+                    'row-span-full col-start-4 cursor-[col-resize] mx-[-6px] group relative z-10',
+                    !isDesktop && 'hidden'
+                  )}
+                  {...getGutterProps('column', 3)}
+                >
+                  <div className="absolute h-full left-[6px] right-[6px] bg-black group-hover:bg-gray-600 group-active:bg-gray-600 pointer-events-none transition" />
+                </div>
+                <div
+                  className={classNames(
+                    'row-span-full min-w-0 bg-[#1E1E1E] text-gray-200 flex flex-col overflow-auto',
+                    isDesktop ? 'col-start-5' : 'col-span-full pt-4'
+                  )}
+                >
+                  <UserList className="max-w-full max-h-64" />
+                  <Chat className="flex-1 p-4 min-h-0" />
+                </div>
+              </>
             )}
-          >
-            <Output
-              result={judgeResults[inputTabIndex]}
-              statusData={statusData}
-              onMount={e => {
-                setOutputEditor(e);
-                setTimeout(() => {
-                  e.layout();
-                }, 0);
-              }}
-            />
           </div>
-          {((showSidebar && isDesktop) ||
-            (!isDesktop && mobileActiveTab === 'users')) && (
-            <>
-              <div
-                className={classNames(
-                  'row-span-full col-start-4 cursor-[col-resize] mx-[-6px] group relative z-10',
-                  !isDesktop && 'hidden'
-                )}
-                {...getGutterProps('column', 3)}
-              >
-                <div className="absolute h-full left-[6px] right-[6px] bg-black group-hover:bg-gray-600 group-active:bg-gray-600 pointer-events-none transition" />
-              </div>
-              <div
-                className={classNames(
-                  'row-span-full min-w-0 bg-[#1E1E1E] text-gray-200 flex flex-col overflow-auto',
-                  isDesktop ? 'col-start-5' : 'col-span-full pt-4'
-                )}
-              >
-                <UserList className="max-w-full max-h-64" />
-                <Chat className="flex-1 p-4 min-h-0" />
-              </div>
-            </>
-          )}
-        </div>
-      )}
-    />
+        )}
+      />
+    </>
   );
 }

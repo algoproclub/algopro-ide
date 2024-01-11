@@ -1,24 +1,42 @@
 import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+const capitalize = (text: string): string => {
+  return text[0].toUpperCase() + text.substring(1);
+};
 const USACOTestCase = ({ data }: { data: any }) => {
   const containerClasses =
-    data.title === 'Correct answer'
+    data.title.toLowerCase() === 'correct answer'
       ? 'bg-green-700 border-green-700'
       : data.title === 'Did not run'
       ? 'bg-gray-700 border-gray-700'
       : 'bg-red-700 border-red-700';
   const textColor =
-    data.title === 'Correct answer' ? 'text-green-100' : 'text-red-100';
+    data.title.toLowerCase() === 'correct answer'
+      ? 'text-green-100'
+      : 'text-red-100';
   return (
     <div
-      className={`m-1 inline-block w-[70px] h-[60px] bg-opacity-50 border ${containerClasses} relative`}
-      title={data.title}
+      className={`m-1 inline-block w-[76px] h-[60px] bg-opacity-50 border ${containerClasses} relative rounded`}
+      title={capitalize(data.title)}
     >
       <div
-        className={`font-bold text-center text-[2.5rem] ${textColor} leading-10`}
+        className={`font-semibold text-center ${textColor} leading-[2.75rem]`}
       >
-        {data.symbol}
+        {data.symbol === '✓' && (
+          <FontAwesomeIcon
+            icon={{ prefix: 'fas', iconName: 'check' }}
+            className="w-5 h-5"
+          />
+        )}
+        {data.symbol === 'x' && (
+          <FontAwesomeIcon
+            icon={{ prefix: 'fas', iconName: 'xmark' }}
+            className="w-5 h-5"
+          />
+        )}
       </div>
       <span
         className={`absolute bottom-0 left-[4px] ${textColor} text-[0.8125rem] font-bold`}
@@ -26,7 +44,7 @@ const USACOTestCase = ({ data }: { data: any }) => {
         {data.trialNum}
       </span>
       <span
-        className={`absolute bottom-0 right-0 text-right ${textColor} leading-3 p-[2px] text-[0.625rem]`}
+        className={`absolute bottom-0 right-0 text-right ${textColor} leading-3 p-1 text-[0.625rem]`}
       >
         {data.memory}
         <br />
@@ -76,33 +94,79 @@ export default function USACOResults({
   }
   return (
     <div className="mt-3">
-      <p className="font-bold text-gray-200">{data.message}</p>
-      {output && (
+      <div className="pb-3">
+        <p className="font-bold text-gray-200 border-gray-700">
+          <span className="space-x-2">
+            <span
+              className={`${
+                data.message.toLowerCase() === 'correct answer'
+                  ? 'text-green-500'
+                  : 'text-red-500'
+              }`}
+            >
+              {data.statusCode === 0 &&
+                data.message.toLowerCase() === 'correct answer' && (
+                  <FontAwesomeIcon
+                    icon={{ prefix: 'fas', iconName: 'check' }}
+                    className="mr-2 w-4 h-4"
+                  />
+                )}
+              {data.statusCode === 0 &&
+                data.message.toLowerCase() !== 'correct answer' && (
+                  <FontAwesomeIcon
+                    icon={{ prefix: 'fas', iconName: 'xmark' }}
+                    className="mr-2 w-4 h-4"
+                  />
+                )}
+            </span>
+            {capitalize(data.message)}
+            {data.statusCode === -8 && '...'}
+          </span>
+          {(data.time || data.memory) && <span> (</span>}
+          {data.time && <span>{data.time}</span>}
+          {data.time && data.memory && <span>, </span>}
+          {data.memory && <span>{data.memory}</span>}
+          {(data.time || data.memory) && <span>)</span>}
+        </p>
+        {data.link && (
+          <a
+            href={data.link}
+            className="text-indigo-300 hover:underline"
+            target="_blank"
+          >
+            {data.link}
+          </a>
+        )}
+        {output && (
+          <>
+            <pre className="font-mono text-red-300 leading-tight mt-2 text-sm">
+              {output}
+            </pre>
+            {equalUpToTrim && (
+              <p className="font-bold text-gray-200 mt-3">
+                Your output contains extra whitespace. This is an error; see{' '}
+                <a
+                  href="https://usaco.guide/general/io?lang=cpp#usaco-note---extra-whitespace"
+                  className="text-indigo-300"
+                >
+                  here
+                </a>{' '}
+                for details.
+              </p>
+            )}
+          </>
+        )}
+      </div>
+      {data.testCases && (
         <>
-          <pre className="font-mono text-red-300 leading-tight mt-1 text-sm">
-            {output}
-          </pre>
-          {equalUpToTrim && (
-            <p className="font-bold text-gray-200 mt-3">
-              Your output contains extra whitespace. This is an error; see{' '}
-              <a
-                href="https://usaco.guide/general/io?lang=cpp#usaco-note---extra-whitespace"
-                className="text-indigo-300"
-              >
-                here
-              </a>{' '}
-              for details.
-            </p>
-          )}
+          <div className="border-t -mx-4 border-gray-600 " />
+          <div className="mt-1 pt-3 -mx-1">
+            {data.testCases.map((tc: any) => (
+              <USACOTestCase data={tc} key={tc.trialNum} />
+            ))}
+          </div>
         </>
       )}
-      <div className="text-center">
-        {data.testCases &&
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          data.testCases.map((tc: any) => (
-            <USACOTestCase data={tc} key={tc.trialNum} />
-          ))}
-      </div>
     </div>
   );
 }
