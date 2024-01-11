@@ -47,19 +47,28 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
           </a>
         </Link>
         {props.fileMenu}
-        {/*         <button
-          type="button"
-          className="relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 hover:bg-gray-800 focus:bg-gray-800 focus:outline-none"
-          onClick={() => handleShare()}
-        >
-          <ShareIcon
-            className="-ml-1 mr-2 h-5 w-5 text-gray-400"
-            aria-hidden="true"
-          />
-          {showCopied ? 'URL Copied!' : 'Share'}
-        </button> */}
+        {
+          <button
+            type="button"
+            className="relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 hover:bg-gray-800 focus:bg-gray-800 focus:outline-none"
+            onClick={() => handleShare()}
+          >
+            <ShareIcon
+              className="-ml-1 mr-2 h-5 w-5 text-gray-400"
+              aria-hidden="true"
+            />
+            {showCopied ? 'URL Copied!' : 'Share'}
+          </button>
+        }
       </div>
       {props.runButton}
+      <div className="flex items-center divide-x divide-gray-700">
+        {props.showViewOnly && (
+          <span className="px-4 py-2 text-gray-400 text-sm font-medium">
+            View Only
+          </span>
+        )}
+      </div>
       <div className="flex-1" />
       {props.showSidebarButton && (
         <div>

@@ -281,9 +281,9 @@ function EditorPage() {
 }
 
 export default function FilePage() {
-  const queryId = useRouter().query.id;
+  const router = useRouter();
+  const queryId = router.query.id;
   const firebaseFileID = '-' + queryId;
-
   const { userData } = useNullableUserContext();
 
   const loadingUI = <MessagePage message="Loading..." showHomeButton={false} />;
