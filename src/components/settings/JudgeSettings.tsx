@@ -48,6 +48,7 @@ export default function JudgeSettings({
               onWorkspaceSettingsChange({
                 problem: {
                   id: hit.id,
+                  platform: 'USACO',
                   submittable: hit.submittable,
                   url: hit.url,
                   source: hit.source,
