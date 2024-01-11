@@ -29,16 +29,12 @@ if (getApps().length === 0) {
         clientEmail: process.env.NEW_FIREBASE_CLIENT_EMAIL,
       }),
       databaseURL:
-        'https://planets-prog-default-rtdb.europe-west1.firebasedatabase.app',
+        'https://algopro-app-default-rtdb.europe-west1.firebasedatabase.app',
     });
   } else {
     initializeApp({
-      projectId: 'planets-prog',
-      credential: cert(
-        'src/serviceAccountKey.json'
-      ),
-      databaseURL:
-        'https://planets-prog-default-rtdb.europe-west1.firebasedatabase.app',
+      projectId: 'algopro-app',
+      databaseURL: 'http://127.0.0.1:9000?ns=algopro-app-default-rtdb',
     });
   }
 }

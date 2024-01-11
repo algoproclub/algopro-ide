@@ -15,7 +15,7 @@ const firebaseConfig = {
   apiKey: 'AIzaSyDR-XvtT4_GYPAUslb-JTdueV68SfsERec',
   authDomain: 'planets-prog.firebaseapp.com',
   databaseURL:
-    'https://planets-prog-default-rtdb.europe-west1.firebasedatabase.app',
+    'https://algopro-app-default-rtdb.europe-west1.firebasedatabase.app',
   projectId: 'planets-prog',
   storageBucket: 'planets-prog.appspot.com',
   messagingSenderId: '858825023192',
@@ -28,7 +28,7 @@ if (!firebase.apps?.length) {
     firebase.initializeApp({
       ...firebaseConfig,
       authDomain: 'localhost:9099',
-      databaseURL: 'http://localhost:9000/?ns=planets-prog-default-rtdb',
+      databaseURL: 'http://localhost:9000/?ns=algopro-app-default-rtdb',
     });
     firebase.auth().useEmulator('http://localhost:9099');
     firebase.database().useEmulator('localhost', 9000);
