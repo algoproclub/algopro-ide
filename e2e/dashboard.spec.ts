@@ -20,6 +20,8 @@ test.describe('Dashboard Page', () => {
     await page.locator('text=Loading...').waitFor({ state: 'hidden' });
     await page.locator('text=Loading files...').waitFor({ state: 'hidden' });
 
+    await page.waitForTimeout(1000);
+
     expect(await page.$('text=Unnamed Workspace')).toBeTruthy();
     expect(await page.$('text="Me"')).toBeTruthy();
   });
@@ -57,6 +59,8 @@ test.describe('Dashboard Page', () => {
     await page.locator('text=Loading...').waitFor({ state: 'hidden' });
     await page2.locator('text=Loading files...').waitFor({ state: 'hidden' });
     await page.locator('text=Loading files...').waitFor({ state: 'hidden' });
+
+    await page.waitForTimeout(1000);
 
     expect(await page2.$('text="My Name"')).toBeTruthy();
     expect(await page.$('text="Me"')).toBeTruthy();
