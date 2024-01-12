@@ -22,7 +22,7 @@ const db = admin.database();
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
 
-const getResultsCSES = async (submissionID, sessionCookie) => {
+const getResultCSES = async (submissionID, sessionCookie) => {
   const getTestcaseTitle = tr => {
     const verdict = Array.from(tr.children)[1]?.textContent?.toLowerCase();
     if (verdict === 'wrong answer') {
@@ -136,7 +136,7 @@ const getResultsCSES = async (submissionID, sessionCookie) => {
   return data;
 };
 
-const getResultsAtCoder = async (problemID, submissionID, sessionCookie) => {
+const getResultAtCoder = async (problemID, submissionID, sessionCookie) => {
   const formatMemory = text => {
     const num = parseInt(text?.split(' ')[0]);
     if (!isNaN(num)) {
@@ -180,7 +180,6 @@ const getResultsAtCoder = async (problemID, submissionID, sessionCookie) => {
       }
       return message;
     }
-    console.log('STATUS', status, tbody.querySelector('td#judge-status'));
     return codeToVerdict.hasOwnProperty(status)
       ? codeToVerdict[status]
       : 'running';
@@ -264,7 +263,7 @@ const getResultsAtCoder = async (problemID, submissionID, sessionCookie) => {
   return data;
 };
 
-const getResultsCF = async (username, submissionID, resultJSON = undefined) => {
+const getResultCF = async (username, submissionID, resultJSON = undefined) => {
   const getStatusText = submission => {
     return submission['verdict'] === 'TESTING'
       ? 'status-working'
@@ -319,81 +318,102 @@ const getResultsCF = async (username, submissionID, resultJSON = undefined) => {
   };
 };
 
-const updateResults = async pending => {
-  const getMultipleResultsCF = async (username, idPairs) => {
-    const resp = await fetch(
-      `https://codeforces.com/api/user.status?handle=${username}`
-    );
-    const resultJSON = (await resp.json())['result'];
+const updateStatusData = (id, statusData) => {
+  const updates = {};
+  updates[`submissions/${id}/statusData`] = statusData;
+  if (statusData.statusCode === 0) {
+    updates[`submissions/pending/${id}`] = null;
+  }
+  db.ref().update(updates);
+};
 
-    idPairs.forEach(pair => {
-      getResultsCF(username, pair.submissionID, resultJSON).then(data =>
-        updateData(pair.fileID, data)
-      );
+const updateResult = async submissionData => {
+  if (submissionData.platformName === 'CSES') {
+    getResultCSES(
+      submissionData.submissionID,
+      submissionData.sessionCookie
+    ).then(data => {
+      updateStatusData(submissionData.fileID, data);
     });
-  };
-  const getSubmissionsWithUsername = async (ids, username) => {
-    const submissionIDs = [];
-    for (const id of ids) {
-      const currUsername = (
-        await db.ref(`files/${id}/platform/user`).get()
+  }
+  if (submissionData.platformName === 'AtCoder') {
+    getResultAtCoder(
+      submissionData.problemID,
+      submissionData.submissionID,
+      submissionData.sessionCookie
+    ).then(data => {
+      updateStatusData(submissionData.fileID, data);
+    });
+  }
+};
+
+const updateResultsCF = async submissionDataList => {
+  if (!submissionDataList || submissionDataList.length === 0) {
+    return;
+  }
+  const sorted = submissionDataList.sort(
+    (a, b) => a.creationTime - b.creationTime
+  );
+  const username = sorted[0].username;
+  const resp = await fetch(
+    `https://codeforces.com/api/user.status?handle=${username}`
+  );
+  const resultJSON = (await resp.json())['result'];
+
+  submissionDataList.forEach(submissionData => {
+    getResultCF(username, submissionData.submissionID, resultJSON).then(data =>
+      updateStatusData(submissionData.fileID, data)
+    );
+  });
+};
+
+const updateResults = async pending => {
+  const readSubmissionData = async pending => {
+    const submissionData = [];
+    for (let fileID of Object.keys(pending)) {
+      //TODO: read these in a single transaction
+      const creationTime = pending[fileID].creationTime;
+      const platform = (await db.ref(`files/${fileID}/platform`).get()).val();
+      const problemID = (
+        await db.ref(`files/${fileID}/problem/id`).get()
       ).val();
-      const currSubmissionID = (
-        await db.ref(`files/${id}/submission/id`).get()
+      const submissionID = (
+        await db.ref(`files/${fileID}/submission/id`).get()
       ).val();
-      if (currUsername === username) {
-        submissionIDs.push({
-          fileID: id,
-          submissionID: currSubmissionID,
-        });
-      }
+
+      submissionData.push({
+        fileID: fileID,
+        platformName: platform.name,
+        username: platform.user,
+        sessionCookie: sessionCookies[platform.name],
+        problemID: problemID,
+        submissionID: submissionID,
+        creationTime: creationTime,
+      });
     }
-    return submissionIDs;
-  };
-  const updateData = (id, data) => {
-    const updates = {};
-    updates[`submissions/${id}/statusData`] = data;
-    if (data.statusCode === 0) {
-      updates[`submissions/pending/${id}`] = null;
-    }
-    db.ref().update(updates);
+    return submissionData;
   };
   if (!pending) {
     return;
   }
-  const sorted = Object.fromEntries(
-    Object.entries(pending).sort(
-      ([, a], [, b]) => a.creationTime - b.creationTime
-    )
-  );
-  const ids = Object.keys(sorted);
-  if (ids.length === 0) {
-    return;
-  }
-  const id = ids[0];
-  const platform = (await db.ref(`files/${id}/platform`).get()).val();
-  const platformName = platform.name;
-  const username = platform.user;
-  const problemID = (await db.ref(`files/${id}/problem/id`).get()).val();
-  const submissionID = (await db.ref(`files/${id}/submission/id`).get()).val();
-  const sessionCookie = (
-    await db.ref(`accounts/${platformName}/sessionCookie`).get()
-  ).val();
+  const sessionCookies = (await db.ref('accounts').get()).val();
+  const pendingData = await readSubmissionData(pending);
+  const pendingByPlatform = pendingData.reduce((accumulator, person) => {
+    const platformName = person.platformName;
+    if (!accumulator[platformName]) {
+      accumulator[platformName] = [];
+    }
+    accumulator[platformName].push(person);
+    return accumulator;
+  }, {});
 
-  if (platformName === 'CF') {
-    const submissionIDs = await getSubmissionsWithUsername(ids, username);
-    await getMultipleResultsCF(username, submissionIDs);
-  }
-  if (platformName === 'CSES') {
-    getResultsCSES(submissionID, sessionCookie).then(data => {
-      updateData(id, data);
-    });
-  }
-  if (platformName === 'AtCoder') {
-    getResultsAtCoder(problemID, submissionID, sessionCookie).then(data => {
-      updateData(id, data);
-    });
-  }
+  pendingByPlatform['CSES']?.forEach(obj => {
+    updateResult(obj);
+  });
+  pendingByPlatform['AtCoder']?.forEach(obj => {
+    updateResult(obj);
+  });
+  updateResultsCF(pendingByPlatform['CF']);
 };
 
 exports.scheduledUpdate = pubsub
