@@ -204,7 +204,7 @@ const getResultsAtCoder = async (problemID, submissionID, sessionCookie) => {
     CE: 'compile error',
     AC: 'correct answer',
     WA: 'incorrect answer',
-    RTE: 'runtime error',
+    RE: 'runtime error',
     TLE: 'time limit exceeded',
     MLE: 'memory limit exceeded',
     OLE: 'output limit exceeded',
