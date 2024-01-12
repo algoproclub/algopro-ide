@@ -108,7 +108,7 @@ export default function USACOResults({
               {data.statusCode === -8 && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'gear' }}
-                  className="mr-2 w-4 h-4 text-gray-400 animate-spin-slow"
+                  className="mr-2 w-4 h-4 text-gray-300 animate-spin-slow"
                 />
               )}
               {data.statusCode === 0 &&

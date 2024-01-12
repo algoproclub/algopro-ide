@@ -201,6 +201,7 @@ const getResultsAtCoder = async (problemID, submissionID, sessionCookie) => {
   };
   const codeToVerdict = {
     WJ: 'running',
+    WR: 'running',
     CE: 'compile error',
     AC: 'correct answer',
     WA: 'incorrect answer',
