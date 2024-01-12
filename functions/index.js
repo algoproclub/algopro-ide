@@ -170,11 +170,20 @@ const getResultsAtCoder = async (problemID, submissionID, sessionCookie) => {
     }
   };
   const getMessage = tbody => {
+    const status = tbody
+      .querySelector('td#judge-status')
+      .textContent.split(' ')[0];
     if (getStatusCode(tbody) === -8) {
-      return 'running';
+      let message = 'running';
+      if (status.includes('/')) {
+        message += ' on test ' + status.split('/')[0];
+      }
+      return message;
     }
-    const status = tbody.querySelector('td#judge-status').textContent;
-    return status in codeToVerdict ? codeToVerdict[status] : 'running';
+    console.log('STATUS', status, tbody.querySelector('td#judge-status'));
+    return codeToVerdict.hasOwnProperty(status)
+      ? codeToVerdict[status]
+      : 'running';
   };
   const getStatusCode = tbody => {
     const status = tbody.querySelector('td#judge-status').textContent;
@@ -252,7 +261,6 @@ const getResultsAtCoder = async (problemID, submissionID, sessionCookie) => {
     });
   }
   data.testCases = testCases;
-  console.log(data);
   return data;
 };
 
@@ -318,7 +326,6 @@ const updateResults = async pending => {
     );
     const resultJSON = (await resp.json())['result'];
 
-    console.log(idPairs);
     idPairs.forEach(pair => {
       getResultsCF(username, pair.submissionID, resultJSON).then(data =>
         updateData(pair.fileID, data)
