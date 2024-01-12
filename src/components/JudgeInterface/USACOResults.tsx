@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
-const capitalize = (text: string): string => {
+const capitalize = (text: string): string | undefined => {
   if (text) {
     return text[0].toUpperCase() + text.substring(1);
   }
@@ -24,17 +24,17 @@ const USACOTestCase = ({ data }: { data: any }) => {
       className={`m-1 p-1 inline-block w-[4.5rem] bg-opacity-50 border ${containerClasses} relative rounded`}
       title={capitalize(data.title)}
     >
-      <div className={`font-semibold text-center ${textColor} p-1`}>
+      <div className={`font-semibold text-center ${textColor} pt-1`}>
         {data.symbol === '✓' && (
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'check' }}
-            className="w-5 h-5"
+            className="w-6 h-6"
           />
         )}
         {data.symbol === 'x' && (
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'xmark' }}
-            className="w-5 h-5"
+            className="w-6 h-6"
           />
         )}
       </div>

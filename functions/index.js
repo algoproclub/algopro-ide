@@ -120,6 +120,17 @@ const getResultsCSES = async (submissionID, sessionCookie) => {
         time: getTestcaseTime(tr) ?? null,
       });
     });
+    data.time = Math.max.apply(
+      null,
+      testCases.map(item => {
+        const num = parseInt(item.time.split(' ')[0]);
+        return isNaN(num) ? Infinity : num;
+      })
+    );
+    if (data.time === Infinity) {
+      data.time = '∞';
+    }
+    data.time += ' ms';
   }
   data.testCases = testCases;
   return data;
@@ -196,6 +207,8 @@ const getResultsAtCoder = async (problemID, submissionID, sessionCookie) => {
     RTE: 'runtime error',
     TLE: 'time limit exceeded',
     MLE: 'memory limit exceeded',
+    OLE: 'output limit exceeded',
+    IE: 'internal error',
   };
   const headers = {
     Cookie: sessionCookie,
@@ -272,7 +285,7 @@ const getResultsCF = async (username, submissionID, resultJSON = undefined) => {
         'idleness limit exceeded',
       ].includes(formatted)
     ) {
-      formatted += ` on test ${submission['passedTestCount']}`;
+      formatted += ` on test ${submission['passedTestCount'] + 1}`;
     }
     return formatted;
   };
@@ -376,9 +389,9 @@ const updateResults = async pending => {
 };
 
 exports.scheduledUpdate = pubsub
-  .schedule('every 3 seconds')
+  .schedule('every 2 seconds')
   .timeZone('UTC')
-  .onRun(context => {
+  .onRun(() => {
     return db.ref('submissions/pending').once('value', snapshot => {
       updateResults(snapshot.val());
     });
