@@ -140,7 +140,8 @@ export default function Workspace({
     };
     const platform = (document.getElementById('platform') as HTMLInputElement)
       .value;
-    const user = (document.getElementById('user') as HTMLInputElement).value;
+    const username = (document.getElementById('user') as HTMLInputElement)
+      .value;
     const problemID = (document.getElementById('problemID') as HTMLInputElement)
       .value;
     const submissionID = (
@@ -148,13 +149,14 @@ export default function Workspace({
     ).value;
 
     const fileUpdates: { [k: string]: any } = {};
-    fileUpdates[`files/${fileData.id}/problem`] = { id: problemID };
-    fileUpdates[`files/${fileData.id}/platform`] = {
-      user: user,
-      name: platform,
+    fileUpdates[`files/${fileData.id}/problem`] = {
+      id: problemID,
+      platform: platform,
     };
-    fileUpdates[`files/${fileData.id}/submission`] = { id: submissionID };
-
+    fileUpdates[`files/${fileData.id}/submission`] = {
+      id: submissionID,
+      username: username,
+    };
     db.ref()
       .update(fileUpdates)
       .then(() => {

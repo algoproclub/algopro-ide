@@ -330,7 +330,7 @@ const updateStatusData = (id, statusData) => {
 };
 
 const updateResult = async submissionData => {
-  if (submissionData.platformName === 'CSES') {
+  if (submissionData.platform === 'CSES') {
     getResultCSES(
       submissionData.submissionID,
       submissionData.sessionCookie
@@ -338,7 +338,7 @@ const updateResult = async submissionData => {
       updateStatusData(submissionData.fileID, data);
     });
   }
-  if (submissionData.platformName === 'AtCoder') {
+  if (submissionData.platform === 'AtCoder') {
     getResultAtCoder(
       submissionData.problemID,
       submissionData.submissionID,
@@ -375,19 +375,23 @@ const updateResults = async pending => {
     for (let fileID of Object.keys(pending)) {
       //TODO: read these in a single transaction
       const creationTime = pending[fileID].creationTime;
-      const platform = (await db.ref(`files/${fileID}/platform`).get()).val();
+      const platform = (
+        await db.ref(`files/${fileID}/problem/platform`).get()
+      ).val();
       const problemID = (
         await db.ref(`files/${fileID}/problem/id`).get()
       ).val();
-      const submissionID = (
-        await db.ref(`files/${fileID}/submission/id`).get()
+      const submission = (
+        await db.ref(`files/${fileID}/submission`).get()
       ).val();
+      const submissionID = submission.id;
+      const username = submission.username;
 
       submissionData.push({
         fileID: fileID,
-        platformName: platform.name,
-        username: platform.user,
-        sessionCookie: accountData[platform.name].sessionCookie,
+        platform: platform,
+        username: username,
+        sessionCookie: accountData[platform]?.sessionCookie,
         problemID: problemID,
         submissionID: submissionID,
         creationTime: creationTime,
@@ -401,11 +405,11 @@ const updateResults = async pending => {
   const accountData = (await db.ref('accounts').get()).val();
   const pendingData = await readSubmissionData(pending);
   const pendingByPlatform = pendingData.reduce((accumulator, person) => {
-    const platformName = person.platformName;
-    if (!accumulator[platformName]) {
-      accumulator[platformName] = [];
+    const platform = person.platform;
+    if (!accumulator[platform]) {
+      accumulator[platform] = [];
     }
-    accumulator[platformName].push(person);
+    accumulator[platform].push(person);
     return accumulator;
   }, {});
 
