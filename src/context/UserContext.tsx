@@ -38,12 +38,20 @@ export type UserContextType = {
   updateUsername: (username: string) => Promise<any>;
 };
 
+export type UsernameData = {
+  CF?: string;
+  CSES?: string;
+  AtCoder?: string;
+};
+
 export type UserData = {
   editorMode: 'Normal' | 'Vim';
   tabSize: number;
   lightMode: boolean;
   defaultPermission: 'READ_WRITE' | 'READ' | 'PRIVATE';
   defaultLanguage: Language;
+  manualSubmission: false;
+  usernames: UsernameData;
 };
 
 export const defaultUserSettings: UserData = {
@@ -52,6 +60,8 @@ export const defaultUserSettings: UserData = {
   lightMode: false,
   defaultPermission: 'READ_WRITE', // change in dashboard
   defaultLanguage: 'cpp', // last viewed file
+  manualSubmission: false,
+  usernames: {},
 };
 
 export type EditorMode = 'Normal' | 'Vim';
@@ -64,6 +74,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     null
   );
   const [_, triggerRerender] = useState<number>(0);
+
+  useEffect(() => {
+    console.log(userData);
+  }, [userData]);
 
   useEffect(() => {
     const unsubscribe = firebase.auth().onAuthStateChanged(user => {
@@ -99,6 +113,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         lightMode: data.lightMode ?? false,
         defaultPermission: data.defaultPermission ?? 'READ_WRITE',
         defaultLanguage: data.defaultLanguage ?? 'cpp',
+        manualSubmission: data.manualSubmission ?? false,
+        usernames: data.usernames ?? {},
       });
     };
     firebase

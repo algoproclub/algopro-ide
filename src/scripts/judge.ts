@@ -1,10 +1,40 @@
 // Source: https://javascript.info/regexp-groups
+
+import firebase from 'firebase/app';
+
+const db = firebase.database();
 export const extractJavaFilename = (code: string): string => {
   const matches = Array.from(code.matchAll(/public +class +(\w+)/g));
   if (matches.length > 0) {
     return matches[0][1] + '.java';
   }
   return 'Main.java'; // fallback, something went wrong
+};
+
+export const startUpdatingResults = async (
+  fileID: string,
+  submissionID: string,
+  username?: string
+) => {
+  const defaultStatusData = {
+    statusCode: -8,
+    statusText: 'status-working',
+    message: 'starting',
+  };
+  await db.ref(`files/${fileID}/submission`).update({
+    id: submissionID,
+    username: username ?? null,
+  });
+  await db.ref('submissions').update({
+    [fileID]: {
+      statusData: defaultStatusData,
+    },
+  });
+  await db.ref('submissions/pending').update({
+    [fileID]: {
+      creationTime: Date.now(),
+    },
+  });
 };
 
 export const submitToJudge = (

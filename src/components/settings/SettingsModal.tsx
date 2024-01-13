@@ -76,9 +76,11 @@ export const SettingsModal = ({
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
   const [tabSize, setTabSize] = useState<number>(-1);
   const [lightMode, setLightMode] = useState<boolean>(false);
+  const [manualSubmission, setManualSubmission] = useState<boolean>(false);
+  const [cfUsername, setCfUsername] = useState<string>('');
   const dirtyRef = useRef<boolean>(false);
 
-  const [tab, setTab] = useState<typeof tabs[number]['id']>('workspace');
+  const [tab, setTab] = useState<(typeof tabs)[number]['id']>('workspace');
 
   const [judgeResults, setJudgeResults] = useJudgeResults();
 
@@ -86,9 +88,11 @@ export const SettingsModal = ({
     if (isOpen) {
       setFileSettings(realFileSettings);
       setName(firebaseUser.displayName ?? ''); // todo this shouldn't really be an empty string ever?
+      setCfUsername(userData.usernames.CF ?? '');
       setEditorMode(userData.editorMode);
       setTabSize(userData.tabSize);
       setLightMode(userData.lightMode);
+      setManualSubmission(userData.manualSubmission);
       dirtyRef.current = false;
       setTab('workspace');
     }
@@ -162,10 +166,15 @@ export const SettingsModal = ({
     updateRealFileData({
       settings: { ...realFileSettings, ...settingsToSet },
     });
-    firebase
+    // TODO: update these in a single transaction
+    await firebase
       .database()
       .ref(`users/${firebaseUser.uid}/data`)
-      .update({ editorMode, tabSize, lightMode });
+      .update({ editorMode, tabSize, lightMode, manualSubmission });
+    await firebase
+      .database()
+      .ref(`users/${firebaseUser.uid}/data/usernames`)
+      .update({ CF: cfUsername });
     if (name !== firebaseUser.displayName) {
       updateUsername(name);
     }
@@ -255,6 +264,11 @@ export const SettingsModal = ({
                       setName(name);
                       dirtyRef.current = true;
                     }}
+                    cfUsername={cfUsername || ''}
+                    onCfUsernameChange={cfHandle => {
+                      setCfUsername(cfHandle);
+                      dirtyRef.current = true;
+                    }}
                     editorMode={editorMode}
                     onEditorModeChange={mode => {
                       setEditorMode(mode);
@@ -270,6 +284,11 @@ export const SettingsModal = ({
                       setLightMode(lightMode);
                       dirtyRef.current = true;
                     }}
+                    manualSubmission={manualSubmission}
+                    onManualSubmissionChange={manualSubmission => {
+                      setManualSubmission(manualSubmission);
+                      dirtyRef.current = true;
+                    }}
                   />
                 )}
                 {tab === 'workspace' && (
@@ -282,12 +301,13 @@ export const SettingsModal = ({
                 {
                   // @ts-ignore
                   tab === 'judge' && (
-                  <JudgeSettings
-                    workspaceSettings={fileSettings}
-                    onWorkspaceSettingsChange={onChange}
-                    userPermission={userPermission || 'READ'}
-                  />
-                )}
+                    <JudgeSettings
+                      workspaceSettings={fileSettings}
+                      onWorkspaceSettingsChange={onChange}
+                      userPermission={userPermission || 'READ'}
+                    />
+                  )
+                }
 
                 <div className="flex items-center space-x-4">
                   <button
@@ -307,18 +327,19 @@ export const SettingsModal = ({
                   {
                     // @ts-ignore
                     tab === 'judge' && (
-                    <button
-                      type="button"
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                      onClick={() => {
-                        onChange({
-                          problem: null,
-                        });
-                      }}
-                    >
-                      Clear
-                    </button>
-                  )}
+                      <button
+                        type="button"
+                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        onClick={() => {
+                          onChange({
+                            problem: null,
+                          });
+                        }}
+                      >
+                        Clear
+                      </button>
+                    )
+                  }
                 </div>
 
                 {tab === 'user' && (

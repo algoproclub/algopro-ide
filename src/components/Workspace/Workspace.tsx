@@ -2,7 +2,7 @@ import { EllipsisHorizontalIcon } from '@heroicons/react/20/solid';
 import classNames from 'classnames';
 import { useAtomValue, useUpdateAtom } from 'jotai/utils';
 import { useAtom } from 'jotai';
-import React, { useEffect, useState } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 /// <reference path="./types/react-split-grid.d.ts" />
 import Split from 'react-split-grid';
 import {
@@ -35,6 +35,8 @@ import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
 import firebase from 'firebase/app';
+import { Dialog, Transition } from '@headlessui/react';
+import LoadResultsModal from '../JudgeInterface/LoadResultsModal';
 
 export type ProblemData = {
   id: string;
@@ -93,7 +95,13 @@ export default function Workspace({
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
   const [judgeResults, setJudgeResults] = useJudgeResults();
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const db = firebase.database();
+
+  const displayStatusData = (snapshot: firebase.database.DataSnapshot) => {
+    const data = snapshot.val();
+    setStatusData(data);
+  };
 
   useEffect(() => {
     function handleResize() {
@@ -122,74 +130,89 @@ export default function Workspace({
   }, [fileData.settings.problem?.id]);
 
   useEffect(() => {
-    const id = fileData.id;
-    db.ref(`submissions/${id}/statusData`).on('value', snapshot => {
-      const data = snapshot.val();
-      setStatusData(data);
-    });
+    db.ref(`submissions/${fileData.id}/statusData`).on(
+      'value',
+      displayStatusData
+    );
+    return () => {
+      db.ref(`submissions/${fileData.id}/statusData`).off(
+        'value',
+        displayStatusData
+      );
+    };
   }, []);
 
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
   const { lightMode } = useUserContext().userData;
 
-  const updateSubmissionData = () => {
-    const defaultStatusData = {
-      statusCode: -8,
-      statusText: 'status-working',
-      message: 'starting',
-    };
+  const updateProblemData = () => {
     const platform = (document.getElementById('platform') as HTMLInputElement)
-      .value;
-    const username = (document.getElementById('user') as HTMLInputElement)
       .value;
     const problemID = (document.getElementById('problemID') as HTMLInputElement)
       .value;
-    const submissionID = (
-      document.getElementById('submissionID') as HTMLInputElement
-    ).value;
 
-    const fileUpdates: { [k: string]: any } = {};
-    fileUpdates[`files/${fileData.id}/problem`] = {
+    const submitButton = document.getElementById(
+      'submit-button'
+    ) as HTMLInputElement;
+    submitButton.disabled = false;
+    submitButton.classList.add('bg-indigo-500');
+    submitButton.classList.remove('bg-indigo-400');
+
+    db.ref(`files/${fileData.id}/problem`).update({
       id: problemID,
       platform: platform,
+    });
+  };
+
+  const submitSolution = () => {
+    const getSubmitLink = async () => {
+      const platform = fileData.problem.platform;
+      const problemID = fileData.problem.id;
+
+      let submitLink = '';
+      if (platform === 'CF') {
+        submitLink = `https://codeforces.com/problemset/problem/${
+          problemID.split('_')[0]
+        }/${problemID.split('_')[1]}`;
+      }
+      if (platform === 'AtCoder') {
+        submitLink = `https://atcoder.jp/contests/${
+          problemID.split('_')[0]
+        }/tasks/${problemID}`;
+      }
+      if (platform === 'CSES') {
+        submitLink = `https://cses.fi/problemset/submit/${problemID}/`;
+      }
+      return submitLink;
     };
-    fileUpdates[`files/${fileData.id}/submission`] = {
-      id: submissionID,
-      username: username,
-    };
-    db.ref()
-      .update(fileUpdates)
-      .then(() => {
-        db.ref('submissions')
-          .update({
-            [fileData.id]: {
-              statusData: defaultStatusData,
-            },
-          })
-          .then(() => {
-            db.ref('submissions/pending').update({
-              [fileData.id]: {
-                creationTime: Date.now(),
-              },
-            });
-          });
-      });
+    getSubmitLink().then(link => {
+      window.open(link, '_blank');
+    });
+    setIsOpen(true);
   };
 
   return (
     <>
+      <LoadResultsModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
       {/*for testing purposes*/}
       <div className="flex flex-col items-center mb-4 space-y-2">
         <input id="platform" type="text" placeholder="platform" />
-        <input id="user" type="text" placeholder="user" />
         <input id="problemID" type="text" placeholder="problem ID" />
-        <input id="submissionID" type="text" placeholder="submission ID" />
-        <button
-          className="text-white bg-indigo-500 px-4 py-2 rounded"
-          onClick={updateSubmissionData}
-        >
-          update
-        </button>
+        <div className="flex space-x-2">
+          <button
+            className="text-white bg-indigo-500 px-4 py-2 rounded"
+            onClick={updateProblemData}
+          >
+            update
+          </button>
+          <button
+            id="submit-button"
+            className="text-white bg-indigo-400 px-4 py-2 rounded"
+            onClick={submitSolution}
+          >
+            submit
+          </button>
+        </div>
       </div>
       <Split
         onDragEnd={() => layoutEditors()}

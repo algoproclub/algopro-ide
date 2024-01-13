@@ -37,6 +37,10 @@ export type FileData = {
       permission: 'OWNER' | 'READ' | 'READ_WRITE' | 'PRIVATE' | null;
     };
   };
+  problem: {
+    id: string;
+    platform: 'CF' | 'AtCoder' | 'CSES';
+  };
   settings: FileSettings;
   isCodeRunning: boolean;
   state: {

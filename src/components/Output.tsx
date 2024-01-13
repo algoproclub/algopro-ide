@@ -80,9 +80,9 @@ export const Output = ({
         }}
       />
       <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden tw-forms-disable tw-forms-disable-all-descendants">
-        {option === 'results' && statusData != null ? (
+        {option === 'results' ? (
           <div className="px-4 h-full overflow-y-auto">
-            <USACOResults data={statusData} />
+            {statusData && <USACOResults data={statusData} />}
           </div>
         ) : (
           <CodeEditor
