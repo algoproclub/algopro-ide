@@ -99,9 +99,11 @@ const getResultCSES = async (submissionID, sessionCookie) => {
     `https://cses.fi/problemset/result/${submissionID}/`,
     { headers: headers }
   );
-  const root = new JSDOM(await resp.text()).window.document;
+  const text = await resp.text();
+  const root = new JSDOM(text).window.document;
 
   const summaryTbody = root.querySelector('table.summary-table > tbody');
+  console.log(sessionCookie, 'BEGIN', text, 'END');
   const data = {
     statusText: getStatusText(summaryTbody) ?? null,
     statusCode: getStatusCode(summaryTbody) ?? null,
@@ -385,7 +387,7 @@ const updateResults = async pending => {
         fileID: fileID,
         platformName: platform.name,
         username: platform.user,
-        sessionCookie: sessionCookies[platform.name],
+        sessionCookie: accountData[platform.name].sessionCookie,
         problemID: problemID,
         submissionID: submissionID,
         creationTime: creationTime,
@@ -396,7 +398,7 @@ const updateResults = async pending => {
   if (!pending) {
     return;
   }
-  const sessionCookies = (await db.ref('accounts').get()).val();
+  const accountData = (await db.ref('accounts').get()).val();
   const pendingData = await readSubmissionData(pending);
   const pendingByPlatform = pendingData.reduce((accumulator, person) => {
     const platformName = person.platformName;
