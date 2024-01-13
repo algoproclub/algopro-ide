@@ -275,9 +275,6 @@ const getResultCF = async (username, submissionID, resultJSON = undefined) => {
     return submission['verdict'] === 'TESTING' ? -8 : 0;
   };
   const getMessage = submission => {
-    if (['TESTING'].includes(submission['verdict'])) {
-      return submission['verdict'];
-    }
     let formatted = submission['verdict'].replaceAll('_', ' ').toLowerCase();
     if (formatted === 'testing') {
       return 'running';
