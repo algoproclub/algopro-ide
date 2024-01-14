@@ -1,4 +1,10 @@
-import firebase from 'firebase/app';
+import {
+  ref,
+  getDatabase,
+  remove,
+  set,
+  serverTimestamp,
+} from 'firebase/database';
 import { useEffect, useMemo } from 'react';
 import { useEditorContext } from '../context/EditorContext';
 import { useUserContext } from '../context/UserContext';
@@ -36,20 +42,18 @@ export default function useUpdateUserDashboard() {
     // Shouldn't happen, but just in case...
     if (!fileData.id) throw new Error('fileData.id was null');
 
-    const fileRef = firebase
-      .database()
-      .ref('users')
-      .child(userData.id)
-      .child('files')
-      .child(fileData.id);
+    const fileRef = ref(
+      getDatabase(),
+      `users/${userData.id}/files/${fileData.id}`
+    );
 
     if (permission === 'PRIVATE') {
       // remove from dashboard recently accessed files
-      fileRef.remove();
+      remove(fileRef);
     } else {
-      fileRef.set({
+      set(fileRef, {
         title: settings.workspaceName || '',
-        lastAccessTime: firebase.database.ServerValue.TIMESTAMP,
+        lastAccessTime: serverTimestamp(),
         creationTime: settings.creationTime ?? null,
         lastPermission: permission,
         lastDefaultPermission: settings.defaultPermission,

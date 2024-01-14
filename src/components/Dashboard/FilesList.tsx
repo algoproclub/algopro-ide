@@ -2,9 +2,13 @@ import React from 'react';
 import Link from 'next/link';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-dayjs.extend(relativeTime);
 
-import firebase from 'firebase/app';
+dayjs.extend(relativeTime);
+import { permissionLabels } from '../UserList/UserListItem';
+import { useAtomValue } from 'jotai/utils';
+import invariant from 'tiny-invariant';
+import { useUserContext } from '../../context/UserContext';
+import { update, ref, getDatabase } from 'firebase/database';
 
 export type File = {
   id: string;
@@ -26,11 +30,6 @@ export interface FilesListProps {
   files: File[];
   showPerms: boolean;
 }
-
-import { permissionLabels } from '../UserList/UserListItem';
-import { useAtomValue } from 'jotai/utils';
-import invariant from 'tiny-invariant';
-import { useUserContext } from '../../context/UserContext';
 
 export const sharingPermissionLabels: Record<string, string> = {
   READ_WRITE: 'Public Read & Write',
@@ -59,13 +58,9 @@ export default function FilesList(props: FilesListProps): JSX.Element {
   };
 
   const handleToggleHideFile = (file: File) => {
-    const ref = firebase
-      .database()
-      .ref('users')
-      .child(firebaseUser.uid)
-      .child('files')
-      .child(file.id);
-    ref.update({ hidden: !file.hidden });
+    update(ref(getDatabase(), `users/${firebaseUser.uid}/files/${file.id}`), {
+      hidden: !file.hidden,
+    });
   };
 
   return (
