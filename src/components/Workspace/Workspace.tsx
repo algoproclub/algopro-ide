@@ -101,7 +101,7 @@ export default function Workspace({
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const db = firebase.database();
 
-  const displayStatusData = (snapshot: firebase.database.DataSnapshot) => {
+  const updateStatusData = (snapshot: firebase.database.DataSnapshot) => {
     const data = snapshot.val();
     setStatusData(data);
   };
@@ -134,12 +134,12 @@ export default function Workspace({
   useEffect(() => {
     db.ref(`submissions/${fileData.id}/statusData`).on(
       'value',
-      displayStatusData
+      updateStatusData
     );
     return () => {
       db.ref(`submissions/${fileData.id}/statusData`).off(
         'value',
-        displayStatusData
+        updateStatusData
       );
     };
   }, []);
