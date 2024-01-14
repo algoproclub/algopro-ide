@@ -8,7 +8,7 @@ import { usePopper } from 'react-popper';
 import { useUserContext } from '../../context/UserContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useEditorContext } from '../../context/EditorContext';
-import firebase from 'firebase/app';
+import { remove, ref, getDatabase, update } from 'firebase/database';
 
 export const permissionLabels: Record<string, string> = {
   OWNER: 'Owner',
@@ -39,22 +39,13 @@ export const UserListItem = ({ user }: { user: User }): JSX.Element | null => {
     permission: PermissionUpdate
   ): void => {
     if (permission === 'DEFAULT') {
-      firebase
-        .database()
-        .ref(`files/${fileData.id}`)
-        .child('users')
-        .child(user.id)
-        .child('permission')
-        .remove();
+      remove(
+        ref(getDatabase(), `files/${fileData.id}/users/${user.id}/permission`)
+      );
     } else {
-      firebase
-        .database()
-        .ref(`files/${fileData.id}`)
-        .child('users')
-        .child(user.id)
-        .update({
-          permission,
-        });
+      update(ref(getDatabase(), `files/${fileData.id}/users/${user.id}`), {
+        permission,
+      });
     }
   };
 

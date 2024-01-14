@@ -1,5 +1,13 @@
 import { atom } from 'jotai';
-import firebase from 'firebase/app';
+import {
+  GoogleAuthProvider,
+  getAuth,
+  signInWithPopup,
+  linkWithPopup,
+  updateProfile,
+  signInWithCredential,
+  signOut,
+} from 'firebase/auth';
 import { ConnectionContextType } from '../context/ConnectionContext';
 import { SHOULD_USE_FIREBASE_EMULATOR } from '../dev_constants';
 
@@ -19,8 +27,9 @@ export const confirmOverrideDataCallbackAtom = atom<
 export const signInWithGoogleAtom = atom(
   null,
   (get, set, connectionContext: ConnectionContextType) => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    const prevUser = firebase.auth().currentUser;
+    const auth = getAuth();
+    const provider = new GoogleAuthProvider();
+    const prevUser = auth.currentUser;
 
     // Remove user from user list before signing in
     const prevConnectionRefs = connectionContext.getConnectionRefs();
@@ -36,20 +45,17 @@ export const signInWithGoogleAtom = atom(
       // as the value of the atom
       set(
         confirmOverrideDataCallbackAtom,
-        () => () => firebase.auth().signInWithPopup(provider)
+        () => () => signInWithPopup(auth, provider)
       );
     } else if (!prevUser) {
-      firebase.auth().signInWithPopup(provider);
+      signInWithPopup(auth, provider);
     } else {
-      prevUser
-        ?.linkWithPopup(provider)
+      linkWithPopup(prevUser, provider)
         .then(result => {
           // linked successfully
           const newName = result.user?.providerData[0]?.displayName;
-          if (newName)
-            firebase
-              .auth()
-              .currentUser!.updateProfile({ displayName: newName });
+          if (newName && auth.currentUser)
+            updateProfile(auth.currentUser, { displayName: newName });
         })
         .catch(error => {
           if (error.code === 'auth/credential-already-in-use') {
@@ -59,7 +65,7 @@ export const signInWithGoogleAtom = atom(
             // as the value of the atom
             set(
               confirmOverrideDataCallbackAtom,
-              () => () => firebase.auth().signInWithCredential(error.credential)
+              () => () => signInWithCredential(auth, error.credential)
             );
           } else {
             alert('Error signing in: ' + error);
@@ -76,6 +82,6 @@ export const signOutAtom = atom(
   null,
   (_, set, connectionContext: ConnectionContextType) => {
     connectionContext.clearConnectionRefs();
-    firebase.auth().signOut();
+    signOut(getAuth());
   }
 );

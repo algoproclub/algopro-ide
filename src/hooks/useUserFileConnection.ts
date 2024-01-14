@@ -1,4 +1,4 @@
-import firebase from 'firebase/app';
+import { update, ref, getDatabase, push } from 'firebase/database';
 import { useAtomValue } from 'jotai/utils';
 import { useEffect } from 'react';
 import { useConnectionContext } from '../context/ConnectionContext';
@@ -18,20 +18,19 @@ export default function useUserFileConnection() {
   const { fileData } = useEditorContext();
 
   useEffect(() => {
-    firebase
-      .database()
-      .ref(`files/${fileData.id}/users/${userData.id}`)
-      .update({
-        name: firebaseUser.displayName,
-        color: colorFromUserId(userData.id),
-      });
+    update(ref(getDatabase(), `files/${fileData.id}/users/${userData.id}`), {
+      name: firebaseUser.displayName,
+      color: colorFromUserId(userData.id),
+    });
 
-    const ref = firebase
-      .database()
-      .ref(`files/${fileData.id}/users/${userData.id}/connections`)
-      .push();
-    connectionContext.addConnectionRef(ref);
-    return () => connectionContext.removeConnectionRef(ref);
+    const connectionsRef = push(
+      ref(
+        getDatabase(),
+        `files/${fileData.id}/users/${userData.id}/connections`
+      )
+    );
+    connectionContext.addConnectionRef(connectionsRef);
+    return () => connectionContext.removeConnectionRef(connectionsRef);
   }, [fileData.id, firebaseUser.displayName]);
 
   // const classroomConnectionsRef = useMemo(

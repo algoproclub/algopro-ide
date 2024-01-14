@@ -1,5 +1,12 @@
-import firebase from 'firebase/app';
-import React, {
+import {
+  DataSnapshot,
+  getDatabase,
+  off,
+  onValue,
+  ref,
+  update,
+} from 'firebase/database';
+import {
   createContext,
   MutableRefObject,
   useCallback,
@@ -117,7 +124,7 @@ export function EditorProvider({
   useEffect(() => {
     setLoading(true);
 
-    const handleDataChange = (snap: firebase.database.DataSnapshot) => {
+    const handleDataChange = (snap: DataSnapshot) => {
       setLoading(false);
       setFileData(
         snap.exists()
@@ -129,24 +136,15 @@ export function EditorProvider({
       );
     };
 
-    firebase
-      .database()
-      .ref('files/' + fileId)
-      .on('value', handleDataChange);
+    const fileRef = ref(getDatabase(), 'files/' + fileId);
+    onValue(fileRef, handleDataChange);
 
-    return () =>
-      firebase
-        .database()
-        .ref('files/' + fileId)
-        .off('value', handleDataChange);
+    return () => off(fileRef, 'value', handleDataChange);
   }, [fileId]);
 
   const updateFileData = useCallback(
     (firebaseUpdateData: Object) => {
-      return firebase
-        .database()
-        .ref('files/' + fileId)
-        .update(firebaseUpdateData);
+      return update(ref(getDatabase(), 'files/' + fileId), firebaseUpdateData);
     },
     [fileId]
   );

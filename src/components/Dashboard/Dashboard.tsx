@@ -1,7 +1,16 @@
 import { useUpdateAtom } from 'jotai/utils';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
-import firebase from 'firebase/app';
+import {
+  getDatabase,
+  ref,
+  orderByChild,
+  query,
+  onValue,
+  set,
+  child,
+  off,
+} from 'firebase/database';
 import {
   signInWithGoogleAtom,
   signOutAtom,
@@ -75,28 +84,25 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!firebaseUser) return;
-
-    const ref = firebase
-      .database()
-      .ref('users')
-      .child(firebaseUser.uid)
-      .child('files');
-    const unsubscribe = ref.orderByChild('lastAccessTime').on('value', snap => {
+    const db = getDatabase();
+    const dbRef = ref(db, `users/${firebaseUser.uid}/files`);
+    const fileQuery = query(dbRef, orderByChild('lastAccessTime'));
+    const unsubscribe = onValue(fileQuery, snap => {
       if (!snap.exists) {
         setFiles([]);
       } else {
         const files: File[] = [];
-        snap.forEach(child => {
-          const data = child.val();
-          const key = child.key;
-          firebase
-            .database()
-            .ref('files/' + key)
-            .on('value', snapp => {
-              if (snapp.exists()) {
-                ref.child(key + '/language').set(snapp.val().settings.language);
-              }
-            });
+        snap.forEach(file => {
+          const data = file.val();
+          const key = file.key;
+          onValue(ref(db, 'files/' + key), snapp => {
+            if (snapp.exists()) {
+              set(
+                child(dbRef, key + '/language'),
+                snapp.val().settings.language
+              );
+            }
+          });
 
           if (!showHidden && data.hidden) return;
           if (key?.startsWith('-') && isFirebaseId(key.substring(1))) {
@@ -121,7 +127,7 @@ export default function Dashboard() {
         // setOwnedFiles(yourOwnedFiles);
       }
     });
-    return () => ref.off('value', unsubscribe);
+    return () => off(fileQuery, 'value', unsubscribe);
   }, [firebaseUser, showHidden]);
 
   return (

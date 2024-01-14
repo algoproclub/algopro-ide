@@ -5,8 +5,19 @@ import {
   useEffect,
   useState,
 } from 'react';
-import type firebaseType from 'firebase';
-import firebase from 'firebase/app';
+import {
+  User,
+  onAuthStateChanged,
+  getAuth,
+  updateProfile,
+} from 'firebase/auth';
+import {
+  getDatabase,
+  ref,
+  DataSnapshot,
+  onValue,
+  off,
+} from 'firebase/database';
 import { signInAnonymously } from '../scripts/firebaseUtils';
 import animals from '../scripts/animals';
 
@@ -27,7 +38,7 @@ export const LANGUAGES: { label: string; value: Language }[] = [
 ];
 
 export type UserContextType = {
-  firebaseUser: firebaseType.User | null;
+  firebaseUser: User | null;
   userData: (UserData & { id: string }) | null;
   /**
    * Updates firebaseUser.displayName. Normally doing this doesn't trigger rerender
@@ -59,14 +70,14 @@ export type EditorMode = 'Normal' | 'Vim';
 const UserContext = createContext<UserContextType | null>(null);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<firebaseType.User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<(UserData & { id: string }) | null>(
     null
   );
   const [_, triggerRerender] = useState<number>(0);
 
   useEffect(() => {
-    const unsubscribe = firebase.auth().onAuthStateChanged(user => {
+    const unsubscribe = onAuthStateChanged(getAuth(), user => {
       if (!user) {
         setUserData(null);
         signInAnonymously();
@@ -75,7 +86,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         if (!displayName) {
           displayName =
             'Anonymous ' + animals[Math.floor(animals.length * Math.random())];
-          user.updateProfile({ displayName }).then(() => setUser(user));
+          updateProfile(user, { displayName }).then(() => setUser(user));
         } else {
           setUser(user);
         }
@@ -90,7 +101,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user) return;
 
-    const handleSnapshot = (snap: firebaseType.database.DataSnapshot) => {
+    const handleSnapshot = (snap: DataSnapshot) => {
       const data = snap.val() ?? {};
       setUserData({
         id: user.uid,
@@ -101,21 +112,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         defaultLanguage: data.defaultLanguage ?? 'cpp',
       });
     };
-    firebase
-      .database()
-      .ref(`users/${user.uid}/data`)
-      .on('value', handleSnapshot);
+    onValue(ref(getDatabase(), `users/${user.uid}/data`), handleSnapshot);
     return () =>
-      firebase
-        .database()
-        .ref(`users/${user.uid}/data`)
-        .off('value', handleSnapshot);
+      off(
+        ref(getDatabase(), `users/${user.uid}/data`),
+        'value',
+        handleSnapshot
+      );
   }, [user]);
 
   const updateUsername = useCallback(
     (newName: string) => {
       if (!user) throw new Error('Tried to update username but user is null');
-      return user.updateProfile({ displayName: newName }).then(() => {
+      return updateProfile(user, { displayName: newName }).then(() => {
         // we need to trigger a rerender because firebase user never changes
         // but some parts of the app needs to rerender when firebaseUser.displayName changes
         triggerRerender(Date.now());
