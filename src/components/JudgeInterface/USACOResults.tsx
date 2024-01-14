@@ -8,6 +8,12 @@ const capitalize = (text: string): string | undefined => {
     return text[0].toUpperCase() + text.substring(1);
   }
 };
+
+const errorMessage = {
+  '-1': 'incorrect input',
+  '-2': 'unknown error',
+};
+
 const USACOTestCase = ({ data }: { data: any }) => {
   const containerClasses =
     data?.title?.toLowerCase() === 'correct answer'
@@ -64,7 +70,7 @@ export default function USACOResults({
   if (!data) return null;
   let equalUpToTrim = false;
   let output = data.output;
-  if (data.message.includes('Incorrect') && output) {
+  if (data.message?.includes('Incorrect') && output) {
     const lines = output.split('\n');
     const indices = [],
       answers = [];
@@ -98,35 +104,39 @@ export default function USACOResults({
       <div className="pb-3">
         <p className="font-bold text-gray-200 border-gray-700">
           <span className="space-x-2">
-            <span
-              className={`${
-                data.message.toLowerCase() === 'correct answer'
-                  ? 'text-green-500'
-                  : 'text-red-500'
-              }`}
-            >
-              {data.statusCode === -8 && (
+            {data.statusCode === -8 && (
+              <FontAwesomeIcon
+                icon={{ prefix: 'fas', iconName: 'gear' }}
+                className="mr-2 w-4 h-4 text-gray-300 animate-spin-slow"
+              />
+            )}
+            {data.statusCode > -8 && data.statusCode < 0 && (
+              <FontAwesomeIcon
+                icon={{ prefix: 'fas', iconName: 'exclamation-triangle' }}
+                className="mr-2 text-yellow-500 w-4 h-4"
+              />
+            )}
+            {data.statusCode === 0 &&
+              data.message?.toLowerCase() === 'correct answer' && (
                 <FontAwesomeIcon
-                  icon={{ prefix: 'fas', iconName: 'gear' }}
-                  className="mr-2 w-4 h-4 text-gray-300 animate-spin-slow"
+                  icon={{ prefix: 'fas', iconName: 'check' }}
+                  className="mr-2 text-green-500 w-4 h-4"
                 />
               )}
-              {data.statusCode === 0 &&
-                data.message.toLowerCase() === 'correct answer' && (
-                  <FontAwesomeIcon
-                    icon={{ prefix: 'fas', iconName: 'check' }}
-                    className="mr-2 w-4 h-4"
-                  />
-                )}
-              {data.statusCode === 0 &&
-                data.message.toLowerCase() !== 'correct answer' && (
-                  <FontAwesomeIcon
-                    icon={{ prefix: 'fas', iconName: 'xmark' }}
-                    className="mr-2 w-4 h-4"
-                  />
-                )}
-            </span>
-            {capitalize(data.message)}
+            {data.statusCode === 0 &&
+              data.message?.toLowerCase() !== 'correct answer' && (
+                <FontAwesomeIcon
+                  icon={{ prefix: 'fas', iconName: 'xmark' }}
+                  className="mr-2 w-4 h-4 text-red-500"
+                />
+              )}
+            {capitalize(
+              data.statusCode > -8 && data.statusCode < 0
+                ? `The fetching was unsuccessful: ${
+                    errorMessage[data.statusCode]
+                  }`
+                : data.message
+            )}
             {data.statusCode === -8 && '...'}
           </span>
           {(data.time || data.memory) && <span> (</span>}
