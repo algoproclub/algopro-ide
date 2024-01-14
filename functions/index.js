@@ -14,6 +14,8 @@ const { pubsub } = require('firebase-functions');
 const jsdom = require('jsdom');
 const { JSDOM } = jsdom;
 
+class IncorrectDataError extends Error {}
+
 admin.initializeApp({
   databaseURL: 'http://localhost:9000/?ns=algopro-app-default-rtdb',
 });
@@ -22,7 +24,8 @@ const db = admin.database();
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
 
-const getResultCSES = async (submissionID, sessionCookie) => {
+const getResultCSES = async submissionData => {
+  const { submissionID, sessionCookie } = submissionData;
   const getTestcaseTitle = tr => {
     const verdict = Array.from(tr.children)[1]?.textContent?.toLowerCase();
     if (verdict === 'wrong answer') {
@@ -103,7 +106,6 @@ const getResultCSES = async (submissionID, sessionCookie) => {
   const root = new JSDOM(text).window.document;
 
   const summaryTbody = root.querySelector('table.summary-table > tbody');
-  console.log(sessionCookie, 'BEGIN', text, 'END');
   const data = {
     statusText: getStatusText(summaryTbody) ?? null,
     statusCode: getStatusCode(summaryTbody) ?? null,
@@ -138,20 +140,24 @@ const getResultCSES = async (submissionID, sessionCookie) => {
   return data;
 };
 
-const getResultAtCoder = async (problemID, submissionID, sessionCookie) => {
+const getResultAtCoder = async (submissionData, options = undefined) => {
+  const { problemID, submissionID, sessionCookie } = submissionData;
   const formatMemory = text => {
     const num = parseInt(text?.split(' ')[0]);
     if (!isNaN(num)) {
       return Math.round(num / 1000) + ' MB';
     }
   };
-  const getSummaryValue = (tbody, key) => {
+  const getSummaryCell = (tbody, key) => {
     const trs = Array.from(tbody.children);
     const tr = trs.filter(tr => {
       const tds = Array.from(tr.children);
       return tds[0]?.textContent?.toLowerCase() === key.toLowerCase();
     })[0];
-    return tr ? Array.from(tr.children)[1]?.textContent : undefined;
+    return tr ? Array.from(tr.children)[1] : undefined;
+  };
+  const getSummaryValue = (tbody, key) => {
+    return getSummaryCell(tbody, key)?.textContent;
   };
   const getTestcaseTitle = tr => {
     const verdict = Array.from(tr.children)[1]?.textContent;
@@ -200,6 +206,12 @@ const getResultAtCoder = async (problemID, submissionID, sessionCookie) => {
   const getMemory = tbody => {
     return formatMemory(getSummaryValue(tbody, 'memory'));
   };
+  const getTask = tbody => {
+    return getSummaryCell(tbody, 'task')
+      .querySelector('a')
+      .href.split('/')
+      .slice(-1)[0];
+  };
   const getOutput = root => {
     return root.querySelector('div.col-sm-12 > pre:not(#submission-code)')
       ?.textContent;
@@ -230,12 +242,21 @@ const getResultAtCoder = async (problemID, submissionID, sessionCookie) => {
     }/submissions/${submissionID}`,
     { headers: headers }
   );
+  if (resp.status === 404) {
+    throw new IncorrectDataError();
+  }
+  if (resp.status !== 200) {
+    throw new Error();
+  }
   const text = await resp.text();
   const root = new JSDOM(text).window.document;
 
   const summaryTbody = root.querySelectorAll(
     'table.table.table-bordered.table-striped > tbody'
   )[0];
+  if (getTask(summaryTbody) !== problemID) {
+    throw new IncorrectDataError();
+  }
   const data = {
     statusText: getStatusText(summaryTbody) ?? null,
     statusCode: getStatusCode(summaryTbody) ?? null,
@@ -265,7 +286,9 @@ const getResultAtCoder = async (problemID, submissionID, sessionCookie) => {
   return data;
 };
 
-const getResultCF = async (username, submissionID, resultJSON = undefined) => {
+const getResultCF = async (submissionData, options = undefined) => {
+  let resultJSON = options?.resultJSON;
+  let { problemID, submissionID, username } = submissionData;
   const getStatusText = submission => {
     return submission['verdict'] === 'TESTING'
       ? 'status-working'
@@ -303,10 +326,22 @@ const getResultCF = async (username, submissionID, resultJSON = undefined) => {
     const resp = await fetch(
       `https://codeforces.com/api/user.status?handle=${username}`
     );
+    if (resp.status === 400) {
+      throw new IncorrectDataError();
+    }
+    if (resp.status !== 200) {
+      throw new Error();
+    }
     resultJSON = (await resp.json())['result'];
   }
   const submission = resultJSON.find(entry => '' + entry.id === submissionID);
-
+  if (
+    !submission ||
+    '' + submission.problem.contestId !== problemID.split('_')[0] ||
+    submission.problem.index !== problemID.split('_')[1]
+  ) {
+    throw new IncorrectDataError();
+  }
   return {
     statusText: getStatusText(submission),
     statusCode: getStatusCode(submission),
@@ -320,29 +355,36 @@ const getResultCF = async (username, submissionID, resultJSON = undefined) => {
 const updateStatusData = (id, statusData) => {
   const updates = {};
   updates[`submissions/${id}/statusData`] = statusData;
-  if (statusData.statusCode === 0) {
+  if (statusData.statusCode > -8) {
     updates[`submissions/pending/${id}`] = null;
   }
   db.ref().update(updates);
 };
 
+const getAndUpdate = (getResult, submissionData, options = undefined) => {
+  getResult(submissionData, options)
+    .then(data => {
+      updateStatusData(submissionData.fileID, data);
+    })
+    .catch(error => {
+      if (error instanceof IncorrectDataError) {
+        updateStatusData(submissionData.fileID, {
+          statusCode: -1,
+        });
+      } else {
+        updateStatusData(submissionData.fileID, {
+          statusCode: -2,
+        });
+      }
+    });
+};
+
 const updateResult = async submissionData => {
   if (submissionData.platform === 'CSES') {
-    getResultCSES(
-      submissionData.submissionID,
-      submissionData.sessionCookie
-    ).then(data => {
-      updateStatusData(submissionData.fileID, data);
-    });
+    getAndUpdate(getResultCSES, submissionData);
   }
   if (submissionData.platform === 'AtCoder') {
-    getResultAtCoder(
-      submissionData.problemID,
-      submissionData.submissionID,
-      submissionData.sessionCookie
-    ).then(data => {
-      updateStatusData(submissionData.fileID, data);
-    });
+    getAndUpdate(getResultAtCoder, submissionData);
   }
 };
 
@@ -357,12 +399,24 @@ const updateResultsCF = async submissionDataList => {
   const resp = await fetch(
     `https://codeforces.com/api/user.status?handle=${username}`
   );
+  if (resp.status === 400) {
+    submissionDataList.forEach(submissionData => {
+      updateStatusData(submissionData.fileID, {
+        statusCode: -1,
+      });
+    });
+  }
+  if (resp.status !== 200) {
+    submissionDataList.forEach(submissionData => {
+      updateStatusData(submissionData.fileID, {
+        statusCode: -2,
+      });
+    });
+  }
   const resultJSON = (await resp.json())['result'];
 
   submissionDataList.forEach(submissionData => {
-    getResultCF(username, submissionData.submissionID, resultJSON).then(data =>
-      updateStatusData(submissionData.fileID, data)
-    );
+    getAndUpdate(getResultCF, submissionData, { resultJSON: resultJSON });
   });
 };
 
