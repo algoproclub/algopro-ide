@@ -1,4 +1,4 @@
-import { Platform } from '../../src/context/EditorContext';
+import { GetPlatform, Platform } from '../../src/context/EditorContext';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { fetchProblemData } from '../../src/scripts/fetchProblemData';
 import { getDatabase, ServerValue } from 'firebase-admin/database';
@@ -6,7 +6,7 @@ import firebaseApp from '../../src/firebaseAdmin';
 import colorFromUserId from '../../src/scripts/colorFromUserId';
 
 type RequestData = {
-  platform: Platform;
+  platform: string;
   problemID: string;
   userID: string;
   userName: string;
@@ -26,8 +26,8 @@ export default async (
   res: NextApiResponse<ResponseData>
 ) => {
   const data: RequestData = req.body;
+  const platform: Platform = GetPlatform(data.platform);
 
-  // todo validate?
   if (
     !data ||
     !data.userName ||
@@ -42,7 +42,7 @@ export default async (
     return;
   }
 
-  let problem = await fetchProblemData(data.problemID, data.platform);
+  let problem = await fetchProblemData(data.problemID, platform);
   if (problem === null) {
     res.status(400).json({
       message: 'Could not identify problem ID.',

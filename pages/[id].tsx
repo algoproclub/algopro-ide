@@ -281,8 +281,7 @@ function EditorPage() {
 }
 
 export default function FilePage() {
-  const router = useRouter();
-  const queryId = router.query.id;
+  const queryId = useRouter().query.id;
   const firebaseFileID = '-' + queryId;
   const { userData } = useNullableUserContext();
 
