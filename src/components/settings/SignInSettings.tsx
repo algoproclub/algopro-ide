@@ -1,5 +1,5 @@
 import React from 'react';
-import firebase from 'firebase/app';
+import { signOut, getAuth } from 'firebase/auth';
 import { useAtomValue, useUpdateAtom } from 'jotai/utils';
 import { signInWithGoogleAtom } from '../../atoms/firebaseUserAtoms';
 import { useConnectionContext } from '../../context/ConnectionContext';
@@ -15,7 +15,7 @@ export default function SignInSettings(): JSX.Element {
 
   const handleSignOut = () => {
     connectionContext.clearConnectionRefs();
-    firebase.auth().signOut();
+    signOut(getAuth());
   };
 
   return (

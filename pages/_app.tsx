@@ -1,10 +1,10 @@
 import { AppProps } from 'next/app';
 import 'tailwindcss/tailwind.css';
 import '../src/styles/globals.css';
-import firebase from 'firebase/app';
-import 'firebase/database';
-import 'firebase/auth';
-import 'firebase/analytics';
+import * as firebase from 'firebase/app';
+import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getAnalytics, isSupported } from 'firebase/analytics';
 import { ConnectionProvider } from '../src/context/ConnectionContext';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
@@ -21,19 +21,21 @@ const firebaseConfig = {
   measurementId: 'G-DW2XN13WS9',
 };
 
-if (!firebase.apps?.length) {
+if (!firebase.getApps()?.length) {
   if (SHOULD_USE_FIREBASE_EMULATOR) {
     firebase.initializeApp({
       ...firebaseConfig,
       authDomain: 'localhost:9099',
       databaseURL: 'http://localhost:9000/?ns=algopro-app-default-rtdb',
     });
-    firebase.auth().useEmulator('http://localhost:9099');
-    firebase.database().useEmulator('localhost', 9000);
+    connectAuthEmulator(getAuth(), 'http://localhost:9099');
+    connectDatabaseEmulator(getDatabase(), 'localhost', 9000);
   } else {
     firebase.initializeApp(firebaseConfig);
-    if (typeof window !== 'undefined' && firebase.analytics) {
-      firebase.analytics();
+    if (typeof window !== 'undefined') {
+      isSupported().then(result => {
+        if (result) getAnalytics();
+      });
     }
   }
 }

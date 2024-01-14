@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import React, { FormEvent, useLayoutEffect, useRef, useState } from 'react';
-import firebase from 'firebase/app';
+import { getDatabase, ref, push, serverTimestamp } from 'firebase/database';
 import { useOnlineUsers } from '../hooks/useOnlineUsers';
 import { ChatMessageItem } from './ChatMessageItem';
 import useUserPermission from '../hooks/useUserPermission';
@@ -34,8 +34,8 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
     if (e) e.preventDefault();
     if (message.trim() === '') return;
 
-    firebase.database().ref(`files/${fileData.id}`).child('chat').push({
-      timestamp: firebase.database.ServerValue.TIMESTAMP,
+    push(ref(getDatabase(), `files/${fileData.id}/chat`), {
+      timestamp: serverTimestamp(),
       userId: userData.id,
       message: message.trim(),
     });
