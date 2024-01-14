@@ -46,11 +46,11 @@ const LoadResultsModal = ({
   const [username, setUsername] = useState<string | undefined>(undefined);
   const { fileData } = useEditorContext();
   const { userData } = useUserContext();
-  const needUsername = ['CF'].includes(fileData.problem.platform);
+  const needUsername = ['CF'].includes(fileData?.problem?.platform);
 
   useEffect(() => {
-    setUsername(userData.usernames[fileData.problem.platform]);
-  }, [userData, fileData]);
+    setUsername(userData.usernames[fileData?.problem?.platform]);
+  }, [userData?.usernames, fileData?.problem?.platform]);
 
   const confirmedClose = () => {
     if (

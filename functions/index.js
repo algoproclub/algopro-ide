@@ -181,6 +181,7 @@ const getResultAtCoder = async (submissionData, options = undefined) => {
     const status = tbody
       .querySelector('td#judge-status')
       .textContent.split(' ')[0];
+
     if (getStatusCode(tbody) === -8) {
       let message = 'running';
       if (status.includes('/')) {
@@ -222,8 +223,6 @@ const getResultAtCoder = async (submissionData, options = undefined) => {
     }/submissions/${submissionID}`;
   };
   const codeToVerdict = {
-    WJ: 'running',
-    WR: 'running',
     CE: 'compile error',
     AC: 'correct answer',
     WA: 'incorrect answer',
@@ -480,4 +479,11 @@ exports.scheduledUpdate = pubsub
     return db.ref('submissions/pending').once('value', snapshot => {
       updateResults(snapshot.val());
     });
+  });
+
+exports.init = pubsub
+  .schedule('every 3 seconds')
+  .timeZone('UTC')
+  .onRun(() => {
+    db.ref('accounts').update({});
   });
