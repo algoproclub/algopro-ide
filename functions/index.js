@@ -423,19 +423,12 @@ const updateResults = async pending => {
   const readSubmissionData = async pending => {
     const submissionData = [];
     for (let fileID of Object.keys(pending)) {
-      //TODO: read these in a single transaction
       const creationTime = pending[fileID].creationTime;
-      const platform = (
-        await db.ref(`files/${fileID}/problem/platform`).get()
-      ).val();
-      const problemID = (
-        await db.ref(`files/${fileID}/problem/id`).get()
-      ).val();
-      const submission = (
-        await db.ref(`files/${fileID}/submission`).get()
-      ).val();
-      const submissionID = submission.id;
-      const username = submission.username;
+      const fileData = (await db.ref(`files/${fileID}`).get()).val();
+      const platform = fileData.problem.platform;
+      const problemID = fileData.problem.id;
+      const submissionID = fileData.submission.id;
+      const username = fileData.submission.username;
 
       submissionData.push({
         fileID: fileID,

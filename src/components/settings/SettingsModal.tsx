@@ -166,15 +166,23 @@ export const SettingsModal = ({
     updateRealFileData({
       settings: { ...realFileSettings, ...settingsToSet },
     });
-    // TODO: update these in a single transaction
     await firebase
       .database()
       .ref(`users/${firebaseUser.uid}/data`)
-      .update({ editorMode, tabSize, lightMode, manualSubmission });
-    await firebase
-      .database()
-      .ref(`users/${firebaseUser.uid}/data/usernames`)
-      .update({ CF: cfUsername });
+      .transaction(data => {
+        if (data) {
+          data.editorMode = editorMode;
+          data.tabSize = tabSize;
+          data.lightMode = lightMode;
+          data.manualSubmission = manualSubmission;
+
+          if (!data.usernames) {
+            data.usernames = {};
+          }
+          data.usernames.CF = cfUsername;
+        }
+        return data;
+      });
     if (name !== firebaseUser.displayName) {
       updateUsername(name);
     }

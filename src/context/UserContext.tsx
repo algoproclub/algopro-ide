@@ -50,7 +50,7 @@ export type UserData = {
   lightMode: boolean;
   defaultPermission: 'READ_WRITE' | 'READ' | 'PRIVATE';
   defaultLanguage: Language;
-  manualSubmission: false;
+  manualSubmission: boolean;
   usernames: UsernameData;
 };
 
