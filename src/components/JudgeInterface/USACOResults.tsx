@@ -1,14 +1,15 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { StatusData, TestCase } from '../Workspace/Workspace';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
-const capitalize = (text: string): string | undefined => {
+const capitalize = (text: string | undefined): string | undefined => {
   if (text) {
     return text[0].toUpperCase() + text.substring(1);
   }
 };
-const USACOTestCase = ({ data }: { data: any }) => {
+const USACOTestCase = ({ data }: { data: TestCase }) => {
   const containerClasses =
     data?.title?.toLowerCase() === 'correct answer'
       ? 'bg-green-700 border-green-700'
@@ -59,12 +60,12 @@ export default function USACOResults({
   data,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any;
+  data: StatusData;
 }): JSX.Element | null {
   if (!data) return null;
   let equalUpToTrim = false;
   let output = data.output;
-  if (data.message.includes('Incorrect') && output) {
+  if (data?.message?.includes('Incorrect') && output) {
     const lines = output.split('\n');
     const indices = [],
       answers = [];
@@ -100,7 +101,7 @@ export default function USACOResults({
           <span className="space-x-2">
             <span
               className={`${
-                data.message.toLowerCase() === 'correct answer'
+                data?.message?.toLowerCase() === 'correct answer'
                   ? 'text-green-500'
                   : 'text-red-500'
               }`}
@@ -112,14 +113,14 @@ export default function USACOResults({
                 />
               )}
               {data.statusCode === 0 &&
-                data.message.toLowerCase() === 'correct answer' && (
+                data?.message?.toLowerCase() === 'correct answer' && (
                   <FontAwesomeIcon
                     icon={{ prefix: 'fas', iconName: 'check' }}
                     className="mr-2 w-4 h-4"
                   />
                 )}
               {data.statusCode === 0 &&
-                data.message.toLowerCase() !== 'correct answer' && (
+                data?.message?.toLowerCase() !== 'correct answer' && (
                   <FontAwesomeIcon
                     icon={{ prefix: 'fas', iconName: 'xmark' }}
                     className="mr-2 w-4 h-4"
@@ -170,7 +171,7 @@ export default function USACOResults({
       {data.testCases && (
         <>
           <div className="mt-3 -mx-1">
-            {data.testCases.map((tc: any) => (
+            {data.testCases.map(tc => (
               <USACOTestCase data={tc} key={tc.trialNum} />
             ))}
           </div>

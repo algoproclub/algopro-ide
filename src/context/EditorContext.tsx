@@ -1,10 +1,7 @@
 import firebase from 'firebase/app';
-import invariant from 'tiny-invariant';
 import {
   createContext,
   MutableRefObject,
-  Ref,
-  RefObject,
   useCallback,
   useContext,
   useEffect,
@@ -37,10 +34,7 @@ export type FileData = {
       permission: 'OWNER' | 'READ' | 'READ_WRITE' | 'PRIVATE' | null;
     };
   };
-  problem: {
-    id: string;
-    platform: 'CF' | 'AtCoder' | 'CSES';
-  };
+  problem: ProblemData;
   settings: FileSettings;
   isCodeRunning: boolean;
   state: {

@@ -2,8 +2,7 @@ import { EllipsisHorizontalIcon } from '@heroicons/react/20/solid';
 import classNames from 'classnames';
 import { useAtomValue, useUpdateAtom } from 'jotai/utils';
 import { useAtom } from 'jotai';
-import React, { Fragment, useEffect, useState } from 'react';
-/// <reference path="./types/react-split-grid.d.ts" />
+import React, { useEffect, useState } from 'react';
 import Split from 'react-split-grid';
 import {
   layoutEditorsAtom,
@@ -35,10 +34,10 @@ import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
 import firebase from 'firebase/app';
-import { Dialog, Transition } from '@headlessui/react';
 import LoadResultsModal from '../JudgeInterface/LoadResultsModal';
 
 export type ProblemData = {
+  platform: 'CF' | 'AtCoder' | 'CSES';
   id: string;
   submittable: boolean;
   url: string;
@@ -49,20 +48,23 @@ export type ProblemData = {
   samples: Sample[];
 };
 
-interface TestCase {
+export interface TestCase {
   title: string;
   trialNum: string;
   symbol: string;
-  memory: string;
-  time: string;
+  memory?: string;
+  time?: string;
 }
 
 export interface StatusData {
+  statusCode: number;
   statusText?: string;
   message?: string;
-  statusCode: number;
   testCases?: TestCase[];
   output?: string;
+  memory?: string;
+  time?: string;
+  link?: string;
 }
 
 export async function fetchProblemData(
@@ -82,6 +84,7 @@ export default function Workspace({
   tabsList: { label: string; value: string }[];
 }): JSX.Element {
   const { fileData } = useEditorContext();
+  const { userData } = useUserContext();
   const layoutEditors = useUpdateAtom(layoutEditorsAtom);
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
   const mobileActiveTab = useAtomValue(mobileActiveTabAtom);
@@ -121,13 +124,12 @@ export default function Workspace({
   const [statusData, setStatusData] = useState<StatusData | null>(null);
 
   useEffect(() => {
-    setStatusData(null);
-    setProblem(fileData.settings.problem);
-    if (fileData.settings.problem) {
+    // setStatusData(null);
+    setProblem(fileData.problem);
+    if (fileData.problem) {
       setInputTab('judge');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fileData.settings.problem?.id]);
+  }, [fileData.problem?.id]);
 
   useEffect(() => {
     db.ref(`submissions/${fileData.id}/statusData`).on(
@@ -145,6 +147,7 @@ export default function Workspace({
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
   const { lightMode } = useUserContext().userData;
 
+  const [submitDisabled, setSubmitDisabled] = useState(true);
   const updateProblemData = () => {
     const platform = (document.getElementById('platform') as HTMLInputElement)
       .value;
@@ -154,7 +157,7 @@ export default function Workspace({
     const submitButton = document.getElementById(
       'submit-button'
     ) as HTMLInputElement;
-    submitButton.disabled = false;
+    setSubmitDisabled(false);
     submitButton.classList.add('bg-indigo-500');
     submitButton.classList.remove('bg-indigo-400');
 
@@ -185,10 +188,14 @@ export default function Workspace({
       }
       return submitLink;
     };
-    getSubmitLink().then(link => {
-      window.open(link, '_blank');
-    });
-    setIsOpen(true);
+    if (userData.manualSubmission) {
+      getSubmitLink().then(link => {
+        window.open(link, '_blank');
+      });
+      setIsOpen(true);
+    } else {
+      alert('Automatic submission is not implemented yet.');
+    }
   };
 
   return (
@@ -206,6 +213,7 @@ export default function Workspace({
             update
           </button>
           <button
+            disabled={submitDisabled}
             id="submit-button"
             className="text-white bg-indigo-400 px-4 py-2 rounded"
             onClick={submitSolution}
@@ -280,7 +288,8 @@ export default function Workspace({
                     yjsDocumentId={`${fileData.id}.input`}
                   />
                 )}
-                {inputTab === 'judge' &&
+                {/* not using any judge interface, for testing purposes */}
+                {inputTab === '_judge' &&
                   problem &&
                   (isNaN(Number(problem.id)) ? (
                     <PlanetsJudgeInterface
