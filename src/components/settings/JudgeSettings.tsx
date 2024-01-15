@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileSettings } from '../../context/EditorContext';
-
 import ProblemSearchInterface from './ProblemSearchInterface';
+import { Platform } from '../../types/problem';
 
 export default function JudgeSettings({
   workspaceSettings,
@@ -48,7 +48,7 @@ export default function JudgeSettings({
               onWorkspaceSettingsChange({
                 problem: {
                   id: hit.id,
-                  platform: 'USACO',
+                  platform: Platform.USACO,
                   submittable: hit.submittable,
                   url: hit.url,
                   source: hit.source,

@@ -1,4 +1,4 @@
-import { Platform } from '../../src/context/EditorContext';
+import { Platform } from '../../src/types/problem';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { fetchProblemData } from '../../src/scripts/fetchProblemData';
 import { getDatabase, ServerValue } from 'firebase-admin/database';
@@ -42,7 +42,7 @@ export default async (
     return;
   }
 
-  let problem = await fetchProblemData(data.problemID, data.platform);
+  let problem = (await fetchProblemData(data)).data;
   if (problem === null) {
     res.status(400).json({
       message: 'Could not identify problem ID.',

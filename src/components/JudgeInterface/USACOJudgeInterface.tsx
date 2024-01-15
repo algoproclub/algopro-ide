@@ -9,7 +9,8 @@ import { StatusData } from '../Workspace/Workspace';
 import SubmitButton from './SubmitButton';
 import { PlayCircleIcon } from '@heroicons/react/20/solid';
 import { useUserContext } from '../../context/UserContext';
-import { ProblemData, useEditorContext } from '../../context/EditorContext';
+import { useEditorContext } from '../../context/EditorContext';
+import { ProblemData } from '../../types/problem';
 
 export const judgePrefix =
   process.env.NODE_ENV === 'development' && false // note: having this as localhost:5000 will break testing

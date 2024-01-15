@@ -4,6 +4,7 @@ import '../src/styles/globals.css';
 import * as firebase from 'firebase/app';
 import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 import { ConnectionProvider } from '../src/context/ConnectionContext';
 import { Toaster } from 'react-hot-toast';
@@ -30,6 +31,7 @@ if (!firebase.getApps()?.length) {
     });
     connectAuthEmulator(getAuth(), 'http://localhost:9099');
     connectDatabaseEmulator(getDatabase(), 'localhost', 9000);
+    connectFunctionsEmulator(getFunctions(), 'localhost', 5001);
   } else {
     firebase.initializeApp(firebaseConfig);
     if (typeof window !== 'undefined') {

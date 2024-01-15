@@ -18,21 +18,7 @@ import {
 } from 'react';
 import { ChatMessage } from '../components/Chat';
 import { useUserContext } from './UserContext';
-import { Sample } from '../components/JudgeInterface/Samples';
-
-export type Platform = 'CF' | 'CSES' | 'AtCoder' | 'USACO';
-
-export type ProblemData = {
-  id: string;
-  submittable: boolean;
-  platform: Platform;
-  url: string;
-  source: string;
-  title: string;
-  input: string;
-  output: string;
-  samples: Sample[];
-};
+import { ProblemData } from '../types/problem';
 
 export type Language = 'cpp' | 'java' | 'py';
 

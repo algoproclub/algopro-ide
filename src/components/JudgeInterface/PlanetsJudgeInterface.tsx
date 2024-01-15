@@ -7,7 +7,8 @@ import { PlayCircleIcon } from '@heroicons/react/20/solid';
 import Markdown from './Markdown';
 import { getFirestore, getDoc, doc, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { ProblemData, useEditorContext } from '../../context/EditorContext';
+import { useEditorContext } from '../../context/EditorContext';
+import { ProblemData } from '../../types/problem';
 
 export const judgePrefix = 'https://vjudge.usaco.guide';
 

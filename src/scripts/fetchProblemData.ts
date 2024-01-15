@@ -1,21 +1,15 @@
-import { Platform, ProblemData } from '../context/EditorContext';
-import { judgePrefix } from '../components/JudgeInterface/PlanetsJudgeInterface';
+import {
+  connectFunctionsEmulator,
+  getFunctions,
+  httpsCallable,
+} from 'firebase/functions';
+import { PlatformProblem, ProblemData } from '../types/problem';
 
-export async function fetchProblemData(
-  problemID: string,
-  platform: Platform = 'USACO'
-): Promise<ProblemData | null> {
-  // TODO Dani fetch from Firebase
-  const url = `${judgePrefix}/problem/${problemID}`;
-  const response = await fetch(url);
-  if (response.status !== 200) return null;
+// TODO why isn't it enough to do this in _app.tsx?
+connectFunctionsEmulator(getFunctions(), 'localhost', 5001);
 
-  return (async function (): Promise<ProblemData | null> {
-    const res = await response.json();
-    res.platform = platform;
-    if (platform == 'CF') {
-      res.source += 'LOLzzz'; // just for testing, replace this entire thing with something meaningful
-    }
-    return res;
-  })();
-}
+// TODO re-add USACO fetch (we probably want to do it through cloud function)
+export const fetchProblemData = httpsCallable<PlatformProblem, ProblemData>(
+  getFunctions(undefined, 'us-central1'),
+  'fetchProblemData'
+);

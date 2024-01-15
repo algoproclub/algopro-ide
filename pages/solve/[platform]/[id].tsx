@@ -1,6 +1,5 @@
 import { useRouter } from 'next/router';
 import { MessagePage } from '../../../src/components/MessagePage';
-import { Platform } from '../../../src/context/EditorContext';
 import { useNullableUserContext } from '../../../src/context/UserContext';
 import React, { useEffect, useRef, useState } from 'react';
 import invariant from 'tiny-invariant';
