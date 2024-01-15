@@ -525,12 +525,3 @@ exports.scheduledUpdate = pubsub
       updateResults(snapshot.val());
     });
   });
-
-exports.init = pubsub
-  .schedule('every 3 seconds')
-  .timeZone('UTC')
-  .onRun(() => {
-    db.ref('accounts').update({
-      AtCoder: { sessionCookie: '...' },
-    });
-  });
