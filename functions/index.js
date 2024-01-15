@@ -12,6 +12,8 @@ const logger = require('firebase-functions/logger');
 const admin = require('firebase-admin');
 const { pubsub } = require('firebase-functions');
 const jsdom = require('jsdom');
+const crypto = require('node:crypto');
+const { defineString } = require('firebase-functions/params');
 const { JSDOM } = jsdom;
 
 class IncorrectDataError extends Error {}
@@ -20,6 +22,21 @@ admin.initializeApp({
   databaseURL: 'http://localhost:9000/?ns=algopro-app-default-rtdb',
 });
 const db = admin.database();
+
+const cfAPIKey = defineString('CF_API_KEY');
+const cfAPISecret = defineString('CF_API_SECRET');
+const atCoderCookie = defineString('ATCODER_COOKIE');
+const csesCookie = defineString('CSES_COOKIE');
+
+const accountData = {
+  AtCoder: {
+    sessionCookie: atCoderCookie.value(),
+  },
+  CSES: {
+    sessionCookie: csesCookie.value(),
+  },
+  CF: {},
+};
 
 // Create and deploy your first functions
 // https://firebase.google.com/docs/functions/get-started
@@ -285,6 +302,38 @@ const getResultAtCoder = async (submissionData, options = undefined) => {
   return data;
 };
 
+const getCFRequestURL = (methodName, params) => {
+  const genRandStr = len => {
+    let result = '';
+    for (let i = 0; i < len; ++i) {
+      result += 'abcdefghijklmnopqrstuvwxyz0123456789'[
+        Math.floor(Math.random() * 36)
+      ];
+    }
+    return result;
+  };
+  const getQueryStr = params => {
+    const arr = Object.entries(params).sort((a, b) =>
+      `${a[0]}&${a[1]}` < `${b[0]}&${b[1]}` ? -1 : 1
+    );
+    return arr.map(item => `${item[0]}=${item[1]}`).join('&');
+  };
+  params['apiKey'] = cfAPIKey.value();
+  params['time'] = Math.round(Date.now() / 1000);
+
+  const secret = cfAPISecret.value();
+  const randStr = genRandStr(6);
+  const queryStr = methodName + '?' + getQueryStr(params);
+  params['apiSig'] =
+    randStr +
+    crypto
+      .createHash('sha512')
+      .update(randStr + '/' + queryStr + '#' + secret)
+      .digest('hex');
+
+  return `https://codeforces.com/api/${methodName}?${getQueryStr(params)}`;
+};
+
 const getResultCF = async (submissionData, options = undefined) => {
   let resultJSON = options?.resultJSON;
   let { problemID, submissionID, username } = submissionData;
@@ -323,7 +372,9 @@ const getResultCF = async (submissionData, options = undefined) => {
   };
   if (!resultJSON) {
     const resp = await fetch(
-      `https://codeforces.com/api/user.status?handle=${username}`
+      getCFRequestURL('user.status', {
+        handle: username,
+      })
     );
     if (resp.status === 400) {
       throw new IncorrectDataError();
@@ -396,7 +447,9 @@ const updateResultsCF = async submissionDataList => {
   );
   const username = sorted[0].username;
   const resp = await fetch(
-    `https://codeforces.com/api/user.status?handle=${username}`
+    getCFRequestURL('user.status', {
+      handle: username,
+    })
   );
   if (resp.status === 400) {
     submissionDataList.forEach(submissionData => {
@@ -445,7 +498,6 @@ const updateResults = async pending => {
   if (!pending) {
     return;
   }
-  const accountData = (await db.ref('accounts').get()).val();
   const pendingData = await readSubmissionData(pending);
   const pendingByPlatform = pendingData.reduce((accumulator, person) => {
     const platform = person.platform;
@@ -478,5 +530,7 @@ exports.init = pubsub
   .schedule('every 3 seconds')
   .timeZone('UTC')
   .onRun(() => {
-    db.ref('accounts').update({});
+    db.ref('accounts').update({
+      AtCoder: { sessionCookie: '...' },
+    });
   });
