@@ -1,10 +1,7 @@
 import firebase from 'firebase/app';
-import invariant from 'tiny-invariant';
-import {
+import React, {
   createContext,
   MutableRefObject,
-  Ref,
-  RefObject,
   useCallback,
   useContext,
   useEffect,
@@ -12,9 +9,32 @@ import {
   useRef,
   useState,
 } from 'react';
-import { ProblemData } from '../components/Workspace/Workspace';
 import { ChatMessage } from '../components/Chat';
 import { useUserContext } from './UserContext';
+import { Sample } from '../components/JudgeInterface/Samples';
+
+export type Platform = 'codeforces' | 'cses' | 'atcoder' | 'usaco' | 'planets';
+
+export function GetPlatform(s: string): Platform {
+  if (s == 'codeforces') return 'codeforces';
+  if (s == 'cses') return 'cses';
+  if (s == 'atcoder') return 'atcoder';
+  if (s == 'usaco') return 'usaco';
+  if (s == 'planets') return 'planets';
+  throw new Error('unknown platform');
+}
+
+export type ProblemData = {
+  id: string;
+  submittable: boolean;
+  platform: Platform;
+  url: string;
+  source: string;
+  title: string;
+  input: string;
+  output: string;
+  samples: Sample[];
+};
 
 export type Language = 'cpp' | 'java' | 'py';
 

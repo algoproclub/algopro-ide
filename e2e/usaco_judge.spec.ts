@@ -8,7 +8,7 @@ import {
 
 test.describe('USACO Judge Functionality', () => {
   test('should fetch usaco info correctly', async ({ page, isMobile }) => {
-    await page.goto(`${host}/usaco/1131`);
+    await page.goto(`${host}/solve/usaco/1131`);
     await page.waitForSelector('button:has-text("Run Code")');
     expect(page.url()).toMatch(new RegExp(`${host}/[A-z0-9_-]{19}`));
     // let monaco load
@@ -29,7 +29,7 @@ test.describe('USACO Judge Functionality', () => {
   });
 
   test('should throw an error for an invalid USACO ID', async ({ page }) => {
-    await page.goto(`${host}/usaco/sfkj23`);
+    await page.goto(`${host}/solve/usaco/sfkj23`);
 
     await page.locator('text=Loading').waitFor({ state: 'detached' });
 
@@ -39,7 +39,7 @@ test.describe('USACO Judge Functionality', () => {
   });
 
   test('should be able to run samples', async ({ page, isMobile }) => {
-    await page.goto(`${host}/usaco/1131`);
+    await page.goto(`${host}/solve/usaco/1131`);
 
     await page.waitForSelector('button:has-text("Run Code")');
     expect(page.url()).toMatch(new RegExp(`${host}/[A-z0-9_-]{19}`));
@@ -104,7 +104,7 @@ System.out.println(hIndex(papers));
     page,
     isMobile,
   }) => {
-    await page.goto(`${host}/usaco/1131`);
+    await page.goto(`${host}/solve/usaco/1131`);
     await page.waitForSelector('button:has-text("Run Code")');
 
     await waitForEditorToLoad(page);
@@ -128,7 +128,7 @@ System.out.println(hIndex(papers));
     page,
     isMobile,
   }) => {
-    await page.goto(`${host}/usaco/363`);
+    await page.goto(`${host}/solve/usaco/363`);
     await page.waitForSelector('button:has-text("Run Code")');
 
     await waitForEditorToLoad(page);

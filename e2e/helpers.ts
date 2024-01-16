@@ -32,9 +32,9 @@ export const testRunCode = async (
   await page.waitForSelector('button:has-text("Run Code")');
   await expect(page.getByText('Successful')).toBeVisible({ timeout: 1000 });
   await page.locator('button:has-text("stdout")').click();
-  await expect(
-    page.getByText('The sum of these three numbers is 6')
-  ).toBeVisible({ timeout: 1000 });
+  await expect(page.getByText('Hello world!')).toHaveCount(2, {
+    timeout: 1000,
+  });
   if (isMobile) {
     await page.getByTestId('mobile-bottom-nav-code-button').click();
   }
