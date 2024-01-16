@@ -27,7 +27,6 @@ export default async (
 ) => {
   const data: RequestData = req.body;
 
-  // todo validate?
   if (
     !data ||
     !data.userName ||
@@ -42,7 +41,12 @@ export default async (
     return;
   }
 
-  let problem = (await fetchProblemData(data)).data;
+  let problem = (
+    await fetchProblemData({
+      problemID: data.problemID,
+      platform: data.platform,
+    })
+  ).data;
   if (problem === null) {
     res.status(400).json({
       message: 'Could not identify problem ID.',
