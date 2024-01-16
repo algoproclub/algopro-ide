@@ -1,0 +1,30 @@
+version: '3'
+services:
+  firebase:
+    build:
+      context: .
+      dockerfile: firebase.Dockerfile
+    ports:
+      - '9099:9099'
+      - '9000:9000'
+      - '4000:4000'
+  yjs:
+    build:
+      context: .
+      dockerfile: yjs.Dockerfile
+    expose:
+      - '1234'
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - FIREBASE_AUTH_EMULATOR_HOST="firebase:9099"
+    ports:
+      - '3000:3000'
+    volumes:
+      - type: bind
+        source: .
+        target: /app
+
+    depends_on: [firebase, yjs]

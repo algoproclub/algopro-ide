@@ -1,5 +1,5 @@
 const useFirebaseEmulatorInDev = true;
-const useYjsDevSerInDev = false;
+const useYjsDevSerInDev = true; //TODO: configure this better
 
 export const SHOULD_USE_FIREBASE_EMULATOR =
   typeof window !== 'undefined' &&
