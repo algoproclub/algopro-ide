@@ -1,5 +1,5 @@
 import firebase from 'firebase/app';
-import {
+import React, {
   createContext,
   MutableRefObject,
   useCallback,
@@ -12,17 +12,15 @@ import {
 import { ChatMessage } from '../components/Chat';
 import { useUserContext } from './UserContext';
 import { Sample } from '../components/JudgeInterface/Samples';
-import { Simulate } from 'react-dom/test-utils';
-import error = Simulate.error;
 
-export type Platform = 'CF' | 'CSES' | 'AtCoder' | 'USACO' | 'Planets';
+export type Platform = 'codeforces' | 'cses' | 'atcoder' | 'usaco' | 'planets';
 
 export function GetPlatform(s: string): Platform {
-  if (s == 'CF') return 'CF';
-  if (s == 'CSES') return 'CSES';
-  if (s == 'AtCoder') return 'AtCoder';
-  if (s == 'USACO') return 'USACO';
-  if (s == 'Planets') return 'Planets';
+  if (s == 'codeforces') return 'codeforces';
+  if (s == 'cses') return 'cses';
+  if (s == 'atcoder') return 'atcoder';
+  if (s == 'usaco') return 'usaco';
+  if (s == 'planets') return 'planets';
   throw new Error('unknown platform');
 }
 

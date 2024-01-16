@@ -3,7 +3,7 @@ import { judgePrefix } from '../components/JudgeInterface/PlanetsJudgeInterface'
 
 export async function fetchProblemData(
   problemID: string,
-  platform: Platform = 'USACO'
+  platform: Platform = 'usaco'
 ): Promise<ProblemData | null> {
   // TODO Dani fetch from Firebase
   const url = `${judgePrefix}/problem/${problemID}`;
@@ -13,7 +13,7 @@ export async function fetchProblemData(
   return (async function (): Promise<ProblemData | null> {
     const res = await response.json();
     res.platform = platform;
-    if (platform == 'CF') {
+    if (platform == 'codeforces') {
       res.source += 'LOLzzz'; // just for testing, replace this entire thing with something meaningful
     }
     return res;
