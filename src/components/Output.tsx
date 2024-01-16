@@ -73,7 +73,7 @@ export const Output = ({
   return (
     <>
       <TabBar
-        tabs={tabs}
+        tabs={statusData ? tabs : tabs.slice(0, -1)}
         activeTab={option}
         onTabSelect={tab => {
           setOption(tab.value as OutputTab);

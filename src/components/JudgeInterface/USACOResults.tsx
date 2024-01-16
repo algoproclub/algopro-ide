@@ -67,10 +67,10 @@ export default function USACOResults({
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: StatusData;
-}): JSX.Element | null {
-  if (!data) return null;
+}) {
   let equalUpToTrim = false;
   let output = data.output;
+
   if (data.message?.includes('Incorrect') && output) {
     const lines = output.split('\n');
     const indices = [],
@@ -85,8 +85,9 @@ export default function USACOResults({
       if (
         indices[i] + 3 == indices[i + 1] &&
         lines[indices[i] + 1] === '[File missing!]'
-      )
+      ) {
         continue;
+      }
       let ans = '';
       for (let j = indices[i] + 1; j < indices[i + 1] - 1; ++j) {
         ans += lines[j].trim() + '\n';
@@ -108,27 +109,27 @@ export default function USACOResults({
             {data.statusCode === -8 && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'gear' }}
-                className="mr-2 w-4 h-4 text-gray-300 animate-spin-slow"
+                className="mr-2 w-4.5 h-4.5 text-gray-400 animate-spin-slow"
               />
             )}
             {data.statusCode > -8 && data.statusCode < 0 && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'exclamation-triangle' }}
-                className="mr-2 text-yellow-500 w-4 h-4"
+                className="mr-2 text-yellow-500 w-4.5 h-4.5"
               />
             )}
             {data.statusCode === 0 &&
               data.message?.toLowerCase() === 'correct answer' && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'check' }}
-                  className="mr-2 text-green-500 w-4 h-4"
+                  className="mr-2 text-green-500 w-4.5 h-4.5"
                 />
               )}
             {data.statusCode === 0 &&
               data.message?.toLowerCase() !== 'correct answer' && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'xmark' }}
-                  className="mr-2 w-4 h-4 text-red-500"
+                  className="mr-2 w-4.5 h-4.5 text-red-500"
                 />
               )}
             {capitalize(
