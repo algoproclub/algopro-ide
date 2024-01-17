@@ -3,7 +3,7 @@ import React from 'react';
 import { RealtimeEditorProps } from './RealtimeEditor';
 
 const Editor = dynamic(() => import('./RealtimeEditor'), {
-  loading: () => <div>Loading...</div>,
+  loading: () => <div className="p-2">Loading...</div>,
   ssr: false,
 });
 

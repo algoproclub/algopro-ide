@@ -46,7 +46,7 @@ const LoadResultsModal = ({
   const [username, setUsername] = useState<string | undefined>(undefined);
   const { fileData } = useEditorContext();
   const { userData } = useUserContext();
-  const needUsername = ['CF'].includes(fileData?.problem?.platform);
+  const needUsername = ['codeforces'].includes(fileData?.problem?.platform);
 
   useEffect(() => {
     setUsername(userData.usernames[fileData?.problem?.platform]);

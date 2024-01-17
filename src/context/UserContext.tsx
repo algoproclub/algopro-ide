@@ -9,6 +9,7 @@ import type firebaseType from 'firebase';
 import firebase from 'firebase/app';
 import { signInAnonymously } from '../scripts/firebaseUtils';
 import animals from '../scripts/animals';
+import {Platform} from "./EditorContext";
 
 export type Language = 'cpp' | 'java' | 'py';
 export const LANGUAGES: { label: string; value: Language }[] = [
@@ -38,11 +39,7 @@ export type UserContextType = {
   updateUsername: (username: string) => Promise<any>;
 };
 
-export type UsernameData = {
-  CF?: string;
-  CSES?: string;
-  AtCoder?: string;
-};
+export type UsernameData = Partial<Record<Platform, string>>;
 
 export type UserData = {
   editorMode: 'Normal' | 'Vim';

@@ -29,13 +29,13 @@ const atCoderCookie = defineString('ATCODER_COOKIE');
 const csesCookie = defineString('CSES_COOKIE');
 
 const accountData = {
-  AtCoder: {
+  atcoder: {
     sessionCookie: atCoderCookie.value(),
   },
-  CSES: {
+  cses: {
     sessionCookie: csesCookie.value(),
   },
-  CF: {},
+  codeforces: {},
 };
 
 // Create and deploy your first functions
@@ -430,10 +430,10 @@ const getAndUpdate = (getResult, submissionData, options = undefined) => {
 };
 
 const updateResult = async submissionData => {
-  if (submissionData.platform === 'CSES') {
+  if (submissionData.platform === 'cses') {
     getAndUpdate(getResultCSES, submissionData);
   }
-  if (submissionData.platform === 'AtCoder') {
+  if (submissionData.platform === 'atcoder') {
     getAndUpdate(getResultAtCoder, submissionData);
   }
 };
@@ -508,13 +508,13 @@ const updateResults = async pending => {
     return accumulator;
   }, {});
 
-  pendingByPlatform['CSES']?.forEach(obj => {
+  pendingByPlatform['cses']?.forEach(obj => {
     updateResult(obj);
   });
-  pendingByPlatform['AtCoder']?.forEach(obj => {
+  pendingByPlatform['atcoder']?.forEach(obj => {
     updateResult(obj);
   });
-  updateResultsCF(pendingByPlatform['CF']);
+  updateResultsCF(pendingByPlatform['codeforces']);
 };
 
 exports.scheduledUpdate = pubsub

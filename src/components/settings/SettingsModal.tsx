@@ -21,8 +21,8 @@ import JudgeSettings from './JudgeSettings';
 import SignInSettings from './SignInSettings';
 import JudgeResult from '../../types/judge';
 import useJudgeResults from '../../hooks/useJudgeResults';
-import { EditorMode, useUserContext } from '../../context/UserContext';
-import { FileSettings, useEditorContext } from '../../context/EditorContext';
+import {EditorMode, UserData, useUserContext} from '../../context/UserContext';
+import {FileSettings, Platform, useEditorContext} from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import firebase from 'firebase/app';
 
@@ -88,7 +88,7 @@ export const SettingsModal = ({
     if (isOpen) {
       setFileSettings(realFileSettings);
       setName(firebaseUser.displayName ?? ''); // todo this shouldn't really be an empty string ever?
-      setCfUsername(userData.usernames.CF ?? '');
+      setCfUsername(userData.usernames.codeforces ?? '');
       setEditorMode(userData.editorMode);
       setTabSize(userData.tabSize);
       setLightMode(userData.lightMode);
@@ -169,7 +169,7 @@ export const SettingsModal = ({
     await firebase
       .database()
       .ref(`users/${firebaseUser.uid}/data`)
-      .transaction(data => {
+      .transaction((data: UserData) => {
         if (data) {
           data.editorMode = editorMode;
           data.tabSize = tabSize;
@@ -179,7 +179,7 @@ export const SettingsModal = ({
           if (!data.usernames) {
             data.usernames = {};
           }
-          data.usernames.CF = cfUsername;
+          data.usernames.codeforces = cfUsername;
         }
         return data;
       });
