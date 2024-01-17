@@ -109,27 +109,27 @@ export default function USACOResults({
             {data.statusCode === -8 && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'gear' }}
-                className="mr-2 w-4.5 h-4.5 text-gray-400 animate-spin-slow"
+                className="mr-2 w-4 h-4 text-gray-400 animate-spin-slow"
               />
             )}
             {data.statusCode > -8 && data.statusCode < 0 && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'exclamation-triangle' }}
-                className="mr-2 text-yellow-500 w-4.5 h-4.5"
+                className="mr-2 text-yellow-500 w-4 h-4"
               />
             )}
             {data.statusCode === 0 &&
               data.message?.toLowerCase() === 'correct answer' && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'check' }}
-                  className="mr-2 text-green-500 w-4.5 h-4.5"
+                  className="mr-2 text-green-500 w-4 h-4"
                 />
               )}
             {data.statusCode === 0 &&
               data.message?.toLowerCase() !== 'correct answer' && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'xmark' }}
-                  className="mr-2 w-4.5 h-4.5 text-red-500"
+                  className="mr-2 w-4 h-4 text-red-500"
                 />
               )}
             {capitalize(

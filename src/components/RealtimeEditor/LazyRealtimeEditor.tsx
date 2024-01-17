@@ -3,7 +3,12 @@ import React from 'react';
 import { RealtimeEditorProps } from './RealtimeEditor';
 
 const Editor = dynamic(() => import('./RealtimeEditor'), {
-  loading: () => <div className="p-2">Loading...</div>,
+  loading: () => (
+    <div className="px-4 py-3">
+      {/*<FontAwesomeIcon icon={{ prefix: "fas", iconName: "spinner" }} className="mr-2 w-4 h-4" />
+    Loading...*/}
+    </div>
+  ),
   ssr: false,
 });
 
