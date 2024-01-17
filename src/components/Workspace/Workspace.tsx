@@ -195,7 +195,7 @@ export default function Workspace({
             className="text-white bg-indigo-400 px-4 py-2 rounded"
             onClick={submitSolution}
           >
-            submit
+            sbmit
           </button>
         </div>
       </div>

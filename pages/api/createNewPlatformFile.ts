@@ -75,12 +75,12 @@ export default async (
             permission: 'OWNER',
           },
         },
+        problem: problem,
         settings: {
           workspaceName: problem.source + ': ' + problem.title,
           defaultPermission: data.defaultPermission,
           creationTime: ServerValue.TIMESTAMP,
           language: 'cpp', //TODO think about how do we support other languages with this method?
-          problem,
           compilerOptions: {
             cpp: '-std=c++17 -O2 -Wall -Wextra -Wshadow -Wconversion -Wfloat-equal -Wduplicated-cond -Wlogical-op',
             java: '',
