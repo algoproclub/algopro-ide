@@ -1,15 +1,16 @@
 import dynamic from 'next/dynamic';
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import LoadingIndicator from '../../LoadingIndicator';
 
 const LazyCodemirrorEditor = dynamic(() => import('./CodemirrorEditor'), {
   loading: () => (
-    <div className="px-4 py-3" data-testid="editorLoadingMessage">
-      <FontAwesomeIcon
-        icon={{ prefix: 'fas', iconName: 'spinner' }}
-        className="mr-2 w-4 h-4 animate-spin-slow text-indigo-500"
-      />
-      Loading...
+    <div
+      className="px-4 py-3 flex items-center justify-between"
+      data-testid="editorLoadingMessage"
+    >
+      <LoadingIndicator className="h-4 w-4 mr-2 text-indigo-500" />
+      <span>Loading...</span>
     </div>
   ),
   ssr: false,
