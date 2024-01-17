@@ -1,14 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
-
-import { useAtomValue } from 'jotai/utils';
-
 import { useRouter } from 'next/router';
+import { MessagePage } from '../../../src/components/MessagePage';
+import { Platform } from '../../../src/context/EditorContext';
+import { useNullableUserContext } from '../../../src/context/UserContext';
+import React, { useEffect, useRef, useState } from 'react';
 import invariant from 'tiny-invariant';
-import { MessagePage } from '../../src/components/MessagePage';
-import { useNullableUserContext } from '../../src/context/UserContext';
 import va from '@vercel/analytics';
 
-export default function CreateUSACO(): JSX.Element {
+export default function CreatePlatformFile(): JSX.Element {
   const router = useRouter();
 
   const { firebaseUser, userData } = useNullableUserContext();
@@ -19,21 +17,26 @@ export default function CreateUSACO(): JSX.Element {
   useEffect(() => {
     if (!router.isReady || !firebaseUser || !userData || createdRef.current)
       return;
-    const usacoID = router.query.id;
+    const platform = router.query.platform;
+    const problemID = router.query.id;
     createdRef.current = true;
 
-    invariant(typeof usacoID === 'string', 'Expected USACO ID to be a string');
+    invariant(
+      typeof problemID === 'string',
+      'Expected problem ID to be a string'
+    );
 
     (async () => {
-      va.track('Create File', { type: 'usaco-file' });
+      va.track('Create File', { type: 'platform-file' });
 
-      const resp = await fetch(`/api/createUSACOFile`, {
+      const resp = await fetch(`/api/createNewPlatformFile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          usacoID: usacoID,
+          platform: platform,
+          problemID: problemID,
           userID: firebaseUser.uid,
           userName: firebaseUser.displayName,
           defaultPermission: userData.defaultPermission,

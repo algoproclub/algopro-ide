@@ -83,7 +83,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = firebase.auth().onAuthStateChanged(user => {
       if (!user) {
         setUserData(null);
-        // signInAnonymously();
+        signInAnonymously();
       } else {
         let displayName = user.displayName;
         if (!displayName) {

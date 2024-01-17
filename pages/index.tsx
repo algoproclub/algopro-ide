@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
 import { useAtomValue, useUpdateAtom } from 'jotai/utils';
-import {
-  signInWithGoogleAtom,
-} from '../src/atoms/firebaseUserAtoms';
+import { signInWithGoogleAtom } from '../src/atoms/firebaseUserAtoms';
 import Dashboard from '../src/components/Dashboard/Dashboard';
 import { useConnectionContext } from '../src/context/ConnectionContext';
 import {
@@ -17,7 +15,7 @@ export default function DashboardPage(): JSX.Element {
   const { firebaseUser, userData } = useNullableUserContext();
 
   useEffect(() => {
-    document.title = 'Planets IDE';
+    document.title = 'AlgoPro IDE';
   }, []);
 
   return (
@@ -25,7 +23,7 @@ export default function DashboardPage(): JSX.Element {
       <ConfirmOverrideModal />
       <div className="flex-1">
         <h1 className="text-gray-100 text-2xl md:text-4xl font-black">
-          Planets IDE
+          AlgoPro IDE
         </h1>
         <div className="text-gray-400 mt-6">
           Based on the{' '}

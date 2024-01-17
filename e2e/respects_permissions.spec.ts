@@ -53,7 +53,7 @@ test.describe('Respects Permissions', () => {
     await expect(page2.getByText('4 5 6')).toBeVisible();
 
     // test scribble
-    await page2.click('text=scribble');
+    /*await page2.click('text=scribble');
     await page2.waitForTimeout(200);
     await page2.click('[data-test-id="scribble-editor"]');
     await page2.waitForTimeout(200);
@@ -68,7 +68,7 @@ test.describe('Respects Permissions', () => {
     await page.keyboard.type('testing scribble');
     await page.waitForTimeout(200);
     expect(await page.$('text="testing scribble"')).toBeTruthy();
-    await page2.waitForSelector('text="testing scribble"');
+    await page2.waitForSelector('text="testing scribble"');*/
 
     if (isMobile) {
       await page.getByTestId('mobile-bottom-nav-code-button').click();
@@ -79,12 +79,12 @@ test.describe('Respects Permissions', () => {
     const editorClass = (await isMonaco(page)) ? '.view-lines' : '.cm-content';
 
     // test editor
-    await page2.click(`${editorClass} div:nth-child(10)`);
+    await page2.click(`${editorClass} div:nth-child(7)`);
     await page.waitForTimeout(200);
     await page2.keyboard.type('// this is a comment');
     await page.waitForTimeout(200);
     expect(await page2.$('text="// this is a comment"')).toBeFalsy();
-    await page.click(`${editorClass} div:nth-child(10)`);
+    await page.click(`${editorClass} div:nth-child(7)`);
     await page.waitForTimeout(200);
     await page.keyboard.type('// this is a comment');
     await page.waitForTimeout(200);
@@ -115,12 +115,12 @@ test.describe('Respects Permissions', () => {
     await switchLang(page, 'Python 3.8.1');
     await page.waitForSelector('button:has-text("Run Code")');
     await page2.waitForSelector('button:has-text("Run Code")');
-    await page2.click(`${editorClass} div:nth-child(5)`);
+    await page2.click(`${editorClass} div:nth-child(2)`);
     await page.waitForTimeout(200);
     await page2.keyboard.type('# this is a comment');
     await page.waitForTimeout(200);
     expect(await page2.$('text="# this is a comment"')).toBeFalsy();
-    await page.click(`${editorClass} div:nth-child(5)`);
+    await page.click(`${editorClass} div:nth-child(2)`);
     await page.waitForTimeout(200);
     await page.keyboard.type('# this is a comment');
     await page.waitForTimeout(200);

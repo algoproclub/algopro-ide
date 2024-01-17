@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "algopro-app"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }

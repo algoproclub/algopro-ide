@@ -1,28 +1,26 @@
 import { EllipsisHorizontalIcon } from '@heroicons/react/20/solid';
-import classNames from 'classnames';
 import { useAtomValue, useUpdateAtom } from 'jotai/utils';
+import classNames from 'classnames';
 import { useAtom } from 'jotai';
 import React, { useEffect, useState } from 'react';
 import Split from 'react-split-grid';
 import {
-  layoutEditorsAtom,
-  inputMonacoEditorAtom,
-  outputMonacoEditorAtom,
   inputCodemirrorEditorAtom,
+  inputMonacoEditorAtom,
+  layoutEditorsAtom,
+  outputMonacoEditorAtom,
 } from '../../atoms/workspace';
 import {
-  mobileActiveTabAtom,
-  showSidebarAtom,
   inputTabAtom,
-  problemAtom,
   inputTabIndexAtom,
+  mobileActiveTabAtom,
+  problemAtom,
+  showSidebarAtom,
 } from '../../atoms/workspaceUI';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { Chat } from '../Chat';
 import { CodeInterface } from '../CodeInterface/CodeInterface';
-import PlanetsJudgeInterface, {
-  judgePrefix,
-} from '../JudgeInterface/PlanetsJudgeInterface';
+import PlanetsJudgeInterface from '../JudgeInterface/PlanetsJudgeInterface';
 import { LazyRealtimeEditor } from '../RealtimeEditor/LazyRealtimeEditor';
 import { Output } from '../Output';
 import { TabBar } from '../TabBar';
@@ -35,18 +33,6 @@ import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
 import firebase from 'firebase/app';
 import LoadResultsModal from '../JudgeInterface/LoadResultsModal';
-
-export type ProblemData = {
-  platform: 'CF' | 'AtCoder' | 'CSES';
-  id: string;
-  submittable: boolean;
-  url: string;
-  source: string;
-  title: string;
-  input: string;
-  output: string;
-  samples: Sample[];
-};
 
 export interface TestCase {
   title: string;
@@ -65,15 +51,6 @@ export interface StatusData {
   memory?: string;
   time?: string;
   link?: string;
-}
-
-export async function fetchProblemData(
-  problemID: string
-): Promise<ProblemData | null> {
-  const url = `${judgePrefix}/problem/${problemID}`;
-  const response = await fetch(url);
-  if (response.status !== 200) return null;
-  return await response.json();
 }
 
 export default function Workspace({
@@ -173,17 +150,17 @@ export default function Workspace({
       const problemID = fileData.problem.id;
 
       let submitLink = '';
-      if (platform === 'CF') {
+      if (platform === 'codeforces') {
         submitLink = `https://codeforces.com/problemset/problem/${
           problemID.split('_')[0]
         }/${problemID.split('_')[1]}`;
       }
-      if (platform === 'AtCoder') {
+      if (platform === 'atcoder') {
         submitLink = `https://atcoder.jp/contests/${
           problemID.split('_')[0]
         }/tasks/${problemID}`;
       }
-      if (platform === 'CSES') {
+      if (platform === 'cses') {
         submitLink = `https://cses.fi/problemset/submit/${problemID}/`;
       }
       return submitLink;

@@ -16,15 +16,13 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 library.add(fas);
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyDR-XvtT4_GYPAUslb-JTdueV68SfsERec',
-  authDomain: 'planets-prog.firebaseapp.com',
-  databaseURL:
-    'https://algopro-app-default-rtdb.europe-west1.firebasedatabase.app',
-  projectId: 'planets-prog',
-  storageBucket: 'planets-prog.appspot.com',
-  messagingSenderId: '858825023192',
-  appId: '1:858825023192:web:da967b9566bd204010c1ad',
-  // measurementId: 'G-G22TZ5YCKV',
+  apiKey: 'AIzaSyBYdZ07lyFBG6s8x2e06NUDCDmPh12AaX0',
+  authDomain: 'algopro-app.firebaseapp.com',
+  projectId: 'algopro-app',
+  storageBucket: 'algopro-app.appspot.com',
+  messagingSenderId: '814731555768',
+  appId: '1:814731555768:web:89691aa18c84f81472154d',
+  measurementId: 'G-DW2XN13WS9',
 };
 
 if (!firebase.apps?.length) {
