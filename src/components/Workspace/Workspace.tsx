@@ -265,8 +265,10 @@ export default function Workspace({
                     yjsDocumentId={`${fileData.id}.input`}
                   />
                 )}
-                {/* not using any judge interface, for testing purposes */}
+                {/* not using any judge interface, for testing purposes
                 {inputTab === '_judge' &&
+                */}
+                {inputTab === 'judge' &&
                   problem &&
                   (isNaN(Number(problem.id)) ? (
                     <PlanetsJudgeInterface
