@@ -228,7 +228,8 @@ const getResultAtCoder = async (submissionData, options = undefined) => {
     return getSummaryCell(tbody, 'task')
       .querySelector('a')
       .href.split('/')
-      .slice(-1)[0];
+      .slice(-1)[0]
+      .toLowerCase();
   };
   const getOutput = root => {
     return root.querySelector('div.col-sm-12 > pre:not(#submission-code)')
@@ -270,7 +271,7 @@ const getResultAtCoder = async (submissionData, options = undefined) => {
   const summaryTbody = root.querySelectorAll(
     'table.table.table-bordered.table-striped > tbody'
   )[0];
-  if (getTask(summaryTbody) !== problemID) {
+  if (getTask(summaryTbody) !== problemID.toLowerCase()) {
     throw new IncorrectDataError();
   }
   const data = {
@@ -388,7 +389,8 @@ const getResultCF = async (submissionData, options = undefined) => {
   if (
     !submission ||
     '' + submission.problem.contestId !== problemID.split('_')[0] ||
-    submission.problem.index !== problemID.split('_')[1]
+    submission.problem.index.toLowerCase() !==
+      problemID.split('_')[1].toLowerCase()
   ) {
     throw new IncorrectDataError();
   }

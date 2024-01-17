@@ -32,7 +32,7 @@ import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
 import firebase from 'firebase/app';
-import LoadResultsModal from '../JudgeInterface/LoadResultsModal';
+import LoadResultsModal from './LoadResultsModal';
 
 export interface TestCase {
   title: string;

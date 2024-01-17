@@ -106,7 +106,7 @@ export default function USACOResults({
       <div className="pb-3">
         <p className="font-bold text-gray-200 border-gray-700">
           <span className="space-x-2">
-            {data.statusCode === -8 && (
+            {data.statusCode <= -8 && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'gear' }}
                 className="mr-2 w-4 h-4 text-gray-400 animate-spin-slow"
@@ -139,7 +139,7 @@ export default function USACOResults({
                   }`
                 : data.message
             )}
-            {data.statusCode === -8 && '...'}
+            {data.statusCode <= -8 && '...'}
           </span>
           {(data.time || data.memory) && <span> (</span>}
           {data.time && <span>{data.time}</span>}

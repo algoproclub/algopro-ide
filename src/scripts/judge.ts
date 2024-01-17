@@ -17,7 +17,7 @@ export const startUpdatingResults = async (
   username?: string
 ) => {
   const defaultStatusData = {
-    statusCode: -8,
+    statusCode: -100,
     statusText: 'status-working',
     message: 'starting',
   };
