@@ -511,10 +511,10 @@ const updateResults = async pending => {
 };
 
 const mutex = new Mutex();
-let isUpdateRunning = true;
+let isUpdateRunning = false;
 
 exports.scheduledUpdate = onSchedule('every 2 seconds', async () => {
-  let startNewUpdate = true;
+  let startNewUpdate = false;
   await mutex.runExclusive(() => {
     if (!isUpdateRunning) {
       isUpdateRunning = true;
