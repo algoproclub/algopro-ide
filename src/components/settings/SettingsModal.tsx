@@ -21,8 +21,16 @@ import JudgeSettings from './JudgeSettings';
 import SignInSettings from './SignInSettings';
 import JudgeResult from '../../types/judge';
 import useJudgeResults from '../../hooks/useJudgeResults';
-import {EditorMode, UserData, useUserContext} from '../../context/UserContext';
-import {FileSettings, Platform, useEditorContext} from '../../context/EditorContext';
+import {
+  EditorMode,
+  UserData,
+  useUserContext,
+} from '../../context/UserContext';
+import {
+  FileSettings,
+  Platform,
+  useEditorContext,
+} from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import firebase from 'firebase/app';
 
@@ -80,7 +88,7 @@ export const SettingsModal = ({
   const [cfUsername, setCfUsername] = useState<string>('');
   const dirtyRef = useRef<boolean>(false);
 
-  const [tab, setTab] = useState<(typeof tabs)[number]['id']>('workspace');
+  const [tab, setTab] = useState<typeof tabs[number]['id']>('workspace');
 
   const [judgeResults, setJudgeResults] = useJudgeResults();
 
@@ -180,6 +188,16 @@ export const SettingsModal = ({
             data.usernames = {};
           }
           data.usernames.codeforces = cfUsername;
+        } else {
+          data = {
+            editorMode: editorMode,
+            tabSize: tabSize,
+            lightMode: lightMode,
+            manualSubmission: manualSubmission,
+            usernames: {
+              codeforces: cfUsername,
+            },
+          };
         }
         return data;
       });
