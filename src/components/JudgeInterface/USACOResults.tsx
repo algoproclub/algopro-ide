@@ -2,8 +2,6 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { StatusData, TestCase } from '../Workspace/Workspace';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-
 const capitalize = (text: string | undefined): string | undefined => {
   if (text) {
     return text[0].toUpperCase() + text.substring(1);
