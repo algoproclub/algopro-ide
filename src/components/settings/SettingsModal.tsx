@@ -96,7 +96,7 @@ export const SettingsModal = ({
     if (isOpen) {
       setFileSettings(realFileSettings);
       setName(firebaseUser.displayName ?? ''); // todo this shouldn't really be an empty string ever?
-      setCfUsername(userData.usernames.codeforces ?? '');
+      setCfUsername(userData?.usernames?.codeforces ?? '');
       setEditorMode(userData.editorMode);
       setTabSize(userData.tabSize);
       setLightMode(userData.lightMode);
@@ -177,7 +177,7 @@ export const SettingsModal = ({
     await firebase
       .database()
       .ref(`users/${firebaseUser.uid}/data`)
-      .transaction((data: UserData) => {
+      .transaction((data: any) => {
         if (data) {
           data.editorMode = editorMode;
           data.tabSize = tabSize;

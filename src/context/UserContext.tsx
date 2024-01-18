@@ -42,13 +42,13 @@ export type UserContextType = {
 export type UsernameData = Partial<Record<Platform, string>>;
 
 export type UserData = {
-  editorMode?: 'Normal' | 'Vim';
-  tabSize?: number;
-  lightMode?: boolean;
-  defaultPermission?: 'READ_WRITE' | 'READ' | 'PRIVATE';
-  defaultLanguage?: Language;
-  manualSubmission?: boolean;
-  usernames?: UsernameData;
+  editorMode: 'Normal' | 'Vim';
+  tabSize: number;
+  lightMode: boolean;
+  defaultPermission: 'READ_WRITE' | 'READ' | 'PRIVATE';
+  defaultLanguage: Language;
+  manualSubmission: boolean;
+  usernames: UsernameData;
 };
 
 export const defaultUserSettings: UserData = {
