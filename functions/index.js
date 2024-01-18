@@ -1,18 +1,8 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
-const { onRequest } = require('firebase-functions/v2/https');
-const logger = require('firebase-functions/logger');
 const admin = require('firebase-admin');
-const { pubsub } = require('firebase-functions');
 const jsdom = require('jsdom');
 const crypto = require('node:crypto');
+const Mutex = require('async-mutex').Mutex;
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineString } = require('firebase-functions/params');
 const { JSDOM } = jsdom;
 
@@ -37,9 +27,6 @@ const accountData = {
   },
   codeforces: {},
 };
-
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
 
 const getResultCSES = async submissionData => {
   const { submissionID, sessionCookie } = submissionData;
@@ -404,39 +391,38 @@ const getResultCF = async (submissionData, options = undefined) => {
   };
 };
 
-const updateStatusData = (id, statusData) => {
+const updateStatusData = async (id, statusData) => {
   const updates = {};
   updates[`submissions/${id}/statusData`] = statusData;
   if (statusData.statusCode > -8) {
     updates[`submissions/pending/${id}`] = null;
   }
-  db.ref().update(updates);
+  await db.ref().update(updates);
 };
 
-const getAndUpdate = (getResult, submissionData, options = undefined) => {
-  getResult(submissionData, options)
-    .then(data => {
-      updateStatusData(submissionData.fileID, data);
-    })
-    .catch(error => {
-      if (error instanceof IncorrectDataError) {
-        updateStatusData(submissionData.fileID, {
-          statusCode: -1,
-        });
-      } else {
-        updateStatusData(submissionData.fileID, {
-          statusCode: -2,
-        });
-      }
-    });
+const getAndUpdate = async (getResult, submissionData, options = undefined) => {
+  try {
+    const data = await getResult(submissionData, options);
+    await updateStatusData(submissionData.fileID, data);
+  } catch (error) {
+    if (error instanceof IncorrectDataError) {
+      await updateStatusData(submissionData.fileID, {
+        statusCode: -1,
+      });
+    } else {
+      await updateStatusData(submissionData.fileID, {
+        statusCode: -2,
+      });
+    }
+  }
 };
 
 const updateResult = async submissionData => {
   if (submissionData.platform === 'cses') {
-    getAndUpdate(getResultCSES, submissionData);
+    await getAndUpdate(getResultCSES, submissionData);
   }
   if (submissionData.platform === 'atcoder') {
-    getAndUpdate(getResultAtCoder, submissionData);
+    await getAndUpdate(getResultAtCoder, submissionData);
   }
 };
 
@@ -468,10 +454,13 @@ const updateResultsCF = async submissionDataList => {
     });
   }
   const resultJSON = (await resp.json())['result'];
-
+  const promises = [];
   submissionDataList.forEach(submissionData => {
-    getAndUpdate(getResultCF, submissionData, { resultJSON: resultJSON });
+    promises.push(
+      getAndUpdate(getResultCF, submissionData, { resultJSON: resultJSON })
+    );
   });
+  await Promise.all(promises);
 };
 
 const updateResults = async pending => {
@@ -510,20 +499,33 @@ const updateResults = async pending => {
     return accumulator;
   }, {});
 
+  const promises = [];
   pendingByPlatform['cses']?.forEach(obj => {
-    updateResult(obj);
+    promises.push(updateResult(obj));
   });
   pendingByPlatform['atcoder']?.forEach(obj => {
-    updateResult(obj);
+    promises.push(updateResult(obj));
   });
-  updateResultsCF(pendingByPlatform['codeforces']);
+  promises.push(updateResultsCF(pendingByPlatform['codeforces']));
+  await Promise.all(promises);
 };
 
-exports.scheduledUpdate = pubsub
-  .schedule('every 2 seconds')
-  .timeZone('UTC')
-  .onRun(() => {
-    return db.ref('submissions/pending').once('value', snapshot => {
-      updateResults(snapshot.val());
-    });
+const mutex = new Mutex();
+let isUpdateRunning = true;
+
+exports.scheduledUpdate = onSchedule('every 2 seconds', async () => {
+  let startNewUpdate = true;
+  await mutex.runExclusive(() => {
+    if (!isUpdateRunning) {
+      isUpdateRunning = true;
+      startNewUpdate = true;
+    }
   });
+  if (!startNewUpdate) {
+    return;
+  }
+  await db.ref('submissions/pending').once('value', async snapshot => {
+    await updateResults(snapshot.val());
+  });
+  isUpdateRunning = false;
+});
