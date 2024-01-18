@@ -63,7 +63,6 @@ const USACOTestCase = ({ data }: { data: TestCase }) => {
 export default function USACOResults({
   data,
 }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: StatusData;
 }) {
   let equalUpToTrim = false;
