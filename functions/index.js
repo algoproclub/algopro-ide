@@ -518,7 +518,6 @@ exports.scheduledUpdate = onSchedule('every 2 seconds', async () => {
   if (!startNewUpdate) {
     return;
   }
-  await new Promise(r => setTimeout(r, 5000));
   await db.ref('submissions/pending').once('value', async snapshot => {
     await updateResults(snapshot.val());
   });
