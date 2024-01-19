@@ -20,10 +20,10 @@ const csesCookie = defineString('CSES_COOKIE');
 
 const accountData = {
   atcoder: {
-    sessionCookie: atCoderCookie.value(),
+    sessionCookie: atCoderCookie,
   },
   cses: {
-    sessionCookie: csesCookie.value(),
+    sessionCookie: csesCookie,
   },
   codeforces: {},
 };
@@ -510,16 +510,11 @@ const updateResults = async pending => {
   await Promise.all(promises);
 };
 
-const mutex = new Mutex();
-let isUpdateRunning = false;
-
 exports.scheduledUpdate = onSchedule('every 2 seconds', async () => {
   let startNewUpdate = false;
-  await mutex.runExclusive(() => {
-    if (!isUpdateRunning) {
-      isUpdateRunning = true;
-      startNewUpdate = true;
-    }
+  await db.ref('submissions/lock').transaction(lock => {
+    startNewUpdate = !lock;
+    return true;
   });
   if (!startNewUpdate) {
     return;
@@ -527,5 +522,5 @@ exports.scheduledUpdate = onSchedule('every 2 seconds', async () => {
   await db.ref('submissions/pending').once('value', async snapshot => {
     await updateResults(snapshot.val());
   });
-  isUpdateRunning = false;
+  await db.ref('submissions/lock').set(null);
 });
