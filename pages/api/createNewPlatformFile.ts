@@ -41,26 +41,13 @@ export default async (
     return;
   }
 
-  let problem = (
-    await fetchProblemData({
-      problemID: data.problemID,
-      platform: data.platform,
-    })
-  ).data;
-  if (problem === null) {
-    res.status(400).json({
-      message: 'Could not identify problem ID.',
-    });
-    return;
-  }
-  problem.id = problem.id.toString();
-
+  // XXX: Normalize (lowercase, etc.) problem ID?
   const idToURLRef = getDatabase(firebaseApp)
     .ref('users')
     .child(data.userID)
     .child('platform-' + data.platform)
     .child('problem-id-to-file-id')
-    .child('' + problem.id);
+    .child(data.problemID);
 
   const idToURLSnap = await idToURLRef.get();
 
@@ -68,33 +55,50 @@ export default async (
     res.status(200).json({
       fileID: idToURLSnap.val(),
     });
-  } else {
-    const resp = await getDatabase(firebaseApp)
-      .ref('/files')
-      .push({
-        users: {
-          [data.userID]: {
-            name: data.userName,
-            color: colorFromUserId(data.userID),
-            permission: 'OWNER',
-          },
-        },
-        settings: {
-          workspaceName: problem.source + ': ' + problem.title,
-          defaultPermission: data.defaultPermission,
-          creationTime: ServerValue.TIMESTAMP,
-          language: 'cpp', //TODO think about how do we support other languages with this method?
-          problem,
-          compilerOptions: {
-            cpp: '-std=c++17 -O2 -Wall -Wextra -Wshadow -Wconversion -Wfloat-equal -Wduplicated-cond -Wlogical-op',
-            java: '',
-            py: '',
-          },
-        },
-      });
-    const fileID: string = resp.key!;
-    await idToURLRef.set(fileID);
-
-    res.status(200).json({ fileID: fileID });
+    return;
   }
+
+  // TODO: Check for cached ProblemData in Firestore
+
+  let problem = (
+    await fetchProblemData({
+      problemID: data.problemID,
+      platform: data.platform,
+    })
+  ).data;
+
+  if (problem === null) {
+    res.status(400).json({
+      message: 'Could not fetch problem data.',
+    });
+    return;
+  }
+
+  const resp = await getDatabase(firebaseApp)
+    .ref('/files')
+    .push({
+      users: {
+        [data.userID]: {
+          name: data.userName,
+          color: colorFromUserId(data.userID),
+          permission: 'OWNER',
+        },
+      },
+      settings: {
+        workspaceName: problem.source + ': ' + problem.title,
+        defaultPermission: data.defaultPermission,
+        creationTime: ServerValue.TIMESTAMP,
+        language: 'cpp', //TODO think about how do we support other languages with this method?
+        problem,
+        compilerOptions: {
+          cpp: '-std=c++17 -O2 -Wall -Wextra -Wshadow -Wconversion -Wfloat-equal -Wduplicated-cond -Wlogical-op',
+          java: '',
+          py: '',
+        },
+      },
+    });
+  const fileID: string = resp.key!;
+  await idToURLRef.set(fileID);
+
+  res.status(200).json({ fileID: fileID });
 };
