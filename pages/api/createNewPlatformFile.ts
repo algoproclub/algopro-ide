@@ -2,6 +2,7 @@ import { Platform } from '../../src/types/problem';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { fetchProblemData } from '../../src/scripts/fetchProblemData';
 import { getDatabase, ServerValue } from 'firebase-admin/database';
+import { getFirestore } from 'firebase-admin/firestore';
 import firebaseApp from '../../src/firebaseAdmin';
 import colorFromUserId from '../../src/scripts/colorFromUserId';
 
@@ -58,20 +59,33 @@ export default async (
     return;
   }
 
-  // TODO: Check for cached ProblemData in Firestore
+  const problemRef = getFirestore(firebaseApp)
+    .collection('problemsets')
+    .doc(data.platform)
+    .collection('problems')
+    .doc(data.problemID);
 
-  let problem = (
-    await fetchProblemData({
-      problemID: data.problemID,
-      platform: data.platform,
-    })
-  ).data;
+  const problemSnap = await problemRef.get();
 
-  if (problem === null) {
-    res.status(400).json({
-      message: 'Could not fetch problem data.',
-    });
-    return;
+  let problem = null;
+  if (!problemSnap.exists) {
+    problem = (
+      await fetchProblemData({
+        problemID: data.problemID,
+        platform: data.platform,
+      })
+    ).data;
+
+    if (problem === null) {
+      res.status(400).json({
+        message: 'Could not fetch problem data.',
+      });
+      return;
+    }
+
+    problemRef.set(problem);
+  } else {
+    problem = problemSnap.data()!;
   }
 
   const resp = await getDatabase(firebaseApp)
