@@ -1,7 +1,6 @@
 const admin = require('firebase-admin');
 const jsdom = require('jsdom');
 const crypto = require('node:crypto');
-const Mutex = require('async-mutex').Mutex;
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineString } = require('firebase-functions/params');
 const { JSDOM } = jsdom;
@@ -478,7 +477,7 @@ const updateResults = async pending => {
         fileID: fileID,
         platform: platform,
         username: username,
-        sessionCookie: accountData[platform]?.sessionCookie,
+        sessionCookie: accountData[platform]?.sessionCookie.value(),
         problemID: problemID,
         submissionID: submissionID,
         creationTime: creationTime,
@@ -519,6 +518,7 @@ exports.scheduledUpdate = onSchedule('every 2 seconds', async () => {
   if (!startNewUpdate) {
     return;
   }
+  await new Promise(r => setTimeout(r, 5000));
   await db.ref('submissions/pending').once('value', async snapshot => {
     await updateResults(snapshot.val());
   });
