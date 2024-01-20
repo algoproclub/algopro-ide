@@ -1,6 +1,7 @@
 const admin = require('firebase-admin');
 const jsdom = require('jsdom');
 const crypto = require('node:crypto');
+const { logger } = require('firebase-functions');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineString } = require('firebase-functions/params');
 const { JSDOM } = jsdom;
@@ -519,8 +520,13 @@ exports.scheduledUpdate = onSchedule('every 2 seconds', async () => {
   if (!startNewUpdate) {
     return;
   }
-  await db.ref('submissions/pending').once('value', async snapshot => {
-    await updateResults(snapshot.val());
-  });
-  await db.ref('submissions/lock').set(null);
+  try {
+    await db.ref('submissions/pending').once('value', async snapshot => {
+      await updateResults(snapshot.val());
+    });
+  } catch (error) {
+    logger.log(error);
+  } finally {
+    await db.ref('submissions/lock').set(null);
+  }
 });
