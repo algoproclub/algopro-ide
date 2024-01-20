@@ -453,6 +453,7 @@ const updateResultsCF = async submissionDataList => {
     });
   }
   const resultJSON = (await resp.json())['result'];
+  console.log(resultJSON);
   const promises = [];
   submissionDataList.forEach(submissionData => {
     promises.push(
@@ -477,7 +478,7 @@ const updateResults = async pending => {
         fileID: fileID,
         platform: platform,
         username: username,
-        sessionCookie: accountData[platform]?.sessionCookie.value(),
+        sessionCookie: accountData[platform]?.sessionCookie?.value(),
         problemID: problemID,
         submissionID: submissionID,
         creationTime: creationTime,
