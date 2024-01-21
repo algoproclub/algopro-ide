@@ -3,6 +3,7 @@ import 'tailwindcss/tailwind.css';
 import '../src/styles/globals.css';
 import firebase from 'firebase/app';
 import 'firebase/database';
+import 'firebase/functions';
 import 'firebase/auth';
 import 'firebase/analytics';
 import { ConnectionProvider } from '../src/context/ConnectionContext';
