@@ -26,7 +26,7 @@ const USACOTestCase = ({ data }: { data: TestCase }) => {
       : 'text-red-100';
   return (
     <div
-      className={`m-1 p-1 inline-block w-[4.5rem] bg-opacity-50 border ${containerClasses} relative rounded`}
+      className={`m-1 p-1 inline-block w-[5rem] bg-opacity-50 border ${containerClasses} relative rounded`}
       title={capitalize(data.title)}
     >
       <div className={`font-semibold text-center ${textColor} pt-1`}>
@@ -60,11 +60,7 @@ const USACOTestCase = ({ data }: { data: TestCase }) => {
   );
 };
 
-export default function USACOResults({
-  data,
-}: {
-  data: StatusData;
-}) {
+export default function USACOResults({ data }: { data: StatusData }) {
   let equalUpToTrim = false;
   let output = data.output;
 

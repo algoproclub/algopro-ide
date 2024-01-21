@@ -34,6 +34,7 @@ if (!firebase.apps?.length) {
     });
     firebase.auth().useEmulator('http://localhost:9099');
     firebase.database().useEmulator('localhost', 9000);
+    firebase.functions().useEmulator('localhost', 5001);
   } else {
     firebase.initializeApp(firebaseConfig);
     if (typeof window !== 'undefined' && firebase.analytics) {

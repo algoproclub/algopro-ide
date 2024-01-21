@@ -36,7 +36,7 @@ import LoadResultsModal from './LoadResultsModal';
 
 export interface TestCase {
   title: string;
-  trialNum: string;
+  trialNum: number;
   symbol: string;
   memory?: string;
   time?: string;

@@ -60,6 +60,10 @@ export type FileData = {
   problem: ProblemData;
   settings: FileSettings;
   isCodeRunning: boolean;
+  submission: {
+    id: string;
+    username?: string;
+  };
   state: {
     judge_resuts: any; // ???
   };
