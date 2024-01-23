@@ -1,9 +1,10 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { startUpdatingResults } from '../../scripts/judge';
 import { useEditorContext } from '../../context/EditorContext';
 import { useUserContext } from '../../context/UserContext';
+import firebase from 'firebase/app';
+import { StatusData } from './Workspace';
 
 const TextInput = ({
   text,
@@ -38,9 +39,13 @@ const TextInput = ({
 const LoadResultsModal = ({
   isOpen,
   onClose,
+  setStatusData,
+  updateStatusData,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  setStatusData: React.Dispatch<React.SetStateAction<StatusData | null>>;
+  updateStatusData: (snapshot: firebase.database.DataSnapshot) => void;
 }) => {
   const [submissionID, setSubmissionID] = useState<string>('');
   const [username, setUsername] = useState<string | undefined>(undefined);
@@ -61,8 +66,27 @@ const LoadResultsModal = ({
       onClose();
     }
   };
-  const loadResults = () => {
-    startUpdatingResults(fileData.id, submissionID, username).then(onClose);
+  const loadResults = async () => {
+    const updateRequest = firebase
+      .functions()
+      .httpsCallable('startUpdatingResults');
+    setStatusData({
+      statusCode: -100,
+      message: 'starting',
+    });
+    updateRequest({
+      fileID: fileData.id,
+      submissionID: submissionID,
+      username: username,
+    }).then(response => {
+      if (!response.data.success) {
+        firebase
+          .database()
+          .ref(`submissions/${fileData.id}/statusData`)
+          .once('value', updateStatusData);
+      }
+    });
+    onClose();
   };
   return (
     <Transition.Root show={isOpen} as={Fragment}>

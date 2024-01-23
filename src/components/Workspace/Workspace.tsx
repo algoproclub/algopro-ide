@@ -177,7 +177,12 @@ export default function Workspace({
 
   return (
     <>
-      <LoadResultsModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <LoadResultsModal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        setStatusData={setStatusData}
+        updateStatusData={updateStatusData}
+      />
       {/*for testing purposes*/}
       <div className="flex flex-col items-center mb-4 space-y-2 hidden">
         <input id="platform" type="text" placeholder="platform" />

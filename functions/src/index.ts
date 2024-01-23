@@ -1,5 +1,6 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { defineString } from 'firebase-functions/params';
+import { onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { FileData, Platform } from '../../src/context/EditorContext';
@@ -83,9 +84,6 @@ const updateResultsCF = async (submissionDataList: SubmissionData[]) => {
     (a, b) => a.creationTime - b.creationTime
   );
   const username = sorted[0].username;
-  if (!username) {
-    throw new Error('username is needed for CF submissions');
-  }
   const resp = await fetch(
     getCFRequestURL('user.status', {
       handle: username,
@@ -165,6 +163,57 @@ const updateResults = async (pending: PendingSubmission) => {
   promises.push(updateResultsCF(pendingByPlatform['codeforces']));
   await Promise.all(promises);
 };
+
+const startUpdatingResults = async (
+  fileID: string,
+  submissionID: string,
+  username?: string
+) => {
+  const defaultStatusData = {
+    statusCode: -100,
+    statusText: 'status-working',
+    message: 'starting',
+  };
+  await db.ref(`files/${fileID}/submission`).update({
+    id: submissionID,
+    username: username ?? null,
+  });
+  await db.ref('submissions').update({
+    [fileID]: {
+      statusData: defaultStatusData,
+    },
+  });
+  await db.ref('submissions/pending').update({
+    [fileID]: {
+      creationTime: Date.now(),
+    },
+  });
+};
+
+exports.startUpdatingResults = onCall(async request => {
+  const fileID = request.data.fileID;
+  const userID = request.auth?.uid;
+  const fileData = (await db.ref(`files/${fileID}`).get()).val();
+  if (
+    !userID ||
+    !fileData ||
+    !fileData.users ||
+    !fileData.users.hasOwnProperty(userID)
+  ) {
+    return { success: false };
+  }
+  const permission =
+    fileData.users[userID].permission ?? fileData?.settings?.defaultPermission;
+  if (!['OWNER', 'READ_WRITE'].includes(permission)) {
+    return { success: false };
+  }
+  await startUpdatingResults(
+    fileID,
+    request.data.submissionID,
+    request.data.username
+  );
+  return { success: true };
+});
 
 exports.scheduledUpdate = onSchedule('every 2 seconds', async () => {
   let startNewUpdate = false;

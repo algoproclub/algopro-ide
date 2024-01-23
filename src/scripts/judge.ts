@@ -11,32 +11,6 @@ export const extractJavaFilename = (code: string): string => {
   return 'Main.java'; // fallback, something went wrong
 };
 
-export const startUpdatingResults = async (
-  fileID: string,
-  submissionID: string,
-  username?: string
-) => {
-  const defaultStatusData = {
-    statusCode: -100,
-    statusText: 'status-working',
-    message: 'starting',
-  };
-  await db.ref(`files/${fileID}/submission`).update({
-    id: submissionID,
-    username: username ?? null,
-  });
-  await db.ref('submissions').update({
-    [fileID]: {
-      statusData: defaultStatusData,
-    },
-  });
-  await db.ref('submissions/pending').update({
-    [fileID]: {
-      creationTime: Date.now(),
-    },
-  });
-};
-
 export const submitToJudge = (
   language: 'cpp' | 'java' | 'py',
   code: string,

@@ -100,7 +100,7 @@ export default function USACOResults({ data }: { data: StatusData }) {
                 className="mr-2 w-4 h-4 text-gray-400 animate-spin-slow"
               />
             )}
-            {data.statusCode > -8 && data.statusCode < 0 && (
+            {data.statusCode === -1 && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'exclamation-triangle' }}
                 className="mr-2 text-yellow-500 w-4 h-4"
