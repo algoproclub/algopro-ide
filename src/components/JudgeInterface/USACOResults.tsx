@@ -8,11 +8,6 @@ const capitalize = (text: string | undefined): string | undefined => {
   }
 };
 
-const errorMessage: Record<number, string> = {
-  '-1': 'incorrect input',
-  '-2': 'unknown error',
-};
-
 const USACOTestCase = ({ data }: { data: TestCase }) => {
   const containerClasses =
     data.title?.toLowerCase() === 'correct answer'
@@ -125,13 +120,7 @@ export default function USACOResults({ data }: { data: StatusData }) {
                   className="mr-2 w-4 h-4 text-red-500"
                 />
               )}
-            {capitalize(
-              data.statusCode > -8 && data.statusCode < 0
-                ? `The fetching was unsuccessful: ${
-                    errorMessage[data.statusCode]
-                  }`
-                : data.message
-            )}
+            {capitalize(data.message)}
             {data.statusCode <= -8 && '...'}
           </span>
           {(data.time || data.memory) && <span> (</span>}

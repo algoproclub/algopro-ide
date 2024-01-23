@@ -171,7 +171,7 @@ export const SettingsModal = ({
         fileData.id + '.' + settingsToSet.language
       ] = false;
     }
-    updateRealFileData({
+    await updateRealFileData({
       settings: { ...realFileSettings, ...settingsToSet },
     });
     await firebase
@@ -202,7 +202,7 @@ export const SettingsModal = ({
         return data;
       });
     if (name !== firebaseUser.displayName) {
-      updateUsername(name);
+      await updateUsername(name);
     }
     onClose();
   };

@@ -1,10 +1,10 @@
 import { StringParam } from 'firebase-functions/lib/params/types';
 
-export type PlatformData = {
+export type AccountData = {
   sessionCookie?: StringParam;
 };
 
-export type Pending = {
+export type PendingSubmission = {
   [key: string]: {
     creationTime: number;
   };

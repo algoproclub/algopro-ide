@@ -7,14 +7,6 @@ import { SubmissionData } from './types';
 const { JSDOM } = jsdom;
 
 export abstract class ResultFetcher {
-  private static withEntry<T extends Record<string, any>>(
-    obj: T,
-    k: string,
-    v: any
-  ): T {
-    return v ? { ...obj, [k]: v } : obj;
-  }
-
   abstract initialize(): Promise<void>;
 
   abstract getStatusCode(): number;
@@ -24,6 +16,14 @@ export abstract class ResultFetcher {
   abstract getMemory(): string | undefined;
   abstract getTime(): string | undefined;
   abstract getLink(): string | undefined;
+
+  private static withEntry<T extends Record<string, any>>(
+    obj: T,
+    key: string,
+    val: any
+  ): T {
+    return val ? { ...obj, [key]: val } : obj;
+  }
 
   getTestCaseNum(): number {
     return 0;
@@ -42,7 +42,7 @@ export abstract class ResultFetcher {
   }
   getNthTestCase(n: number): TestCase {
     let testCase: TestCase = {
-      trialNum: n,
+      trialNum: n + 1,
       title: this.getTestCaseTitle(n),
       symbol: this.getTestCaseSymbol(n),
     };
@@ -361,18 +361,20 @@ export class AtCoderResultFetcher extends ResultFetcher {
       }
     );
     if (resp.status !== 200) {
-      throw resp.status === 400 ? new IncorrectDataError() : new Error();
+      throw resp.status === 404 ? new IncorrectDataError() : new Error();
     }
     this.document = new JSDOM(await resp.text()).window.document;
     this.summary = this.document.querySelectorAll(
       'table.table.table-bordered.table-striped > tbody'
     )[0];
+    if (!this.summary) {
+      throw new Error();
+    }
     this.testcases = Array.from(
       this.document.querySelectorAll(
         'table.table.table-bordered.table-striped.th-center > tbody'
       )[2]?.children ?? []
     );
-
     if (this.getTask() !== problemID.toLowerCase()) {
       throw new IncorrectDataError();
     }
@@ -522,9 +524,15 @@ export class CSESResultFetcher extends ResultFetcher {
       `https://cses.fi/problemset/result/${submissionID}/`,
       { headers: this.headers }
     );
+    if (resp.status !== 200) {
+      throw new Error();
+    }
     this.document = new JSDOM(await resp.text()).window.document;
     this.summary =
       this.document.querySelector('table.summary-table > tbody') ?? undefined;
+    if (!this.summary) {
+      throw new Error();
+    }
     this.testcases = Array.from(
       this.document.querySelector('table.narrow.closeable > tbody')?.children ??
         []

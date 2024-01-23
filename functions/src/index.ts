@@ -11,12 +11,13 @@ import {
   ResultFetcher,
   CSESResultFetcher,
 } from './getResult';
-import { Pending, PlatformData, SubmissionData } from './types';
+import { PendingSubmission, AccountData, SubmissionData } from './types';
 
 admin.initializeApp({
   databaseURL: 'http://localhost:9000/?ns=algopro-app-default-rtdb',
 });
 const db = admin.database();
+
 export class IncorrectDataError extends Error {}
 
 export const cfAPIKey = defineString('CF_API_KEY');
@@ -24,7 +25,7 @@ export const cfAPISecret = defineString('CF_API_SECRET');
 export const atCoderCookie = defineString('ATCODER_COOKIE');
 export const csesCookie = defineString('CSES_COOKIE');
 
-const accountData: { [key in Platform]: PlatformData } = {
+const accountData: { [key in Platform]: AccountData } = {
   atcoder: {
     sessionCookie: atCoderCookie,
   },
@@ -50,19 +51,15 @@ const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
     const data = await fetcher.getResults();
     await updateStatusData(fileID, data);
   } catch (error) {
+    let message = 'Error: unknown error';
     if (error instanceof IncorrectDataError) {
-      await updateStatusData(fileID, {
-        statusCode: -1,
-        statusText: 'status-done',
-        message: 'incorrect data',
-      });
-    } else {
-      await updateStatusData(fileID, {
-        statusCode: -1,
-        statusText: 'status-done',
-        message: 'incorrect data',
-      });
+      message = 'Error: incorrect data';
     }
+    await updateStatusData(fileID, {
+      statusCode: -1,
+      statusText: 'status-done',
+      message: message,
+    });
   }
 };
 
@@ -94,21 +91,15 @@ const updateResultsCF = async (submissionDataList: SubmissionData[]) => {
       handle: username,
     })
   );
-  if (resp.status === 400) {
-    submissionDataList.forEach(submissionData => {
-      updateStatusData(submissionData.fileID, {
-        statusCode: -1,
-        statusText: 'status-done',
-        message: 'unknown error',
-      });
-    });
-  }
   if (resp.status !== 200) {
     submissionDataList.forEach(submissionData => {
       updateStatusData(submissionData.fileID, {
         statusCode: -1,
         statusText: 'status-done',
-        message: 'unknown error',
+        message:
+          resp.status === 400
+            ? 'Error: incorrect data'
+            : 'Error: unknown error',
       });
     });
   }
@@ -125,8 +116,8 @@ const updateResultsCF = async (submissionDataList: SubmissionData[]) => {
   await Promise.all(promises);
 };
 
-const updateResults = async (pending: Pending) => {
-  const readSubmissionData = async (pending: Pending) => {
+const updateResults = async (pending: PendingSubmission) => {
+  const readSubmissionData = async (pending: PendingSubmission) => {
     const submissionData: SubmissionData[] = [];
     for (let fileID of Object.keys(pending)) {
       const creationTime = pending[fileID].creationTime;
