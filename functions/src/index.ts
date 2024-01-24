@@ -39,7 +39,7 @@ const accountData: { [key in Platform]: AccountData } = {
 };
 
 const updateStatusData = async (id: string, statusData: StatusData) => {
-  const updates: { [k: string]: StatusData | null } = {};
+  const updates: { [key: string]: StatusData | null } = {};
   updates[`submissions/${id}/statusData`] = statusData;
   if (statusData.statusCode > -8) {
     updates[`submissions/pending/${id}`] = null;
@@ -142,7 +142,7 @@ const updateResults = async (pending: PendingSubmission) => {
   }
   const pendingData = await readSubmissionData(pending);
   const pendingByPlatform = pendingData.reduce(
-    (accumulator: { [k: string]: SubmissionData[] }, data) => {
+    (accumulator: { [key: string]: SubmissionData[] }, data) => {
       const platform = data.platform;
       if (!accumulator[platform]) {
         accumulator[platform] = [];

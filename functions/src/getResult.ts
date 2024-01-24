@@ -8,7 +8,6 @@ const { JSDOM } = jsdom;
 
 export abstract class ResultFetcher {
   abstract initialize(): Promise<void>;
-
   abstract getStatusCode(): number;
   abstract getStatusText(): string | undefined;
   abstract getMessage(): string;
@@ -103,7 +102,7 @@ export class CFResultFetcher extends ResultFetcher {
 
   constructor(
     private submissionData: SubmissionData,
-    private resultJSON: { [k: string]: any }
+    private resultJSON: { [key: string]: any }
   ) {
     super();
   }
@@ -207,9 +206,9 @@ export class AtCoderResultFetcher extends ResultFetcher {
     IE: 'internal error',
   };
   private readonly headers: HeadersInit;
-  private document: Document | undefined;
-  private summary: Element | undefined;
-  private testcases: Element[] | undefined;
+  private document?: Document;
+  private summary?: Element;
+  private testcases?: Element[];
 
   constructor(private submissionData: SubmissionData) {
     super();
@@ -383,9 +382,9 @@ export class AtCoderResultFetcher extends ResultFetcher {
 
 export class CSESResultFetcher extends ResultFetcher {
   private readonly headers: HeadersInit;
-  private document: Document | undefined;
-  private summary: Element | undefined;
-  private testcases: Element[] | undefined;
+  private document?: Document;
+  private summary?: Element;
+  private testcases?: Element[];
 
   constructor(private submissionData: SubmissionData) {
     super();
@@ -542,7 +541,7 @@ export class CSESResultFetcher extends ResultFetcher {
 
 export const getCFRequestURL = (
   methodName: string,
-  params: { [k: string]: any }
+  params: { [key: string]: any }
 ) => {
   const genRandStr = (len: number) => {
     let result = '';
@@ -554,12 +553,12 @@ export const getCFRequestURL = (
     return result;
   };
 
-  const getQueryStr = (params: { [k: string]: any }) => {
-    const arr = Object.entries(params).sort((a, b) => {
-      const keyComparison = a[0].localeCompare(b[0]);
+  const getQueryStr = (params: { [key: string]: any }) => {
+    const arr = Object.entries(params).sort((param1, param2) => {
+      const keyComparison = param1[0].localeCompare(param2[0]);
       return keyComparison !== 0
         ? keyComparison
-        : `${a[1]}`.localeCompare(`${b[1]}`);
+        : `${param1[1]}`.localeCompare(`${param2[1]}`);
     });
     return arr.map(item => `${item[0]}=${item[1]}`).join('&');
   };
