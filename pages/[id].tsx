@@ -38,6 +38,8 @@ import useUserFileConnection from '../src/hooks/useUserFileConnection';
 import useUpdateUserDashboard from '../src/hooks/useUpdateUserDashboard';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
 import { useConnectionContext } from '../src/context/ConnectionContext';
+import { PlatformProblem, ProblemData } from '../src/types/problem';
+import { fetchProblemFromDb } from '../src/scripts/fetchProblemFromDb';
 import Link from 'next/link';
 
 function EditorPage() {
@@ -77,8 +79,14 @@ function EditorPage() {
     }, 0);
   };
 
-  const handleRunCode = () => {
-    const problem = fileData.settings.problem;
+  const handleRunCode = async () => {
+    const problem =
+      fileData.settings.problem?.platform === 'USACO'
+        ? (fileData.settings.problem as ProblemData)
+        : await fetchProblemFromDb(
+            fileData.settings.problem as PlatformProblem | null
+          );
+
     const setIsRunning = (isRunning: boolean) => {
       updateFileData({
         isCodeRunning: isRunning,

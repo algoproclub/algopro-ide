@@ -29,9 +29,13 @@ import { UserList } from '../UserList/UserList';
 import Samples from '../JudgeInterface/Samples';
 import useJudgeResults from '../../hooks/useJudgeResults';
 import USACOJudgeInterface from '../JudgeInterface/USACOJudgeInterface';
+import GenericJudgeInterface from '../JudgeInterface/GenericJudgeInterface';
 import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { PlatformProblem, ProblemData } from '../../types/problem';
+import { fetchProblemFromDb } from '../../scripts/fetchProblemFromDb';
 
 interface TestCase {
   title: string;
@@ -89,13 +93,24 @@ export default function Workspace({
   const [statusData, setStatusData] = useState<StatusData | null>(null);
 
   useEffect(() => {
-    setStatusData(null);
-    setProblem(fileData.settings.problem);
-    if (fileData.settings.problem) {
-      setInputTab('judge');
-    }
+    (async () => {
+      setStatusData(null);
+
+      // XXX: hack
+      const problemData =
+        fileData.settings.problem?.platform === 'USACO'
+          ? (fileData.settings.problem as ProblemData)
+          : await fetchProblemFromDb(
+              fileData.settings.problem as PlatformProblem | null
+            );
+
+      setProblem(problemData);
+      if (problemData) {
+        setInputTab('judge');
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fileData.settings.problem?.id]);
+  }, [fileData.settings.problem]);
 
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
   const { lightMode } = useUserContext().userData;
@@ -170,7 +185,7 @@ export default function Workspace({
               {inputTab === 'judge' &&
                 problem &&
                 (isNaN(Number(problem.id)) ? (
-                  <PlanetsJudgeInterface
+                  <GenericJudgeInterface
                     problem={problem}
                     statusData={statusData}
                     setStatusData={setStatusData}

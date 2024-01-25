@@ -19,6 +19,7 @@ export type ProblemData = {
   url: string;
   source: string;
   title: string;
+  statement: string | null;
   input: string;
   output: string;
   samples: Sample[];

@@ -103,7 +103,7 @@ export default async (
         defaultPermission: data.defaultPermission,
         creationTime: ServerValue.TIMESTAMP,
         language: 'cpp', //TODO think about how do we support other languages with this method?
-        problem,
+        problem: { platform: data.platform, problemID: data.problemID },
         compilerOptions: {
           cpp: '-std=c++17 -O2 -Wall -Wextra -Wshadow -Wconversion -Wfloat-equal -Wduplicated-cond -Wlogical-op',
           java: '',

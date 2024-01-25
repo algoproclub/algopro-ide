@@ -18,7 +18,7 @@ import React, {
 } from 'react';
 import { ChatMessage } from '../components/Chat';
 import { useUserContext } from './UserContext';
-import { ProblemData } from '../types/problem';
+import { PlatformProblem, ProblemData } from '../types/problem';
 
 export type Language = 'cpp' | 'java' | 'py';
 
@@ -27,7 +27,8 @@ export interface FileSettings {
   defaultPermission: 'READ_WRITE' | 'READ' | 'PRIVATE';
   workspaceName: string | null;
   creationTime: string | null; // firebase timetsamp?
-  problem: ProblemData | null;
+  // FIXME: Store only PlatformProblem for USACO, too!
+  problem: ProblemData | PlatformProblem | null;
   classroomID: string | null;
   language: Language;
 }
