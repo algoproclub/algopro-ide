@@ -21,12 +21,12 @@ import { getApp, getApps, initializeApp, cert } from 'firebase-admin/app';
 // import serviceAccount from './serviceAccountKey.json';
 
 if (getApps().length === 0) {
-  if (process.env.NEW_NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+  if (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
     initializeApp({
       credential: cert({
-        projectId: process.env.NEW_NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        privateKey: process.env.NEW_FIREBASE_PRIVATE_KEY,
-        clientEmail: process.env.NEW_FIREBASE_CLIENT_EMAIL,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
       }),
       databaseURL:
         'https://algopro-app-default-rtdb.europe-west1.firebasedatabase.app',
