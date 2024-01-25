@@ -16,6 +16,8 @@ import { SHOULD_USE_FIREBASE_EMULATOR } from '../src/dev_constants';
 const firebaseConfig = {
   apiKey: 'AIzaSyBYdZ07lyFBG6s8x2e06NUDCDmPh12AaX0',
   authDomain: 'algopro-app.firebaseapp.com',
+  databaseURL:
+    'https://algopro-app-default-rtdb.europe-west1.firebasedatabase.app',
   projectId: 'algopro-app',
   storageBucket: 'algopro-app.appspot.com',
   messagingSenderId: '814731555768',
