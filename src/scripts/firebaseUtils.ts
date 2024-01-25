@@ -1,12 +1,9 @@
-import firebase from 'firebase/app';
+import * as firebase from 'firebase/auth';
 
 export const signInAnonymously = (): void => {
-  firebase
-    .auth()
-    .signInAnonymously()
-    .catch(error => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      alert('Error signing in: ' + errorCode + ' ' + errorMessage);
-    });
+  firebase.signInAnonymously(firebase.getAuth()).catch(error => {
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    alert('Error signing in: ' + errorCode + ' ' + errorMessage);
+  });
 };

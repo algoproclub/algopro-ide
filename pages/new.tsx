@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { RadioGroup } from '@headlessui/react';
 import { Language } from '../src/context/EditorContext';
 import Link from 'next/link';
-import firebase from 'firebase/app';
+import { getDatabase, ref, update } from 'firebase/database';
 import { SharingPermissions } from '../src/components/SharingPermissions';
 import va from '@vercel/analytics';
 
@@ -63,7 +63,7 @@ export default function NewFilePage() {
     setIsSubmitting(true);
     (async () => {
       va.track('Create File', { type: 'new-file' });
-      firebase.database().ref(`users/${firebaseUser.uid}/data`).update({
+      update(ref(getDatabase(), `users/${firebaseUser.uid}/data`), {
         defaultLanguage: lang,
         defaultPermission: defaultPerimssion,
       });
