@@ -2,10 +2,8 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { StatusData, TestCase } from '../Workspace/Workspace';
 
-const capitalize = (text: string | undefined): string | undefined => {
-  if (text) {
-    return text[0].toUpperCase() + text.substring(1);
-  }
+const capitalize = (text: string): string => {
+  return text[0].toUpperCase() + text.substring(1);
 };
 
 const USACOTestCase = ({ data }: { data: TestCase }) => {
@@ -120,7 +118,7 @@ export default function USACOResults({ data }: { data: StatusData }) {
                   className="mr-2 w-4 h-4 text-red-500"
                 />
               )}
-            {capitalize(data.message)}
+            {data.message ? capitalize(data.message) : null}
             {data.statusCode <= -8 && '...'}
           </span>
           {(data.time || data.memory) && <span> (</span>}

@@ -38,19 +38,19 @@ export interface TestCase {
   title: string;
   trialNum: number;
   symbol: string;
-  memory?: string;
-  time?: string;
+  memory: string | null;
+  time: string | null;
 }
 
 export interface StatusData {
   statusCode: number;
-  statusText?: string;
-  message?: string;
-  testCases?: TestCase[];
-  output?: string;
-  memory?: string;
-  time?: string;
-  link?: string;
+  statusText: string | null;
+  message: string | null;
+  testCases: TestCase[] | null;
+  output: string | null;
+  memory: string | null;
+  time: string | null;
+  link: string | null;
 }
 
 export default function Workspace({

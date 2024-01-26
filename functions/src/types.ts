@@ -4,7 +4,7 @@ export type AccountData = {
   sessionCookie?: StringParam;
 };
 
-export type PendingSubmission = {
+export type PendingSubmissions = {
   [key: string]: {
     creationTime: number;
   };
@@ -13,8 +13,8 @@ export type PendingSubmission = {
 export type SubmissionData = {
   fileID: string;
   platform: string;
-  username?: string;
-  sessionCookie?: string;
+  username: string | null;
+  sessionCookie: string | null;
   problemID: string;
   submissionID: string;
   creationTime: number;

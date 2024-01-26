@@ -1,7 +1,7 @@
 import * as crypto from 'node:crypto';
 import * as jsdom from 'jsdom';
 import { StatusData, TestCase } from '../../src/components/Workspace/Workspace';
-import { IncorrectDataError, cfAPIKey, cfAPISecret } from './index';
+import { cfAPIKey, cfAPISecret, IncorrectDataError } from './index';
 import { SubmissionData } from './types';
 
 const { JSDOM } = jsdom;
@@ -9,20 +9,12 @@ const { JSDOM } = jsdom;
 export abstract class ResultFetcher {
   abstract initialize(): Promise<void>;
   abstract getStatusCode(): number;
-  abstract getStatusText(): string | undefined;
+  abstract getStatusText(): string | null;
   abstract getMessage(): string;
-  abstract getOutput(): string | undefined;
-  abstract getMemory(): string | undefined;
-  abstract getTime(): string | undefined;
-  abstract getLink(): string | undefined;
-
-  private static withEntry<T extends Record<string, any>>(
-    obj: T,
-    key: string,
-    val: any
-  ): T {
-    return val ? { ...obj, [key]: val } : obj;
-  }
+  abstract getOutput(): string | null;
+  abstract getMemory(): string | null;
+  abstract getTime(): string | null;
+  abstract getLink(): string | null;
 
   getTestCaseNum(): number {
     return 0;
@@ -33,29 +25,20 @@ export abstract class ResultFetcher {
   getTestCaseSymbol(n: number): string {
     return '?';
   }
-  getTestCaseTime(n: number): string | undefined {
-    return;
+  getTestCaseTime(n: number): string | null {
+    return null;
   }
-  getTestCaseMemory(n: number): string | undefined {
-    return;
+  getTestCaseMemory(n: number): string | null {
+    return null;
   }
   getNthTestCase(n: number): TestCase {
-    let testCase: TestCase = {
+    return {
       trialNum: n + 1,
       title: this.getTestCaseTitle(n),
       symbol: this.getTestCaseSymbol(n),
+      memory: this.getTestCaseMemory(n),
+      time: this.getTestCaseTime(n),
     };
-    testCase = ResultFetcher.withEntry(
-      testCase,
-      'time',
-      this.getTestCaseTime(n)
-    );
-    testCase = ResultFetcher.withEntry(
-      testCase,
-      'memory',
-      this.getTestCaseMemory(n)
-    );
-    return testCase;
   }
   getTestCases(): TestCase[] {
     const testCases: TestCase[] = [];
@@ -67,33 +50,16 @@ export abstract class ResultFetcher {
 
   async getResults(): Promise<StatusData> {
     await this.initialize();
-    let statusData: StatusData = {
+    return {
       statusCode: this.getStatusCode(),
+      statusText: this.getStatusText(),
       message: this.getMessage(),
+      output: this.getOutput(),
+      memory: this.getMemory(),
+      time: this.getTime(),
+      link: this.getLink(),
+      testCases: this.getTestCases(),
     };
-    statusData = ResultFetcher.withEntry(
-      statusData,
-      'statusText',
-      this.getStatusText()
-    );
-    statusData = ResultFetcher.withEntry(
-      statusData,
-      'output',
-      this.getOutput()
-    );
-    statusData = ResultFetcher.withEntry(
-      statusData,
-      'memory',
-      this.getMemory()
-    );
-    statusData = ResultFetcher.withEntry(statusData, 'time', this.getTime());
-    statusData = ResultFetcher.withEntry(statusData, 'link', this.getLink());
-    statusData = ResultFetcher.withEntry(
-      statusData,
-      'testCases',
-      this.getTestCases()
-    );
-    return statusData;
   }
 }
 
@@ -148,48 +114,43 @@ export class CFResultFetcher extends ResultFetcher {
     return `https://codeforces.com/contest/${this.submission.contestId}/submission/${submissionID}`;
   }
 
-  getMemory(): string | undefined {
+  getMemory(): string | null {
     return (
       Math.round(this.submission['memoryConsumedBytes'] / 100000) / 10 + ' MB'
     );
   }
 
-  getTime(): string | undefined {
+  getTime(): string | null {
     return this.submission['timeConsumedMillis'] + ' ms';
   }
 
-  getOutput(): string | undefined {
-    return undefined;
+  getOutput(): string | null {
+    return null;
   }
 
   async initialize() {
     const { problemID, submissionID, username } = this.submissionData;
 
     if (!username) {
-      throw new IncorrectDataError();
-    }
-    if (!this.resultJSON) {
-      const resp = await fetch(
-        getCFRequestURL('user.status', {
-          handle: username,
-        })
-      );
-      if (resp.status !== 200) {
-        throw resp.status === 400 ? new IncorrectDataError() : new Error();
-      }
-      this.resultJSON = ((await resp.json()) as any)['result'];
+      throw new IncorrectDataError('CF: username is missing');
     }
     this.submission = this.resultJSON.find(
       (entry: any) => '' + entry.id === submissionID
     );
-    if (
-      !this.submission ||
-      this.submission.problem.contestId.toString() !==
-        problemID.split('_')[0] ||
-      this.submission.problem.index.toLowerCase() !==
-        problemID.split('_')[1].toLowerCase()
-    ) {
-      throw new IncorrectDataError();
+    if (!this.submission) {
+      throw new IncorrectDataError(
+        `CF: no such submission (username: ${username}, submission ID: ${submissionID})`
+      );
+    }
+    const respProblemID: string =
+      '' +
+      this.submission.problem.contestId.toString() +
+      this.submission.problem.index.toLowerCase();
+
+    if (problemID != respProblemID) {
+      throw new IncorrectDataError(
+        `CF: problem IDs don't match (${problemID} - ${respProblemID})`
+      );
     }
   }
 }
@@ -219,7 +180,7 @@ export class AtCoderResultFetcher extends ResultFetcher {
 
   private static formatMemory(text?: string | null) {
     const num = text ? parseInt(text?.split(' ')[0]) : NaN;
-    return isNaN(num) ? undefined : Math.round(num / 100) / 10 + ' MB';
+    return isNaN(num) ? null : Math.round(num / 100) / 10 + ' MB';
   }
 
   private static isValidVerdict(
@@ -260,7 +221,7 @@ export class AtCoderResultFetcher extends ResultFetcher {
     return status && status in AtCoderResultFetcher.codeToVerdict ? 0 : -8;
   }
 
-  getStatusText(): string | undefined {
+  getStatusText(): string {
     const status = this.summary?.querySelector('td#judge-status')?.textContent;
     return status && status in AtCoderResultFetcher.codeToVerdict
       ? 'status-done'
@@ -287,22 +248,24 @@ export class AtCoderResultFetcher extends ResultFetcher {
     return AtCoderResultFetcher.codeToVerdict[status];
   }
 
-  getTime(): string | undefined {
-    return this.getSummaryValue('exec time');
+  getTime(): string | null {
+    return this.getSummaryValue('exec time') ?? null;
   }
 
-  getMemory(): string | undefined {
-    return AtCoderResultFetcher.formatMemory(this.getSummaryValue('memory'));
-  }
-
-  getOutput(): string | undefined {
+  getMemory(): string | null {
     return (
-      this.document?.querySelector('div.col-sm-12 > pre:not(#submission-code)')
-        ?.textContent ?? undefined
+      AtCoderResultFetcher.formatMemory(this.getSummaryValue('memory')) ?? null
     );
   }
 
-  getLink(): string | undefined {
+  getOutput(): string | null {
+    return (
+      this.document?.querySelector('div.col-sm-12 > pre:not(#submission-code)')
+        ?.textContent ?? null
+    );
+  }
+
+  getLink(): string {
     const { problemID, submissionID } = this.submissionData;
     return `https://atcoder.jp/contests/${
       problemID.split('_')[0]
@@ -326,17 +289,17 @@ export class AtCoderResultFetcher extends ResultFetcher {
     return AtCoderResultFetcher.codeToVerdict[verdict];
   }
 
-  getTestCaseTime(n: number): string | undefined {
+  getTestCaseTime(n: number): string | null {
     if (!this.testcases) {
-      return undefined;
+      return null;
     }
     const tableRow = this.testcases[n];
-    return Array.from(tableRow.children)[2]?.textContent ?? undefined;
+    return Array.from(tableRow.children)[2]?.textContent ?? null;
   }
 
-  getTestCaseMemory(n: number): string | undefined {
+  getTestCaseMemory(n: number): string | null {
     if (!this.testcases) {
-      return undefined;
+      return null;
     }
     const tableRow = this.testcases[n];
     return AtCoderResultFetcher.formatMemory(
@@ -351,23 +314,29 @@ export class AtCoderResultFetcher extends ResultFetcher {
   async initialize(): Promise<void> {
     const { problemID, submissionID } = this.submissionData;
 
-    const resp = await fetch(
-      `https://atcoder.jp/contests/${
-        problemID.split('_')[0]
-      }/submissions/${submissionID}`,
-      {
-        headers: this.headers,
-      }
-    );
+    const url = `https://atcoder.jp/contests/${
+      problemID.split('_')[0]
+    }/submissions/${submissionID}`;
+
+    const resp = await fetch(url, {
+      headers: this.headers,
+    });
     if (resp.status !== 200) {
-      throw resp.status === 404 ? new IncorrectDataError() : new Error();
+      const errorMessage = `AtCoder: response status is not 200; url: ${url}; response status: ${resp.status}`;
+      throw resp.status === 404
+        ? new IncorrectDataError(errorMessage)
+        : new Error(errorMessage);
     }
-    this.document = new JSDOM(await resp.text()).window.document;
+    const respText = await resp.text();
+
+    this.document = new JSDOM(respText).window.document;
     this.summary = this.document.querySelectorAll(
       'table.table.table-bordered.table-striped > tbody'
     )[0];
     if (!this.summary) {
-      throw new Error();
+      throw new Error(
+        `AtCoder: summary table is missing; url: ${url}; response text: ${respText}`
+      );
     }
     this.testcases = Array.from(
       this.document.querySelectorAll(
@@ -375,7 +344,9 @@ export class AtCoderResultFetcher extends ResultFetcher {
       )[2]?.children ?? []
     );
     if (this.getTask() !== problemID.toLowerCase()) {
-      throw new IncorrectDataError();
+      throw new IncorrectDataError(
+        `AtCoder: problem IDs don't match (${this.getTask()} - ${problemID.toLowerCase()})`
+      );
     }
   }
 }
@@ -413,7 +384,7 @@ export class CSESResultFetcher extends ResultFetcher {
     return value === 'READY' || value === 'COMPILE ERROR' ? 0 : -8;
   }
 
-  getStatusText(): string | undefined {
+  getStatusText(): string {
     const value = this.getSummaryValue('status');
     return value === 'READY' || value === 'COMPILE ERROR'
       ? 'status-done'
@@ -438,9 +409,9 @@ export class CSESResultFetcher extends ResultFetcher {
     return value ?? '?';
   }
 
-  getOutput(): string | undefined {
+  getOutput(): string | null {
     if (!this.document) {
-      return;
+      return null;
     }
     const compilerReport = Array.from(
       this.document.querySelectorAll('div.closeable')
@@ -449,13 +420,13 @@ export class CSESResultFetcher extends ResultFetcher {
       return subtitle?.textContent === 'Compiler report';
     })[0];
 
-    return compilerReport?.querySelector('pre')?.textContent ?? undefined;
+    return compilerReport?.querySelector('pre')?.textContent ?? null;
   }
 
-  getTime(): string | undefined {
+  getTime(): string | null {
     const testCases = this.getTestCases();
     if (testCases.length === 0) {
-      return undefined;
+      return null;
     }
     const timeNum = Math.max.apply(
       null,
@@ -467,12 +438,12 @@ export class CSESResultFetcher extends ResultFetcher {
     return (timeNum === Infinity ? '∞' : '' + timeNum) + ' ms';
   }
 
-  getMemory(): string | undefined {
-    return undefined;
+  getMemory(): string | null {
+    return null;
   }
 
-  getLink(): string | undefined {
-    return undefined;
+  getLink(): string | null {
+    return null;
   }
 
   getTestCaseNum(): number {
@@ -495,20 +466,22 @@ export class CSESResultFetcher extends ResultFetcher {
     return verdict ?? '?';
   }
 
-  getTestCaseTime(n: number): string | undefined {
+  getTestCaseTime(n: number): string {
     if (!this.testcases) {
       return '?';
     }
-    const time = Array.from(
-      this.testcases[n].children
-    )[2].textContent?.toLowerCase();
+    const time =
+      Array.from(this.testcases[n].children)[2].textContent?.toLowerCase() ??
+      null;
+
+    if (!time) {
+      return '?';
+    }
     if (time === '--') {
       return '∞ ms';
     }
-    const num = time
-      ? parseFloat(time.substring(0, time.length - 1).trim()) * 1000
-      : NaN;
-    return isNaN(num) ? time : num + ' ms';
+    const num = parseFloat(time.substring(0, time.length - 1).trim()) * 1000;
+    return isNaN(num) ? '?' : num + ' ms';
   }
 
   getTestCaseSymbol(n: number): string {
@@ -519,18 +492,22 @@ export class CSESResultFetcher extends ResultFetcher {
   async initialize() {
     const { submissionID } = this.submissionData;
 
-    const resp = await fetch(
-      `https://cses.fi/problemset/result/${submissionID}/`,
-      { headers: this.headers }
-    );
+    const url = `https://cses.fi/problemset/result/${submissionID}/`;
+    const resp = await fetch(url, { headers: this.headers });
     if (resp.status !== 200) {
-      throw new Error();
+      throw new Error(
+        `CSES: response status is not 200; url: ${url}; response status: ${resp.status}`
+      );
     }
-    this.document = new JSDOM(await resp.text()).window.document;
+    const respText = await resp.text();
+
+    this.document = new JSDOM(respText).window.document;
     this.summary =
       this.document.querySelector('table.summary-table > tbody') ?? undefined;
     if (!this.summary) {
-      throw new Error();
+      throw new Error(
+        `CSES: summary table not found; url: ${url}; response text: ${respText}`
+      );
     }
     this.testcases = Array.from(
       this.document.querySelector('table.narrow.closeable > tbody')?.children ??

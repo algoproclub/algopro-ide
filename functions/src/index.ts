@@ -12,7 +12,7 @@ import {
   ResultFetcher,
   CSESResultFetcher,
 } from './getResult';
-import { PendingSubmission, AccountData, SubmissionData } from './types';
+import { PendingSubmissions, AccountData, SubmissionData } from './types';
 
 admin.initializeApp({
   databaseURL: 'http://localhost:9000/?ns=algopro-app-default-rtdb',
@@ -38,10 +38,13 @@ const accountData: { [key in Platform]: AccountData } = {
   usaco: {},
 };
 
-const updateStatusData = async (id: string, statusData: StatusData) => {
-  const updates: { [key: string]: StatusData | null } = {};
+const updateStatusData = async (
+  id: string,
+  statusData: Partial<StatusData>
+) => {
+  const updates: { [key: string]: Partial<StatusData> | null } = {};
   updates[`submissions/${id}/statusData`] = statusData;
-  if (statusData.statusCode > -8) {
+  if (statusData.statusCode !== undefined && statusData.statusCode > -8) {
     updates[`submissions/pending/${id}`] = null;
   }
   await db.ref().update(updates);
@@ -56,6 +59,7 @@ const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
     if (error instanceof IncorrectDataError) {
       message = 'Error: incorrect data';
     }
+    logger.log(error);
     await updateStatusData(fileID, {
       statusCode: -1,
       statusText: 'status-done',
@@ -64,19 +68,21 @@ const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
   }
 };
 
-const updateResult = async (submissionData: SubmissionData) => {
+const updateResultNonCF = async (submissionData: SubmissionData) => {
   let fetcher: ResultFetcher;
   if (submissionData.platform === 'cses') {
     fetcher = new CSESResultFetcher(submissionData);
   } else if (submissionData.platform === 'atcoder') {
     fetcher = new AtCoderResultFetcher(submissionData);
   } else {
-    return;
+    throw new Error(`invalid platform name (${submissionData.platform})`);
   }
   await getAndUpdate(fetcher, submissionData.fileID);
 };
 
-const updateResultsCF = async (submissionDataList: SubmissionData[]) => {
+const updateResultsCF = async (
+  submissionDataList: SubmissionData[] | undefined
+) => {
   if (!submissionDataList || submissionDataList.length === 0) {
     return;
   }
@@ -84,12 +90,15 @@ const updateResultsCF = async (submissionDataList: SubmissionData[]) => {
     (a, b) => a.creationTime - b.creationTime
   );
   const username = sorted[0].username;
-  const resp = await fetch(
-    getCFRequestURL('user.status', {
-      handle: username,
-    })
-  );
+  const url = getCFRequestURL('user.status', {
+    handle: username,
+  });
+  const resp = await fetch(url);
   if (resp.status !== 200) {
+    logger.log(
+      `CF: response status is not 200; url: ${url}; response status: ${resp.status}`
+    );
+
     submissionDataList.forEach(submissionData => {
       updateStatusData(submissionData.fileID, {
         statusCode: -1,
@@ -100,6 +109,7 @@ const updateResultsCF = async (submissionDataList: SubmissionData[]) => {
             : 'Error: unknown error',
       });
     });
+    return;
   }
   const resultJSON = ((await resp.json()) as any)['result'];
   const promises: Promise<void>[] = [];
@@ -114,8 +124,8 @@ const updateResultsCF = async (submissionDataList: SubmissionData[]) => {
   await Promise.all(promises);
 };
 
-const updateResults = async (pending: PendingSubmission) => {
-  const readSubmissionData = async (pending: PendingSubmission) => {
+const updateResults = async (pending: PendingSubmissions | null) => {
+  const readSubmissionData = async (pending: PendingSubmissions) => {
     const submissionData: SubmissionData[] = [];
     for (let fileID of Object.keys(pending)) {
       const creationTime = pending[fileID].creationTime;
@@ -129,7 +139,7 @@ const updateResults = async (pending: PendingSubmission) => {
         fileID: fileID,
         platform: platform,
         username: username,
-        sessionCookie: accountData[platform]?.sessionCookie?.value(),
+        sessionCookie: accountData[platform]?.sessionCookie?.value() ?? null,
         problemID: problemID,
         submissionID: submissionID,
         creationTime: creationTime,
@@ -155,10 +165,10 @@ const updateResults = async (pending: PendingSubmission) => {
 
   const promises: Promise<void>[] = [];
   pendingByPlatform['cses']?.forEach(obj => {
-    promises.push(updateResult(obj));
+    promises.push(updateResultNonCF(obj));
   });
   pendingByPlatform['atcoder']?.forEach(obj => {
-    promises.push(updateResult(obj));
+    promises.push(updateResultNonCF(obj));
   });
   promises.push(updateResultsCF(pendingByPlatform['codeforces']));
   await Promise.all(promises);
@@ -167,7 +177,7 @@ const updateResults = async (pending: PendingSubmission) => {
 const startUpdatingResults = async (
   fileID: string,
   submissionID: string,
-  username?: string
+  username: string | null
 ) => {
   const defaultStatusData = {
     statusCode: -100,
@@ -176,7 +186,7 @@ const startUpdatingResults = async (
   };
   await db.ref(`files/${fileID}/submission`).update({
     id: submissionID,
-    username: username ?? null,
+    username: username,
   });
   await db.ref('submissions').update({
     [fileID]: {

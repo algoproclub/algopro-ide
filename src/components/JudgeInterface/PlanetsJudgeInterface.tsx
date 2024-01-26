@@ -52,6 +52,9 @@ const mapVerdictToStatusCode = (verdict: string): number => {
 
 const convertPlanetsResultToStatusData = (result: any): StatusData => {
   return {
+    link: null,
+    memory: null,
+    time: null,
     statusText: 'status-working',
     message: result.verdict,
     statusCode: mapVerdictToStatusCode(result.verdict),
@@ -104,6 +107,12 @@ export default function PlanetsJudgeInterface({
     setStatusData({
       message: 'Sending submission to server',
       statusCode: -100,
+      statusText: null,
+      testCases: null,
+      output: null,
+      memory: null,
+      time: null,
+      link: null,
     });
 
     const submissionData = {

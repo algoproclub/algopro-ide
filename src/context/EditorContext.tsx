@@ -62,7 +62,7 @@ export type FileData = {
   isCodeRunning: boolean;
   submission: {
     id: string;
-    username?: string;
+    username: string | null;
   };
   state: {
     judge_resuts: any; // ???

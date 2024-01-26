@@ -62,6 +62,12 @@ export default function JudgeInterface({
     setStatusData({
       message: 'Sending submission to server',
       statusCode: -100,
+      statusText: null,
+      testCases: null,
+      output: null,
+      memory: null,
+      time: null,
+      link: null,
     });
 
     const data = {

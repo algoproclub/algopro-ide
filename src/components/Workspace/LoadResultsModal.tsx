@@ -12,7 +12,7 @@ const TextInput = ({
   label,
   onChange,
 }: {
-  text?: string;
+  text: string;
   id: string;
   label: string;
   onChange: (e: any) => void;
@@ -48,13 +48,13 @@ const LoadResultsModal = ({
   updateStatusData: (snapshot: firebase.database.DataSnapshot) => void;
 }) => {
   const [submissionID, setSubmissionID] = useState<string>('');
-  const [username, setUsername] = useState<string | undefined>(undefined);
+  const [username, setUsername] = useState<string>('');
   const { fileData } = useEditorContext();
   const { userData } = useUserContext();
   const needUsername = ['codeforces'].includes(fileData?.problem?.platform);
 
   useEffect(() => {
-    setUsername(userData.usernames[fileData?.problem?.platform]);
+    setUsername(userData.usernames[fileData?.problem?.platform] ?? '');
   }, [userData?.usernames, fileData?.problem?.platform]);
 
   const confirmedClose = () => {
@@ -70,9 +70,16 @@ const LoadResultsModal = ({
     const updateRequest = firebase
       .functions()
       .httpsCallable('startUpdatingResults');
+
     setStatusData({
       statusCode: -100,
       message: 'starting',
+      statusText: null,
+      link: null,
+      time: null,
+      memory: null,
+      output: null,
+      testCases: null,
     });
     updateRequest({
       fileID: fileData.id,
