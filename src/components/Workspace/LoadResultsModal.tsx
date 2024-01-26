@@ -48,13 +48,13 @@ const LoadResultsModal = ({
   updateStatusData: (snapshot: firebase.database.DataSnapshot) => void;
 }) => {
   const [submissionID, setSubmissionID] = useState<string>('');
-  const [username, setUsername] = useState<string>('');
+  const [username, setUsername] = useState<string | null>(null);
   const { fileData } = useEditorContext();
   const { userData } = useUserContext();
   const needUsername = ['codeforces'].includes(fileData?.problem?.platform);
 
   useEffect(() => {
-    setUsername(userData.usernames[fileData?.problem?.platform] ?? '');
+    setUsername(userData.usernames[fileData?.problem?.platform] ?? null);
   }, [userData?.usernames, fileData?.problem?.platform]);
 
   const confirmedClose = () => {
@@ -138,7 +138,7 @@ const LoadResultsModal = ({
                 {needUsername && (
                   <TextInput
                     label="Username"
-                    text={username}
+                    text={username ?? ''}
                     id="username"
                     onChange={e => setUsername(e.target.value)}
                   />
