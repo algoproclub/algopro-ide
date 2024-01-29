@@ -30,14 +30,11 @@ export const submitToJudge = (
         }
       : {}),
   };
-  return fetch(
-    `https://ggzk2rm2ad.execute-api.us-west-1.amazonaws.com/Prod/execute`,
-    {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    }
-  );
+  return fetch(`/api/execute`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
 };
