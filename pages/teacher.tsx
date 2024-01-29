@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Listbox } from '@headlessui/react';
+import { Listbox, Transition } from '@headlessui/react';
 import { getDatabase, ref, get } from 'firebase/database';
 import { FileData } from '../src/context/EditorContext';
 import { StatusData } from '../src/components/Workspace/Workspace';
@@ -77,8 +77,8 @@ const Pagination = ({
       <button
         className={`px-3 py-1.5 rounded border ${
           page === pageData.current
-            ? 'bg-indigo-600 border-indigo-600 hover:bg-indigo-700'
-            : 'border-gray-600 hover:border-gray-500 hover:bg-gray-800'
+            ? 'bg-indigo-600 border-indigo-600'
+            : 'border-gray-600 hover:border-gray-500 hover:bg-gray-800 active:bg-gray-700'
         }`}
         onClick={() => onChange(page)}
       >
@@ -89,7 +89,7 @@ const Pagination = ({
   return (
     <>
       <button
-        className="px-3 py-1 rounded border border-gray-600 flex items-center justify-center hover:border-gray-500 hover:bg-gray-800"
+        className="px-3 py-1 rounded border border-gray-600 flex items-center justify-center hover:border-gray-500 hover:bg-gray-800 active:bg-gray-700"
         onClick={() => onChange(1)}
       >
         <FontAwesomeIcon
@@ -119,7 +119,7 @@ const Pagination = ({
         </div>
       )}
       <button
-        className="px-3 py-1 rounded border border-gray-600 flex items-center justify-center hover:border-gray-500 hover:bg-gray-800"
+        className="px-3 py-1 rounded border border-gray-600 flex items-center justify-center hover:border-gray-500 hover:bg-gray-800 active:bg-gray-700"
         onClick={() => onChange(pageData.max)}
       >
         <FontAwesomeIcon
@@ -272,25 +272,34 @@ export default function TeacherPage() {
                     className={`w-full px-3 py-2 text-left rounded-md border ${
                       open
                         ? 'ring-2 ring-indigo-500 border-transparent bg-gray-800'
-                        : 'hover:bg-gray-800 border-gray-600 hover:border-gray-500'
+                        : 'hover:bg-gray-800 active:bg-gray-700 border-gray-600 hover:border-gray-500'
                     }`}
                   >
                     {editTimeList[selected]}
                   </Listbox.Button>
-                  <Listbox.Options className="border border-gray-600 rounded-md bg-gray-900 divide-y divide-gray-700 absolute top-[2.65rem] w-full cursor-pointer overflow-hidden">
-                    {editTimeList.map((val, ind) => (
-                      <Listbox.Option
-                        className="px-3 py-2 hover:bg-gray-800"
-                        key={ind}
-                        value={ind}
-                      >
-                        {val}
-                      </Listbox.Option>
-                    ))}
-                  </Listbox.Options>
+                  <Transition
+                    enter="transition duration-100 ease-out"
+                    enterFrom="transform scale-95 opacity-0"
+                    enterTo="transform scale-100 opacity-100"
+                    leave="transition duration-75 ease-out"
+                    leaveFrom="transform scale-100 opacity-100"
+                    leaveTo="transform scale-95 opacity-0"
+                  >
+                    <Listbox.Options className="border border-gray-600 rounded-md bg-gray-900 divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden">
+                      {editTimeList.map((val, ind) => (
+                        <Listbox.Option
+                          className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700"
+                          key={ind}
+                          value={ind}
+                        >
+                          {val}
+                        </Listbox.Option>
+                      ))}
+                    </Listbox.Options>
+                  </Transition>
                 </div>
                 <button
-                  className="border border-gray-600 px-3 py-1 rounded-lg hover:border-gray-500 hover:bg-gray-800"
+                  className="border border-gray-600 px-3 py-1 rounded-lg hover:border-gray-500 hover:bg-gray-800 active:bg-gray-700"
                   onClick={updateFileList}
                 >
                   <FontAwesomeIcon
@@ -304,11 +313,11 @@ export default function TeacherPage() {
         <div className="mt-3 border border-gray-600 overflow-x-auto">
           <table className="table-auto w-full bg-gray-800 divide-y divide-gray-600 text-sm">
             <thead>
-              <tr className="divide-x divide-gray-600">
+              <tr className="divide-x divide-gray-600 select-none">
                 {headers.map((val, ind) => (
                   <th
                     key={ind}
-                    className="px-3 py-2 text-left whitespace-nowrap cursor-pointer hover:bg-gray-700 space-x-2"
+                    className="px-3 py-2 text-left whitespace-nowrap cursor-pointer hover:bg-gray-700 active:bg-gray-600 space-x-2"
                     onClick={() => changeSorting(ind)}
                   >
                     <span>{val}</span>
