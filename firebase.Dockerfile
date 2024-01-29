@@ -9,4 +9,4 @@ RUN npm install -g firebase-tools
 COPY .firebaserc ./
 COPY firebase.json ./
 COPY database.rules.json ./
-ENTRYPOINT ["firebase", "emulators:start", "-P", "planets-prog"]
+ENTRYPOINT ["firebase", "emulators:start", "-P", "algopro-app"]
