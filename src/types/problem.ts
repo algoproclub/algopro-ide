@@ -24,3 +24,16 @@ export type ProblemData = {
   output: string;
   samples: Sample[];
 };
+
+export type ProblemSolution = {
+  problemID: string;
+  platform: Platform;
+  sourceCode: string;
+  language: 'cpp' | 'java' | 'py';
+};
+
+export type SubmissionData = {
+  id: string;
+  username: string | null;
+  platform: Platform;
+};
