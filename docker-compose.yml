@@ -14,6 +14,11 @@ services:
       dockerfile: yjs.Dockerfile
     ports:
       - '1234:1234'
+  execute:
+    build:
+      context: execute
+    ports:
+      - '1235'
   web:
     build:
       context: .
@@ -36,4 +41,4 @@ services:
       - type: bind
         source: patches/
         target: /app/patches
-    depends_on: [firebase, yjs]
+    depends_on: [firebase, yjs, execute]

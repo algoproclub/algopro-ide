@@ -3,6 +3,7 @@ WORKDIR /app
 
 COPY package*.json ./
 RUN yarn install
+COPY tsconfig.json ./
 COPY index.html ./
 COPY *.js ./
 COPY *.ts ./
