@@ -20,6 +20,7 @@ import JudgeSettings from './JudgeSettings';
 
 import SignInSettings from './SignInSettings';
 import JudgeResult from '../../types/judge';
+import { ProblemData } from '../../types/problem';
 import useJudgeResults from '../../hooks/useJudgeResults';
 import { EditorMode, useUserContext } from '../../context/UserContext';
 import { FileSettings, useEditorContext } from '../../context/EditorContext';
@@ -140,7 +141,11 @@ export const SettingsModal = ({
           return results;
         }
 
-        const samples = settingsToSet.problem.samples;
+        // FIXME: Support selecting problems on non-USACO platforms.
+        if (settingsToSet.problem.platform !== 'USACO') {
+          throw new Error('Unsupported platform');
+        }
+        const samples = (settingsToSet.problem as ProblemData).samples;
         setJudgeResults(resizeResults(newJudgeResults, 2 + samples.length));
       } else {
         setJudgeResults(newJudgeResults);

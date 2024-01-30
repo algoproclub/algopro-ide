@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileSettings } from '../../context/EditorContext';
 import ProblemSearchInterface from './ProblemSearchInterface';
-import { Platform } from '../../types/problem';
+import { Platform, ProblemData } from '../../types/problem';
 
 export default function JudgeSettings({
   workspaceSettings,
@@ -14,7 +14,10 @@ export default function JudgeSettings({
 }): JSX.Element {
   const canChange =
     userPermission === 'READ_WRITE' || userPermission === 'OWNER';
-  const { problem } = workspaceSettings;
+  const problem =
+    workspaceSettings.problem?.platform == Platform.USACO
+      ? (workspaceSettings.problem as ProblemData)
+      : null;
   return (
     <div>
       <div className="space-y-6">
@@ -56,6 +59,7 @@ export default function JudgeSettings({
                   input: hit.input,
                   output: hit.output,
                   samples: hit.samples,
+                  statement: hit.statement,
                 },
               });
             }}
