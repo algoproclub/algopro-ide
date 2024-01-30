@@ -33,6 +33,8 @@ function htmlToPlaintext(node: domhandler.ChildNode): string {
 const CODEFORCES_PROBLEM_REGEX = /^(\d+)([A-Z].*)$/;
 const CODEFORCES_TITLE_REGEX = /\w+\. (.*)/;
 
+const ATCODER_PROBLEM_REGEX = /(\w+)_(\w+)/;
+
 export const fetchProblemData = onCall<
   PlatformProblem,
   Promise<ProblemData | null>
@@ -45,6 +47,8 @@ export const fetchProblemData = onCall<
   switch (platform.toUpperCase()) {
     case 'CF':
       return fetchProblemDataCodeforces(problemID);
+    case 'ATCODER':
+      return fetchProblemDataAtCoder(problemID);
     default:
       throw new HttpsError(
         'unimplemented',
@@ -95,6 +99,61 @@ async function fetchProblemDataCodeforces(
     input: 'asdasdasd',
     output: 'XXXXXXx',
     source: `Codeforces ${problemID}`,
+    samples,
+  };
+}
+
+async function fetchProblemDataAtCoder(
+  problemID: string
+): Promise<ProblemData | null> {
+  const matches = problemID.match(ATCODER_PROBLEM_REGEX);
+  if (!matches) {
+    return null;
+  }
+
+  const url = `https://atcoder.jp/contests/${matches[1]}/tasks/${problemID}`;
+  const problemPage = await fetch(url);
+  if (!problemPage) {
+    return null;
+  }
+
+  const document = cheerio.load(await problemPage.text());
+
+  let samples: Sample[] = [];
+  const inputs_and_outputs = document('#task-statement .lang-en > div')
+    .filter((_, el) => document('h3', el).text().startsWith('Sample'))
+    .map((_, el) => document('pre', el).text())
+    .get();
+
+  for (let i = 0; i < inputs_and_outputs.length; i += 2)
+    samples.push({
+      input: inputs_and_outputs[i],
+      output: inputs_and_outputs[i + 1],
+    });
+
+  const title = document('span.h2')
+    .first()
+    .contents()
+    .filter((_, el) => el.type === 'text')
+    .text()
+    .trim();
+
+  const statement = document('#task-statement .lang-en > div')
+    .filter((_, el) => !document('h3', el).text().startsWith('Sample'))
+    .map((_, el) => document(el).html())
+    .toArray()
+    .join('\n');
+
+  return {
+    id: problemID,
+    submittable: true,
+    platform: Platform.ATCODER,
+    url,
+    title,
+    statement,
+    input: 'asdasdasd',
+    output: 'XXXXXXx',
+    source: `AtCoder ${problemID}`,
     samples,
   };
 }
