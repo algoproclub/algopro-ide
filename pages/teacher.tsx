@@ -60,7 +60,7 @@ type MainFileData = {
 };
 
 const db = getDatabase();
-const maxPageLength = 20;
+const maxPageLength = 18;
 
 const Pagination = ({
   pageData,
@@ -258,7 +258,7 @@ export default function TeacherPage() {
   );
 
   return (
-    <div className="w-full text-white mx-auto mt-8 max-w-7xl">
+    <div className="w-full text-white mx-auto pt-8 max-w-7xl">
       <div className="mx-2">
         <Listbox value={2} onChange={changeSelection}>
           {({ open }) => (
