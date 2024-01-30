@@ -92,26 +92,26 @@ export default function USACOResults({ data }: { data: StatusData }) {
       <div className="pb-3">
         <p className="font-bold text-gray-200 border-gray-700">
           <span className="space-x-2">
-            {data.statusCode <= -8 && (
+            {!['error', 'resolved'].includes(data.statusCode) && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'gear' }}
                 className="mr-2 w-4 h-4 text-gray-400 animate-spin-slow"
               />
             )}
-            {data.statusCode === -1 && (
+            {data.statusCode === 'error' && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'exclamation-triangle' }}
                 className="mr-2 text-yellow-500 w-4 h-4"
               />
             )}
-            {data.statusCode === 0 &&
+            {data.statusCode === 'resolved' &&
               data.message?.toLowerCase() === 'correct answer' && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'check' }}
                   className="mr-2 text-green-500 w-4 h-4"
                 />
               )}
-            {data.statusCode === 0 &&
+            {data.statusCode === 'resolved' &&
               data.message?.toLowerCase() !== 'correct answer' && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'xmark' }}
@@ -119,7 +119,7 @@ export default function USACOResults({ data }: { data: StatusData }) {
                 />
               )}
             {data.message ? capitalize(data.message) : null}
-            {data.statusCode <= -8 && '...'}
+            {!['error', 'resolved'].includes(data.statusCode) && '...'}
           </span>
           {(data.time || data.memory) && <span> (</span>}
           {data.time && <span>{data.time}</span>}

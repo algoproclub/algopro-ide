@@ -2,13 +2,13 @@ import * as crypto from 'node:crypto';
 import * as jsdom from 'jsdom';
 import { cfAPIKey, cfAPISecret, IncorrectDataError } from './index';
 import { SubmissionData } from './types';
-import { StatusData, TestCase } from '../../src/types/problem';
+import { StatusCode, StatusData, TestCase } from '../../src/types/problem';
 
 const { JSDOM } = jsdom;
 
 export abstract class ResultFetcher {
   abstract initialize(): Promise<void>;
-  abstract getStatusCode(): number;
+  abstract getStatusCode(): StatusCode;
   abstract getStatusText(): string | null;
   abstract getMessage(): string;
   abstract getOutput(): string | null;
@@ -79,8 +79,8 @@ export class CFResultFetcher extends ResultFetcher {
       : 'status-done';
   }
 
-  getStatusCode(): number {
-    return this.submission['verdict'] === 'TESTING' ? -8 : 0;
+  getStatusCode(): StatusCode {
+    return this.submission['verdict'] === 'TESTING' ? 'working' : 'resolved';
   }
 
   getMessage(): string {
@@ -216,9 +216,11 @@ export class AtCoderResultFetcher extends ResultFetcher {
       .toLowerCase();
   }
 
-  getStatusCode(): number {
+  getStatusCode(): StatusCode {
     const status = this.summary?.querySelector('td#judge-status')?.textContent;
-    return status && status in AtCoderResultFetcher.codeToVerdict ? 0 : -8;
+    return status && status in AtCoderResultFetcher.codeToVerdict
+      ? 'resolved'
+      : 'working';
   }
 
   getStatusText(): string {
@@ -235,7 +237,7 @@ export class AtCoderResultFetcher extends ResultFetcher {
     if (!status) {
       return 'running';
     }
-    if (this.getStatusCode() === -8) {
+    if (this.getStatusCode() === 'working') {
       let message = 'running';
       if (status.includes('/')) {
         message += ' on test ' + status.split('/')[0];
@@ -379,9 +381,11 @@ export class CSESResultFetcher extends ResultFetcher {
     return tableRow ? Array.from(tableRow.children)[1]?.textContent : undefined;
   }
 
-  getStatusCode(): number {
+  getStatusCode(): StatusCode {
     const value = this.getSummaryValue('status');
-    return value === 'READY' || value === 'COMPILE ERROR' ? 0 : -8;
+    return value === 'READY' || value === 'COMPILE ERROR'
+      ? 'resolved'
+      : 'working';
   }
 
   getStatusText(): string {

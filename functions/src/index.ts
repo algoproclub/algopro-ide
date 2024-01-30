@@ -18,17 +18,15 @@ import {
   StatusData,
 } from '../../src/types/problem';
 
-admin.initializeApp({
-  databaseURL: 'http://localhost:9000/?ns=algopro-app-default-rtdb',
-});
-const db = admin.database();
-
-export class IncorrectDataError extends Error {}
-
 export const cfAPIKey = defineString('CF_API_KEY');
 export const cfAPISecret = defineString('CF_API_SECRET');
 export const atCoderCookie = defineString('ATCODER_COOKIE');
 export const csesCookie = defineString('CSES_COOKIE');
+
+export class IncorrectDataError extends Error {}
+
+admin.initializeApp();
+const db = admin.database();
 
 const accountData: { [key in Platform]: AccountData } = {
   atcoder: {
@@ -48,7 +46,10 @@ const updateStatusData = async (
 ) => {
   const updates: { [key: string]: Partial<StatusData> | null } = {};
   updates[`submissions/${id}/statusData`] = statusData;
-  if (statusData.statusCode !== undefined && statusData.statusCode > -8) {
+  if (
+    statusData.statusCode !== undefined &&
+    ['error', 'resolved'].includes(statusData.statusCode)
+  ) {
     updates[`submissions/pending/${id}`] = null;
   }
   await db.ref().update(updates);
@@ -65,7 +66,7 @@ const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
     }
     logger.log(error);
     await updateStatusData(fileID, {
-      statusCode: -1,
+      statusCode: 'error',
       statusText: 'status-done',
       message: message,
     });
@@ -105,7 +106,7 @@ const updateResultsCF = async (
 
     submissionDataList.forEach(submissionData => {
       updateStatusData(submissionData.fileID, {
-        statusCode: -1,
+        statusCode: 'error',
         statusText: 'status-done',
         message:
           resp.status === 400
@@ -180,7 +181,7 @@ const updateResults = async (pending: PendingSubmissions | null) => {
   await Promise.all(promises);
 };
 
-const startUpdatingResults = async (
+const registerManualSubmission = async (
   fileID: string,
   submissionID: string,
   username: string | null
@@ -206,7 +207,7 @@ const startUpdatingResults = async (
   });
 };
 
-exports.startUpdatingResults = onCall(async request => {
+exports.registerManualSubmission = onCall(async request => {
   const fileID = request.data.fileID;
   const userID = request.auth?.uid;
   const fileData = (await db.ref(`files/${fileID}`).get()).val();
@@ -223,7 +224,7 @@ exports.startUpdatingResults = onCall(async request => {
   if (!['OWNER', 'READ_WRITE'].includes(permission)) {
     return { success: false };
   }
-  await startUpdatingResults(
+  await registerManualSubmission(
     fileID,
     request.data.submissionID,
     request.data.username

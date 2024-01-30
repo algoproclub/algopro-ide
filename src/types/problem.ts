@@ -22,8 +22,10 @@ export type FileSubmission = {
   username: string | null;
 };
 
+export type StatusCode = 'starting' | 'working' | 'error' | 'resolved';
+
 export interface StatusData {
-  statusCode: number;
+  statusCode: StatusCode;
   statusText: string | null;
   message: string | null;
   testCases: TestCase[] | null;

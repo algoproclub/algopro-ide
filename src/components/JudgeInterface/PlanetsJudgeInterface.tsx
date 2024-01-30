@@ -8,7 +8,7 @@ import firebase from 'firebase/app';
 import 'firebase/firestore';
 import 'firebase/functions';
 import { useEditorContext } from '../../context/EditorContext';
-import { ProblemData, StatusData } from '../../types/problem';
+import { ProblemData, StatusCode, StatusData } from '../../types/problem';
 
 export const judgePrefix = 'https://vjudge.usaco.guide';
 
@@ -44,10 +44,10 @@ const mapVerdictToTitle = (verdict: string): string => {
   return verdict;
 };
 
-const mapVerdictToStatusCode = (verdict: string): number => {
+const mapVerdictToStatusCode = (verdict: string): StatusCode => {
   if (verdict.startsWith('Starting') || verdict.startsWith('Running'))
-    return -8;
-  return 0;
+    return 'working';
+  return 'resolved';
 };
 
 const convertPlanetsResultToStatusData = (result: any): StatusData => {
@@ -106,7 +106,7 @@ export default function PlanetsJudgeInterface({
     }
     setStatusData({
       message: 'Sending submission to server',
-      statusCode: -100,
+      statusCode: 'resolved',
       statusText: null,
       testCases: null,
       output: null,
@@ -133,7 +133,11 @@ export default function PlanetsJudgeInterface({
       .doc(id)
       .onSnapshot(doc => {
         setStatusData(convertPlanetsResultToStatusData(doc.data()));
-        if (mapVerdictToStatusCode(doc.data()?.verdict) == 0) {
+        if (
+          ['error', 'resolved'].includes(
+            mapVerdictToStatusCode(doc.data()?.verdict)
+          )
+        ) {
           unsubscribe();
         }
       });
@@ -168,7 +172,10 @@ export default function PlanetsJudgeInterface({
         </div>
       </div>
       <SubmitButton
-        isLoading={(statusData?.statusCode ?? 0) <= -8}
+        isLoading={
+          statusData !== null &&
+          !['error', 'resolved'].includes(statusData.statusCode)
+        }
         isDisabled={!problem.submittable}
         onClick={() => handleSubmit()}
       />

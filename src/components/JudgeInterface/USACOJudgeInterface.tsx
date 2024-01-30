@@ -61,7 +61,7 @@ export default function JudgeInterface({
     }
     setStatusData({
       message: 'Sending submission to server',
-      statusCode: -100,
+      statusCode: 'starting',
       statusText: null,
       testCases: null,
       output: null,
@@ -92,7 +92,7 @@ export default function JudgeInterface({
       const data = await statusResp.json();
       setStatusData(data);
 
-      if (data.statusCode && parseInt(data.statusCode) <= -8) {
+      if (data.statusCode && ['error', 'resolved'].includes(data.statusCode)) {
         // still working
         setTimeout(checkStatus, 1000);
       }
@@ -156,7 +156,10 @@ export default function JudgeInterface({
         </div>
       </div>
       <SubmitButton
-        isLoading={(statusData?.statusCode ?? 0) <= -8}
+        isLoading={
+          statusData !== null &&
+          !['error', 'resolved'].includes(statusData.statusCode)
+        }
         isDisabled={!problem.submittable}
         onClick={() => handleSubmit()}
       />

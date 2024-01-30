@@ -69,10 +69,10 @@ const LoadResultsModal = ({
   const loadResults = async () => {
     const updateRequest = firebase
       .functions()
-      .httpsCallable('startUpdatingResults');
+      .httpsCallable('registerManualSubmission');
 
     setStatusData({
-      statusCode: -100,
+      statusCode: 'starting',
       message: 'starting',
       statusText: null,
       link: null,
