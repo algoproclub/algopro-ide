@@ -37,18 +37,25 @@ export const fetchProblemData = onCall<
   PlatformProblem,
   Promise<ProblemData | null>
 >(async request => {
-  const platform = request.data.platform;
-  const problemID = request.data.problemID;
-  if (typeof platform !== 'string') {
-    return null;
-  }
-  if (platform !== 'CF') {
-    return null;
-  }
-  if (typeof problemID !== 'string') {
+  const { platform, problemID } = request.data;
+  if (typeof platform !== 'string' || typeof problemID !== 'string') {
     return null;
   }
 
+  switch (platform.toUpperCase()) {
+    case 'CF':
+      return fetchProblemDataCodeforces(problemID);
+    default:
+      throw new HttpsError(
+        'unimplemented',
+        `platform '${platform}' is unimplemented`
+      );
+  }
+});
+
+async function fetchProblemDataCodeforces(
+  problemID: string
+): Promise<ProblemData | null> {
   const matches = problemID.match(CODEFORCES_PROBLEM_REGEX);
   if (!matches) {
     return null;
@@ -76,7 +83,7 @@ export const fetchProblemData = onCall<
   return {
     id: problemID,
     submittable: true,
-    platform,
+    platform: Platform.CF,
     url,
     title: document('.header > .title')
       .text()
@@ -90,7 +97,7 @@ export const fetchProblemData = onCall<
     source: `Codeforces ${problemID}`,
     samples,
   };
-});
+}
 
 export const submitProblemSolution = onCall<
   ProblemSolution,
