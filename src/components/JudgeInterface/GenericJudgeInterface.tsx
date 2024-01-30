@@ -13,6 +13,7 @@ import {
   ProblemSolution,
   SubmissionData,
 } from '../../types/problem';
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
 
 const submitProblemSolution = httpsCallable<ProblemSolution, SubmissionData>(
   getFunctions(),
@@ -46,14 +47,25 @@ export default function GenericJudgeInterface({
   return (
     <div className="relative h-full flex flex-col">
       <div className="flex-1 overflow-y-auto">
-        <div className="p-4 pb-0">
-          <div>
-            <p className="text-gray-100 font-bold text-lg">{problem.title}</p>
-            <div
-              dangerouslySetInnerHTML={{ __html: problem.statement ?? '' }}
-            ></div>
-          </div>
-        </div>
+        <section id="problem-statement" className="p-4 pb-0">
+          <h3>
+            <a
+              href={problem.url}
+              target="_blank"
+              rel="noreferrer"
+              className="font-bold text-lg hover:underline flex flex-row items-center"
+            >
+              {problem.title}
+              <ArrowTopRightOnSquareIcon
+                aria-hidden="true"
+                className="ml-1 h-5 w-5"
+              />
+            </a>
+          </h3>
+          <div
+            dangerouslySetInnerHTML={{ __html: problem.statement ?? '' }}
+          ></div>
+        </section>
       </div>
       <SubmitButton
         isLoading={(statusData?.statusCode ?? 0) <= -8}
