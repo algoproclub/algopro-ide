@@ -72,18 +72,15 @@ export const fetchProblemData = onCall<
     });
   }
 
-  const statement = document('.problem-statement > :not([class])');
-  const inputSpec = document('.problem-statement > .input-specification');
-  const outputSpec = document('.problem-statement > .output-specification');
-
   return {
     id: problemID,
     submittable: true,
     platform,
     url,
     title: document('.header > .title').text(),
-    statement: [statement, inputSpec, outputSpec]
-      .map(el => el.html())
+    statement: document('.problem-statement > :not(.sample-tests, .header)')
+      .map((_, el) => document(el).html())
+      .toArray()
       .join('\n'),
     input: 'asdasdasd',
     output: 'XXXXXXx',
