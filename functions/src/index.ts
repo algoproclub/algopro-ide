@@ -3,8 +3,6 @@ import { defineString } from 'firebase-functions/params';
 import { onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import { FileData, Platform } from '../../src/context/EditorContext';
-import { StatusData } from '../../src/components/Workspace/Workspace';
 import {
   getCFRequestURL,
   CFResultFetcher,
@@ -13,6 +11,12 @@ import {
   CSESResultFetcher,
 } from './getResult';
 import { PendingSubmissions, AccountData, SubmissionData } from './types';
+import {
+  FileSubmission,
+  Platform,
+  ProblemData,
+  StatusData,
+} from '../../src/types/problem';
 
 admin.initializeApp({
   databaseURL: 'http://localhost:9000/?ns=algopro-app-default-rtdb',
@@ -127,9 +131,11 @@ const updateResultsCF = async (
 const updateResults = async (pending: PendingSubmissions | null) => {
   const readSubmissionData = async (pending: PendingSubmissions) => {
     const submissionData: SubmissionData[] = [];
-    for (let fileID of Object.keys(pending)) {
+    for (const fileID of Object.keys(pending)) {
       const creationTime = pending[fileID].creationTime;
-      const fileData: FileData = (await db.ref(`files/${fileID}`).get()).val();
+      const fileData: { problem: ProblemData; submission: FileSubmission } = (
+        await db.ref(`files/${fileID}`).get()
+      ).val();
       const platform = fileData.problem.platform;
       const problemID = fileData.problem.id;
       const submissionID = fileData.submission.id;

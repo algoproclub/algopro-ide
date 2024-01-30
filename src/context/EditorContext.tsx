@@ -11,9 +11,7 @@ import React, {
 } from 'react';
 import { ChatMessage } from '../components/Chat';
 import { useUserContext } from './UserContext';
-import { Sample } from '../components/JudgeInterface/Samples';
-
-export type Platform = 'codeforces' | 'cses' | 'atcoder' | 'usaco' | 'planets';
+import { FileSubmission, Platform, ProblemData } from '../types/problem';
 
 export function GetPlatform(s: string): Platform {
   if (s == 'codeforces') return 'codeforces';
@@ -23,18 +21,6 @@ export function GetPlatform(s: string): Platform {
   if (s == 'planets') return 'planets';
   throw new Error('unknown platform');
 }
-
-export type ProblemData = {
-  id: string;
-  submittable: boolean;
-  platform: Platform;
-  url: string;
-  source: string;
-  title: string;
-  input: string;
-  output: string;
-  samples: Sample[];
-};
 
 export type Language = 'cpp' | 'java' | 'py';
 
@@ -60,10 +46,7 @@ export type FileData = {
   problem: ProblemData;
   settings: FileSettings;
   isCodeRunning: boolean;
-  submission: {
-    id: string;
-    username: string | null;
-  };
+  submission: FileSubmission;
   state: {
     judge_resuts: any; // ???
   };

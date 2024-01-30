@@ -4,7 +4,7 @@ import { useAtomValue } from 'jotai/utils';
 import JudgeResult from '../types/judge';
 import { EditorProps } from './editor/MonacoEditor/monaco-editor-types';
 import USACOResults from './JudgeInterface/USACOResults';
-import { StatusData } from './Workspace/Workspace';
+import { StatusData } from '../types/problem';
 import { useUserContext } from '../context/UserContext';
 import { useEditorContext } from '../context/EditorContext';
 import { CodeEditor } from './editor/CodeEditor';

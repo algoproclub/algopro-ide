@@ -1,9 +1,10 @@
-import { GetPlatform, Platform } from '../../src/context/EditorContext';
+import { GetPlatform } from '../../src/context/EditorContext';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { fetchProblemData } from '../../src/scripts/fetchProblemData';
 import { getDatabase, ServerValue } from 'firebase-admin/database';
 import firebaseApp from '../../src/firebaseAdmin';
 import colorFromUserId from '../../src/scripts/colorFromUserId';
+import { Platform } from '../../src/types/problem';
 
 type RequestData = {
   platform: string;

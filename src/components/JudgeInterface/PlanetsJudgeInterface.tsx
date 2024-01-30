@@ -1,14 +1,14 @@
 import { useAtomValue } from 'jotai/utils';
 import React, { useState, useEffect } from 'react';
 import { mainMonacoEditorAtom } from '../../atoms/workspace';
-import { StatusData } from '../Workspace/Workspace';
 import SubmitButton from './SubmitButton';
 import { PlayCircleIcon } from '@heroicons/react/20/solid';
 import Markdown from './Markdown';
 import firebase from 'firebase/app';
 import 'firebase/firestore';
 import 'firebase/functions';
-import { ProblemData, useEditorContext } from '../../context/EditorContext';
+import { useEditorContext } from '../../context/EditorContext';
+import { ProblemData, StatusData } from '../../types/problem';
 
 export const judgePrefix = 'https://vjudge.usaco.guide';
 

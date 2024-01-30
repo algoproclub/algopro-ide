@@ -1,8 +1,8 @@
 import * as crypto from 'node:crypto';
 import * as jsdom from 'jsdom';
-import { StatusData, TestCase } from '../../src/components/Workspace/Workspace';
 import { cfAPIKey, cfAPISecret, IncorrectDataError } from './index';
 import { SubmissionData } from './types';
+import { StatusData, TestCase } from '../../src/types/problem';
 
 const { JSDOM } = jsdom;
 

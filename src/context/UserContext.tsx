@@ -9,7 +9,7 @@ import type firebaseType from 'firebase';
 import firebase from 'firebase/app';
 import { signInAnonymously } from '../scripts/firebaseUtils';
 import animals from '../scripts/animals';
-import { Platform } from './EditorContext';
+import { Platform } from '../types/problem';
 
 export type Language = 'cpp' | 'java' | 'py';
 export const LANGUAGES: { label: string; value: Language }[] = [

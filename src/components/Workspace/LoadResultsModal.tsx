@@ -4,7 +4,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useEditorContext } from '../../context/EditorContext';
 import { useUserContext } from '../../context/UserContext';
 import firebase from 'firebase/app';
-import { StatusData } from './Workspace';
+import { StatusData } from '../../types/problem';
 
 const TextInput = ({
   text,

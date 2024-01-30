@@ -1,6 +1,6 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { StatusData, TestCase } from '../Workspace/Workspace';
+import { StatusData, TestCase } from '../../types/problem';
 
 const capitalize = (text: string): string => {
   return text[0].toUpperCase() + text.substring(1);

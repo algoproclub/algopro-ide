@@ -25,7 +25,7 @@ import { LazyRealtimeEditor } from '../RealtimeEditor/LazyRealtimeEditor';
 import { Output } from '../Output';
 import { TabBar } from '../TabBar';
 import { UserList } from '../UserList/UserList';
-import Samples, { Sample } from '../JudgeInterface/Samples';
+import Samples from '../JudgeInterface/Samples';
 import useJudgeResults from '../../hooks/useJudgeResults';
 import USACOJudgeInterface from '../JudgeInterface/USACOJudgeInterface';
 import { useEditorContext } from '../../context/EditorContext';
@@ -33,25 +33,7 @@ import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
 import firebase from 'firebase/app';
 import LoadResultsModal from './LoadResultsModal';
-
-export interface TestCase {
-  title: string;
-  trialNum: number;
-  symbol: string;
-  memory: string | null;
-  time: string | null;
-}
-
-export interface StatusData {
-  statusCode: number;
-  statusText: string | null;
-  message: string | null;
-  testCases: TestCase[] | null;
-  output: string | null;
-  memory: string | null;
-  time: string | null;
-  link: string | null;
-}
+import { StatusData } from '../../types/problem';
 
 export default function Workspace({
   handleRunCode,

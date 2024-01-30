@@ -26,11 +26,7 @@ import {
   UserData,
   useUserContext,
 } from '../../context/UserContext';
-import {
-  FileSettings,
-  Platform,
-  useEditorContext,
-} from '../../context/EditorContext';
+import { FileSettings, useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import firebase from 'firebase/app';
 
@@ -88,7 +84,7 @@ export const SettingsModal = ({
   const [cfUsername, setCfUsername] = useState<string>('');
   const dirtyRef = useRef<boolean>(false);
 
-  const [tab, setTab] = useState<typeof tabs[number]['id']>('workspace');
+  const [tab, setTab] = useState<(typeof tabs)[number]['id']>('workspace');
 
   const [judgeResults, setJudgeResults] = useJudgeResults();
 
