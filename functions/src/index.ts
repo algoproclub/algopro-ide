@@ -31,6 +31,7 @@ function htmlToPlaintext(node: domhandler.ChildNode): string {
 }
 
 const CODEFORCES_PROBLEM_REGEX = /^(\d+)([A-Z].*)$/;
+const CODEFORCES_TITLE_REGEX = /\w+\. (.*)/;
 
 export const fetchProblemData = onCall<
   PlatformProblem,
@@ -77,7 +78,9 @@ export const fetchProblemData = onCall<
     submittable: true,
     platform,
     url,
-    title: document('.header > .title').text(),
+    title: document('.header > .title')
+      .text()
+      .match(CODEFORCES_TITLE_REGEX)!![1],
     statement: document('.problem-statement > :not(.sample-tests, .header)')
       .map((_, el) => document(el).html())
       .toArray()
