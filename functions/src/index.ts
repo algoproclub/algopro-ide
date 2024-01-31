@@ -91,7 +91,7 @@ async function fetchProblemDataCodeforces(
     url,
     title: document('.header > .title')
       .text()
-      .match(CODEFORCES_TITLE_REGEX)!![1],
+      .match(CODEFORCES_TITLE_REGEX)![1],
     statement: document('.problem-statement > :not(.sample-tests, .header)')
       .map((_, el) => document(el).html())
       .toArray()
