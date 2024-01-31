@@ -1,9 +1,14 @@
-import type firebaseType from 'firebase';
+import {
+  DatabaseReference,
+  DataSnapshot,
+  off,
+  onValue,
+} from 'firebase/database';
 import { useState, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 
 export default function useFirebaseRefValue<T>(
-  ref: firebaseType.database.Reference | undefined
+  ref: DatabaseReference | undefined
 ) {
   const [value, setValue] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -17,15 +22,15 @@ export default function useFirebaseRefValue<T>(
     setIsLoading(true);
     setValue(null);
 
-    const callback = (snapshot: firebaseType.database.DataSnapshot) => {
+    const callback = (snapshot: DataSnapshot) => {
       ReactDOM.unstable_batchedUpdates(() => {
         setIsLoading(false);
         setValue(snapshot.val());
       });
     };
-    ref.on('value', callback);
+    onValue(ref, callback);
 
-    return () => ref.off('value', callback);
+    return () => off(ref, 'value', callback);
   }, [ref?.key]);
 
   return useMemo(

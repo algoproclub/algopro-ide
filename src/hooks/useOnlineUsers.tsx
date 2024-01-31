@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import type firebaseType from 'firebase';
 import { useAtomValue, useUpdateAtom } from 'jotai/utils';
 import { useEditorContext } from '../context/EditorContext';
 

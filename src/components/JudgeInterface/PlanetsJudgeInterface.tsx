@@ -4,6 +4,8 @@ import { mainMonacoEditorAtom } from '../../atoms/workspace';
 import SubmitButton from './SubmitButton';
 import { PlayCircleIcon } from '@heroicons/react/20/solid';
 import Markdown from './Markdown';
+import { getFirestore, getDoc, doc, onSnapshot } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import firebase from 'firebase/app';
 import 'firebase/firestore';
 import 'firebase/functions';
@@ -16,16 +18,13 @@ function encode(str: string | null) {
   return btoa(unescape(encodeURIComponent(str || '')));
 }
 
-const firestore = firebase.firestore();
+const firestore = getFirestore();
 
 const getProblemStatement = async (id: string, language: string) => {
-  const docSnap = await firestore
-    .collection('problems')
-    .doc(id)
-    .collection('statements')
-    .doc(language)
-    .get();
-  if (docSnap.exists) {
+  const docSnap = await getDoc(
+    doc(firestore, 'problems', id, 'statements', language)
+  );
+  if (docSnap.exists()) {
     return docSnap.data();
   } else {
     return { content: null };
@@ -121,26 +120,23 @@ export default function PlanetsJudgeInterface({
       solution: mainMonacoEditor.getValue(),
     };
 
-    const submit = firebase
-      .app()
-      .functions('europe-west1')
-      .httpsCallable('submit');
+    const submit = httpsCallable<unknown, { id: string }>(
+      getFunctions(undefined, 'europe-west1'),
+      'submit'
+    );
 
     const response = await submit(submissionData);
     const id = response.data.id;
-    const unsubscribe = firestore
-      .collection('submissions')
-      .doc(id)
-      .onSnapshot(doc => {
-        setStatusData(convertPlanetsResultToStatusData(doc.data()));
-        if (
-          ['error', 'resolved'].includes(
-            mapVerdictToStatusCode(doc.data()?.verdict)
-          )
-        ) {
-          unsubscribe();
-        }
-      });
+    const unsubscribe = onSnapshot(doc(firestore, 'submissions', id), doc => {
+      setStatusData(convertPlanetsResultToStatusData(doc.data()));
+      if (
+        ['error', 'resolved'].includes(
+          mapVerdictToStatusCode(doc.data()?.verdict)
+        )
+      ) {
+        unsubscribe();
+      }
+    });
   };
 
   return (

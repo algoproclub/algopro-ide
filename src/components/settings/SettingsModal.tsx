@@ -8,7 +8,6 @@ import React, {
 import { Dialog, Transition } from '@headlessui/react';
 import classNames from 'classnames';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { useAtom } from 'jotai';
 import {
   ComputerDesktopIcon,
   ServerIcon,
@@ -21,14 +20,10 @@ import JudgeSettings from './JudgeSettings';
 import SignInSettings from './SignInSettings';
 import JudgeResult from '../../types/judge';
 import useJudgeResults from '../../hooks/useJudgeResults';
-import {
-  EditorMode,
-  UserData,
-  useUserContext,
-} from '../../context/UserContext';
+import { EditorMode, useUserContext } from '../../context/UserContext';
 import { FileSettings, useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
-import firebase from 'firebase/app';
+import { update, ref, getDatabase, runTransaction } from 'firebase/database';
 
 export interface SettingsDialogProps {
   isOpen: boolean;
@@ -84,7 +79,7 @@ export const SettingsModal = ({
   const [cfUsername, setCfUsername] = useState<string>('');
   const dirtyRef = useRef<boolean>(false);
 
-  const [tab, setTab] = useState<(typeof tabs)[number]['id']>('workspace');
+  const [tab, setTab] = useState<typeof tabs[number]['id']>('workspace');
 
   const [judgeResults, setJudgeResults] = useJudgeResults();
 
@@ -170,10 +165,9 @@ export const SettingsModal = ({
     await updateRealFileData({
       settings: { ...realFileSettings, ...settingsToSet },
     });
-    await firebase
-      .database()
-      .ref(`users/${firebaseUser.uid}/data`)
-      .transaction((data: any) => {
+    await runTransaction(
+      ref(getDatabase(), `users/${firebaseUser.uid}/data`),
+      (data: any) => {
         if (data) {
           data.editorMode = editorMode;
           data.tabSize = tabSize;
@@ -196,7 +190,8 @@ export const SettingsModal = ({
           };
         }
         return data;
-      });
+      }
+    );
     if (name !== firebaseUser.displayName) {
       await updateUsername(name);
     }

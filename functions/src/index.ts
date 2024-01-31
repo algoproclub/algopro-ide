@@ -46,10 +46,7 @@ const updateStatusData = async (
 ) => {
   const updates: { [key: string]: Partial<StatusData> | null } = {};
   updates[`submissions/${id}/statusData`] = statusData;
-  if (
-    statusData.statusCode !== undefined &&
-    ['error', 'resolved'].includes(statusData.statusCode)
-  ) {
+  if (['error', 'resolved'].includes(statusData.statusCode!)) {
     updates[`submissions/pending/${id}`] = null;
   }
   await db.ref().update(updates);
@@ -186,10 +183,15 @@ const registerManualSubmission = async (
   submissionID: string,
   username: string | null
 ) => {
-  const defaultStatusData = {
-    statusCode: -100,
+  const defaultStatusData: StatusData = {
+    statusCode: 'starting',
     statusText: 'status-working',
     message: 'starting',
+    link: null,
+    time: null,
+    memory: null,
+    output: null,
+    testCases: null,
   };
   await db.ref(`files/${fileID}/submission`).update({
     id: submissionID,

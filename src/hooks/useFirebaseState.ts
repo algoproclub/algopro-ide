@@ -1,8 +1,14 @@
-import type firebaseType from 'firebase';
+import {
+  DatabaseReference,
+  DataSnapshot,
+  off,
+  onValue,
+  set,
+} from 'firebase/database';
 import { useEffect, useMemo, useState } from 'react';
 
 export default function useFirebaseState<T>(
-  ref: firebaseType.database.Reference | null | undefined,
+  ref: DatabaseReference | null | undefined,
   defaultValue: T
 ): [T, (value: T) => void] {
   const [value, setValue] = useState<T>(defaultValue);
@@ -12,19 +18,19 @@ export default function useFirebaseState<T>(
       setValue(defaultValue);
       return;
     }
-    const callback = (snapshot: firebaseType.database.DataSnapshot) => {
+    const callback = (snapshot: DataSnapshot) => {
       const val = snapshot.val();
       setValue(val ?? defaultValue);
     };
-    ref.on('value', callback);
-    return () => ref.off('value', callback);
+    onValue(ref, callback);
+    return () => off(ref, 'value', callback);
   }, [ref?.key]);
 
   const update = useMemo(() => {
     if (!ref) return () => {};
 
     return (value: T) => {
-      ref.set(value);
+      set(ref, value);
     };
   }, [ref]);
 
