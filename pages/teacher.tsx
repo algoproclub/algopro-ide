@@ -195,7 +195,7 @@ export default function TeacherPage() {
               return val.permission === 'OWNER';
             })?.name ?? '';
           const submission: StatusData | null = (
-            await get(ref(db, `submissions/${data.id}`))
+            await get(ref(db, `submissions/${data.id}/statusData`))
           ).val();
           const verdict = submission?.message ?? 'No submission';
 
