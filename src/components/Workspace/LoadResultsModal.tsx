@@ -3,8 +3,11 @@ import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useEditorContext } from '../../context/EditorContext';
 import { useUserContext } from '../../context/UserContext';
-import firebase from 'firebase/app';
 import { StatusData } from '../../types/problem';
+import { DataSnapshot, getDatabase, ref, onValue } from 'firebase/database';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import firebase from 'firebase/compat';
+import HttpsCallableResult = firebase.functions.HttpsCallableResult;
 
 const TextInput = ({
   text,
@@ -45,7 +48,7 @@ const LoadResultsModal = ({
   isOpen: boolean;
   onClose: () => void;
   setStatusData: React.Dispatch<React.SetStateAction<StatusData | null>>;
-  updateStatusData: (snapshot: firebase.database.DataSnapshot) => void;
+  updateStatusData: (snapshot: DataSnapshot) => void;
 }) => {
   const [submissionID, setSubmissionID] = useState<string>('');
   const [username, setUsername] = useState<string | null>(null);
@@ -67,9 +70,10 @@ const LoadResultsModal = ({
     }
   };
   const loadResults = async () => {
-    const updateRequest = firebase
-      .functions()
-      .httpsCallable('registerManualSubmission');
+    const updateRequest = httpsCallable(
+      getFunctions(),
+      'registerManualSubmission'
+    );
 
     setStatusData({
       statusCode: 'starting',
@@ -85,12 +89,15 @@ const LoadResultsModal = ({
       fileID: fileData.id,
       submissionID: submissionID,
       username: username,
-    }).then(response => {
+    }).then((response: HttpsCallableResult) => {
       if (!response.data.success) {
-        firebase
-          .database()
-          .ref(`submissions/${fileData.id}/statusData`)
-          .once('value', updateStatusData);
+        onValue(
+          ref(getDatabase(), `submissions/${fileData.id}/statusData`),
+          updateStatusData,
+          {
+            onlyOnce: true,
+          }
+        );
       }
     });
     onClose();

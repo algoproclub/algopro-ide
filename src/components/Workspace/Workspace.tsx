@@ -31,9 +31,16 @@ import USACOJudgeInterface from '../JudgeInterface/USACOJudgeInterface';
 import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
-import firebase from 'firebase/app';
 import LoadResultsModal from './LoadResultsModal';
 import { StatusData } from '../../types/problem';
+import {
+  DataSnapshot,
+  getDatabase,
+  onValue,
+  off,
+  ref,
+  update,
+} from 'firebase/database';
 
 export default function Workspace({
   handleRunCode,
@@ -58,9 +65,9 @@ export default function Workspace({
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
   const [judgeResults, setJudgeResults] = useJudgeResults();
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const db = firebase.database();
+  const db = getDatabase();
 
-  const updateStatusData = (snapshot: firebase.database.DataSnapshot) => {
+  const updateStatusData = (snapshot: DataSnapshot) => {
     const data = snapshot.val();
     setStatusData(data);
   };
@@ -91,15 +98,9 @@ export default function Workspace({
   }, [fileData.problem?.id]);
 
   useEffect(() => {
-    db.ref(`submissions/${fileData.id}/statusData`).on(
-      'value',
-      updateStatusData
-    );
+    onValue(ref(db, `submissions/${fileData.id}/statusData`), updateStatusData);
     return () => {
-      db.ref(`submissions/${fileData.id}/statusData`).off(
-        'value',
-        updateStatusData
-      );
+      off(ref(db, `submissions/${fileData.id}/statusData`));
     };
   }, []);
 
@@ -120,7 +121,7 @@ export default function Workspace({
     submitButton.classList.add('bg-indigo-500');
     submitButton.classList.remove('bg-indigo-400');
 
-    db.ref(`files/${fileData.id}/problem`).update({
+    update(ref(db, `files/${fileData.id}/problem`), {
       id: problemID,
       platform: platform,
     });

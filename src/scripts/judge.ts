@@ -1,7 +1,5 @@
 import firebase from 'firebase/app';
 
-const db = firebase.database();
-
 // Source: https://javascript.info/regexp-groups
 export const extractJavaFilename = (code: string): string => {
   const matches = Array.from(code.matchAll(/public +class +(\w+)/g));
