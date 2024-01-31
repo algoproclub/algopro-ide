@@ -119,16 +119,16 @@ async function fetchProblemDataAtCoder(
 
   const document = cheerio.load(await problemPage.text());
 
-  let samples: Sample[] = [];
-  const inputs_and_outputs = document('#task-statement .lang-en > div')
+  const samples: Sample[] = [];
+  const inputsAndOutputs = document('#task-statement .lang-en > div')
     .filter((_, el) => document('h3', el).text().startsWith('Sample'))
     .map((_, el) => document('pre', el).text())
     .get();
 
-  for (let i = 0; i < inputs_and_outputs.length; i += 2)
+  for (let i = 0; i < inputsAndOutputs.length; i += 2)
     samples.push({
-      input: inputs_and_outputs[i],
-      output: inputs_and_outputs[i + 1],
+      input: inputsAndOutputs[i],
+      output: inputsAndOutputs[i + 1],
     });
 
   const title = document('span.h2')
