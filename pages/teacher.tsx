@@ -20,6 +20,7 @@ const editTimeList = [
   'In 1 hour',
   'In 3 hours',
   'In 12 hours',
+  'In 1 day',
   'In 7 days',
 ];
 const timeInMillis = [
@@ -28,6 +29,7 @@ const timeInMillis = [
   60 * 60 * 1000,
   3 * 60 * 60 * 1000,
   12 * 60 * 60 * 1000,
+  24 * 60 * 60 * 1000,
   7 * 24 * 60 * 60 * 1000,
 ];
 
