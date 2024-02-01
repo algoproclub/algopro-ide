@@ -2,10 +2,8 @@ import { getFirestore, getDoc, doc, onSnapshot } from 'firebase/firestore';
 import { PlatformProblem, ProblemData } from '../types/problem';
 
 export async function fetchProblemFromDb(
-  problem: PlatformProblem | null
+  problem: PlatformProblem
 ): Promise<ProblemData | undefined> {
-  if (!problem) return undefined;
-
   const docRef = doc(
     getFirestore(),
     'problemsets',

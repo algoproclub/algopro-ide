@@ -101,13 +101,11 @@ export default function Workspace({
     (async () => {
       setStatusData(null);
 
-      // XXX: hack
+      // FIXME: Do not store USACO problems directly in the Realtime DB.
       const problemData =
-        fileData.problem?.platform === 'USACO'
+        fileData.problem && fileData.problem.platform === 'USACO'
           ? (fileData.problem as ProblemData)
-          : await fetchProblemFromDb(
-              fileData.problem as PlatformProblem | null
-            );
+          : await fetchProblemFromDb(fileData.problem as PlatformProblem);
 
       setProblem(problemData);
       if (problemData) {
