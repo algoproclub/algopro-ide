@@ -110,8 +110,8 @@ async function fetchProblemDataCodeforces(
       .map((_, el) => document(el).html())
       .toArray()
       .join('\n'),
-    input: 'asdasdasd',
-    output: 'XXXXXXx',
+    input: 'stdin',
+    output: 'stdout',
     source: `Codeforces ${problemID}`,
     samples,
   };
@@ -165,8 +165,8 @@ async function fetchProblemDataAtCoder(
     url,
     title,
     statement,
-    input: 'asdasdasd',
-    output: 'XXXXXXx',
+    input: 'stdin',
+    output: 'stdout',
     source: `AtCoder ${problemID}`,
     samples,
   };
