@@ -127,6 +127,7 @@ export default function Workspace({
     });
   };
 
+  // will be used some way in JudgeInterfaces after implementing automatic submission
   const submitSolution = () => {
     const getSubmitLink = async () => {
       const platform = fileData.problem.platform;
@@ -166,27 +167,6 @@ export default function Workspace({
         setStatusData={setStatusData}
         updateStatusData={updateStatusData}
       />
-      {/*for testing purposes*/}
-      <div className="flex flex-col items-center mb-4 space-y-2 hidden">
-        <input id="platform" type="text" placeholder="platform" />
-        <input id="problemID" type="text" placeholder="problem ID" />
-        <div className="flex space-x-2">
-          <button
-            className="text-white bg-indigo-500 px-4 py-2 rounded"
-            onClick={updateProblemData}
-          >
-            update
-          </button>
-          <button
-            disabled={submitDisabled}
-            id="submit-button"
-            className="text-white bg-indigo-400 px-4 py-2 rounded"
-            onClick={submitSolution}
-          >
-            sbmit
-          </button>
-        </div>
-      </div>
       <Split
         onDragEnd={() => layoutEditors()}
         render={({ getGridProps, getGutterProps }) => (
@@ -253,9 +233,6 @@ export default function Workspace({
                     yjsDocumentId={`${fileData.id}.input`}
                   />
                 )}
-                {/* not using any judge interface, for testing purposes
-                {inputTab === '_judge' &&
-                */}
                 {inputTab === 'judge' &&
                   problem &&
                   (isNaN(Number(problem.id)) ? (
