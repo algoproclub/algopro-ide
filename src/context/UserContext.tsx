@@ -20,6 +20,7 @@ import {
 } from 'firebase/database';
 import { signInAnonymously } from '../scripts/firebaseUtils';
 import animals from '../scripts/animals';
+import { Platform } from '../types/problem';
 
 export type Language = 'cpp' | 'java' | 'py';
 export const LANGUAGES: { label: string; value: Language }[] = [
@@ -49,12 +50,16 @@ export type UserContextType = {
   updateUsername: (username: string) => Promise<any>;
 };
 
+export type UsernameData = Partial<Record<Platform, string>>;
+
 export type UserData = {
   editorMode: 'Normal' | 'Vim';
   tabSize: number;
   lightMode: boolean;
   defaultPermission: 'READ_WRITE' | 'READ' | 'PRIVATE';
   defaultLanguage: Language;
+  manualSubmission: boolean;
+  usernames: UsernameData;
 };
 
 export const defaultUserSettings: UserData = {
@@ -63,6 +68,8 @@ export const defaultUserSettings: UserData = {
   lightMode: false,
   defaultPermission: 'READ_WRITE', // change in dashboard
   defaultLanguage: 'cpp', // last viewed file
+  manualSubmission: false,
+  usernames: {},
 };
 
 export type EditorMode = 'Normal' | 'Vim';
@@ -110,6 +117,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         lightMode: data.lightMode ?? false,
         defaultPermission: data.defaultPermission ?? 'READ_WRITE',
         defaultLanguage: data.defaultLanguage ?? 'cpp',
+        manualSubmission: data.manualSubmission ?? false,
+        usernames: data.usernames ?? {},
       });
     };
     onValue(ref(getDatabase(), `users/${user.uid}/data`), handleSnapshot);

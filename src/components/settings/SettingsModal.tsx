@@ -8,7 +8,6 @@ import React, {
 import { Dialog, Transition } from '@headlessui/react';
 import classNames from 'classnames';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { useAtom } from 'jotai';
 import {
   ComputerDesktopIcon,
   ServerIcon,
@@ -16,7 +15,6 @@ import {
 } from '@heroicons/react/20/solid';
 import UserSettings from './UserSettings';
 import WorkspaceSettingsUI from './WorkspaceSettingsUI';
-import JudgeSettings from './JudgeSettings';
 
 import SignInSettings from './SignInSettings';
 import JudgeResult from '../../types/judge';
@@ -25,7 +23,7 @@ import useJudgeResults from '../../hooks/useJudgeResults';
 import { EditorMode, useUserContext } from '../../context/UserContext';
 import { FileSettings, useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
-import { update, ref, getDatabase } from 'firebase/database';
+import { update, ref, getDatabase, runTransaction } from 'firebase/database';
 
 export interface SettingsDialogProps {
   isOpen: boolean;
@@ -43,11 +41,6 @@ const tabs = [
     label: 'User',
     icon: UserIcon,
   },
-  // {
-  //   id: 'judge',
-  //   label: 'Judge',
-  //   icon: ServerIcon,
-  // },
 ] as const;
 
 export const SettingsModal = ({
@@ -77,6 +70,8 @@ export const SettingsModal = ({
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
   const [tabSize, setTabSize] = useState<number>(-1);
   const [lightMode, setLightMode] = useState<boolean>(false);
+  const [manualSubmission, setManualSubmission] = useState<boolean>(false);
+  const [cfUsername, setCfUsername] = useState<string>('');
   const dirtyRef = useRef<boolean>(false);
 
   const [tab, setTab] = useState<typeof tabs[number]['id']>('workspace');
@@ -87,9 +82,11 @@ export const SettingsModal = ({
     if (isOpen) {
       setFileSettings(realFileSettings);
       setName(firebaseUser.displayName ?? ''); // todo this shouldn't really be an empty string ever?
+      setCfUsername(userData.usernames.CF ?? '');
       setEditorMode(userData.editorMode);
       setTabSize(userData.tabSize);
       setLightMode(userData.lightMode);
+      setManualSubmission(userData.manualSubmission);
       dirtyRef.current = false;
       setTab('workspace');
     }
@@ -127,31 +124,6 @@ export const SettingsModal = ({
       settingsToSet = toKeep;
     }
 
-    if (realFileSettings.problem != settingsToSet.problem) {
-      const newJudgeResults = judgeResults;
-      while (newJudgeResults.length > 1) newJudgeResults.pop();
-
-      if (settingsToSet.problem) {
-        function resizeResults(
-          results: (JudgeResult | null)[],
-          newSize: number
-        ) {
-          while (results.length > newSize) results.pop();
-          while (results.length < newSize) results.push(null);
-          return results;
-        }
-
-        // FIXME: Support selecting problems on non-USACO platforms.
-        if (settingsToSet.problem.platform !== 'USACO') {
-          throw new Error('Unsupported platform');
-        }
-        const samples = (settingsToSet.problem as ProblemData).samples;
-        setJudgeResults(resizeResults(newJudgeResults, 2 + samples.length));
-      } else {
-        setJudgeResults(newJudgeResults);
-      }
-    }
-
     if (realFileSettings.language !== settingsToSet.language) {
       // The language changed.
       // This means we might have to initialize the code for the new language.
@@ -164,16 +136,38 @@ export const SettingsModal = ({
         fileData.id + '.' + settingsToSet.language
       ] = false;
     }
-    updateRealFileData({
+    await updateRealFileData({
       settings: { ...realFileSettings, ...settingsToSet },
     });
-    update(ref(getDatabase(), `users/${firebaseUser.uid}/data`), {
-      editorMode,
-      tabSize,
-      lightMode,
-    });
+    await runTransaction(
+      ref(getDatabase(), `users/${firebaseUser.uid}/data`),
+      (data: any) => {
+        if (data) {
+          data.editorMode = editorMode;
+          data.tabSize = tabSize;
+          data.lightMode = lightMode;
+          data.manualSubmission = manualSubmission;
+
+          if (!data.usernames) {
+            data.usernames = {};
+          }
+          data.usernames.CF = cfUsername;
+        } else {
+          data = {
+            editorMode: editorMode,
+            tabSize: tabSize,
+            lightMode: lightMode,
+            manualSubmission: manualSubmission,
+            usernames: {
+              CF: cfUsername,
+            },
+          };
+        }
+        return data;
+      }
+    );
     if (name !== firebaseUser.displayName) {
-      updateUsername(name);
+      await updateUsername(name);
     }
     onClose();
   };
@@ -261,6 +255,11 @@ export const SettingsModal = ({
                       setName(name);
                       dirtyRef.current = true;
                     }}
+                    cfUsername={cfUsername || ''}
+                    onCfUsernameChange={cfHandle => {
+                      setCfUsername(cfHandle);
+                      dirtyRef.current = true;
+                    }}
                     editorMode={editorMode}
                     onEditorModeChange={mode => {
                       setEditorMode(mode);
@@ -276,6 +275,11 @@ export const SettingsModal = ({
                       setLightMode(lightMode);
                       dirtyRef.current = true;
                     }}
+                    manualSubmission={manualSubmission}
+                    onManualSubmissionChange={manualSubmission => {
+                      setManualSubmission(manualSubmission);
+                      dirtyRef.current = true;
+                    }}
                   />
                 )}
                 {tab === 'workspace' && (
@@ -285,16 +289,6 @@ export const SettingsModal = ({
                     userPermission={userPermission || 'READ'}
                   />
                 )}
-                {
-                  // @ts-ignore
-                  tab === 'judge' && (
-                    <JudgeSettings
-                      workspaceSettings={fileSettings}
-                      onWorkspaceSettingsChange={onChange}
-                      userPermission={userPermission || 'READ'}
-                    />
-                  )
-                }
 
                 <div className="flex items-center space-x-4">
                   <button
@@ -311,22 +305,6 @@ export const SettingsModal = ({
                   >
                     Save
                   </button>
-                  {
-                    // @ts-ignore
-                    tab === 'judge' && (
-                      <button
-                        type="button"
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                        onClick={() => {
-                          onChange({
-                            problem: null,
-                          });
-                        }}
-                      >
-                        Clear
-                      </button>
-                    )
-                  }
                 </div>
 
                 {tab === 'user' && (

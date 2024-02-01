@@ -71,7 +71,7 @@ export default async (
   if (!problemSnap.exists) {
     problem = (
       await fetchProblemData({
-        problemID: data.problemID,
+        id: data.problemID,
         platform: data.platform,
       })
     ).data;
@@ -98,12 +98,12 @@ export default async (
           permission: 'OWNER',
         },
       },
+      problem: { platform: data.platform, id: data.problemID },
       settings: {
         workspaceName: problem.source + ': ' + problem.title,
         defaultPermission: data.defaultPermission,
         creationTime: ServerValue.TIMESTAMP,
         language: 'cpp', //TODO think about how do we support other languages with this method?
-        problem: { platform: data.platform, problemID: data.problemID },
         compilerOptions: {
           cpp: '-std=c++17 -O2 -Wall -Wextra -Wshadow -Wconversion -Wfloat-equal -Wduplicated-cond -Wlogical-op',
           java: '',

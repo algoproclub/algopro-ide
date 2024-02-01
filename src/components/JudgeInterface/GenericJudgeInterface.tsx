@@ -1,7 +1,7 @@
 import { useAtomValue } from 'jotai/utils';
 import React, { useState, useEffect, useRef } from 'react';
 import { mainEditorValueAtom } from '../../atoms/workspace';
-import { StatusData } from '../Workspace/Workspace';
+import { StatusData } from '../../types/problem';
 import SubmitButton from './SubmitButton';
 import { PlayCircleIcon } from '@heroicons/react/20/solid';
 import Markdown from './Markdown';

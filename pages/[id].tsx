@@ -81,11 +81,9 @@ function EditorPage() {
 
   const handleRunCode = async () => {
     const problem =
-      fileData.settings.problem?.platform === 'USACO'
-        ? (fileData.settings.problem as ProblemData)
-        : await fetchProblemFromDb(
-            fileData.settings.problem as PlatformProblem | null
-          );
+      fileData.problem?.platform === 'USACO'
+        ? (fileData.problem as ProblemData)
+        : await fetchProblemFromDb(fileData.problem as PlatformProblem | null);
 
     const setIsRunning = (isRunning: boolean) => {
       updateFileData({

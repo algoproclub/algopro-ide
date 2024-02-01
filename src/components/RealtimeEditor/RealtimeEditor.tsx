@@ -24,7 +24,7 @@ export interface RealtimeEditorProps extends EditorProps {
 
 const WEBSOCKET_SERVER = SHOULD_USE_DEV_YJS_SERVER
   ? 'ws://localhost:1234'
-  : 'wss://yjs.usaco.guide:443';
+  : 'wss://yjs.algopro.hu';
 
 const RealtimeEditor = ({
   defaultValue,
@@ -97,9 +97,9 @@ const RealtimeEditor = ({
             selection: any;
           }
         >;
-        let awarenessState =
+        const awarenessState =
           provider.awareness.getStates() as UserAwarenessData;
-        for (let addedUserID of added) {
+        for (const addedUserID of added) {
           const firebaseUserID =
             awarenessState.get(addedUserID)?.firebaseUserID ??
             '-NPeGgrWL0zpVHHZ2aECh';
@@ -144,7 +144,7 @@ const RealtimeEditor = ({
           yjsDocumentId.endsWith('java') ||
           yjsDocumentId.endsWith('py')
         ) {
-          let prefix = yjsDocumentId.substring(
+          const prefix = yjsDocumentId.substring(
             0,
             yjsDocumentId.lastIndexOf('.')
           );
@@ -172,7 +172,7 @@ const RealtimeEditor = ({
 
   // make editor read only until yjs syncs with server
   const editorOptions = useMemo(() => {
-    let editorOptions = { ...(props.options || {}) };
+    const editorOptions = { ...(props.options || {}) };
     if (!isSynced) editorOptions.readOnly = true;
     return editorOptions;
   }, [isSynced, props.options]);

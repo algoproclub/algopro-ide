@@ -11,7 +11,7 @@ export async function fetchProblemFromDb(
     'problemsets',
     problem.platform,
     'problems',
-    problem.problemID
+    problem.id
   );
 
   return (await getDoc(docRef)).data() as ProblemData | undefined;

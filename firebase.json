@@ -9,11 +9,11 @@
     "database": {
       "port": 9000
     },
-    "ui": {
-      "enabled": true
-    },
     "functions": {
       "port": 5001
+    },
+    "ui": {
+      "enabled": true
     },
     "firestore": {
       "port": 8080

@@ -1,3 +1,5 @@
+import firebase from 'firebase/app';
+
 // Source: https://javascript.info/regexp-groups
 export const extractJavaFilename = (code: string): string => {
   const matches = Array.from(code.matchAll(/public +class +(\w+)/g));

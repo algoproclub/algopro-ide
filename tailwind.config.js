@@ -19,6 +19,9 @@ module.exports = {
       backgroundColor: {
         'custom-blue': 'rgb(53,103,118)',
       },
+      animation: {
+        'spin-slow': 'spin 2s linear infinite',
+      },
     },
   },
   variants: {

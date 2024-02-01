@@ -5,12 +5,11 @@ import {
   mainMonacoEditorAtom,
 } from '../../atoms/workspace';
 import USACOResults from './USACOResults';
-import { StatusData } from '../Workspace/Workspace';
 import SubmitButton from './SubmitButton';
 import { PlayCircleIcon } from '@heroicons/react/20/solid';
 import { useUserContext } from '../../context/UserContext';
 import { useEditorContext } from '../../context/EditorContext';
-import { ProblemData } from '../../types/problem';
+import { ProblemData, StatusData } from '../../types/problem';
 
 export const judgePrefix =
   process.env.NODE_ENV === 'development' && false // note: having this as localhost:5000 will break testing
@@ -62,7 +61,13 @@ export default function JudgeInterface({
     }
     setStatusData({
       message: 'Sending submission to server',
-      statusCode: -100,
+      statusCode: 'starting',
+      statusText: null,
+      testCases: null,
+      output: null,
+      memory: null,
+      time: null,
+      link: null,
     });
 
     const data = {
@@ -87,7 +92,7 @@ export default function JudgeInterface({
       const data = await statusResp.json();
       setStatusData(data);
 
-      if (data.statusCode && parseInt(data.statusCode) <= -8) {
+      if (data.statusCode && ['error', 'resolved'].includes(data.statusCode)) {
         // still working
         setTimeout(checkStatus, 1000);
       }
@@ -151,7 +156,10 @@ export default function JudgeInterface({
         </div>
       </div>
       <SubmitButton
-        isLoading={(statusData?.statusCode ?? 0) <= -8}
+        isLoading={
+          statusData !== null &&
+          !['error', 'resolved'].includes(statusData.statusCode)
+        }
         isDisabled={!problem.submittable}
         onClick={() => handleSubmit()}
       />
