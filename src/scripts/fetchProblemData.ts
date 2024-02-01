@@ -1,5 +1,5 @@
-import { Platform, ProblemData } from '../context/EditorContext';
 import { judgePrefix } from '../components/JudgeInterface/PlanetsJudgeInterface';
+import { Platform, ProblemData } from '../types/problem';
 
 export async function fetchProblemData(
   problemID: string,

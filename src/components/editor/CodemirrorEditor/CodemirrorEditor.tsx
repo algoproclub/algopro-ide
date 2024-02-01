@@ -45,7 +45,7 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
   }, [props.yjsInfo]);
 
   const extensions = useMemo(() => {
-    let extensions = [];
+    const extensions = [];
     const tabSize = props.options?.tabSize || 4;
     extensions.push(indentUnit.of(' '.repeat(tabSize)));
     if (yCollabExtension) {
