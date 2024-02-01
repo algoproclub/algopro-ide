@@ -16,7 +16,8 @@
   "main": "lib/functions/src/index.js",
   "dependencies": {
     "firebase-admin": "^11.8.0",
-    "firebase-functions": "^4.3.1"
+    "firebase-functions": "^4.3.1",
+    "jsdom": "^19.0.0"
   },
   "devDependencies": {
     "@types/jsdom": "^21.1.6",

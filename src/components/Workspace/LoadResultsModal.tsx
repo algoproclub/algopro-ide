@@ -72,7 +72,7 @@ const LoadResultsModal = ({
   const loadResults = async () => {
     const updateRequest = httpsCallable(
       getFunctions(),
-      'registerManualSubmission'
+      'registermanualsubmission'
     );
 
     setStatusData({

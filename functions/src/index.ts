@@ -209,49 +209,56 @@ const registerManualSubmission = async (
   });
 };
 
-exports.registerManualSubmission = onCall(async request => {
-  const fileID = request.data.fileID;
-  const userID = request.auth?.uid;
-  const fileData = (await db.ref(`files/${fileID}`).get()).val();
-  if (
-    !userID ||
-    !fileData ||
-    !fileData.users ||
-    !fileData.users.hasOwnProperty(userID)
-  ) {
-    return { success: false };
+exports.registermanualsubmission = onCall(
+  { region: 'europe-west1' },
+  async request => {
+    const fileID = request.data.fileID;
+    const userID = request.auth?.uid;
+    const fileData = (await db.ref(`files/${fileID}`).get()).val();
+    if (
+      !userID ||
+      !fileData ||
+      !fileData.users ||
+      !fileData.users.hasOwnProperty(userID)
+    ) {
+      return { success: false };
+    }
+    const permission =
+      fileData.users[userID].permission ??
+      fileData?.settings?.defaultPermission;
+    if (!['OWNER', 'READ_WRITE'].includes(permission)) {
+      return { success: false };
+    }
+    await registerManualSubmission(
+      fileID,
+      request.data.submissionID,
+      request.data.username
+    );
+    return { success: true };
   }
-  const permission =
-    fileData.users[userID].permission ?? fileData?.settings?.defaultPermission;
-  if (!['OWNER', 'READ_WRITE'].includes(permission)) {
-    return { success: false };
-  }
-  await registerManualSubmission(
-    fileID,
-    request.data.submissionID,
-    request.data.username
-  );
-  return { success: true };
-});
+);
 
-exports.scheduledUpdate = onSchedule('every 2 seconds', async () => {
-  let startNewUpdate = false;
-  await db.ref('submissions/lock').transaction((lock?: boolean) => {
-    startNewUpdate = !lock;
-    return true;
-  });
-  if (!startNewUpdate) {
-    return;
+exports.scheduledupdate = onSchedule(
+  { region: 'europe-west1', schedule: 'every 2 seconds' },
+  async () => {
+    let startNewUpdate = false;
+    await db.ref('submissions/lock').transaction((lock?: boolean) => {
+      startNewUpdate = !lock;
+      return true;
+    });
+    if (!startNewUpdate) {
+      return;
+    }
+    try {
+      await db
+        .ref('submissions/pending')
+        .once('value', async (snapshot: admin.database.DataSnapshot) => {
+          await updateResults(snapshot.val());
+        });
+    } catch (error) {
+      logger.log(error);
+    } finally {
+      await db.ref('submissions/lock').set(null);
+    }
   }
-  try {
-    await db
-      .ref('submissions/pending')
-      .once('value', async (snapshot: admin.database.DataSnapshot) => {
-        await updateResults(snapshot.val());
-      });
-  } catch (error) {
-    logger.log(error);
-  } finally {
-    await db.ref('submissions/lock').set(null);
-  }
-});
+);
