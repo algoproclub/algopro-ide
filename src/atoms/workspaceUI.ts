@@ -1,6 +1,5 @@
 import { atom } from 'jotai';
-
-import { ProblemData } from '../context/EditorContext';
+import { ProblemData } from '../types/problem';
 
 export const mobileActiveTabAtom = atom<'code' | 'io' | 'users'>('code');
 export const showSidebarAtom = atom<boolean>(false);

@@ -4,7 +4,7 @@ import { useAtomValue } from 'jotai/utils';
 import JudgeResult from '../types/judge';
 import { EditorProps } from './editor/MonacoEditor/monaco-editor-types';
 import USACOResults from './JudgeInterface/USACOResults';
-import { StatusData } from './Workspace/Workspace';
+import { StatusData } from '../types/problem';
 import { useUserContext } from '../context/UserContext';
 import { useEditorContext } from '../context/EditorContext';
 import { CodeEditor } from './editor/CodeEditor';
@@ -73,16 +73,16 @@ export const Output = ({
   return (
     <>
       <TabBar
-        tabs={tabs}
+        tabs={statusData ? tabs : tabs.slice(0, -1)}
         activeTab={option}
         onTabSelect={tab => {
           setOption(tab.value as OutputTab);
         }}
       />
       <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden tw-forms-disable tw-forms-disable-all-descendants">
-        {option === 'results' && statusData != null ? (
-          <div className="px-4">
-            <USACOResults data={statusData} />
+        {option === 'results' ? (
+          <div className="px-4 h-full overflow-y-auto">
+            {statusData && <USACOResults data={statusData} />}
           </div>
         ) : (
           <CodeEditor
