@@ -121,17 +121,17 @@ const updateResultsCF = async (
         })
       );
     });
-    return;
+  } else {
+    const resultJSON = ((await resp.json()) as any)['result'];
+    submissionDataList.forEach(submissionData => {
+      promises.push(
+        getAndUpdate(
+          new CFResultFetcher(submissionData, resultJSON),
+          submissionData.fileID
+        )
+      );
+    });
   }
-  const resultJSON = ((await resp.json()) as any)['result'];
-  submissionDataList.forEach(submissionData => {
-    promises.push(
-      getAndUpdate(
-        new CFResultFetcher(submissionData, resultJSON),
-        submissionData.fileID
-      )
-    );
-  });
   await Promise.all(promises);
 };
 
