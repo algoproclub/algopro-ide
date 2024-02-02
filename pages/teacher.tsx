@@ -370,11 +370,11 @@ export default function TeacherPage() {
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <a
-                        href={`http://localhost:3000/${data.fileID}`}
+                        href={`http://localhost:3000/${data.fileID.slice(1)}`}
                         className="text-indigo-300 hover:underline"
                         target="_blank"
                       >
-                        {data.fileID}
+                        {data.fileID.slice(1)}
                       </a>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
