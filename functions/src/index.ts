@@ -1,4 +1,3 @@
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { defineString } from 'firebase-functions/params';
 import { onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
@@ -17,6 +16,11 @@ import {
   ProblemData,
   StatusData,
 } from '../../src/types/problem';
+import {
+  onValueCreated,
+  onValueDeleted,
+  onValueUpdated,
+} from 'firebase-functions/v2/database';
 
 export const cfAPIKey = defineString('CF_API_KEY');
 export const cfAPISecret = defineString('CF_API_SECRET');
@@ -92,6 +96,10 @@ const updateResultsCF = async (
     (a, b) => a.creationTime - b.creationTime
   );
   const username = sorted[0].username;
+  submissionDataList = submissionDataList.filter(
+    submissionData => submissionData.username === username
+  );
+
   const url = getCFRequestURL('user.status', {
     handle: username,
   });
@@ -238,27 +246,39 @@ exports.registermanualsubmission = onCall(
   }
 );
 
-exports.scheduledupdate = onSchedule(
-  { region: 'europe-west1', schedule: 'every 2 seconds' },
-  async () => {
-    let startNewUpdate = false;
-    await db.ref('submissions/lock').transaction((lock?: boolean) => {
-      startNewUpdate = !lock;
-      return true;
-    });
-    if (!startNewUpdate) {
-      return;
-    }
-    try {
-      await db
-        .ref('submissions/pending')
-        .once('value', async (snapshot: admin.database.DataSnapshot) => {
-          await updateResults(snapshot.val());
-        });
-    } catch (error) {
-      logger.log(error);
-    } finally {
-      await db.ref('submissions/lock').set(null);
-    }
+const handleNodeUpdated = async () => {
+  const pending = (await db.ref('submissions/pending').get()).val();
+  if (!pending) {
+    return;
   }
+  let startNewUpdate = false;
+  await db.ref('submissions/lock').transaction((lock?: boolean) => {
+    startNewUpdate = !lock;
+    return true;
+  });
+  if (!startNewUpdate) {
+    return;
+  }
+  try {
+    await new Promise(r => setTimeout(r, 2000));
+    await db
+      .ref('submissions/pending')
+      .once('value', async (snapshot: admin.database.DataSnapshot) => {
+        await updateResults(snapshot.val());
+      });
+  } catch (error) {
+    logger.log(error);
+  } finally {
+    await db.ref('submissions/lock').set(null);
+  }
+};
+
+exports.onlockdeleted = onValueDeleted('submissions/lock', handleNodeUpdated);
+exports.onpendingcreated = onValueCreated(
+  'submissions/pending',
+  handleNodeUpdated
+);
+exports.onpendingupdated = onValueUpdated(
+  'submissions/pending',
+  handleNodeUpdated
 );

@@ -31,14 +31,18 @@ const firebaseConfig = {
 
 if (!firebase.getApps()?.length) {
   if (SHOULD_USE_FIREBASE_EMULATOR) {
-    firebase.initializeApp({
+    const app = firebase.initializeApp({
       ...firebaseConfig,
       authDomain: 'localhost:9099',
       databaseURL: 'http://localhost:9000/?ns=algopro-app-default-rtdb',
     });
     connectAuthEmulator(getAuth(), 'http://localhost:9099');
     connectDatabaseEmulator(getDatabase(), 'localhost', 9000);
-    connectFunctionsEmulator(getFunctions(), 'localhost', 5001);
+    connectFunctionsEmulator(
+      getFunctions(app, 'europe-west1'),
+      'localhost',
+      5001
+    );
     connectFirestoreEmulator(getFirestore(), 'localhost', 8080);
   } else {
     firebase.initializeApp(firebaseConfig);
