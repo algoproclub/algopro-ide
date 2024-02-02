@@ -108,7 +108,6 @@ const updateResultsCF = async (
     logger.log(
       `CF: response status is not 200; url: ${url}; response status: ${resp.status}`
     );
-
     submissionDataList.forEach(submissionData => {
       updateStatusData(submissionData.fileID, {
         statusCode: 'error',
@@ -138,24 +137,33 @@ const updateResults = async (pending: PendingSubmissions | null) => {
   const readSubmissionData = async (pending: PendingSubmissions) => {
     const submissionData: SubmissionData[] = [];
     for (const fileID of Object.keys(pending)) {
-      const creationTime = pending[fileID].creationTime;
-      const fileData: { problem: ProblemData; submission: FileSubmission } = (
-        await db.ref(`files/${fileID}`).get()
-      ).val();
-      const platform = fileData.problem.platform;
-      const problemID = fileData.problem.id;
-      const submissionID = fileData.submission.id;
-      const username = fileData.submission.username;
+      try {
+        const creationTime = pending[fileID].creationTime;
+        const fileData: { problem: ProblemData; submission: FileSubmission } = (
+          await db.ref(`files/${fileID}`).get()
+        ).val();
+        const platform = fileData.problem.platform;
+        const problemID = fileData.problem.id;
+        const submissionID = fileData.submission.id;
+        const username = fileData.submission.username;
 
-      submissionData.push({
-        fileID: fileID,
-        platform: platform,
-        username: username,
-        sessionCookie: accountData[platform]?.sessionCookie?.value() ?? null,
-        problemID: problemID,
-        submissionID: submissionID,
-        creationTime: creationTime,
-      });
+        submissionData.push({
+          fileID: fileID,
+          platform: platform,
+          username: username,
+          sessionCookie: accountData[platform]?.sessionCookie?.value() ?? null,
+          problemID: problemID,
+          submissionID: submissionID,
+          creationTime: creationTime,
+        });
+      } catch (error) {
+        updateStatusData(fileID, {
+          statusCode: 'error',
+          statusText: 'status-done',
+          message: 'Error: incorrect data',
+        });
+        logger.log(error);
+      }
     }
     return submissionData;
   };
@@ -221,6 +229,15 @@ exports.registermanualsubmission = onCall(
   { region: 'europe-west1' },
   async request => {
     const fileID = request.data.fileID;
+    const submissionID = request.data.submissionID;
+    const username = request.data.username;
+
+    if (typeof fileID !== 'string' || typeof submissionID !== 'string') {
+      return { success: false };
+    }
+    if (username !== null && typeof username !== 'string') {
+      return { success: false };
+    }
     const userID = request.auth?.uid;
     const fileData = (await db.ref(`files/${fileID}`).get()).val();
     if (
@@ -273,12 +290,15 @@ const handleNodeUpdated = async () => {
   }
 };
 
-exports.onlockdeleted = onValueDeleted('submissions/lock', handleNodeUpdated);
+exports.onlockdeleted = onValueDeleted(
+  { region: 'europe-west1', ref: 'submissions/lock' },
+  handleNodeUpdated
+);
 exports.onpendingcreated = onValueCreated(
-  'submissions/pending',
+  { region: 'europe-west1', ref: 'submissions/pending' },
   handleNodeUpdated
 );
 exports.onpendingupdated = onValueUpdated(
-  'submissions/pending',
+  { region: 'europe-west1', ref: 'submissions/pending' },
   handleNodeUpdated
 );
