@@ -104,24 +104,26 @@ const updateResultsCF = async (
     handle: username,
   });
   const resp = await fetch(url);
+  const promises: Promise<void>[] = [];
   if (resp.status !== 200) {
     logger.log(
       `CF: response status is not 200; url: ${url}; response status: ${resp.status}`
     );
     submissionDataList.forEach(submissionData => {
-      updateStatusData(submissionData.fileID, {
-        statusCode: 'error',
-        statusText: 'status-done',
-        message:
-          resp.status === 400
-            ? 'Error: incorrect data'
-            : 'Error: unknown error',
-      });
+      promises.push(
+        updateStatusData(submissionData.fileID, {
+          statusCode: 'error',
+          statusText: 'status-done',
+          message:
+            resp.status === 400
+              ? 'Error: incorrect data'
+              : 'Error: unknown error',
+        })
+      );
     });
     return;
   }
   const resultJSON = ((await resp.json()) as any)['result'];
-  const promises: Promise<void>[] = [];
   submissionDataList.forEach(submissionData => {
     promises.push(
       getAndUpdate(
@@ -157,7 +159,7 @@ const updateResults = async (pending: PendingSubmissions | null) => {
           creationTime: creationTime,
         });
       } catch (error) {
-        updateStatusData(fileID, {
+        await updateStatusData(fileID, {
           statusCode: 'error',
           statusText: 'status-done',
           message: 'Error: incorrect data',
@@ -251,6 +253,7 @@ exports.registermanualsubmission = onCall(
     const permission =
       fileData.users[userID].permission ??
       fileData?.settings?.defaultPermission;
+
     if (!['OWNER', 'READ_WRITE'].includes(permission)) {
       return { success: false };
     }
@@ -278,11 +281,8 @@ const handleNodeUpdated = async () => {
   }
   try {
     await new Promise(r => setTimeout(r, 2000));
-    await db
-      .ref('submissions/pending')
-      .once('value', async (snapshot: admin.database.DataSnapshot) => {
-        await updateResults(snapshot.val());
-      });
+    const pending = (await db.ref('submissions/pending').get()).val();
+    await updateResults(pending);
   } catch (error) {
     logger.log(error);
   } finally {
