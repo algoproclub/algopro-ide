@@ -8,7 +8,6 @@ import React, {
 import { Dialog, Transition } from '@headlessui/react';
 import classNames from 'classnames';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { useAtom } from 'jotai';
 import {
   ComputerDesktopIcon,
   ServerIcon,
@@ -24,7 +23,7 @@ import useJudgeResults from '../../hooks/useJudgeResults';
 import { EditorMode, useUserContext } from '../../context/UserContext';
 import { FileSettings, useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
-import { update, ref, getDatabase } from 'firebase/database';
+import { update, ref, getDatabase, runTransaction } from 'firebase/database';
 
 export interface SettingsDialogProps {
   isOpen: boolean;
@@ -76,6 +75,8 @@ export const SettingsModal = ({
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
   const [tabSize, setTabSize] = useState<number>(-1);
   const [lightMode, setLightMode] = useState<boolean>(false);
+  const [manualSubmission, setManualSubmission] = useState<boolean>(false);
+  const [cfUsername, setCfUsername] = useState<string>('');
   const dirtyRef = useRef<boolean>(false);
 
   const [tab, setTab] = useState<typeof tabs[number]['id']>('workspace');
@@ -86,9 +87,11 @@ export const SettingsModal = ({
     if (isOpen) {
       setFileSettings(realFileSettings);
       setName(firebaseUser.displayName ?? ''); // todo this shouldn't really be an empty string ever?
+      setCfUsername(userData.usernames.codeforces ?? '');
       setEditorMode(userData.editorMode);
       setTabSize(userData.tabSize);
       setLightMode(userData.lightMode);
+      setManualSubmission(userData.manualSubmission);
       dirtyRef.current = false;
       setTab('workspace');
     }
@@ -159,16 +162,38 @@ export const SettingsModal = ({
         fileData.id + '.' + settingsToSet.language
       ] = false;
     }
-    updateRealFileData({
+    await updateRealFileData({
       settings: { ...realFileSettings, ...settingsToSet },
     });
-    update(ref(getDatabase(), `users/${firebaseUser.uid}/data`), {
-      editorMode,
-      tabSize,
-      lightMode,
-    });
+    await runTransaction(
+      ref(getDatabase(), `users/${firebaseUser.uid}/data`),
+      (data: any) => {
+        if (data) {
+          data.editorMode = editorMode;
+          data.tabSize = tabSize;
+          data.lightMode = lightMode;
+          data.manualSubmission = manualSubmission;
+
+          if (!data.usernames) {
+            data.usernames = {};
+          }
+          data.usernames.codeforces = cfUsername;
+        } else {
+          data = {
+            editorMode: editorMode,
+            tabSize: tabSize,
+            lightMode: lightMode,
+            manualSubmission: manualSubmission,
+            usernames: {
+              codeforces: cfUsername,
+            },
+          };
+        }
+        return data;
+      }
+    );
     if (name !== firebaseUser.displayName) {
-      updateUsername(name);
+      await updateUsername(name);
     }
     onClose();
   };
@@ -256,6 +281,11 @@ export const SettingsModal = ({
                       setName(name);
                       dirtyRef.current = true;
                     }}
+                    cfUsername={cfUsername || ''}
+                    onCfUsernameChange={cfHandle => {
+                      setCfUsername(cfHandle);
+                      dirtyRef.current = true;
+                    }}
                     editorMode={editorMode}
                     onEditorModeChange={mode => {
                       setEditorMode(mode);
@@ -269,6 +299,11 @@ export const SettingsModal = ({
                     lightMode={lightMode}
                     onLightModeChange={lightMode => {
                       setLightMode(lightMode);
+                      dirtyRef.current = true;
+                    }}
+                    manualSubmission={manualSubmission}
+                    onManualSubmissionChange={manualSubmission => {
+                      setManualSubmission(manualSubmission);
                       dirtyRef.current = true;
                     }}
                   />

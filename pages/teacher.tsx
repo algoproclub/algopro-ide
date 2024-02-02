@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Listbox, Transition } from '@headlessui/react';
 import { getDatabase, ref, get } from 'firebase/database';
 import { FileData } from '../src/context/EditorContext';
-import { StatusData } from '../src/components/Workspace/Workspace';
+import { StatusData } from '../src/types/problem';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 
@@ -189,7 +189,7 @@ export default function TeacherPage() {
           return data?.teacher?.editTime && data?.teacher?.editTime >= fromTime;
         })
         .map(async entry => {
-          const fileID = entry[0].slice(1);
+          const fileID = entry[0];
           const data = entry[1];
 
           const owner =
@@ -197,9 +197,12 @@ export default function TeacherPage() {
               return val.permission === 'OWNER';
             })?.name ?? '';
           const submission: StatusData | null = (
-            await get(ref(db, `submissions/${data.id}/statusData`))
+            await get(ref(db, `submissions/${fileID}/statusData`))
           ).val();
-          const verdict = submission?.message ?? 'No submission';
+
+          const verdict = submission
+            ? submission.message ?? 'No verdict'
+            : 'No submission';
 
           return {
             workspaceName: data.settings.workspaceName ?? 'Unnamed',

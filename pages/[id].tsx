@@ -78,7 +78,7 @@ function EditorPage() {
   };
 
   const handleRunCode = () => {
-    const problem = fileData.settings.problem;
+    const problem = fileData.problem;
     const setIsRunning = (isRunning: boolean) => {
       updateFileData({
         isCodeRunning: isRunning,
