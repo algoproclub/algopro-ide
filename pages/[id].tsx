@@ -26,7 +26,10 @@ import { useEffect, useState } from 'react';
 import { useMediaQuery } from '../src/hooks/useMediaQuery';
 import Workspace from '../src/components/Workspace/Workspace';
 import { MobileBottomNav } from '../src/components/NavBar/MobileBottomNav';
-import { useNullableUserContext } from '../src/context/UserContext';
+import {
+  useNullableUserContext,
+  useUserContext,
+} from '../src/context/UserContext';
 import useUserPermission from '../src/hooks/useUserPermission';
 import { SettingsModal } from '../src/components/settings/SettingsModal';
 import { getSampleIndex } from '../src/components/JudgeInterface/Samples';
@@ -41,6 +44,8 @@ import { useConnectionContext } from '../src/context/ConnectionContext';
 import { PlatformProblem, ProblemData } from '../src/types/problem';
 import { fetchProblemFromDb } from '../src/scripts/fetchProblemFromDb';
 import Link from 'next/link';
+import { Simulate } from 'react-dom/test-utils';
+import load = Simulate.load;
 
 function EditorPage() {
   const { fileData, updateFileData } = useEditorContext();
@@ -291,8 +296,14 @@ export default function FilePage() {
   const router = useRouter();
   const queryId = router.query.id;
   const firebaseFileID = '-' + queryId;
-  const { userData } = useNullableUserContext();
+  const { userData, logged } = useNullableUserContext();
 
+  const loginUI = (
+    <MessagePage
+      message="Please login to view this file."
+      showHomeButton={true}
+    />
+  );
   const loadingUI = <MessagePage message="Loading..." showHomeButton={false} />;
   const oldLink = `https://legacy.ide.usaco.guide/${queryId}`;
   const fileNotFoundUI = (
@@ -320,6 +331,7 @@ export default function FilePage() {
   const permissionDeniedUI = <MessagePage message="This file is private." />;
 
   if (!queryId) return null;
+  if (logged === false) return loginUI;
   if (!userData) return loadingUI;
 
   return (

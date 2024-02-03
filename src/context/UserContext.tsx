@@ -18,7 +18,7 @@ import {
   onValue,
   off,
 } from 'firebase/database';
-import { signInAnonymously } from '../scripts/firebaseUtils';
+
 import animals from '../scripts/animals';
 import { Platform } from '../types/problem';
 
@@ -38,9 +38,24 @@ export const LANGUAGES: { label: string; value: Language }[] = [
   },
 ];
 
+export type EditorMode = 'Normal' | 'Vim';
+export type UsernameData = Partial<Record<Platform, string>>;
+
+export type UserData = {
+  id: string;
+  editorMode: EditorMode;
+  tabSize: number;
+  lightMode: boolean;
+  defaultPermission: 'READ_WRITE' | 'READ' | 'PRIVATE';
+  defaultLanguage: Language;
+  manualSubmission: boolean;
+  usernames: UsernameData;
+};
+
 export type UserContextType = {
   firebaseUser: User | null;
-  userData: (UserData & { id: string }) | null;
+  userData: UserData | null;
+  logged: boolean | null;
   /**
    * Updates firebaseUser.displayName. Normally doing this doesn't trigger rerender
    * so use this function, which will force a UI rerender
@@ -50,45 +65,21 @@ export type UserContextType = {
   updateUsername: (username: string) => Promise<any>;
 };
 
-export type UsernameData = Partial<Record<Platform, string>>;
-
-export type UserData = {
-  editorMode: 'Normal' | 'Vim';
-  tabSize: number;
-  lightMode: boolean;
-  defaultPermission: 'READ_WRITE' | 'READ' | 'PRIVATE';
-  defaultLanguage: Language;
-  manualSubmission: boolean;
-  usernames: UsernameData;
-};
-
-export const defaultUserSettings: UserData = {
-  editorMode: 'Normal', // change in settings
-  tabSize: 4,
-  lightMode: false,
-  defaultPermission: 'READ_WRITE', // change in dashboard
-  defaultLanguage: 'cpp', // last viewed file
-  manualSubmission: false,
-  usernames: {},
-};
-
-export type EditorMode = 'Normal' | 'Vim';
-
 const UserContext = createContext<UserContextType | null>(null);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<(UserData & { id: string }) | null>(
-    null
-  );
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [logged, setLogged] = useState<boolean | null>(null);
   const [_, triggerRerender] = useState<number>(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getAuth(), user => {
       if (!user) {
+        setLogged(false);
         setUserData(null);
-        // signInAnonymously();
       } else {
+        setLogged(true);
         let displayName = user.displayName;
         if (!displayName) {
           displayName =
@@ -144,7 +135,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <UserContext.Provider
-      value={{ firebaseUser: user, userData, updateUsername }}
+      value={{ firebaseUser: user, userData, updateUsername, logged }}
     >
       {children}
     </UserContext.Provider>
