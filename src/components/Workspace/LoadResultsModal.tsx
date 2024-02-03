@@ -6,6 +6,7 @@ import { useUserContext } from '../../context/UserContext';
 import { StatusData } from '../../types/problem';
 import { DataSnapshot, getDatabase, ref, onValue } from 'firebase/database';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { Platform } from '../../types/problem';
 import firebase from 'firebase/compat';
 import HttpsCallableResult = firebase.functions.HttpsCallableResult;
 
@@ -54,10 +55,12 @@ const LoadResultsModal = ({
   const [username, setUsername] = useState<string | null>(null);
   const { fileData } = useEditorContext();
   const { userData } = useUserContext();
-  const needUsername = ['codeforces'].includes(fileData?.problem?.platform);
+  const needUsername = fileData?.problem?.platform === 'codeforces';
 
   useEffect(() => {
-    setUsername(userData.usernames[fileData?.problem?.platform] ?? null);
+    if (fileData?.problem?.platform) {
+      setUsername(userData.usernames[fileData?.problem?.platform] ?? null);
+    }
   }, [userData?.usernames, fileData?.problem?.platform]);
 
   const confirmedClose = () => {
@@ -71,7 +74,7 @@ const LoadResultsModal = ({
   };
   const loadResults = async () => {
     const updateRequest = httpsCallable(
-      getFunctions(),
+      getFunctions(undefined, 'europe-west1'),
       'registermanualsubmission'
     );
 

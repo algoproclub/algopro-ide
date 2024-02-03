@@ -17,3 +17,7 @@ export default interface JudgeResult {
   debugData?: any;
   fileOutput?: string;
 }
+export interface Sample {
+  input: string;
+  output: string;
+}

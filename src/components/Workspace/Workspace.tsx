@@ -28,11 +28,11 @@ import { UserList } from '../UserList/UserList';
 import Samples from '../JudgeInterface/Samples';
 import useJudgeResults from '../../hooks/useJudgeResults';
 import USACOJudgeInterface from '../JudgeInterface/USACOJudgeInterface';
+import GenericJudgeInterface from '../JudgeInterface/GenericJudgeInterface';
 import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
-import LoadResultsModal from './LoadResultsModal';
-import { StatusData } from '../../types/problem';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import {
   DataSnapshot,
   getDatabase,
@@ -41,6 +41,14 @@ import {
   ref,
   update,
 } from 'firebase/database';
+import LoadResultsModal from './LoadResultsModal';
+import {
+  Platform,
+  PlatformProblem,
+  ProblemData,
+  StatusData,
+} from '../../types/problem';
+import { fetchProblemFromDb } from '../../scripts/fetchProblemFromDb';
 
 export default function Workspace({
   handleRunCode,
@@ -90,12 +98,21 @@ export default function Workspace({
   const [statusData, setStatusData] = useState<StatusData | null>(null);
 
   useEffect(() => {
-    // setStatusData(null);
-    setProblem(fileData.problem);
-    if (fileData.problem) {
-      setInputTab('judge');
-    }
-  }, [fileData.problem?.id]);
+    (async () => {
+      setStatusData(null);
+
+      // FIXME: Do not store USACO problems directly in the Realtime DB.
+      const problemData =
+        fileData.problem && fileData.problem.platform === 'usaco'
+          ? (fileData.problem as ProblemData)
+          : await fetchProblemFromDb(fileData.problem as PlatformProblem);
+
+      setProblem(problemData);
+      if (problemData) {
+        setInputTab('judge');
+      }
+    })();
+  }, [fileData.problem?.platform]);
 
   useEffect(() => {
     onValue(ref(db, `submissions/${fileData.id}/statusData`), updateStatusData);
@@ -130,8 +147,11 @@ export default function Workspace({
   // will be used some way in JudgeInterfaces after implementing automatic submission
   const submitSolution = () => {
     const getSubmitLink = async () => {
-      const platform = fileData.problem.platform;
-      const problemID = fileData.problem.id;
+      const platform = fileData.problem?.platform;
+      const problemID = fileData.problem?.id;
+      if (problemID === undefined) {
+        throw new Error('Tried to submit a file with no associated problem');
+      }
 
       let submitLink = '';
       if (platform === 'codeforces') {
@@ -236,7 +256,7 @@ export default function Workspace({
                 {inputTab === 'judge' &&
                   problem &&
                   (isNaN(Number(problem.id)) ? (
-                    <PlanetsJudgeInterface
+                    <GenericJudgeInterface
                       problem={problem}
                       statusData={statusData}
                       setStatusData={setStatusData}

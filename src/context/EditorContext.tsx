@@ -18,16 +18,7 @@ import React, {
 } from 'react';
 import { ChatMessage } from '../components/Chat';
 import { useUserContext } from './UserContext';
-import { FileSubmission, Platform, ProblemData } from '../types/problem';
-
-export function GetPlatform(s: string): Platform {
-  if (s == 'codeforces') return 'codeforces';
-  if (s == 'cses') return 'cses';
-  if (s == 'atcoder') return 'atcoder';
-  if (s == 'usaco') return 'usaco';
-  if (s == 'planets') return 'planets';
-  throw new Error('unknown platform');
-}
+import { FileSubmission, PlatformProblem, ProblemData } from '../types/problem';
 
 export type Language = 'cpp' | 'java' | 'py';
 
@@ -36,7 +27,6 @@ export interface FileSettings {
   defaultPermission: 'READ_WRITE' | 'READ' | 'PRIVATE';
   workspaceName: string | null;
   creationTime: string | null; // firebase timetsamp?
-  problem: ProblemData | null;
   classroomID: string | null;
   language: Language;
 }
@@ -50,7 +40,7 @@ export type FileData = {
       permission: 'OWNER' | 'READ' | 'READ_WRITE' | 'PRIVATE' | null;
     };
   };
-  problem: ProblemData;
+  problem: ProblemData | PlatformProblem | null;
   settings: FileSettings;
   isCodeRunning: boolean;
   submission: FileSubmission;
@@ -59,6 +49,10 @@ export type FileData = {
   };
   chat: {
     [key: string]: Omit<ChatMessage, 'key'>;
+  };
+  teacher: {
+    editTime: number;
+    codeSize: number;
   };
 };
 
