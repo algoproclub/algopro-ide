@@ -50,6 +50,10 @@ export type FileData = {
   chat: {
     [key: string]: Omit<ChatMessage, 'key'>;
   };
+  teacher: {
+    editTime: number;
+    codeSize: number;
+  };
 };
 
 export type EditorContextType = {
