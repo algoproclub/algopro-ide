@@ -33,13 +33,13 @@ if (!firebase.getApps()?.length) {
   if (SHOULD_USE_FIREBASE_EMULATOR) {
     firebase.initializeApp({
       ...firebaseConfig,
-      authDomain: 'localhost:9099',
-      databaseURL: 'http://localhost:9000/?ns=algopro-app-default-rtdb',
+      authDomain: '127.0.0.1:9099',
+      databaseURL: 'http://127.0.0.1:9000/?ns=algopro-app-default-rtdb',
     });
-    connectAuthEmulator(getAuth(), 'http://localhost:9099');
-    connectDatabaseEmulator(getDatabase(), 'localhost', 9000);
-    connectFunctionsEmulator(getFunctions(), 'localhost', 5001);
-    connectFirestoreEmulator(getFirestore(), 'localhost', 8080);
+    connectAuthEmulator(getAuth(), 'http://127.0.0.1:9099');
+    connectDatabaseEmulator(getDatabase(), '127.0.0.1', 9000);
+    connectFunctionsEmulator(getFunctions(), '127.0.0.1', 5001);
+    connectFirestoreEmulator(getFirestore(), '127.0.0.1', 8080);
   } else {
     firebase.initializeApp(firebaseConfig);
     if (typeof window !== 'undefined') {

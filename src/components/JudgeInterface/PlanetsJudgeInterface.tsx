@@ -6,9 +6,6 @@ import { PlayCircleIcon } from '@heroicons/react/20/solid';
 import Markdown from './Markdown';
 import { getFirestore, getDoc, doc, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import firebase from 'firebase/app';
-import 'firebase/firestore';
-import 'firebase/functions';
 import { useEditorContext } from '../../context/EditorContext';
 import { ProblemData, StatusCode, StatusData } from '../../types/problem';
 
