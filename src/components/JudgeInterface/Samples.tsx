@@ -1,10 +1,6 @@
 import React from 'react';
 import { PlayCircleIcon } from '@heroicons/react/20/solid';
-
-export interface Sample {
-  input: string;
-  output: string;
-}
+import { Sample } from '../../types/problem';
 
 export function getSampleIndex(inputTab: string): number {
   return inputTab.length === 6 ? 1 : +inputTab.substring(7);

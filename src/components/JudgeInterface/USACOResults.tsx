@@ -1,51 +1,63 @@
 import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { StatusData, TestCase } from '../../types/problem';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const USACOTestCase = ({ data }: { data: any }) => {
+const capitalize = (text: string): string => {
+  return text[0].toUpperCase() + text.substring(1);
+};
+
+const USACOTestCase = ({ data }: { data: TestCase }) => {
   const containerClasses =
-    data.title === 'Correct answer'
+    data.title?.toLowerCase() === 'correct answer'
       ? 'bg-green-700 border-green-700'
       : data.title === 'Did not run'
       ? 'bg-gray-700 border-gray-700'
       : 'bg-red-700 border-red-700';
   const textColor =
-    data.title === 'Correct answer' ? 'text-green-100' : 'text-red-100';
+    data.title?.toLowerCase() === 'correct answer'
+      ? 'text-green-100'
+      : 'text-red-100';
   return (
     <div
-      className={`m-1 inline-block w-[70px] h-[60px] bg-opacity-50 border ${containerClasses} relative`}
-      title={data.title}
+      className={`m-1 p-1 inline-block w-[5rem] bg-opacity-50 border ${containerClasses} relative rounded`}
+      title={capitalize(data.title)}
     >
-      <div
-        className={`font-bold text-center text-[2.5rem] ${textColor} leading-10`}
-      >
-        {data.symbol}
+      <div className={`font-semibold text-center ${textColor} pt-1`}>
+        {data.symbol === '✓' && (
+          <FontAwesomeIcon
+            icon={{ prefix: 'fas', iconName: 'check' }}
+            className="w-6 h-6"
+          />
+        )}
+        {data.symbol === 'x' && (
+          <FontAwesomeIcon
+            icon={{ prefix: 'fas', iconName: 'xmark' }}
+            className="w-6 h-6"
+          />
+        )}
       </div>
-      <span
-        className={`absolute bottom-0 left-[4px] ${textColor} text-[0.8125rem] font-bold`}
-      >
-        {data.trialNum}
-      </span>
-      <span
-        className={`absolute bottom-0 right-0 text-right ${textColor} leading-3 p-[2px] text-[0.625rem]`}
-      >
-        {data.memory}
-        <br />
-        {data.time}
-      </span>
+      <div>
+        <div className="flex justify-end">
+          {data.memory && (
+            <span className={`text-[0.625rem]`}>{data.memory}</span>
+          )}
+        </div>
+        <div className="flex items-center justify-between">
+          <span className={`${textColor} text-[0.8125rem] font-bold leading-3`}>
+            {data.trialNum}
+          </span>
+          <span className={`text-[0.625rem] leading-3`}>{data.time}</span>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default function USACOResults({
-  data,
-}: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any;
-}): JSX.Element | null {
-  if (!data) return null;
+export default function USACOResults({ data }: { data: StatusData }) {
   let equalUpToTrim = false;
   let output = data.output;
-  if (data.message.includes('Incorrect') && output) {
+
+  if (data.message?.includes('Incorrect') && output) {
     const lines = output.split('\n');
     const indices = [],
       answers = [];
@@ -59,8 +71,9 @@ export default function USACOResults({
       if (
         indices[i] + 3 == indices[i + 1] &&
         lines[indices[i] + 1] === '[File missing!]'
-      )
+      ) {
         continue;
+      }
       let ans = '';
       for (let j = indices[i] + 1; j < indices[i + 1] - 1; ++j) {
         ans += lines[j].trim() + '\n';
@@ -76,10 +89,60 @@ export default function USACOResults({
   }
   return (
     <div className="mt-3">
-      <p className="font-bold text-gray-200">{data.message}</p>
+      <div className="pb-3">
+        <p className="font-bold text-gray-200 border-gray-700">
+          <span className="space-x-2">
+            {!['error', 'resolved'].includes(data.statusCode) && (
+              <FontAwesomeIcon
+                icon={{ prefix: 'fas', iconName: 'gear' }}
+                className="mr-2 w-4 h-4 text-gray-400 animate-spin-slow"
+              />
+            )}
+            {data.statusCode === 'error' && (
+              <FontAwesomeIcon
+                icon={{ prefix: 'fas', iconName: 'exclamation-triangle' }}
+                className="mr-2 text-yellow-500 w-4 h-4"
+              />
+            )}
+            {data.statusCode === 'resolved' &&
+              data.message?.toLowerCase() === 'correct answer' && (
+                <FontAwesomeIcon
+                  icon={{ prefix: 'fas', iconName: 'check' }}
+                  className="mr-2 text-green-500 w-4 h-4"
+                />
+              )}
+            {data.statusCode === 'resolved' &&
+              data.message?.toLowerCase() !== 'correct answer' && (
+                <FontAwesomeIcon
+                  icon={{ prefix: 'fas', iconName: 'xmark' }}
+                  className="mr-2 w-4 h-4 text-red-500"
+                />
+              )}
+            {data.message ? capitalize(data.message) : null}
+            {!['error', 'resolved'].includes(data.statusCode) && '...'}
+          </span>
+          {(data.time || data.memory) && <span> (</span>}
+          {data.time && <span>{data.time}</span>}
+          {data.time && data.memory && <span>, </span>}
+          {data.memory && <span>{data.memory}</span>}
+          {(data.time || data.memory) && <span>)</span>}
+        </p>
+        {data.link && (
+          <a
+            href={data.link}
+            className="text-indigo-300 hover:underline"
+            target="_blank"
+          >
+            {data.link}
+          </a>
+        )}
+      </div>
+      {(output || data.testCases) && (
+        <div className="border-t -mx-4 border-gray-600 " />
+      )}
       {output && (
-        <>
-          <pre className="font-mono text-red-300 leading-tight mt-1 text-sm">
+        <div className="pt-3">
+          <pre className="font-mono text-gray-300 leading-tight mt-2 text-sm bg-gray-900 rounded p-3 border border-gray-700 overflow-auto">
             {output}
           </pre>
           {equalUpToTrim && (
@@ -94,15 +157,17 @@ export default function USACOResults({
               for details.
             </p>
           )}
+        </div>
+      )}
+      {data.testCases && (
+        <>
+          <div className="mt-3 -mx-1">
+            {data.testCases.map(tc => (
+              <USACOTestCase data={tc} key={tc.trialNum} />
+            ))}
+          </div>
         </>
       )}
-      <div className="text-center">
-        {data.testCases &&
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          data.testCases.map((tc: any) => (
-            <USACOTestCase data={tc} key={tc.trialNum} />
-          ))}
-      </div>
     </div>
   );
 }

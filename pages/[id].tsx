@@ -38,6 +38,8 @@ import useUserFileConnection from '../src/hooks/useUserFileConnection';
 import useUpdateUserDashboard from '../src/hooks/useUpdateUserDashboard';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
 import { useConnectionContext } from '../src/context/ConnectionContext';
+import { PlatformProblem, ProblemData } from '../src/types/problem';
+import { fetchProblemFromDb } from '../src/scripts/fetchProblemFromDb';
 import Link from 'next/link';
 
 function EditorPage() {
@@ -77,8 +79,13 @@ function EditorPage() {
     }, 0);
   };
 
-  const handleRunCode = () => {
-    const problem = fileData.settings.problem;
+  const handleRunCode = async () => {
+    // FIXME: Do not store USACO problems directly in the Realtime DB.
+    const problem =
+      fileData.problem && fileData.problem.platform === 'usaco'
+        ? (fileData.problem as ProblemData)
+        : await fetchProblemFromDb(fileData.problem as PlatformProblem);
+
     const setIsRunning = (isRunning: boolean) => {
       updateFileData({
         isCodeRunning: isRunning,
@@ -281,7 +288,8 @@ function EditorPage() {
 }
 
 export default function FilePage() {
-  const queryId = useRouter().query.id;
+  const router = useRouter();
+  const queryId = router.query.id;
   const firebaseFileID = '-' + queryId;
   const { userData } = useNullableUserContext();
 

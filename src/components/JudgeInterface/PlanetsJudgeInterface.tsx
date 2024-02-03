@@ -1,13 +1,13 @@
 import { useAtomValue } from 'jotai/utils';
 import React, { useState, useEffect } from 'react';
 import { mainMonacoEditorAtom } from '../../atoms/workspace';
-import { StatusData } from '../Workspace/Workspace';
 import SubmitButton from './SubmitButton';
 import { PlayCircleIcon } from '@heroicons/react/20/solid';
 import Markdown from './Markdown';
 import { getFirestore, getDoc, doc, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { ProblemData, useEditorContext } from '../../context/EditorContext';
+import { useEditorContext } from '../../context/EditorContext';
+import { ProblemData, StatusCode, StatusData } from '../../types/problem';
 
 export const judgePrefix = 'https://vjudge.usaco.guide';
 
@@ -40,14 +40,17 @@ const mapVerdictToTitle = (verdict: string): string => {
   return verdict;
 };
 
-const mapVerdictToStatusCode = (verdict: string): number => {
+const mapVerdictToStatusCode = (verdict: string): StatusCode => {
   if (verdict.startsWith('Starting') || verdict.startsWith('Running'))
-    return -8;
-  return 0;
+    return 'working';
+  return 'resolved';
 };
 
 const convertPlanetsResultToStatusData = (result: any): StatusData => {
   return {
+    link: null,
+    memory: null,
+    time: null,
     statusText: 'status-working',
     message: result.verdict,
     statusCode: mapVerdictToStatusCode(result.verdict),
@@ -99,7 +102,13 @@ export default function PlanetsJudgeInterface({
     }
     setStatusData({
       message: 'Sending submission to server',
-      statusCode: -100,
+      statusCode: 'resolved',
+      statusText: null,
+      testCases: null,
+      output: null,
+      memory: null,
+      time: null,
+      link: null,
     });
 
     const submissionData = {
@@ -117,7 +126,11 @@ export default function PlanetsJudgeInterface({
     const id = response.data.id;
     const unsubscribe = onSnapshot(doc(firestore, 'submissions', id), doc => {
       setStatusData(convertPlanetsResultToStatusData(doc.data()));
-      if (mapVerdictToStatusCode(doc.data()?.verdict) == 0) {
+      if (
+        ['error', 'resolved'].includes(
+          mapVerdictToStatusCode(doc.data()?.verdict)
+        )
+      ) {
         unsubscribe();
       }
     });
@@ -152,7 +165,10 @@ export default function PlanetsJudgeInterface({
         </div>
       </div>
       <SubmitButton
-        isLoading={(statusData?.statusCode ?? 0) <= -8}
+        isLoading={
+          statusData !== null &&
+          !['error', 'resolved'].includes(statusData.statusCode)
+        }
         isDisabled={!problem.submittable}
         onClick={() => handleSubmit()}
       />
