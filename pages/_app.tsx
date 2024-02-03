@@ -38,7 +38,11 @@ if (!firebase.getApps()?.length) {
     });
     connectAuthEmulator(getAuth(), 'http://127.0.0.1:9099');
     connectDatabaseEmulator(getDatabase(), '127.0.0.1', 9000);
-    connectFunctionsEmulator(getFunctions(), '127.0.0.1', 5001);
+    connectFunctionsEmulator(
+      getFunctions(undefined, 'europe-west1'),
+      '127.0.0.1',
+      5001
+    );
     connectFirestoreEmulator(getFirestore(), '127.0.0.1', 8080);
   } else {
     firebase.initializeApp(firebaseConfig);

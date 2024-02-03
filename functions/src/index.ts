@@ -52,7 +52,7 @@ const ATCODER_PROBLEM_REGEX = /(\w+)_(\w+)/;
 export const fetchproblemdata = onCall<
   PlatformProblem,
   Promise<ProblemData | null>
->(async request => {
+>({ region: 'europe-west1' }, async request => {
   const { platform, id } = request.data;
   if (typeof platform !== 'string' || typeof id !== 'string') {
     return null;
@@ -175,7 +175,7 @@ async function fetchProblemDataAtCoder(
 export const submitproblemsolution = onCall<
   ProblemSolution,
   Promise<ClientSubmissionData>
->(async request => {
+>({ region: 'europe-west1' }, async request => {
   const { platform } = request.data;
 
   if (platform !== 'codeforces') {

@@ -74,7 +74,7 @@ const LoadResultsModal = ({
   };
   const loadResults = async () => {
     const updateRequest = httpsCallable(
-      getFunctions(),
+      getFunctions(undefined, 'europe-west1'),
       'registermanualsubmission'
     );
 
