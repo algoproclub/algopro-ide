@@ -18,8 +18,9 @@ import {
   onValue,
   off,
 } from 'firebase/database';
-import { signInAnonymously } from '../scripts/firebaseUtils';
+
 import animals from '../scripts/animals';
+import { Platform } from '../types/problem';
 
 export type Language = 'cpp' | 'java' | 'py';
 export const LANGUAGES: { label: string; value: Language }[] = [
@@ -38,13 +39,17 @@ export const LANGUAGES: { label: string; value: Language }[] = [
 ];
 
 export type EditorMode = 'Normal' | 'Vim';
+export type UsernameData = Partial<Record<Platform, string>>;
+
 export type UserData = {
-  id?: string;
+  id: string;
   editorMode: EditorMode;
   tabSize: number;
   lightMode: boolean;
   defaultPermission: 'READ_WRITE' | 'READ' | 'PRIVATE';
   defaultLanguage: Language;
+  manualSubmission: boolean;
+  usernames: UsernameData;
 };
 
 export type UserContextType = {
@@ -103,6 +108,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         lightMode: data.lightMode ?? false,
         defaultPermission: data.defaultPermission ?? 'READ_WRITE',
         defaultLanguage: data.defaultLanguage ?? 'cpp',
+        manualSubmission: data.manualSubmission ?? false,
+        usernames: data.usernames ?? {},
       });
     };
     onValue(ref(getDatabase(), `users/${user.uid}/data`), handleSnapshot);
