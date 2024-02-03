@@ -103,7 +103,7 @@ export default function Workspace({
 
       // FIXME: Do not store USACO problems directly in the Realtime DB.
       const problemData =
-        fileData.problem && fileData.problem.platform === 'USACO'
+        fileData.problem && fileData.problem.platform === 'usaco'
           ? (fileData.problem as ProblemData)
           : await fetchProblemFromDb(fileData.problem as PlatformProblem);
 
@@ -154,17 +154,17 @@ export default function Workspace({
       }
 
       let submitLink = '';
-      if (platform === Platform.CF) {
+      if (platform === 'codeforces') {
         submitLink = `https://codeforces.com/problemset/problem/${
           problemID.split('_')[0]
         }/${problemID.split('_')[1]}`;
       }
-      if (platform === Platform.ATCODER) {
+      if (platform === 'atcoder') {
         submitLink = `https://atcoder.jp/contests/${
           problemID.split('_')[0]
         }/tasks/${problemID}`;
       }
-      if (platform === Platform.CSES) {
+      if (platform === 'cses') {
         submitLink = `https://cses.fi/problemset/submit/${problemID}/`;
       }
       return submitLink;

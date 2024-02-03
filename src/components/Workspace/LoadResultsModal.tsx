@@ -55,7 +55,7 @@ const LoadResultsModal = ({
   const [username, setUsername] = useState<string | null>(null);
   const { fileData } = useEditorContext();
   const { userData } = useUserContext();
-  const needUsername = fileData?.problem?.platform === Platform.CF;
+  const needUsername = fileData?.problem?.platform === 'codeforces';
 
   useEffect(() => {
     if (fileData?.problem?.platform) {

@@ -3,13 +3,7 @@ export type PlatformProblem = {
   id: string;
 };
 
-export enum Platform {
-  CF = 'CF',
-  CSES = 'CSES',
-  ATCODER = 'AtCoder',
-  USACO = 'USACO',
-  PLANETS = 'Planets',
-}
+export type Platform = 'codeforces' | 'cses' | 'atcoder' | 'usaco' | 'planets';
 
 export type ProblemData = {
   id: string;

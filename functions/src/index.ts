@@ -58,10 +58,10 @@ export const fetchProblemData = onCall<
     return null;
   }
 
-  switch (platform.toUpperCase()) {
-    case 'CF':
+  switch (platform) {
+    case 'codeforces':
       return fetchProblemDataCodeforces(id);
-    case 'ATCODER':
+    case 'atcoder':
       return fetchProblemDataAtCoder(id);
     default:
       throw new HttpsError(
@@ -101,7 +101,7 @@ async function fetchProblemDataCodeforces(
   return {
     id: problemID,
     submittable: true,
-    platform: Platform.CF,
+    platform: 'codeforces',
     url,
     title: document('.header > .title')
       .text()
@@ -161,7 +161,7 @@ async function fetchProblemDataAtCoder(
   return {
     id: problemID,
     submittable: true,
-    platform: Platform.ATCODER,
+    platform: 'atcoder',
     url,
     title,
     statement,
@@ -178,7 +178,7 @@ export const submitProblemSolution = onCall<
 >(async request => {
   const { platform } = request.data;
 
-  if (platform !== 'CF') {
+  if (platform !== 'codeforces') {
     throw new HttpsError(
       'unimplemented',
       `platform '${platform}' is unimplemented`
@@ -258,7 +258,7 @@ async function submitProblemSolutionCodeforces({
   return {
     id,
     username,
-    platform: Platform.CF,
+    platform: 'codeforces',
   };
 }
 
@@ -279,15 +279,15 @@ admin.initializeApp();
 const db = admin.database();
 
 const accountData: { [key in Platform]: AccountData } = {
-  AtCoder: {
+  atcoder: {
     sessionCookie: atCoderCookie,
   },
-  CSES: {
+  cses: {
     sessionCookie: csesCookie,
   },
-  CF: {},
-  Planets: {},
-  USACO: {},
+  codeforces: {},
+  planets: {},
+  usaco: {},
 };
 
 const updateStatusData = async (
@@ -322,9 +322,9 @@ const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
 
 const updateResultNonCF = async (submissionData: SubmissionData) => {
   let fetcher: ResultFetcher;
-  if (submissionData.platform === Platform.CSES) {
+  if (submissionData.platform === 'cses') {
     fetcher = new CSESResultFetcher(submissionData);
-  } else if (submissionData.platform === Platform.ATCODER) {
+  } else if (submissionData.platform === 'atcoder') {
     fetcher = new AtCoderResultFetcher(submissionData);
   } else {
     throw new Error(`invalid platform name (${submissionData.platform})`);

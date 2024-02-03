@@ -82,7 +82,7 @@ export const SettingsModal = ({
     if (isOpen) {
       setFileSettings(realFileSettings);
       setName(firebaseUser.displayName ?? ''); // todo this shouldn't really be an empty string ever?
-      setCfUsername(userData.usernames.CF ?? '');
+      setCfUsername(userData.usernames.codeforces ?? '');
       setEditorMode(userData.editorMode);
       setTabSize(userData.tabSize);
       setLightMode(userData.lightMode);
@@ -151,7 +151,7 @@ export const SettingsModal = ({
           if (!data.usernames) {
             data.usernames = {};
           }
-          data.usernames.CF = cfUsername;
+          data.usernames.codeforces = cfUsername;
         } else {
           data = {
             editorMode: editorMode,
@@ -159,7 +159,7 @@ export const SettingsModal = ({
             lightMode: lightMode,
             manualSubmission: manualSubmission,
             usernames: {
-              CF: cfUsername,
+              codeforces: cfUsername,
             },
           };
         }
