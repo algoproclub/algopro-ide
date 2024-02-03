@@ -17,7 +17,7 @@ import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
 
 const submitProblemSolution = httpsCallable<ProblemSolution, SubmissionData>(
   getFunctions(),
-  'submitProblemSolution'
+  'submitproblemsolution'
 );
 
 export default function GenericJudgeInterface({

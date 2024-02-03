@@ -49,7 +49,7 @@ const CODEFORCES_TITLE_REGEX = /\w+\. (.*)/;
 
 const ATCODER_PROBLEM_REGEX = /(\w+)_(\w+)/;
 
-export const fetchProblemData = onCall<
+export const fetchproblemdata = onCall<
   PlatformProblem,
   Promise<ProblemData | null>
 >(async request => {
@@ -172,7 +172,7 @@ async function fetchProblemDataAtCoder(
   };
 }
 
-export const submitProblemSolution = onCall<
+export const submitproblemsolution = onCall<
   ProblemSolution,
   Promise<ClientSubmissionData>
 >(async request => {
