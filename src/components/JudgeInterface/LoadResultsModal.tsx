@@ -9,6 +9,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Platform } from '../../types/problem';
 import firebase from 'firebase/compat';
 import HttpsCallableResult = firebase.functions.HttpsCallableResult;
+import { registerSubmission } from '../../scripts/updateStatus';
 
 const TextInput = ({
   text,
@@ -44,12 +45,10 @@ const LoadResultsModal = ({
   isOpen,
   onClose,
   setStatusData,
-  updateStatusData,
 }: {
   isOpen: boolean;
   onClose: () => void;
   setStatusData: React.Dispatch<React.SetStateAction<StatusData | null>>;
-  updateStatusData: (snapshot: DataSnapshot) => void;
 }) => {
   const [submissionID, setSubmissionID] = useState<string>('');
   const [username, setUsername] = useState<string | null>(null);
@@ -72,39 +71,7 @@ const LoadResultsModal = ({
       onClose();
     }
   };
-  const loadResults = async () => {
-    const updateRequest = httpsCallable(
-      getFunctions(undefined, 'europe-west1'),
-      'registermanualsubmission'
-    );
 
-    setStatusData({
-      statusCode: 'starting',
-      message: 'starting',
-      statusText: null,
-      link: null,
-      time: null,
-      memory: null,
-      output: null,
-      testCases: null,
-    });
-    updateRequest({
-      fileID: fileData.id,
-      submissionID: submissionID,
-      username: username,
-    }).then((response: HttpsCallableResult) => {
-      if (!response.data.success) {
-        onValue(
-          ref(getDatabase(), `submissions/${fileData.id}/statusData`),
-          updateStatusData,
-          {
-            onlyOnce: true,
-          }
-        );
-      }
-    });
-    onClose();
-  };
   return (
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog
@@ -170,7 +137,15 @@ const LoadResultsModal = ({
                   <button
                     type="button"
                     className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    onClick={loadResults}
+                    onClick={() => {
+                      registerSubmission(
+                        fileData.id,
+                        submissionID,
+                        username,
+                        setStatusData
+                      );
+                      onClose();
+                    }}
                   >
                     Load
                   </button>
