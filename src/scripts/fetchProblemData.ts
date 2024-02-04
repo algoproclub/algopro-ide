@@ -1,19 +1,143 @@
-import {
-  connectFunctionsEmulator,
-  getFunctions,
-  httpsCallable,
-} from 'firebase/functions';
 import { PlatformProblem, ProblemData } from '../types/problem';
+import { Sample } from '../types/judge';
+import { ElementType } from 'domelementtype';
+import * as domhandler from 'domhandler';
+import * as cheerio from 'cheerio';
 
-// TODO why isn't it enough to do this in _app.tsx?
-connectFunctionsEmulator(
-  getFunctions(undefined, 'europe-west1'),
-  '127.0.0.1',
-  5001
-);
+// FIXME: We might need to escape HTML entities (?)
+function htmlToPlaintext(node: domhandler.ChildNode): string {
+  if (node instanceof domhandler.Text) {
+    return node.data;
+  }
+  if (node instanceof domhandler.Element) {
+    const lineBreak =
+      node.type === ElementType.Tag &&
+      (node.tagName === 'br' ||
+        (node.tagName === 'div' &&
+          node.attribs.class.includes('test-example-line')));
+    return (
+      node.children.map(htmlToPlaintext).join('') + (lineBreak ? '\n' : '')
+    );
+  }
+  return '';
+}
 
-// TODO re-add USACO fetch (we probably want to do it through cloud function)
-export const fetchProblemData = httpsCallable<PlatformProblem, ProblemData>(
-  getFunctions(undefined, 'europe-west1'),
-  'fetchproblemdata'
-);
+const CODEFORCES_PROBLEM_REGEX = /^(\d+)([A-Z].*)$/;
+const CODEFORCES_TITLE_REGEX = /\w+\. (.*)/;
+
+const ATCODER_PROBLEM_REGEX = /(\w+)_(\w+)/;
+
+export async function fetchProblemData({
+  platform,
+  id,
+}: PlatformProblem): Promise<ProblemData | null> {
+  switch (platform) {
+    case 'codeforces':
+      return fetchProblemDataCodeforces(id);
+    case 'atcoder':
+      return fetchProblemDataAtCoder(id);
+    default:
+      throw new Error(`platform '${platform}' is unimplemented`);
+  }
+}
+
+async function fetchProblemDataCodeforces(
+  problemID: string
+): Promise<ProblemData | null> {
+  const matches = problemID.match(CODEFORCES_PROBLEM_REGEX);
+  if (!matches) {
+    return null;
+  }
+
+  const url = `https://codeforces.com/problemset/problem/${matches[1]}/${matches[2]}`;
+  const problemPage = await fetch(url);
+  if (!problemPage) {
+    return null;
+  }
+
+  const document = cheerio.load(await problemPage.text());
+
+  const samples: Sample[] = [];
+  const inputsAndOutputs = Array.from(document('.sample-test pre')).map(
+    htmlToPlaintext
+  );
+  for (let i = 0; i < inputsAndOutputs.length; i += 2) {
+    samples.push({
+      input: inputsAndOutputs[i],
+      output: inputsAndOutputs[i + 1],
+    });
+  }
+
+  return {
+    id: problemID,
+    submittable: true,
+    platform: 'codeforces',
+    url,
+    title: document('.header > .title')
+      .text()
+      .match(CODEFORCES_TITLE_REGEX)![1],
+    statement: document('.problem-statement > :not(.sample-tests, .header)')
+      .map((_, el) => document(el).html())
+      .toArray()
+      .join('\n'),
+    input: 'stdin',
+    output: 'stdout',
+    source: `Codeforces ${problemID}`,
+    samples,
+  };
+}
+
+async function fetchProblemDataAtCoder(
+  problemID: string
+): Promise<ProblemData | null> {
+  const matches = problemID.match(ATCODER_PROBLEM_REGEX);
+  if (!matches) {
+    return null;
+  }
+
+  const url = `https://atcoder.jp/contests/${matches[1]}/tasks/${problemID}`;
+  const problemPage = await fetch(url);
+  if (!problemPage) {
+    return null;
+  }
+
+  const document = cheerio.load(await problemPage.text());
+
+  const samples: Sample[] = [];
+  const inputsAndOutputs = document('#task-statement .lang-en > div')
+    .filter((_, el) => document('h3', el).text().startsWith('Sample'))
+    .map((_, el) => document('pre', el).text())
+    .get();
+
+  for (let i = 0; i < inputsAndOutputs.length; i += 2)
+    samples.push({
+      input: inputsAndOutputs[i],
+      output: inputsAndOutputs[i + 1],
+    });
+
+  const title = document('span.h2')
+    .first()
+    .contents()
+    .filter((_, el) => el.type === 'text')
+    .text()
+    .trim();
+
+  const statement = document('#task-statement .lang-en > div')
+    .filter((_, el) => !document('h3', el).text().startsWith('Sample'))
+    .map((_, el) => document(el).html())
+    .toArray()
+    .join('\n');
+
+  return {
+    id: problemID,
+    submittable: true,
+    platform: 'atcoder',
+    url,
+    title,
+    statement,
+    input: 'stdin',
+    output: 'stdout',
+    source: `AtCoder ${problemID}`,
+    samples,
+  };
+}
