@@ -1,3 +1,8 @@
+export type PlatformProblem = {
+  platform: Platform;
+  id: string;
+};
+
 export type Platform = 'codeforces' | 'cses' | 'atcoder' | 'usaco' | 'planets';
 
 export type ProblemData = {
@@ -7,9 +12,23 @@ export type ProblemData = {
   url: string;
   source: string;
   title: string;
+  statement: string | null;
   input: string;
   output: string;
   samples: Sample[];
+};
+
+export type ProblemSolution = {
+  problemID: string;
+  platform: Platform;
+  sourceCode: string;
+  language: 'cpp' | 'java' | 'py';
+};
+
+export type SubmissionData = {
+  id: string;
+  username: string | null;
+  platform: Platform;
 };
 
 export interface Sample {

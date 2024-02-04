@@ -4,7 +4,7 @@ import { ProblemData } from '../types/problem';
 export const mobileActiveTabAtom = atom<'code' | 'io' | 'users'>('code');
 export const showSidebarAtom = atom<boolean>(false);
 export const inputTabAtom = atom<string>('input');
-export const problemAtom = atom<ProblemData | null | undefined>(undefined);
+export const problemAtom = atom<ProblemData | undefined>(undefined);
 export const tabsListAtom = atom(get => {
   const getSamplesList = (length: number) => {
     const res = [];
@@ -21,7 +21,7 @@ export const tabsListAtom = atom(get => {
   return [
     { label: 'Input', value: 'input' },
     ...(problem ? [{ label: 'Task Overview', value: 'judge' }] : []),
-    ...(problem?.samples && problem?.samples[0].output
+    ...(problem?.samples.length && problem?.samples[0].output
       ? getSamplesList(problem.samples.length)
       : []),
   ];

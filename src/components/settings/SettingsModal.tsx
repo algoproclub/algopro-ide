@@ -15,10 +15,10 @@ import {
 } from '@heroicons/react/20/solid';
 import UserSettings from './UserSettings';
 import WorkspaceSettingsUI from './WorkspaceSettingsUI';
-import JudgeSettings from './JudgeSettings';
 
 import SignInSettings from './SignInSettings';
 import JudgeResult from '../../types/judge';
+import { ProblemData } from '../../types/problem';
 import useJudgeResults from '../../hooks/useJudgeResults';
 import { EditorMode, useUserContext } from '../../context/UserContext';
 import { FileSettings, useEditorContext } from '../../context/EditorContext';
@@ -41,11 +41,6 @@ const tabs = [
     label: 'User',
     icon: UserIcon,
   },
-  // {
-  //   id: 'judge',
-  //   label: 'Judge',
-  //   icon: ServerIcon,
-  // },
 ] as const;
 
 export const SettingsModal = ({
@@ -127,27 +122,6 @@ export const SettingsModal = ({
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { defaultPermission, ...toKeep } = settingsToSet;
       settingsToSet = toKeep;
-    }
-
-    if (realFileSettings.problem != settingsToSet.problem) {
-      const newJudgeResults = judgeResults;
-      while (newJudgeResults.length > 1) newJudgeResults.pop();
-
-      if (settingsToSet.problem) {
-        function resizeResults(
-          results: (JudgeResult | null)[],
-          newSize: number
-        ) {
-          while (results.length > newSize) results.pop();
-          while (results.length < newSize) results.push(null);
-          return results;
-        }
-
-        const samples = settingsToSet.problem.samples;
-        setJudgeResults(resizeResults(newJudgeResults, 2 + samples.length));
-      } else {
-        setJudgeResults(newJudgeResults);
-      }
     }
 
     if (realFileSettings.language !== settingsToSet.language) {
@@ -315,16 +289,6 @@ export const SettingsModal = ({
                     userPermission={userPermission || 'READ'}
                   />
                 )}
-                {
-                  // @ts-ignore
-                  tab === 'judge' && (
-                    <JudgeSettings
-                      workspaceSettings={fileSettings}
-                      onWorkspaceSettingsChange={onChange}
-                      userPermission={userPermission || 'READ'}
-                    />
-                  )
-                }
 
                 <div className="flex items-center space-x-4">
                   <button
@@ -341,22 +305,6 @@ export const SettingsModal = ({
                   >
                     Save
                   </button>
-                  {
-                    // @ts-ignore
-                    tab === 'judge' && (
-                      <button
-                        type="button"
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                        onClick={() => {
-                          onChange({
-                            problem: null,
-                          });
-                        }}
-                      >
-                        Clear
-                      </button>
-                    )
-                  }
                 </div>
 
                 {tab === 'user' && (
