@@ -23,6 +23,7 @@ import {
 } from '../../scripts/updateStatus';
 import 'katex/dist/katex.min.css';
 import renderMathInElement from 'katex/contrib/auto-render';
+import katex from 'katex';
 
 const submitProblemSolution = httpsCallable<ProblemSolution, SubmissionData>(
   getFunctions(undefined, 'europe-west1'),
@@ -111,6 +112,11 @@ export default function GenericJudgeInterface({
           { left: '$$$', right: '$$$', display: false },
           { left: '$$$$$', right: '$$$$$', display: true },
         ],
+      });
+
+      // For AtCoder
+      ref.current.querySelectorAll('var').forEach(element => {
+        katex.render(element.textContent ?? '', element);
       });
     }
   }, [ref.current]);
