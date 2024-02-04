@@ -1,6 +1,5 @@
 import { defineString } from 'firebase-functions/params';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import fetch from 'node-fetch';
@@ -20,7 +19,12 @@ import {
   ResultFetcher,
   CSESResultFetcher,
 } from './getResult';
-import { PendingSubmissions, SubmissionData, AccountData } from './types';
+import { PendingSubmissions, AccountData, SubmissionData } from './types';
+import {
+  onValueCreated,
+  onValueDeleted,
+  onValueUpdated,
+} from 'firebase-functions/v2/database';
 
 export const submitproblemsolution = onCall<
   ProblemSolution,
@@ -194,37 +198,42 @@ const updateResultsCF = async (
     (a, b) => a.creationTime - b.creationTime
   );
   const username = sorted[0].username;
+  submissionDataList = submissionDataList.filter(
+    submissionData => submissionData.username === username
+  );
+
   const url = getCFRequestURL('user.status', {
     handle: username,
   });
   const resp = await fetch(url);
+  const promises: Promise<void>[] = [];
   if (resp.status !== 200) {
     logger.log(
       `CF: response status is not 200; url: ${url}; response status: ${resp.status}`
     );
-
     submissionDataList.forEach(submissionData => {
-      updateStatusData(submissionData.fileID, {
-        statusCode: 'error',
-        statusText: 'status-done',
-        message:
-          resp.status === 400
-            ? 'Error: incorrect data'
-            : 'Error: unknown error',
-      });
+      promises.push(
+        updateStatusData(submissionData.fileID, {
+          statusCode: 'error',
+          statusText: 'status-done',
+          message:
+            resp.status === 400
+              ? 'Error: incorrect data'
+              : 'Error: unknown error',
+        })
+      );
     });
-    return;
+  } else {
+    const resultJSON = ((await resp.json()) as any)['result'];
+    submissionDataList.forEach(submissionData => {
+      promises.push(
+        getAndUpdate(
+          new CFResultFetcher(submissionData, resultJSON),
+          submissionData.fileID
+        )
+      );
+    });
   }
-  const resultJSON = ((await resp.json()) as any)['result'];
-  const promises: Promise<void>[] = [];
-  submissionDataList.forEach(submissionData => {
-    promises.push(
-      getAndUpdate(
-        new CFResultFetcher(submissionData, resultJSON),
-        submissionData.fileID
-      )
-    );
-  });
   await Promise.all(promises);
 };
 
@@ -232,24 +241,33 @@ const updateResults = async (pending: PendingSubmissions | null) => {
   const readSubmissionData = async (pending: PendingSubmissions) => {
     const submissionData: SubmissionData[] = [];
     for (const fileID of Object.keys(pending)) {
-      const creationTime = pending[fileID].creationTime;
-      const fileData: { problem: ProblemData; submission: FileSubmission } = (
-        await db.ref(`files/${fileID}`).get()
-      ).val();
-      const platform = fileData.problem.platform;
-      const problemID = fileData.problem.id;
-      const submissionID = fileData.submission.id;
-      const username = fileData.submission.username;
+      try {
+        const creationTime = pending[fileID].creationTime;
+        const fileData: { problem: ProblemData; submission: FileSubmission } = (
+          await db.ref(`files/${fileID}`).get()
+        ).val();
+        const platform = fileData.problem.platform;
+        const problemID = fileData.problem.id;
+        const submissionID = fileData.submission.id;
+        const username = fileData.submission.username;
 
-      submissionData.push({
-        fileID: fileID,
-        platform: platform,
-        username: username,
-        sessionCookie: accountData[platform]?.sessionCookie?.value() ?? null,
-        problemID: problemID,
-        submissionID: submissionID,
-        creationTime: creationTime,
-      });
+        submissionData.push({
+          fileID: fileID,
+          platform: platform,
+          username: username,
+          sessionCookie: accountData[platform]?.sessionCookie?.value() ?? null,
+          problemID: problemID,
+          submissionID: submissionID,
+          creationTime: creationTime,
+        });
+      } catch (error) {
+        await updateStatusData(fileID, {
+          statusCode: 'error',
+          statusText: 'status-done',
+          message: 'Error: incorrect data',
+        });
+        logger.log(error);
+      }
     }
     return submissionData;
   };
@@ -280,7 +298,7 @@ const updateResults = async (pending: PendingSubmissions | null) => {
   await Promise.all(promises);
 };
 
-const registerManualSubmission = async (
+const registerSubmission = async (
   fileID: string,
   submissionID: string,
   username: string | null
@@ -311,7 +329,7 @@ const registerManualSubmission = async (
   });
 };
 
-exports.registermanualsubmission = onCall(
+exports.registersubmission = onCall(
   { region: 'europe-west1' },
   async request => {
     const fileID = request.data.fileID;
@@ -328,10 +346,11 @@ exports.registermanualsubmission = onCall(
     const permission =
       fileData.users[userID].permission ??
       fileData?.settings?.defaultPermission;
+
     if (!['OWNER', 'READ_WRITE'].includes(permission)) {
       return { success: false };
     }
-    await registerManualSubmission(
+    await registerSubmission(
       fileID,
       request.data.submissionID,
       request.data.username
@@ -340,27 +359,41 @@ exports.registermanualsubmission = onCall(
   }
 );
 
-exports.scheduledupdate = onSchedule(
-  { region: 'europe-west1', schedule: 'every 2 seconds' },
-  async () => {
-    let startNewUpdate = false;
-    await db.ref('submissions/lock').transaction((lock?: boolean) => {
-      startNewUpdate = !lock;
-      return true;
-    });
-    if (!startNewUpdate) {
-      return;
-    }
-    try {
-      await db
-        .ref('submissions/pending')
-        .once('value', async (snapshot: admin.database.DataSnapshot) => {
-          await updateResults(snapshot.val());
-        });
-    } catch (error) {
-      logger.log(error);
-    } finally {
-      await db.ref('submissions/lock').set(null);
-    }
+const updateStatus = async () => {
+  const pending = (await db.ref('submissions/pending').get()).val();
+  if (!pending) {
+    return;
   }
+  let startNewUpdate = false;
+  await db.ref('submissions/lock').transaction((lock?: boolean) => {
+    startNewUpdate = !lock;
+    return true;
+  });
+  if (!startNewUpdate) {
+    return;
+  }
+  try {
+    await new Promise(r => setTimeout(r, 2000));
+    const pending = (await db.ref('submissions/pending').get()).val();
+    await updateResults(pending);
+  } catch (error) {
+    logger.log(error);
+  } finally {
+    await db.ref('submissions/lock').set(null);
+  }
+};
+
+const region = process.env.IS_TEST_ENV ? 'us-central1' : 'europe-west1';
+
+exports.onlockdeleted = onValueDeleted(
+  { ref: 'submissions/lock', region },
+  updateStatus
+);
+exports.onpendingcreated = onValueCreated(
+  { ref: 'submissions/pending', region },
+  updateStatus
+);
+exports.onpendingupdated = onValueUpdated(
+  { ref: 'submissions/pending', region },
+  updateStatus
 );
