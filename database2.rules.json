@@ -6,7 +6,7 @@
         ".write": "auth.uid == $secretid",
         ".indexOn": "lastAccessTime",
         "role": {
-          ".validate": "!root.child('users').child($secretid).child('role').exists()"
+          ".validate": "!data.exists() && newData.val() === 'student'"
         }
       }
     },
