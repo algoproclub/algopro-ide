@@ -16,7 +16,6 @@ import {
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
 import { useUserContext } from '../../context/UserContext';
 import LoadResultsModal from './LoadResultsModal';
-import { submitproblemsolution } from '../../../functions/src';
 import {
   registerSubmission,
   resetStatusData,
