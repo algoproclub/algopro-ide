@@ -8,6 +8,12 @@ services:
       - '9099:9099'
       - '9000:9000'
       - '4000:4000'
+      - '8080:8080'
+      - '5001:5001'
+    volumes:
+      - type: bind
+        source: functions/
+        target: /app/functions
   yjs:
     build:
       context: .
@@ -17,6 +23,8 @@ services:
   execute:
     build:
       context: execute
+    environment:
+      - EXECUTE_DUMMY=true
     ports:
       - '1235'
   web:
@@ -24,7 +32,8 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - FIREBASE_AUTH_EMULATOR_HOST="firebase:9099"
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
+      - FIRESTORE_EMULATOR_HOST=firebase:8080
     ports:
       - '3000:3000'
       - '127.0.0.1:9229:9229'

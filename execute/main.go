@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -13,14 +14,15 @@ import (
 	_ "github.com/mraron/njudge/pkg/language/langs/cpp"
 	_ "github.com/mraron/njudge/pkg/language/langs/java"
 	_ "github.com/mraron/njudge/pkg/language/langs/pypy3"
+	"go.skia.org/infra/go/util/limitwriter"
 
 	"github.com/mraron/njudge/pkg/language/sandbox"
 )
 
 var Languages = map[string]language.Language{
-	"cpp":    language.DefaultStore.Get("cpp17"),
-	"java":   language.DefaultStore.Get("java"),
-	"python": language.DefaultStore.Get("pypy3"),
+	"cpp":  language.DefaultStore.Get("cpp17"),
+	"java": language.DefaultStore.Get("java"),
+	"py":   language.DefaultStore.Get("pypy3"),
 }
 
 type ExecuteRequest struct {
@@ -56,7 +58,8 @@ func (req ExecuteRequest) Run(sp *language.SandboxProvider) (*ExecuteResponse, e
 	}
 
 	stdout := &bytes.Buffer{}
-	status, err := lang.Run(sandbox, bin, bytes.NewBuffer(req.Input), stdout, 5*time.Second, 128*1024*1024)
+	stdoutLimiter := limitwriter.New(stdout, 5000)
+	status, err := lang.Run(sandbox, bin, bytes.NewBuffer(req.Input), stdoutLimiter, 5*time.Second, 128*1024*1024)
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +90,17 @@ type ExecuteResponse struct {
 
 func main() {
 	sp := language.NewSandboxProvider()
-	s := sandbox.NewDummy()
-	sp.Put(s)
+	if os.Getenv("EXECUTE_DUMMY") != "" {
+		for i := 0; i < 10; i++ {
+			s := sandbox.NewDummy()
+			sp.Put(s)
+		}
+	} else {
+		for i := 0; i < 10; i++ {
+			s := sandbox.NewIsolate(255 + i)
+			sp.Put(s)
+		}
+	}
 
 	e := echo.New()
 	e.Use(middleware.Logger())
