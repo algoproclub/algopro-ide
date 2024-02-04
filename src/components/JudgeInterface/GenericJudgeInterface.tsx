@@ -16,7 +16,7 @@ import {
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
 
 const submitProblemSolution = httpsCallable<ProblemSolution, SubmissionData>(
-  getFunctions(),
+  getFunctions(undefined, 'europe-west1'),
   'submitproblemsolution'
 );
 
