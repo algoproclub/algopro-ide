@@ -26,6 +26,8 @@ import {
   onValueUpdated,
 } from 'firebase-functions/v2/database';
 
+require('dotenv').config({ path: '.env.local' });
+
 export const submitproblemsolution = onCall<
   ProblemSolution,
   Promise<ClientSubmissionData>
