@@ -4,7 +4,10 @@
       "$secretid": {
         ".read": "$secretid == auth.uid",
         ".write": "auth.uid == $secretid",
-        ".indexOn": "lastAccessTime"
+        ".indexOn": "lastAccessTime",
+        "role": {
+          ".validate": "!data.exists() && newData.val() === 'student'"
+        }
       }
     },
     "files": {
@@ -54,7 +57,7 @@
           ".read": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ'",
           ".write": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE'"
         },
-          
+
         "state": {
           ".read": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ'",
           ".write": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE'"

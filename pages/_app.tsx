@@ -2,7 +2,12 @@ import { AppProps } from 'next/app';
 import 'tailwindcss/tailwind.css';
 import '../src/styles/globals.css';
 import * as firebase from 'firebase/app';
-import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
+import {
+  getDatabase,
+  connectDatabaseEmulator,
+  update,
+  ref,
+} from 'firebase/database';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { getAnalytics, isSupported } from 'firebase/analytics';
@@ -10,10 +15,14 @@ import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 import { ConnectionProvider } from '../src/context/ConnectionContext';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
-import { UserProvider } from '../src/context/UserContext';
+import {
+  useNullableUserContext,
+  UserProvider,
+} from '../src/context/UserContext';
 import { SHOULD_USE_FIREBASE_EMULATOR } from '../src/dev_constants';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
+import { useEffect } from 'react';
 
 library.add(fas);
 
@@ -54,13 +63,29 @@ if (!firebase.getApps()?.length) {
   }
 }
 
+const ContextValueListener = ({ children }: { children: JSX.Element }) => {
+  const { firebaseUser, userData } = useNullableUserContext();
+
+  useEffect(() => {
+    if (firebaseUser) {
+      update(ref(getDatabase(), `users/${firebaseUser.uid}`), {
+        role: 'student',
+      });
+    }
+  }, [firebaseUser]);
+
+  return <>{children}</>;
+};
+
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <Toaster position="bottom-right" />
       <UserProvider>
         <ConnectionProvider>
-          <Component {...pageProps} />
+          <ContextValueListener>
+            <Component {...pageProps} />
+          </ContextValueListener>
         </ConnectionProvider>
       </UserProvider>
       <Analytics />
