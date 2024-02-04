@@ -7,6 +7,7 @@ import {
   connectDatabaseEmulator,
   update,
   ref,
+  get,
 } from 'firebase/database';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
@@ -68,8 +69,13 @@ const ContextValueListener = ({ children }: { children: JSX.Element }) => {
 
   useEffect(() => {
     if (firebaseUser) {
-      update(ref(getDatabase(), `users/${firebaseUser.uid}`), {
-        role: 'student',
+      const userRef = ref(getDatabase(), `users/${firebaseUser.uid}`);
+      get(userRef).then(userSnap => {
+        if (!userSnap.val().role) {
+          update(userRef, {
+            role: 'student',
+          });
+        }
       });
     }
   }, [firebaseUser]);
