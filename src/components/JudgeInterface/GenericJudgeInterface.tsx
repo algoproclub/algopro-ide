@@ -21,6 +21,9 @@ import {
   registerSubmission,
   resetStatusData,
 } from '../../scripts/updateStatus';
+import 'katex/dist/katex.min.css';
+import renderMathInElement from 'katex/contrib/auto-render';
+import katex from 'katex';
 
 const submitProblemSolution = httpsCallable<ProblemSolution, SubmissionData>(
   getFunctions(undefined, 'europe-west1'),
@@ -100,6 +103,24 @@ export default function GenericJudgeInterface({
     }
   };
 
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (ref.current !== null) {
+      renderMathInElement(ref.current, {
+        delimiters: [
+          // For Codeforces
+          { left: '$$$', right: '$$$', display: false },
+          { left: '$$$$$', right: '$$$$$', display: true },
+        ],
+      });
+
+      // For AtCoder
+      ref.current.querySelectorAll('var').forEach(element => {
+        katex.render(element.textContent ?? '', element);
+      });
+    }
+  }, [ref.current]);
+
   return (
     <div className="relative h-full flex flex-col">
       <LoadResultsModal
@@ -108,13 +129,13 @@ export default function GenericJudgeInterface({
         setStatusData={setStatusData}
       />
       <div className="flex-1 overflow-y-auto">
-        <section id="problem-statement" className="p-4 pb-0">
+        <section className="p-4 pb-0">
           <h3>
             <a
               href={problem.url}
               target="_blank"
               rel="noreferrer"
-              className="font-bold text-lg hover:underline flex flex-row items-center"
+              className="font-bold text-xl hover:underline flex flex-row items-center"
             >
               {problem.title}
               <ArrowTopRightOnSquareIcon
@@ -124,8 +145,20 @@ export default function GenericJudgeInterface({
             </a>
           </h3>
           <div
+            id="problem-statement"
             dangerouslySetInnerHTML={{ __html: problem.statement ?? '' }}
+            ref={ref}
           ></div>
+          <style jsx global>{`
+            #problem-statement p {
+              margin-bottom: 0.5rem;
+            }
+
+            #problem-statement .section-title {
+              font-size: 1.125rem;
+              font-weight: 600;
+            }
+          `}</style>
         </section>
       </div>
       <SubmitButton
