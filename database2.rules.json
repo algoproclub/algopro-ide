@@ -71,7 +71,13 @@
         }
       }
     },
-    ".read": false,
+    "submissions": {
+      "$secretid": {
+        ".write": false,
+        ".read": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ'"
+      }
+    },
+    ".read": "root.child('users').child(auth.uid).child('role').val() === 'teacher'",
     ".write": false
   }
 }
