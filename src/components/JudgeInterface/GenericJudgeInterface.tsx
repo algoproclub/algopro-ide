@@ -143,6 +143,16 @@ export default function GenericJudgeInterface({
             dangerouslySetInnerHTML={{ __html: problem.statement ?? '' }}
             ref={ref}
           ></div>
+          <style jsx global>{`
+            #problem-statement p {
+              margin-bottom: 0.5rem;
+            }
+
+            #problem-statement .section-title {
+              font-size: 1.125rem;
+              font-weight: 600;
+            }
+          `}</style>
         </section>
       </div>
       <SubmitButton
