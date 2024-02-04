@@ -69,12 +69,10 @@ export default async (
 
   let problem = null;
   if (!problemSnap.exists) {
-    problem = (
-      await fetchProblemData({
-        id: data.problemID,
-        platform: data.platform,
-      })
-    ).data;
+    problem = await fetchProblemData({
+      id: data.problemID,
+      platform: data.platform,
+    });
 
     if (problem === null) {
       res.status(400).json({

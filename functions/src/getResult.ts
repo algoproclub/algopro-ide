@@ -145,7 +145,7 @@ export class CFResultFetcher extends ResultFetcher {
     const respProblemID: string =
       '' +
       this.submission.problem.contestId.toString() +
-      this.submission.problem.index.toLowerCase();
+      this.submission.problem.index;
 
     if (problemID != respProblemID) {
       throw new IncorrectDataError(
@@ -345,9 +345,9 @@ export class AtCoderResultFetcher extends ResultFetcher {
         'table.table.table-bordered.table-striped.th-center > tbody'
       )[2]?.children ?? []
     );
-    if (this.getTask() !== problemID.toLowerCase()) {
+    if (this.getTask() !== problemID) {
       throw new IncorrectDataError(
-        `AtCoder: problem IDs don't match (${this.getTask()} - ${problemID.toLowerCase()})`
+        `AtCoder: problem IDs don't match (${this.getTask()} - ${problemID})`
       );
     }
   }
