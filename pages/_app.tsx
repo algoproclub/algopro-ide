@@ -71,7 +71,7 @@ const ContextValueListener = ({ children }: { children: JSX.Element }) => {
     if (firebaseUser) {
       const userRef = ref(getDatabase(), `users/${firebaseUser.uid}`);
       get(userRef).then(userSnap => {
-        if (!userSnap.val().role) {
+        if (!userSnap.val()?.role) {
           update(userRef, {
             role: 'student',
           });
