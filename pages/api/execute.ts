@@ -41,7 +41,7 @@ export default async (
   res: NextApiResponse<ResponseData>
 ) => {
   const requestData: RequestData = req.body;
-  const executeResponse = await fetch('http://127.0.0.1:1235/execute', {
+  const executeResponse = await fetch('http://51.21.132.241:1235/execute', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
