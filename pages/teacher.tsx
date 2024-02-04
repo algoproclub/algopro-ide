@@ -193,9 +193,9 @@ export default function TeacherPage() {
           const data = entry[1];
 
           const owner =
-            Array.from(Object.values(data.users)).find(val => {
+            Array.from(Object.values(data.users ?? [])).find(val => {
               return val.permission === 'OWNER';
-            })?.name ?? '';
+            })?.name ?? '?';
           const submission: StatusData | null = (
             await get(ref(db, `submissions/${fileID}/statusData`))
           ).val();
@@ -370,7 +370,7 @@ export default function TeacherPage() {
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <a
-                        href={`http://localhost:3000/${data.fileID.slice(1)}`}
+                        href={`/${data.fileID.slice(1)}`}
                         className="text-indigo-300 hover:underline"
                         target="_blank"
                       >
