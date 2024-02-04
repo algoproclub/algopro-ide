@@ -25,6 +25,7 @@ import {
   onValueDeleted,
   onValueUpdated,
 } from 'firebase-functions/v2/database';
+import { randomUUID } from 'crypto';
 
 require('dotenv').config({ path: '.env.local' });
 
@@ -32,7 +33,14 @@ export const submitproblemsolution = onCall<
   ProblemSolution,
   Promise<ClientSubmissionData>
 >({ region: 'europe-west1' }, async request => {
-  const { platform } = request.data;
+  const data = request.data;
+  const { platform, language } = data;
+  const comment = {
+    cpp: '//',
+    java: '//',
+    py: '#',
+  }[language];
+  data.sourceCode = `${comment} UUID: ${randomUUID()}\n` + data.sourceCode;
 
   if (platform !== 'codeforces') {
     throw new HttpsError(
@@ -41,7 +49,7 @@ export const submitproblemsolution = onCall<
     );
   }
 
-  return submitProblemSolutionCodeforces(request.data);
+  return submitProblemSolutionCodeforces(data);
 });
 
 const CODEFORCES_PROBLEM_REGEX = /^(\d+)([A-Z].*)$/;
