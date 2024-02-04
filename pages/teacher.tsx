@@ -175,7 +175,7 @@ export default function TeacherPage() {
 
   const updateFileList = async () => {
     const fromTime = Date.now() - timeInMillis[selected];
-    const filesObj: { [key: string]: FileData } = (
+    const filesObj: { [key: string]: Partial<FileData> } = (
       await get(ref(db, 'files'))
     ).val();
 
@@ -201,16 +201,16 @@ export default function TeacherPage() {
           ).val();
 
           const verdict = submission
-            ? submission.message ?? 'No verdict'
-            : 'No submission';
+            ? submission.message ?? 'no verdict'
+            : 'no submission';
 
           return {
-            workspaceName: data.settings.workspaceName ?? 'Unnamed',
+            workspaceName: data.settings?.workspaceName ?? '?',
             owner: owner,
             fileID: fileID,
             lastVerdict: verdict,
-            lastEdit: data.teacher.editTime,
-            codeSize: data.teacher.codeSize,
+            lastEdit: data.teacher!.editTime!,
+            codeSize: data.teacher!.codeSize!,
           };
         })
     );
