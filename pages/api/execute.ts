@@ -1,0 +1,77 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { Language } from '../../src/context/EditorContext';
+
+type RequestData = {
+  compilerOptions: string;
+  filename: string;
+  input: string;
+  language: Language;
+  sourceCode: string;
+};
+
+type StatusType =
+  | 'success'
+  | 'internal_error'
+  | 'wrong_answer'
+  | 'time_limit_exceeded'
+  | 'runtime_error'
+  | 'compile_error';
+
+type ResponseData = {
+  compilationMessage?: string;
+  message?: string;
+  status: StatusType;
+  stdout: string;
+  stderr: string;
+  time: string;
+  memory: string;
+};
+
+function mapResult(verdict: number): StatusType {
+  if (verdict == 1) return 'success';
+  if (verdict == 2) return 'time_limit_exceeded';
+  if (verdict == 4) return 'runtime_error';
+  if (verdict == 8) return 'runtime_error';
+  if (verdict == 16) return 'internal_error';
+  return 'compile_error';
+}
+
+export default async (
+  req: NextApiRequest,
+  res: NextApiResponse<ResponseData>
+) => {
+  const requestData: RequestData = req.body;
+  const executeResponse = await fetch('http://51.21.132.241:1235/execute', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      language: requestData.language,
+      filename: requestData.filename,
+      source: btoa(requestData.sourceCode),
+      input: btoa(requestData.input),
+    }),
+  });
+
+  const result = await executeResponse.json();
+  if (!result.compiled) {
+    res.status(200).json({
+      message: result.compiler_output,
+      status: 'compile_error',
+      memory: '',
+      stderr: '',
+      stdout: '',
+      time: '',
+    });
+  } else {
+    res.status(200).json({
+      compilationMessage: result.compiler_output,
+      status: mapResult(result.verdict),
+      memory: result.memory,
+      stderr: result.stderr,
+      stdout: result.output,
+      time: (parseInt(result.time) / 1e9).toString(),
+    });
+  }
+};
