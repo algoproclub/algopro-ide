@@ -531,15 +531,17 @@ const updateStatus = async () => {
   }
 };
 
+const region = process.env.IS_TEST_ENV ? 'us-central1' : 'europe-west1';
+
 exports.onlockdeleted = onValueDeleted(
-  { region: 'europe-west1', ref: 'submissions/lock' },
+  { ref: 'submissions/lock', region },
   updateStatus
 );
 exports.onpendingcreated = onValueCreated(
-  { region: 'europe-west1', ref: 'submissions/pending' },
+  { ref: 'submissions/pending', region },
   updateStatus
 );
 exports.onpendingupdated = onValueUpdated(
-  { region: 'europe-west1', ref: 'submissions/pending' },
+  { ref: 'submissions/pending', region },
   updateStatus
 );

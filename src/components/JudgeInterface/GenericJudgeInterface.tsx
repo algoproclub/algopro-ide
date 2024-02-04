@@ -45,14 +45,14 @@ export default function GenericJudgeInterface({
 
   const handleSubmit = async () => {
     const getSubmitLink = () => {
+      const codeforcesRegex = /^(\d+)([A-Z].*)$/;
       const platform = problem.platform;
       const problemID = problem.id;
+      const matches = problemID.match(codeforcesRegex)!;
 
       let submitLink = '';
       if (platform === 'codeforces') {
-        submitLink = `https://codeforces.com/problemset/problem/${
-          problemID.split('_')[0]
-        }/${problemID.split('_')[1]}`;
+        submitLink = `https://codeforces.com/problemset/problem/${matches[1]}/${matches[2]}`;
       }
       if (platform === 'atcoder') {
         submitLink = `https://atcoder.jp/contests/${
