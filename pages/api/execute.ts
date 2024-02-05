@@ -36,6 +36,10 @@ function mapResult(verdict: number): StatusType {
   return 'compile_error';
 }
 
+function utf8btoa(input: string): string {
+  const buffer = Buffer.from(input, 'utf-8');
+  return buffer.toString('base64');
+}
 export default async (
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
@@ -49,8 +53,8 @@ export default async (
     body: JSON.stringify({
       language: requestData.language,
       filename: requestData.filename,
-      source: btoa(requestData.sourceCode),
-      input: btoa(requestData.input),
+      source: utf8btoa(requestData.sourceCode),
+      input: utf8btoa(requestData.input),
     }),
   });
 
