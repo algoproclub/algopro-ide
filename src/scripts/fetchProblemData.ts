@@ -36,6 +36,8 @@ export async function fetchProblemData({
       return fetchProblemDataCodeforces(id);
     case 'atcoder':
       return fetchProblemDataAtCoder(id);
+    case 'cses':
+      return fetchProblemDataCSES(id);
     default:
       throw new Error(`platform '${platform}' is unimplemented`);
   }
@@ -138,6 +140,61 @@ async function fetchProblemDataAtCoder(
     input: 'stdin',
     output: 'stdout',
     source: `AtCoder ${problemID}`,
+    samples,
+  };
+}
+
+async function fetchProblemDataCSES(
+  problemID: string
+): Promise<ProblemData | null> {
+  const url = `https://cses.fi/problemset/task/${problemID}`;
+  const problemPage = await fetch(url);
+  if (!problemPage) {
+    return null;
+  }
+
+  const document = cheerio.load(await problemPage.text());
+
+  // Fix up relative URLs to point to the cses.fi domain
+  document('img').each((_, el) => {
+    const src = document(el).attr('src');
+    if (src && src.startsWith('/')) {
+      document(el).attr('src', `https://cses.fi${src}`);
+    }
+  });
+
+  const sections: { heading: string | null; children: domhandler.Element[] }[] =
+    [{ heading: null, children: [] }];
+  for (const el of document('.md').first().children()) {
+    if (el.type === ElementType.Tag && el.tagName === 'h1') {
+      sections.push({ heading: document(el).text(), children: [el] });
+    } else {
+      sections[sections.length - 1].children.push(el);
+    }
+  }
+
+  const inputsAndOutputs: string[] | undefined = sections
+    .find(s => s.heading === 'Example')
+    ?.children.filter(el => el.type === ElementType.Tag && el.tagName === 'pre')
+    .map(htmlToPlaintext);
+
+  let samples: Sample[] = inputsAndOutputs
+    ? [{ input: inputsAndOutputs[0], output: inputsAndOutputs[1] }]
+    : [];
+
+  return {
+    id: problemID,
+    submittable: true,
+    platform: 'cses',
+    url,
+    title: document('.title-block > h1').text(),
+    statement: sections
+      .filter(s => s.heading !== 'Example')
+      .map(s => s.children.map(c => document(c).prop('outerHTML')).join('\n'))
+      .join('\n'),
+    input: 'stdin',
+    output: 'stdout',
+    source: `CSES ${problemID}`,
     samples,
   };
 }
