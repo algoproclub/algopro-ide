@@ -1,18 +1,15 @@
 import React, { useEffect } from 'react';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
-import { useAtomValue, useUpdateAtom } from 'jotai/utils';
+import { useUpdateAtom } from 'jotai/utils';
 import { signInWithGoogleAtom } from '../src/atoms/firebaseUserAtoms';
 import Dashboard from '../src/components/Dashboard/Dashboard';
 import { useConnectionContext } from '../src/context/ConnectionContext';
-import {
-  useNullableUserContext,
-  useUserContext,
-} from '../src/context/UserContext';
+import { useNullableUserContext } from '../src/context/UserContext';
 
 export default function DashboardPage(): JSX.Element {
   const signInWithGoogle = useUpdateAtom(signInWithGoogleAtom);
   const connectionContext = useConnectionContext();
-  const { firebaseUser, userData } = useNullableUserContext();
+  const { userData, logged } = useNullableUserContext();
 
   useEffect(() => {
     document.title = 'AlgoPro IDE';
@@ -40,8 +37,7 @@ export default function DashboardPage(): JSX.Element {
         </div>
 
         <div className="h-6"></div>
-
-        {!firebaseUser ? (
+        {logged === false ? (
           <div className="text-gray-400 mt-6">
             Not signed in.{' '}
             <button

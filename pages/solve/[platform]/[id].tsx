@@ -8,8 +8,16 @@ import va from '@vercel/analytics';
 export default function CreatePlatformFile(): JSX.Element {
   const router = useRouter();
 
-  const { firebaseUser, userData } = useNullableUserContext();
+  const { firebaseUser, userData, logged } = useNullableUserContext();
   const [error, setError] = useState<string | null>(null);
+
+  const loginUI = (
+    <MessagePage
+      message="Please login to solve this task."
+      showHomeButton={true}
+    />
+  );
+  const loadingUI = <MessagePage message="Loading..." showHomeButton={false} />;
 
   const createdRef = useRef<boolean>(false);
 
@@ -59,5 +67,6 @@ export default function CreatePlatformFile(): JSX.Element {
     return <MessagePage message={'Error: ' + error} />;
   }
 
-  return <MessagePage message="Loading File..." showHomeButton={false} />;
+  if (logged === false) return loginUI;
+  return loadingUI;
 }
