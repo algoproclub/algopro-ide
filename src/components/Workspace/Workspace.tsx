@@ -191,7 +191,7 @@ export default function Workspace({
               )}
               {inputTab === 'judge' &&
                 problem &&
-                (isNaN(Number(problem.id)) ? (
+                (problem.platform !== 'usaco' ? (
                   <GenericJudgeInterface
                     problem={problem}
                     statusData={statusData}
