@@ -74,17 +74,17 @@ export class CFResultFetcher extends ResultFetcher {
   }
 
   getStatusText(): string {
-    return this.submission['verdict'] === 'TESTING'
+    return this.submission.verdict === 'TESTING'
       ? 'status-working'
       : 'status-done';
   }
 
   getStatusCode(): StatusCode {
-    return this.submission['verdict'] === 'TESTING' ? 'working' : 'resolved';
+    return this.submission.verdict === 'TESTING' ? 'working' : 'resolved';
   }
 
   getMessage(): string {
-    let formatted = (this.submission['verdict'] as string)
+    let formatted = (this.submission.verdict as string)
       .split('_')
       .join(' ')
       .toLowerCase();
@@ -104,7 +104,7 @@ export class CFResultFetcher extends ResultFetcher {
         'idleness limit exceeded',
       ].includes(formatted)
     ) {
-      formatted += ` on test ${this.submission['passedTestCount'] + 1}`;
+      formatted += ` on test ${this.submission.passedTestCount + 1}`;
     }
     return formatted;
   }
@@ -116,12 +116,12 @@ export class CFResultFetcher extends ResultFetcher {
 
   getMemory(): string | null {
     return (
-      Math.round(this.submission['memoryConsumedBytes'] / 100000) / 10 + ' MB'
+      Math.round(this.submission.memoryConsumedBytes / 100000) / 10 + ' MB'
     );
   }
 
   getTime(): string | null {
-    return this.submission['timeConsumedMillis'] + ' ms';
+    return this.submission.timeConsumedMillis + ' ms';
   }
 
   getOutput(): string | null {
@@ -147,11 +147,12 @@ export class CFResultFetcher extends ResultFetcher {
       this.submission.problem.contestId.toString() +
       this.submission.problem.index;
 
-    if (problemID != respProblemID) {
+    if (problemID !== respProblemID) {
       throw new IncorrectDataError(
         `CF: problem IDs don't match (${problemID} - ${respProblemID})`
       );
     }
+    this.submission.verdict ??= 'TESTING';
   }
 }
 
@@ -515,7 +516,7 @@ export class CSESResultFetcher extends ResultFetcher {
     }
     this.testcases = Array.from(
       this.document.querySelector('table.narrow.closeable > tbody')?.children ??
-        []
+      []
     );
   }
 }
