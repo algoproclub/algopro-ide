@@ -25,7 +25,7 @@ export function RadioGroupContents<T>({
       <RadioGroup.Label
         as="div"
         className={classNames(
-          'font-medium mb-2',
+          'font-medium mb-2 text-gray-700',
           lightMode ? 'text-white' : ''
         )}
       >

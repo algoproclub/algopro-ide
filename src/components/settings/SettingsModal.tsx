@@ -306,7 +306,6 @@ export const SettingsModal = ({
                     Save
                   </button>
                 </div>
-
                 {tab === 'user' && (
                   <>
                     <hr className="border-gray-200" />

@@ -57,7 +57,7 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
   };
 
   return (
-    <div className={classNames(className, 'flex flex-col mx-4 mt-4')}>
+    <div className={classNames(className, 'flex flex-col mx-4 mb-4')}>
       <div className="font-bold text-sm text-white py-2.5 px-4 rounded-t-md border border-gray-700 bg-gray-800">
         Chat
       </div>
@@ -83,7 +83,7 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
       {(userPermission === 'OWNER' || userPermission === 'READ_WRITE') && (
         <form onSubmit={handleSubmit}>
           <textarea
-            className="text-white mt-4 block w-full bg-[#121212] px-3 py-2 border border-gray-700 focus:border-indigo-600 focus:ring-0 focus:placeholder-gray-400 text-sm max-h-[10rem]"
+            className="mt-2 text-white block w-full bg-[#121212] px-3 py-2 border border-gray-700 focus:border-indigo-600 focus:ring-0 focus:placeholder-gray-400 text-sm max-h-[10rem]"
             placeholder="Send a message"
             rows={3}
             value={message}
@@ -91,7 +91,7 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
             onKeyDown={handleKeyDown}
             ref={chatInputRef}
           />
-          <button className="my-2 rounded-md block w-full py-2.5 text-sm font-bold text-indigo-100 hover:text-indigo-100 bg-indigo-800/75 hover:bg-indigo-900/75 active:bg-indigo-900/50 focus:outline-none">
+          <button className="mt-2 rounded-md block w-full py-2.5 text-sm font-bold text-indigo-100 hover:text-indigo-100 bg-indigo-800/75 hover:bg-indigo-900/75 active:bg-indigo-900/50 focus:outline-none">
             Send
           </button>
         </form>

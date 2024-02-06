@@ -73,7 +73,7 @@ export default function UserSettings({
       </div>
       <div>
         <RadioGroup value={editorMode} onChange={onEditorModeChange}>
-          <RadioGroup.Label className="font-medium text-gray-800 mb-4">
+          <RadioGroup.Label className="font-medium text-gray-700 mb-4">
             Editor Mode
           </RadioGroup.Label>
           <div className="bg-white rounded-md space-x-4">
@@ -118,7 +118,7 @@ export default function UserSettings({
 
       <div>
         <RadioGroup value={tabSize} onChange={onTabSizeChange}>
-          <RadioGroup.Label className="font-medium text-gray-800 mb-4">
+          <RadioGroup.Label className="font-medium text-gray-700 mb-4">
             Tab Size
           </RadioGroup.Label>
           <div className="bg-white rounded-md space-x-4">
@@ -163,7 +163,7 @@ export default function UserSettings({
 
       <div>
         <RadioGroup value={lightMode} onChange={onLightModeChange}>
-          <RadioGroup.Label className="font-medium text-gray-800 mb-4">
+          <RadioGroup.Label className="font-medium text-gray-700 mb-4">
             Theme
           </RadioGroup.Label>
           <div className="bg-white rounded-md space-x-4">
@@ -210,7 +210,7 @@ export default function UserSettings({
           value={manualSubmission}
           onChange={onManualSubmissionChange}
         >
-          <RadioGroup.Label className="font-medium text-gray-800 mb-4">
+          <RadioGroup.Label className="font-medium text-gray-700 mb-4">
             Preferred submission mode
           </RadioGroup.Label>
           <div className="bg-white rounded-md space-x-4">

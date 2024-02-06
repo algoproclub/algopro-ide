@@ -64,7 +64,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
       {props.runButton}
       <div className="flex items-center divide-x divide-gray-700">
         {props.showViewOnly && (
-          <span className="px-4 py-2 text-gray-400 text-sm font-medium">
+          <span className="px-4 py-2 text-gray-400 text-sm font-medium whitespace-nowrap hidden sm:inline">
             View Only
           </span>
         )}
