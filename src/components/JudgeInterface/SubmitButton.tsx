@@ -19,7 +19,7 @@ export default function SubmitButton({
   return (
     <button
       className={classNames(
-        'block w-full py-2 text-lg font-medium transition focus:outline-none border-t border-gray-600',
+        'block w-full py-2 text-lg font-medium transition focus:outline-none border-t border-gray-600 min-w-[24rem]',
         isLoading || isDisabled ? loadingClasses : normalClasses
       )}
       disabled={isLoading || isDisabled}

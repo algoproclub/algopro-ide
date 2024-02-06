@@ -153,7 +153,7 @@ export default function Workspace({
           </div>
           <div
             className={classNames(
-              'flex flex-col min-h-0 overflow-hidden min-w-[24rem]',
+              'flex flex-col min-h-0 overflow-hidden',
               !isDesktop && 'col-span-full mb-[6px]',
               !isDesktop && mobileActiveTab !== 'io' && 'hidden',
               isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
@@ -164,7 +164,7 @@ export default function Workspace({
               activeTab={inputTab}
               onTabSelect={x => setInputTab(x.value)}
             />
-            <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden">
+            <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden min-w-[24rem]">
               {inputTab === 'input' && (
                 <LazyRealtimeEditor
                   theme={lightMode ? 'light' : 'vs-dark'}
@@ -253,7 +253,7 @@ export default function Workspace({
           </div>
           <div
             className={classNames(
-              'flex flex-col min-w-0 min-h-0 overflow-hidden',
+              'flex flex-col min-w-0 min-h-0 overflow-hidden min-w-[24rem]',
               !isDesktop && 'col-span-full mt-[6px]',
               !isDesktop && mobileActiveTab !== 'io' && 'hidden',
               isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
