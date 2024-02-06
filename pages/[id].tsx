@@ -320,16 +320,11 @@ export default function FilePage() {
         <div className="text-3xl sm:text-4xl text-white font-bold">
           File Not Found
         </div>
-        <p className="sm:text-lg mt-8 text-gray-200 max-w-prose mx-auto text-left">
-          Note: The IDE was recently updated to use a new backend system. If
-          you're trying to access an old file you created with the old version
-          of the IDE, try this link:{' '}
-          <a href={oldLink} className="font-medium text-white underline">
-            {oldLink}
-          </a>
+        <p className="sm:text-lg mt-3 text-gray-200 max-w-prose mx-auto text-left">
+          Please check that the entered file ID is correct.
         </p>
         <Link href="/">
-          <a className="mt-6 sm:mt-10 inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-[#1E1E1E]">
+          <a className="mt-4 sm:mt-6 inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-[#1E1E1E]">
             Go Home
           </a>
         </Link>

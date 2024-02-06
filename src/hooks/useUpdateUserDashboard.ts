@@ -13,7 +13,7 @@ import useUserPermission from './useUserPermission';
 
 export default function useUpdateUserDashboard() {
   const { fileData } = useEditorContext();
-  const { userData } = useUserContext();
+  const { userData, userRole } = useUserContext();
   const onlineUsers = useOnlineUsers();
   const settings = fileData.settings;
   const permission = useUserPermission();
@@ -22,8 +22,10 @@ export default function useUpdateUserDashboard() {
       return data.permission === 'OWNER';
     })[0][1]?.name ?? '?';
 
+  const prefix = userRole === 'teacher' ? `[${owner}] ` : '';
+
   useEffect(() => {
-    document.title = `[${owner}] ${
+    document.title = `${prefix}${
       settings.workspaceName ? settings.workspaceName + ' · ' : ''
     }AlgoPro IDE`;
   }, [settings.workspaceName]);

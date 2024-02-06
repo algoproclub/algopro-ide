@@ -8,6 +8,7 @@ import {
   update,
   ref,
   get,
+  runTransaction,
 } from 'firebase/database';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
@@ -71,12 +72,21 @@ const ContextValueListener = ({ children }: { children: JSX.Element }) => {
   useEffect(() => {
     if (firebaseUser) {
       const userRef = ref(getDatabase(), `users/${firebaseUser.uid}`);
-      get(userRef).then(userSnap => {
-        if (!userSnap.val()?.role) {
-          update(userRef, {
-            role: 'student',
-          });
+
+      get(userRef).then(snap => {
+        if (snap.val()?.data?.role) {
+          return;
         }
+        runTransaction(userRef, curr => {
+          if (!curr) {
+            curr = { data: { role: 'student' } };
+          } else if (!curr.data) {
+            curr.data = { role: 'student' };
+          } else if (!curr.data.role) {
+            curr.data.role = 'student';
+          }
+          return curr;
+        });
       });
     }
   }, [firebaseUser]);

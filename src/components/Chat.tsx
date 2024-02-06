@@ -57,7 +57,7 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
   };
 
   return (
-    <div className={classNames(className, 'flex flex-col mx-4 mb-4')}>
+    <div className={classNames(className, 'flex flex-col mx-4 my-4')}>
       <div className="font-bold text-sm text-white py-2.5 px-4 rounded-t-md border border-gray-700 bg-gray-800">
         Chat
       </div>
