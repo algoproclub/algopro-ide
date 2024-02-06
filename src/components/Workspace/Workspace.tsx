@@ -49,6 +49,7 @@ import {
   StatusData,
 } from '../../types/problem';
 import { fetchProblemFromDb } from '../../scripts/fetchProblemFromDb';
+import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
 
 export default function Workspace({
   handleRunCode,
@@ -95,6 +96,10 @@ export default function Workspace({
       setStatusData(null);
 
       // FIXME: Do not store USACO problems directly in the Realtime DB.
+      if (!fileData.problem) {
+        setProblem(undefined);
+        return;
+      }
       const problemData =
         fileData.problem && fileData.problem.platform === 'usaco'
           ? (fileData.problem as ProblemData)
@@ -132,7 +137,7 @@ export default function Workspace({
         >
           <CodeInterface
             className={classNames(
-              'row-span-full min-w-0 overflow-hidden border-t border-black',
+              'row-span-full min-w-0 overflow-hidden',
               !isDesktop && 'col-span-full',
               !isDesktop && mobileActiveTab !== 'code' && 'hidden'
             )}
@@ -144,11 +149,11 @@ export default function Workspace({
             )}
             {...getGutterProps('column', 1)}
           >
-            <div className="absolute h-full left-[6px] right-[6px] bg-black group-hover:bg-gray-600 group-active:bg-gray-600 pointer-events-none transition" />
+            <div className="absolute h-full left-[7px] right-[7px] bg-gray-700 group-hover:bg-gray-600 group-active:bg-gray-600 pointer-events-none transition" />
           </div>
           <div
             className={classNames(
-              'flex flex-col min-w-0 min-h-0 overflow-hidden',
+              'flex flex-col min-h-0 overflow-hidden min-w-[24rem]',
               !isDesktop && 'col-span-full mb-[6px]',
               !isDesktop && mobileActiveTab !== 'io' && 'hidden',
               isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
@@ -189,15 +194,11 @@ export default function Workspace({
                   yjsDocumentId={`${fileData.id}.input`}
                 />
               )}
-              {inputTab === 'judge' &&
+              {problem?.id === fileData.problem?.id &&
+                inputTab === 'judge' &&
                 problem &&
                 (problem.platform !== 'usaco' ? (
-                  <GenericJudgeInterface
-                    problem={problem}
-                    statusData={statusData}
-                    setStatusData={setStatusData}
-                    handleRunCode={handleRunCode}
-                  />
+                  <GenericJudgeInterface problem={problem} />
                 ) : (
                   <USACOJudgeInterface
                     problem={problem}
@@ -206,18 +207,27 @@ export default function Workspace({
                     handleRunCode={handleRunCode}
                   />
                 ))}
-              {inputTab.startsWith('Sample') && problem && (
-                <div className="overflow-y-auto h-full">
-                  <div className="p-4 pb-0">
-                    <Samples
-                      samples={problem.samples}
-                      inputTab={inputTab}
-                      handleRunCode={handleRunCode}
-                    />
+              {problem?.id === fileData.problem?.id &&
+                inputTab.startsWith('Sample') &&
+                problem && (
+                  <div className="overflow-y-auto h-full">
+                    <div className="p-4 pb-0 relative h-full">
+                      <Samples
+                        samples={problem.samples}
+                        inputTab={inputTab}
+                        handleRunCode={handleRunCode}
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
+            {problem?.submittable && problem.id === fileData.problem?.id && (
+              <PlatformSubmitButton
+                platform={problem.platform}
+                statusData={statusData}
+                setStatusData={setStatusData}
+              />
+            )}
           </div>
           <div
             className={classNames(
@@ -230,9 +240,9 @@ export default function Workspace({
           >
             <div
               className={classNames(
-                'absolute w-full bg-black group-hover:bg-gray-600 group-active:bg-gray-600 group-focus:bg-gray-600 pointer-events-none transition',
+                'absolute w-full bg-gray-700 group-hover:bg-gray-600 group-active:bg-gray-600 group-focus:bg-gray-600 pointer-events-none transition',
                 isDesktop
-                  ? 'top-[6px] bottom-[6px]'
+                  ? 'top-[7px] bottom-[7px]'
                   : 'inset-y-0 bg-gray-800 flex items-center justify-center'
               )}
             >
@@ -270,16 +280,16 @@ export default function Workspace({
                 )}
                 {...getGutterProps('column', 3)}
               >
-                <div className="absolute h-full left-[6px] right-[6px] bg-black group-hover:bg-gray-600 group-active:bg-gray-600 pointer-events-none transition" />
+                <div className="absolute h-full left-[7px] right-[7px] bg-gray-700 group-hover:bg-gray-600 group-active:bg-gray-600 pointer-events-none transition" />
               </div>
               <div
                 className={classNames(
-                  'row-span-full min-w-0 bg-[#1E1E1E] text-gray-200 flex flex-col overflow-auto',
+                  'row-span-full min-w-[24rem] bg-[#1E1E1E] text-gray-200 flex flex-col overflow-auto',
                   isDesktop ? 'col-start-5' : 'col-span-full pt-4'
                 )}
               >
-                <UserList className="max-w-full max-h-64" />
-                <Chat className="flex-1 p-4 min-h-0" />
+                <UserList className="max-w-full max-h-64 lg:mt-3" />
+                <Chat className="flex-1 min-h-0" />
               </div>
             </>
           )}

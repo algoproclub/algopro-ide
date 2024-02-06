@@ -31,77 +31,9 @@ const submitProblemSolution = httpsCallable<ProblemSolution, SubmissionData>(
 
 export default function GenericJudgeInterface({
   problem,
-  statusData,
-  setStatusData,
-  handleRunCode,
 }: {
   problem: ProblemData;
-  statusData: StatusData | null;
-  setStatusData: React.Dispatch<React.SetStateAction<StatusData | null>>;
-  handleRunCode: () => void;
 }): JSX.Element {
-  const { fileData } = useEditorContext();
-  const { userData } = useUserContext();
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const getMainEditorValue = useAtomValue(mainEditorValueAtom)!;
-
-  const handleSubmit = async () => {
-    const getSubmitLink = () => {
-      const codeforcesRegex = /^(\d+)([A-Z].*)$/;
-      const platform = problem.platform;
-      const problemID = problem.id;
-      const matches = problemID.match(codeforcesRegex)!;
-
-      let submitLink = '';
-      if (platform === 'codeforces') {
-        submitLink = `https://codeforces.com/problemset/problem/${matches[1]}/${matches[2]}`;
-      }
-      if (platform === 'atcoder') {
-        submitLink = `https://atcoder.jp/contests/${
-          problemID.split('_')[0]
-        }/tasks/${problemID}`;
-      }
-      if (platform === 'cses') {
-        submitLink = `https://cses.fi/problemset/submit/${problemID}/`;
-      }
-      return submitLink;
-    };
-    if (userData.manualSubmission) {
-      const link = getSubmitLink();
-      window.open(link, '_blank');
-      setIsOpen(true);
-    } else {
-      try {
-        setStatusData({
-          statusCode: 'starting',
-          message: 'starting',
-          statusText: null,
-          link: null,
-          time: null,
-          memory: null,
-          output: null,
-          testCases: null,
-        });
-        const submissionData = await submitProblemSolution({
-          platform: problem.platform,
-          problemID: problem.id,
-          language: fileData.settings.language,
-          sourceCode: getMainEditorValue(),
-        });
-        registerSubmission(
-          fileData.id,
-          submissionData.data.id,
-          submissionData.data.username,
-          setStatusData
-        );
-        console.log('submission success', submissionData);
-      } catch (error) {
-        resetStatusData(fileData.id, setStatusData);
-        console.error(error);
-      }
-    }
-  };
-
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (ref.current !== null) {
@@ -131,11 +63,6 @@ export default function GenericJudgeInterface({
 
   return (
     <div className="relative h-full flex flex-col">
-      <LoadResultsModal
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        setStatusData={setStatusData}
-      />
       <div className="flex-1 overflow-y-auto">
         <section className="p-4 pb-0">
           <h3>
@@ -169,11 +96,6 @@ export default function GenericJudgeInterface({
           `}</style>
         </section>
       </div>
-      <SubmitButton
-        isLoading={(statusData?.statusCode ?? 0) <= -8}
-        isDisabled={!problem.submittable}
-        onClick={handleSubmit}
-      />
     </div>
   );
 }

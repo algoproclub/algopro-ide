@@ -17,9 +17,13 @@ export default function useUpdateUserDashboard() {
   const onlineUsers = useOnlineUsers();
   const settings = fileData.settings;
   const permission = useUserPermission();
+  const owner =
+    Object.entries(fileData.users).filter(([_, data]) => {
+      return data.permission === 'OWNER';
+    })[0][1]?.name ?? '?';
 
   useEffect(() => {
-    document.title = `${
+    document.title = `[${owner}] ${
       settings.workspaceName ? settings.workspaceName + ' · ' : ''
     }AlgoPro IDE`;
   }, [settings.workspaceName]);

@@ -68,8 +68,16 @@ function EditorPage() {
   useUpdateUserDashboard();
 
   const [inputTab, setInputTab] = useAtom(inputTabAtom);
-  const tabsList = useAtomValue(tabsListAtom);
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
+
+  let tabsList = useAtomValue(tabsListAtom);
+
+  if (!fileData.problem) {
+    tabsList = tabsList.filter(
+      ({ value }) => value != 'judge' && !value.startsWith('Sample')
+    );
+    setInputTab('input');
+  }
   useEffect(() => {
     if (inputTabIndex === tabsList.length) {
       // current tab doesn't exist
@@ -87,7 +95,7 @@ function EditorPage() {
   const handleRunCode = async () => {
     // FIXME: Do not store USACO problems directly in the Realtime DB.
     const problem =
-      fileData.problem && fileData.problem.platform === 'usaco'
+      fileData.problem && fileData.problem?.platform === 'usaco'
         ? (fileData.problem as ProblemData)
         : await fetchProblemFromDb(fileData.problem as PlatformProblem);
 

@@ -1,6 +1,7 @@
 import classNames from 'classnames';
 import React from 'react';
 import LoadingIndicator from '../LoadingIndicator';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function SubmitButton({
   isLoading,
@@ -12,13 +13,13 @@ export default function SubmitButton({
   onClick: React.MouseEventHandler<HTMLButtonElement>;
 }): JSX.Element {
   const loadingClasses =
-    'cursor-not-allowed bg-custom-blue bg-opacity-50 text-white opacity-50';
+    'cursor-not-allowed bg-[#363636] bg-opacity-80 text-white opacity-80';
   const normalClasses =
-    'text-white hover:text-indigo-100 hover:bg-custom-blue hover:bg-opacity-50 bg-custom-blue bg-opacity-50';
+    'text-white bg-[#363636] hover:bg-gray-600 hover:border-gray-500 active:bg-gray-500 active:border-gray-400';
   return (
     <button
       className={classNames(
-        'block w-full py-2 text-xl uppercase font-bold transition focus:outline-none',
+        'block w-full py-2 text-lg font-medium transition focus:outline-none border-t border-gray-600',
         isLoading || isDisabled ? loadingClasses : normalClasses
       )}
       disabled={isLoading || isDisabled}
@@ -30,9 +31,21 @@ export default function SubmitButton({
           <span>Waiting for results...</span>
         </>
       ) : isDisabled ? (
-        'Cannot Submit'
+        <span>
+          <FontAwesomeIcon
+            icon={{ prefix: 'fas', iconName: 'ban' }}
+            className="mr-2.5 w-4 h-4"
+          />
+          Cannot Submit
+        </span>
       ) : (
-        'Submit'
+        <>
+          <FontAwesomeIcon
+            icon={{ prefix: 'fas', iconName: 'paper-plane' }}
+            className="mr-2.5 w-4 h-4"
+          />
+          <span>Submit</span>
+        </>
       )}
     </button>
   );

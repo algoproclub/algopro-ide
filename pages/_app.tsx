@@ -23,9 +23,10 @@ import {
 import { SHOULD_USE_FIREBASE_EMULATOR } from '../src/dev_constants';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
+import { far } from '@fortawesome/free-regular-svg-icons';
 import { useEffect } from 'react';
 
-library.add(fas);
+library.add(fas, far);
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBYdZ07lyFBG6s8x2e06NUDCDmPh12AaX0',

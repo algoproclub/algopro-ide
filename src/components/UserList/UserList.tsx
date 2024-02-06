@@ -33,9 +33,11 @@ export const UserList = ({
   }, [users]);
 
   return (
-    <div className={classNames('flex flex-col', className)}>
-      <div className="font-medium px-4 pb-2">Users</div>
-      <ul className="px-4 flex-1 overflow-y-auto min-h-0">
+    <div className={classNames('flex flex-col mx-4', className)}>
+      <div className="font-bold py-2.5 px-4 border border-gray-700 rounded-t-md text-sm bg-gray-800">
+        Users
+      </div>
+      <ul className="px-4 py-2 flex-1 overflow-y-auto min-h-0 bg-[#161616] border border-t-0 border-gray-700 max-h-[12rem]">
         {(sortedUsers || []).map(user => (
           <UserListItem user={user} key={user.id} />
         ))}

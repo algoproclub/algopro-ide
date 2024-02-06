@@ -62,7 +62,7 @@ type MainFileData = {
 };
 
 const db = getDatabase();
-const maxPageLength = 18;
+const maxPageLength = 16;
 
 const Pagination = ({
   pageData,
@@ -133,6 +133,10 @@ const Pagination = ({
   );
 };
 
+const capitalize = (text: string) => {
+  return text[0].toUpperCase() + text.slice(1);
+};
+
 export default function TeacherPage() {
   const [selected, setSelected] = useState(0);
   const [pageData, setPageData] = useState<PageData>({
@@ -152,14 +156,26 @@ export default function TeacherPage() {
     if (sortOptions.order) {
       fileList.sort((a, b) => {
         let res = 0;
-        if (sortOptions.by === 0)
-          res = a.workspaceName.localeCompare(b.workspaceName);
-        if (sortOptions.by === 1) res = a.owner.localeCompare(b.owner);
-        if (sortOptions.by === 2) res = a.fileID.localeCompare(b.fileID);
-        if (sortOptions.by === 3)
-          res = a.lastVerdict.localeCompare(b.lastVerdict);
-        if (sortOptions.by === 4) res = a.lastEdit < b.lastEdit ? -1 : 1;
-        if (sortOptions.by === 5) res = a.codeSize < b.codeSize ? -1 : 1;
+        switch (sortOptions.by) {
+          case 0:
+            res = a.workspaceName.localeCompare(b.workspaceName);
+            break;
+          case 1:
+            res = a.owner.localeCompare(b.owner);
+            break;
+          case 2:
+            res = a.fileID.localeCompare(b.fileID);
+            break;
+          case 3:
+            res = a.lastVerdict.localeCompare(b.lastVerdict);
+            break;
+          case 4:
+            res = a.lastEdit < b.lastEdit ? -1 : 1;
+            break;
+          case 5:
+            res = a.codeSize < b.codeSize ? -1 : 1;
+            break;
+        }
         if (sortOptions.order === 2) {
           res *= -1;
         }
@@ -175,7 +191,7 @@ export default function TeacherPage() {
 
   const updateFileList = async () => {
     const fromTime = Date.now() - timeInMillis[selected];
-    const filesObj: { [key: string]: FileData } = (
+    const filesObj: { [key: string]: Partial<FileData> } = (
       await get(ref(db, 'files'))
     ).val();
 
@@ -184,33 +200,33 @@ export default function TeacherPage() {
     }
     const newFileList = await Promise.all(
       Object.entries(filesObj)
-        .filter(entry => {
-          const data = entry[1];
-          return data?.teacher?.editTime && data?.teacher?.editTime >= fromTime;
+        .filter(([_, fileData]) => {
+          return (
+            fileData?.teacher?.editTime &&
+            fileData?.teacher?.editTime >= fromTime
+          );
         })
-        .map(async entry => {
-          const fileID = entry[0];
-          const data = entry[1];
-
+        .map(async ([fileID, fileData]) => {
           const owner =
-            Array.from(Object.values(data.users ?? [])).find(val => {
+            Object.values(fileData.users ?? []).find(val => {
               return val.permission === 'OWNER';
             })?.name ?? '?';
+
           const submission: StatusData | null = (
             await get(ref(db, `submissions/${fileID}/statusData`))
           ).val();
 
           const verdict = submission
-            ? submission.message ?? 'No verdict'
-            : 'No submission';
+            ? submission.message ?? 'no verdict'
+            : 'no submission';
 
           return {
-            workspaceName: data.settings.workspaceName ?? 'Unnamed',
+            workspaceName: fileData.settings?.workspaceName ?? '?',
             owner: owner,
             fileID: fileID,
             lastVerdict: verdict,
-            lastEdit: data.teacher.editTime,
-            codeSize: data.teacher.codeSize,
+            lastEdit: fileData.teacher!.editTime!,
+            codeSize: fileData.teacher!.codeSize!,
           };
         })
     );
@@ -263,8 +279,8 @@ export default function TeacherPage() {
   );
 
   return (
-    <div className="w-full text-white mx-auto pt-8 max-w-7xl">
-      <div className="mx-2">
+    <div className="w-full text-white mx-auto pt-4 pb-4 max-w-7xl">
+      <div className="mx-4">
         <Listbox value={2} onChange={changeSelection}>
           {({ open }) => (
             <>
@@ -378,7 +394,27 @@ export default function TeacherPage() {
                       </a>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      {data.lastVerdict}
+                      {data.lastVerdict === 'correct answer' && (
+                        <span className="text-green-400">
+                          {capitalize(data.lastVerdict)}
+                        </span>
+                      )}
+                      {['no submission', 'no verdict'].includes(
+                        data.lastVerdict
+                      ) && (
+                        <span className="text-white">
+                          {capitalize(data.lastVerdict)}
+                        </span>
+                      )}
+                      {![
+                        'no submission',
+                        'no verdict',
+                        'correct answer',
+                      ].includes(data.lastVerdict) && (
+                        <span className="text-red-400">
+                          {capitalize(data.lastVerdict)}
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       {unixToDate(data.lastEdit)}
