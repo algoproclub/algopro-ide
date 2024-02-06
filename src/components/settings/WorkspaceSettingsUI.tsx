@@ -57,6 +57,7 @@ export default function WorkspaceSettingsUI({
           !(userPermission === 'OWNER' || userPermission === 'READ_WRITE')
         }
         options={LANGUAGES}
+        className="text-gray-700"
       />
 
       <div>
@@ -100,6 +101,7 @@ export default function WorkspaceSettingsUI({
           onWorkspaceSettingsChange({ defaultPermission: val })
         }
         isOwner={userPermission === 'OWNER'}
+        className="text-gray-700"
       />
     </div>
   );
