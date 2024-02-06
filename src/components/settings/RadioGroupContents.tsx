@@ -26,11 +26,7 @@ export function RadioGroupContents<T>({
     <RadioGroup value={value} onChange={onChange} disabled={disabled}>
       <RadioGroup.Label
         as="div"
-        className={classNames(
-          'font-medium mb-2',
-          lightMode ? 'text-white' : '',
-          className
-        )}
+        className={classNames(lightMode ? 'text-white' : 'mb-1', className)}
       >
         {title}
       </RadioGroup.Label>

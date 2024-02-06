@@ -27,7 +27,10 @@ const TextInput = ({
 }) => {
   return (
     <div>
-      <label htmlFor={id} className="block font-medium text-gray-700">
+      <label
+        htmlFor={id}
+        className="block text-[0.92rem] font-medium text-gray-700"
+      >
         {label}
       </label>
       <div className="mt-1">
@@ -174,7 +177,7 @@ const LoadResultsModal = ({
                 <div className="flex items-center space-x-4">
                   <button
                     type="button"
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-[0.92rem] font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     onClick={confirmedClose}
                   >
                     Cancel

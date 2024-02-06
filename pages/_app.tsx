@@ -8,7 +8,6 @@ import {
   update,
   ref,
   get,
-  runTransaction,
 } from 'firebase/database';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
@@ -67,26 +66,17 @@ if (!firebase.getApps()?.length) {
 }
 
 const ContextValueListener = ({ children }: { children: JSX.Element }) => {
-  const { firebaseUser, userData } = useNullableUserContext();
+  const { firebaseUser } = useNullableUserContext();
 
   useEffect(() => {
     if (firebaseUser) {
       const userRef = ref(getDatabase(), `users/${firebaseUser.uid}`);
-
-      get(userRef).then(snap => {
-        if (snap.val()?.data?.role) {
-          return;
+      get(userRef).then(userSnap => {
+        if (!userSnap.val()?.role) {
+          update(userRef, {
+            role: 'student',
+          });
         }
-        runTransaction(userRef, curr => {
-          if (!curr) {
-            curr = { data: { role: 'student' } };
-          } else if (!curr.data) {
-            curr.data = { role: 'student' };
-          } else if (!curr.data.role) {
-            curr.data.role = 'student';
-          }
-          return curr;
-        });
       });
     }
   }, [firebaseUser]);

@@ -49,6 +49,7 @@ export type UserData = {
   defaultPermission: 'READ_WRITE' | 'READ' | 'PRIVATE';
   defaultLanguage: Language;
   manualSubmission: boolean;
+  discordID: string;
   usernames: UsernameData;
 };
 
@@ -106,7 +107,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const handleSnapshot = (snap: DataSnapshot) => {
       const data = snap.val()?.data ?? {};
-      const role = snap.val()?.data?.role;
+      const role = snap.val()?.role;
       setUserData({
         id: user.uid,
         editorMode: data.editorMode ?? 'Normal',
@@ -115,6 +116,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         defaultPermission: data.defaultPermission ?? 'READ_WRITE',
         defaultLanguage: data.defaultLanguage ?? 'cpp',
         manualSubmission: data.manualSubmission ?? false,
+        discordID: data.discordID,
         usernames: data.usernames ?? {},
       });
       setUserRole(role ?? 'student');

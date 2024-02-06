@@ -67,11 +67,12 @@ export const SettingsModal = ({
   );
 
   const [name, setName] = useState<string>('');
+  const [cfUsername, setCfUsername] = useState<string>('');
+  const [discordID, setDiscordID] = useState<string>('');
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
   const [tabSize, setTabSize] = useState<number>(-1);
   const [lightMode, setLightMode] = useState<boolean>(false);
   const [manualSubmission, setManualSubmission] = useState<boolean>(false);
-  const [cfUsername, setCfUsername] = useState<string>('');
   const dirtyRef = useRef<boolean>(false);
 
   const [tab, setTab] = useState<typeof tabs[number]['id']>('workspace');
@@ -83,12 +84,13 @@ export const SettingsModal = ({
       setFileSettings(realFileSettings);
       setName(firebaseUser.displayName ?? ''); // todo this shouldn't really be an empty string ever?
       setCfUsername(userData.usernames.codeforces ?? '');
+      setDiscordID(userData.discordID ?? '');
       setEditorMode(userData.editorMode);
       setTabSize(userData.tabSize);
       setLightMode(userData.lightMode);
       setManualSubmission(userData.manualSubmission);
-      dirtyRef.current = false;
       setTab('workspace');
+      dirtyRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -151,6 +153,7 @@ export const SettingsModal = ({
           if (!data.usernames) {
             data.usernames = {};
           }
+          data.discordID = discordID;
           data.usernames.codeforces = cfUsername;
         } else {
           data = {
@@ -158,6 +161,7 @@ export const SettingsModal = ({
             tabSize: tabSize,
             lightMode: lightMode,
             manualSubmission: manualSubmission,
+            discordID: discordID,
             usernames: {
               codeforces: cfUsername,
             },
@@ -256,8 +260,13 @@ export const SettingsModal = ({
                       dirtyRef.current = true;
                     }}
                     cfUsername={cfUsername || ''}
-                    onCfUsernameChange={cfHandle => {
-                      setCfUsername(cfHandle);
+                    onCfUsernameChange={cfUsername => {
+                      setCfUsername(cfUsername);
+                      dirtyRef.current = true;
+                    }}
+                    discordID={discordID || ''}
+                    onDiscordIDChange={discordID => {
+                      setDiscordID(discordID);
                       dirtyRef.current = true;
                     }}
                     editorMode={editorMode}

@@ -316,7 +316,7 @@ export default function FilePage() {
   const oldLink = `https://legacy.ide.usaco.guide/${queryId}`;
   const fileNotFoundUI = (
     <div className="p-8 sm:p-16">
-      <div className=" max-w-prose mx-auto">
+      <div className="max-w-prose mx-auto">
         <div className="text-3xl sm:text-4xl text-white font-bold">
           File Not Found
         </div>

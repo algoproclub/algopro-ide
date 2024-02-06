@@ -10,6 +10,8 @@ export default function UserSettings({
   onNameChange,
   cfUsername,
   onCfUsernameChange,
+  discordID,
+  onDiscordIDChange,
   editorMode,
   onEditorModeChange,
   tabSize,
@@ -23,6 +25,8 @@ export default function UserSettings({
   onNameChange: (name: string) => void;
   cfUsername: string;
   onCfUsernameChange: (cfUsername: string) => void;
+  discordID: string;
+  onDiscordIDChange: (discordID: string) => void;
   editorMode: EditorMode;
   onEditorModeChange: (mode: EditorMode) => void;
   tabSize: number;
@@ -33,9 +37,12 @@ export default function UserSettings({
   onManualSubmissionChange: (manualSubmission: boolean) => void;
 }): JSX.Element {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <label htmlFor={`name`} className="block font-medium text-gray-700">
+        <label
+          htmlFor={`name`}
+          className="block text-gray-700 text-[0.92rem] font-medium"
+        >
           Username
         </label>
         <div className="mt-1">
@@ -51,18 +58,18 @@ export default function UserSettings({
           />
         </div>
       </div>
-      <div className="mt-1">
+      <div>
         <label
-          htmlFor={`cf-handle`}
-          className="block font-medium text-gray-700"
+          htmlFor={`cf-username`}
+          className="block text-[0.92rem] font-medium text-gray-700"
         >
-          Codeforces handle
+          Codeforces username
         </label>
         <div className="mt-1">
           <input
             type="text"
-            name={`cf-handle`}
-            id={`cf-handle`}
+            name={`cf-username`}
+            id={`cf-username`}
             className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm"
             value={cfUsername}
             onChange={e => {
@@ -72,8 +79,28 @@ export default function UserSettings({
         </div>
       </div>
       <div>
+        <label
+          htmlFor={`discord-username`}
+          className="block text-[0.92rem] font-medium text-gray-700"
+        >
+          Discord user ID
+        </label>
+        <div className="mt-1">
+          <input
+            type="text"
+            name={`discord-username`}
+            id={`discord-username`}
+            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm"
+            value={discordID}
+            onChange={e => {
+              onDiscordIDChange(e.target.value);
+            }}
+          />
+        </div>
+      </div>
+      <div>
         <RadioGroup value={editorMode} onChange={onEditorModeChange}>
-          <RadioGroup.Label className="font-medium text-gray-700 mb-4">
+          <RadioGroup.Label className="text-gray-700 text-[0.92rem] font-medium">
             Editor Mode
           </RadioGroup.Label>
           <div className="bg-white rounded-md space-x-4">
@@ -91,7 +118,7 @@ export default function UserSettings({
                           ? 'bg-indigo-600 border-transparent'
                           : 'bg-white border-gray-300',
                         active ? 'ring-2 ring-offset-2 ring-indigo-500' : '',
-                        'h-4 w-4 mt-0.5 cursor-pointer rounded-full border flex items-center justify-center'
+                        'h-4 w-4 mt-1 cursor-pointer rounded-full border flex items-center justify-center'
                       )}
                       aria-hidden="true"
                     >
@@ -118,7 +145,7 @@ export default function UserSettings({
 
       <div>
         <RadioGroup value={tabSize} onChange={onTabSizeChange}>
-          <RadioGroup.Label className="font-medium text-gray-700 mb-4">
+          <RadioGroup.Label className="text-[0.92rem] font-medium text-gray-700">
             Tab Size
           </RadioGroup.Label>
           <div className="bg-white rounded-md space-x-4">
@@ -136,7 +163,7 @@ export default function UserSettings({
                           ? 'bg-indigo-600 border-transparent'
                           : 'bg-white border-gray-300',
                         active ? 'ring-2 ring-offset-2 ring-indigo-500' : '',
-                        'h-4 w-4 mt-0.5 cursor-pointer rounded-full border flex items-center justify-center'
+                        'h-4 w-4 mt-1 cursor-pointer rounded-full border flex items-center justify-center'
                       )}
                       aria-hidden="true"
                     >
@@ -163,7 +190,7 @@ export default function UserSettings({
 
       <div>
         <RadioGroup value={lightMode} onChange={onLightModeChange}>
-          <RadioGroup.Label className="font-medium text-gray-700 mb-4">
+          <RadioGroup.Label className="text-[0.92rem] font-medium text-gray-700">
             Theme
           </RadioGroup.Label>
           <div className="bg-white rounded-md space-x-4">
@@ -181,7 +208,7 @@ export default function UserSettings({
                           ? 'bg-indigo-600 border-transparent'
                           : 'bg-white border-gray-300',
                         active ? 'ring-2 ring-offset-2 ring-indigo-500' : '',
-                        'h-4 w-4 mt-0.5 cursor-pointer rounded-full border flex items-center justify-center'
+                        'h-4 w-4 mt-1 cursor-pointer rounded-full border flex items-center justify-center'
                       )}
                       aria-hidden="true"
                     >
@@ -210,7 +237,7 @@ export default function UserSettings({
           value={manualSubmission}
           onChange={onManualSubmissionChange}
         >
-          <RadioGroup.Label className="font-medium text-gray-700 mb-4">
+          <RadioGroup.Label className="text-[0.92rem] font-medium text-gray-700">
             Preferred submission mode
           </RadioGroup.Label>
           <div className="bg-white rounded-md space-x-4">
@@ -228,7 +255,7 @@ export default function UserSettings({
                           ? 'bg-indigo-600 border-transparent'
                           : 'bg-white border-gray-300',
                         active ? 'ring-2 ring-offset-2 ring-indigo-500' : '',
-                        'h-4 w-4 mt-0.5 cursor-pointer rounded-full border flex items-center justify-center'
+                        'h-4 w-4 mt-1 cursor-pointer rounded-full border flex items-center justify-center'
                       )}
                       aria-hidden="true"
                     >
