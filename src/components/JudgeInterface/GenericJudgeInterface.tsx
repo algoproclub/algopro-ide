@@ -117,6 +117,15 @@ export default function GenericJudgeInterface({
       ref.current.querySelectorAll('var').forEach(element => {
         katex.render(element.textContent ?? '', element);
       });
+
+      // For CSES
+      ref.current.querySelectorAll('.math').forEach(element => {
+        if (!(element instanceof HTMLElement)) return;
+
+        katex.render(element.textContent ?? '', element, {
+          displayMode: element.classList.contains('display'),
+        });
+      });
     }
   }, [ref.current]);
 

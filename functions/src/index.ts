@@ -139,6 +139,14 @@ export const cfAPISecret = defineString('CF_API_SECRET');
 export const atCoderCookie = defineString('ATCODER_COOKIE');
 export const csesCookie = defineString('CSES_COOKIE');
 
+const PENDING_TIME_LIMIT_MS = 300000;
+
+enum Errors {
+  NO_SUCH_SUBMISSION = 'No such submission exists for the given problem.',
+  UNKNOWN_ERROR = 'Could not retrieve the results due to an unknown error',
+  PENDING_TIMEOUT = 'Could not retreive the submission results in time. Please try again later.',
+}
+
 export class IncorrectDataError extends Error {}
 
 admin.initializeApp();
@@ -162,6 +170,7 @@ const updateStatusData = async (
 ) => {
   const updates: { [key: string]: Partial<StatusData> | null } = {};
   updates[`submissions/${id}/statusData`] = statusData;
+
   if (['error', 'resolved'].includes(statusData.statusCode!)) {
     updates[`submissions/pending/${id}`] = null;
   }
@@ -173,9 +182,9 @@ const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
     const data = await fetcher.getResults();
     await updateStatusData(fileID, data);
   } catch (error) {
-    let message = 'Error: unknown error';
+    let message = Errors.UNKNOWN_ERROR;
     if (error instanceof IncorrectDataError) {
-      message = 'Error: incorrect data';
+      message = Errors.NO_SUCH_SUBMISSION;
     }
     logger.log(error);
     await updateStatusData(fileID, {
@@ -228,8 +237,8 @@ const updateResultsCF = async (
           statusText: 'status-done',
           message:
             resp.status === 400
-              ? 'Error: incorrect data'
-              : 'Error: unknown error',
+              ? Errors.NO_SUCH_SUBMISSION
+              : Errors.UNKNOWN_ERROR,
         })
       );
     });
@@ -274,7 +283,7 @@ const updateResults = async (pending: PendingSubmissions | null) => {
         await updateStatusData(fileID, {
           statusCode: 'error',
           statusText: 'status-done',
-          message: 'Error: incorrect data',
+          message: Errors.NO_SUCH_SUBMISSION,
         });
         logger.log(error);
       }
@@ -384,8 +393,34 @@ const updateStatus = async () => {
   }
   try {
     await new Promise(r => setTimeout(r, 2000));
-    const pending = (await db.ref('submissions/pending').get()).val();
-    await updateResults(pending);
+    const pending: PendingSubmissions = (
+      await db.ref('submissions/pending').get()
+    ).val();
+    const cutoff = Date.now() - PENDING_TIME_LIMIT_MS;
+
+    const filtered: PendingSubmissions = {};
+    const promises: Promise<void>[] = [];
+
+    Object.entries(pending).forEach((entry, index) => {
+      const fileID = entry[0];
+      const creationTime = entry[1].creationTime;
+
+      if (creationTime <= cutoff) {
+        promises.push(
+          updateStatusData(fileID, {
+            statusCode: 'error',
+            statusText: 'status-done',
+            message: Errors.PENDING_TIMEOUT,
+          })
+        );
+      } else {
+        filtered[fileID] = {
+          creationTime,
+        };
+      }
+    });
+    await Promise.all(promises);
+    await updateResults(filtered);
   } catch (error) {
     logger.log(error);
   } finally {
