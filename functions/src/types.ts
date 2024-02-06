@@ -4,10 +4,12 @@ export type AccountData = {
   sessionCookie?: StringParam;
 };
 
+export type PendingSubmission = {
+  creationTime: number;
+};
+
 export type PendingSubmissions = {
-  [key: string]: {
-    creationTime: number;
-  };
+  [key: string]: PendingSubmission;
 };
 
 export type SubmissionData = {
