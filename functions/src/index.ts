@@ -239,9 +239,10 @@ export const csesCookie = defineString('CSES_COOKIE');
 export const csesCsrfToken = defineString('CSES_CSRF_TOKEN');
 
 const PENDING_TIME_LIMIT_MS = 300000;
+const INCORRECT_DATA_RETRY_LIMIT_MS = 20000;
 
 enum Errors {
-  NO_SUCH_SUBMISSION = 'No such submission exists for the given problem.',
+  NO_SUCH_SUBMISSION = 'No such submission exists for the given problem. Please check if the entered submission ID is correct.',
   UNKNOWN_ERROR = 'Could not retrieve the results due to an unknown error',
   PENDING_TIMEOUT = 'Could not retreive the submission results in time. Please try again later.',
 }
@@ -283,6 +284,12 @@ const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
   } catch (error) {
     let message = Errors.UNKNOWN_ERROR;
     if (error instanceof IncorrectDataError) {
+      if (
+        fetcher.submissionData.creationTime >
+        Date.now() - INCORRECT_DATA_RETRY_LIMIT_MS
+      ) {
+        return;
+      }
       message = Errors.NO_SUCH_SUBMISSION;
     }
     logger.log(error);
