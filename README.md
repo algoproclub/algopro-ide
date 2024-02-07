@@ -10,7 +10,7 @@ This project uses the [Firebase Realtime Database](https://firebase.google.com/d
 
 ```
 yarn install
-FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:9099" yarn dev
+FIRESTORE_EMULATOR_HOST="127.0.0.1:8080" FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:9099" yarn dev
 # in a separate tab. make sure you are using emulators iff SHOULD_USE_FIREBASE_EMULATOR is true!
 firebase emulators:start
 ```
