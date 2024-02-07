@@ -90,22 +90,26 @@ export default function Workspace({
 
   const [statusData, setStatusData] = useState<StatusData | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      setStatusData(null);
+  if (fileData.problem) {
+    useEffect(() => {
+      (async () => {
+        setStatusData(null);
 
-      // FIXME: Do not store USACO problems directly in the Realtime DB.
-      const problemData =
-        fileData.problem && fileData.problem.platform === 'usaco'
-          ? (fileData.problem as ProblemData)
-          : await fetchProblemFromDb(fileData.problem as PlatformProblem);
+        // FIXME: Do not store USACO problems directly in the Realtime DB.
+        const problemData =
+          fileData.problem && fileData.problem.platform === 'usaco'
+            ? (fileData.problem as ProblemData)
+            : await fetchProblemFromDb(fileData.problem as PlatformProblem);
 
-      setProblem(problemData);
-      if (problemData) {
-        setInputTab('judge');
-      }
-    })();
-  }, [fileData.problem?.platform]);
+        setProblem(problemData);
+        if (problemData) {
+          setInputTab('judge');
+        }
+      })();
+    }, [fileData.problem?.platform]);
+  } else {
+    setProblem(undefined);
+  }
 
   useEffect(() => {
     onValue(
