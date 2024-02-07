@@ -93,7 +93,7 @@ async function submitProblemSolutionCodeforces({
         submittedProblemIndex,
         source: sourceCode,
         programTypeId: {
-          cpp: '54', // GNU G++17 7.3.0
+          cpp: '73', // GNU G++20 11.2.0 (64 bit, winlibs)
           py: '70', // PyPy 3.9.10 (7.3.9, 64bit)
           java: '87', // Java 21 64bit
         }[language],
@@ -156,7 +156,7 @@ async function submitProblemSolutionAtCoder({
         'data.TaskScreenName': problemID,
         sourceCode,
         'data.LanguageId': {
-          cpp: '5053', // C++ 17 (gcc 12.2)
+          cpp: '5001', // C++ 20 (gcc 12.2)
           py: '5078', // Python (PyPy 3.10-v7.3.12)
           java: '5005', // Java (OpenJDK 17)
         }[language],
@@ -197,7 +197,7 @@ async function submitProblemSolutionCSES({
     { cpp: 'C++', py: 'Python3', java: 'Java' }[language]
   );
   if (language != 'java') {
-    formData.append('option', { cpp: 'C++17', py: 'PyPy3' }[language]);
+    formData.append('option', { cpp: 'C++20', py: 'PyPy3' }[language]);
   }
   formData.append('type', 'course');
   formData.append('target', 'problemset');
