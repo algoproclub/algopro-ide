@@ -73,7 +73,7 @@ export default function WorkspaceSettingsUI({
             type="text"
             name={`compiler_options`}
             id={`compiler_options`}
-            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black font-mono text-[0.82rem]"
+            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black font-mono text-[0.82rem] text-gray-800"
             value={
               workspaceSettings.compilerOptions[workspaceSettings.language]
             }

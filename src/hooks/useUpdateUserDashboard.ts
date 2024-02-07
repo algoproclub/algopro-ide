@@ -10,10 +10,13 @@ import { useEditorContext } from '../context/EditorContext';
 import { useUserContext } from '../context/UserContext';
 import { useOnlineUsers } from './useOnlineUsers';
 import useUserPermission from './useUserPermission';
+import { useAtomValue } from 'jotai';
+import { problemAtom } from '../atoms/workspaceUI';
 
 export default function useUpdateUserDashboard() {
   const { fileData } = useEditorContext();
   const { userData, userRole } = useUserContext();
+  const problem = useAtomValue(problemAtom);
   const onlineUsers = useOnlineUsers();
   const settings = fileData.settings;
   const permission = useUserPermission();
@@ -22,13 +25,23 @@ export default function useUpdateUserDashboard() {
       return data.permission === 'OWNER';
     })[0][1]?.name ?? '?';
 
-  const prefix = userRole === 'teacher' ? `[${owner}] ` : '';
-
   useEffect(() => {
-    document.title = `${prefix}${
-      settings.workspaceName ? settings.workspaceName + ' · ' : ''
-    }AlgoPro IDE`;
-  }, [settings.workspaceName]);
+    const suffix = 'AlgoPro IDE';
+    let prefix = undefined;
+
+    if (userRole === 'teacher' && settings.workspaceName) {
+      prefix = `[${owner}] ${settings.workspaceName}`;
+    }
+    if (userRole === 'student') {
+      prefix = problem?.title;
+    }
+    if (prefix) {
+      prefix += ' - ';
+    } else {
+      prefix = '';
+    }
+    document.title = `${prefix}${suffix}`;
+  }, [problem, settings.workspaceName]);
 
   const fileOwner = useMemo(() => {
     const user = onlineUsers?.find(user => user.permission === 'OWNER');

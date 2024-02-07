@@ -30,9 +30,9 @@ export default function Samples({
   inputTab: string;
   handleRunCode: () => void;
 }): JSX.Element {
+  const { fileData } = useEditorContext();
   const index = getSampleIndex(inputTab);
   const sample = samples[index - 1];
-  const { fileData } = useEditorContext();
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
 

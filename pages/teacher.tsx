@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Listbox, Transition } from '@headlessui/react';
+import { Listbox, Transition, Disclosure } from '@headlessui/react';
 import { getDatabase, ref, get } from 'firebase/database';
 import { FileData } from '../src/context/EditorContext';
 import { StatusData } from '../src/types/problem';
@@ -36,7 +36,6 @@ const timeInMillis = [
 const headers = [
   'Workspace name',
   'Owner',
-  'Link',
   'Last verdict',
   'Last edit',
   'Code size',
@@ -52,11 +51,14 @@ type PageData = {
   max: number;
 };
 
+type VerdictType = 'pending' | 'accepted' | 'incorrect' | 'error' | 'empty';
+
 type MainFileData = {
   workspaceName: string;
   owner: string;
   fileID: string;
   lastVerdict: string;
+  verdictType: VerdictType;
   lastEdit: number;
   codeSize: number;
 };
@@ -148,6 +150,8 @@ export default function TeacherPage() {
     order: 0,
   });
   const [fileList, setFileList] = useState<MainFileData[] | null>(null);
+  const [ownerFilter, setOwnerFilter] = useState('');
+  const [workspaceFilter, setWorkspaceFilter] = useState('');
 
   const sortedFileList = (fileList: MainFileData[] | null) => {
     if (!fileList) {
@@ -164,15 +168,12 @@ export default function TeacherPage() {
             res = a.owner.localeCompare(b.owner);
             break;
           case 2:
-            res = a.fileID.localeCompare(b.fileID);
-            break;
-          case 3:
             res = a.lastVerdict.localeCompare(b.lastVerdict);
             break;
-          case 4:
+          case 3:
             res = a.lastEdit < b.lastEdit ? -1 : 1;
             break;
-          case 5:
+          case 4:
             res = a.codeSize < b.codeSize ? -1 : 1;
             break;
         }
@@ -201,30 +202,57 @@ export default function TeacherPage() {
     const newFileList = await Promise.all(
       Object.entries(filesObj)
         .filter(([_, fileData]) => {
+          if (!fileData.users) {
+            return false;
+          }
+          const owner = Object.values(fileData.users).find(val => {
+            return val.permission === 'OWNER';
+          });
+          if (!owner) {
+            return false;
+          }
           return (
             fileData?.teacher?.editTime &&
-            fileData?.teacher?.editTime >= fromTime
+            fileData?.teacher?.editTime >= fromTime &&
+            fileData.settings?.workspaceName
+              ?.toLowerCase()
+              .includes(workspaceFilter.toLowerCase()) &&
+            owner.name.toLowerCase().includes(ownerFilter.toLowerCase())
           );
         })
         .map(async ([fileID, fileData]) => {
-          const owner =
-            Object.values(fileData.users ?? []).find(val => {
-              return val.permission === 'OWNER';
-            })?.name ?? '?';
-
+          const owner = Object.values(fileData.users!).find(val => {
+            return val.permission === 'OWNER';
+          })!.name;
           const submission: StatusData | null = (
             await get(ref(db, `submissions/${fileID}/statusData`))
           ).val();
-
-          const verdict = submission
-            ? submission.message ?? 'no verdict'
-            : 'no submission';
-
+          let verdict = 'no submission';
+          let verdictType: VerdictType = 'empty';
+          if (submission === null) {
+            verdict = 'no verdict';
+          }
+          if (submission?.statusCode === 'error') {
+            verdict = 'error';
+            verdictType = 'error';
+          }
+          if (submission?.message && submission.statusCode !== 'error') {
+            verdict = submission.message;
+            if (submission.statusCode === 'resolved') {
+              verdictType =
+                submission.message === 'correct answer'
+                  ? 'accepted'
+                  : 'incorrect';
+            } else {
+              verdictType = 'pending';
+            }
+          }
           return {
             workspaceName: fileData.settings?.workspaceName ?? '?',
             owner: owner,
             fileID: fileID,
             lastVerdict: verdict,
+            verdictType: verdictType,
             lastEdit: fileData.teacher!.editTime!,
             codeSize: fileData.teacher!.codeSize!,
           };
@@ -281,46 +309,29 @@ export default function TeacherPage() {
   return (
     <div className="w-full text-white mx-auto pt-4 pb-4 max-w-7xl">
       <div className="mx-4">
-        <Listbox value={2} onChange={changeSelection}>
+        <Disclosure>
           {({ open }) => (
             <>
-              <Listbox.Label className="text-sm inline-block mb-0.5">
-                Last edit
-              </Listbox.Label>
-              <div className="w-full flex space-x-2">
-                <div className="w-full relative text-sm">
-                  <Listbox.Button
-                    className={`w-full px-3 py-2 text-left rounded-md border ${
+              <div className="w-full flex items-stretch space-x-2">
+                <Disclosure.Button className="w-full">
+                  <div
+                    className={`flex items-center justify-center w-full border px-4 py-2 rounded-md ${
                       open
-                        ? 'ring-2 ring-indigo-500 border-transparent bg-gray-800'
-                        : 'hover:bg-gray-800 active:bg-gray-700 border-gray-600 hover:border-gray-500'
+                        ? 'bg-gray-800 border-gray-500'
+                        : 'border-gray-600 hover:border-gray-500'
                     }`}
                   >
-                    {editTimeList[selected]}
-                  </Listbox.Button>
-                  <Transition
-                    enter="transition duration-100 ease-out"
-                    enterFrom="transform scale-95 opacity-0"
-                    enterTo="transform scale-100 opacity-100"
-                    leave="transition duration-75 ease-out"
-                    leaveFrom="transform scale-100 opacity-100"
-                    leaveTo="transform scale-95 opacity-0"
-                  >
-                    <Listbox.Options className="border border-gray-600 rounded-md bg-gray-900 divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden">
-                      {editTimeList.map((val, ind) => (
-                        <Listbox.Option
-                          className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700"
-                          key={ind}
-                          value={ind}
-                        >
-                          {val}
-                        </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </Transition>
-                </div>
+                    Filter
+                    <FontAwesomeIcon
+                      icon={{ prefix: 'fas', iconName: 'chevron-down' }}
+                      className={`ml-2 w-3.5 h-3.5 transform duration-200 ${
+                        open ? 'rotate-180' : 'rotate-0'
+                      }`}
+                    />
+                  </div>
+                </Disclosure.Button>
                 <button
-                  className="border border-gray-600 px-3 py-1 rounded-lg hover:border-gray-500 hover:bg-gray-800 active:bg-gray-700"
+                  className="flex items-center justify-center border border-gray-600 px-3 py-1 rounded-lg hover:border-gray-500 hover:bg-gray-800 active:bg-gray-700"
                   onClick={updateFileList}
                 >
                   <FontAwesomeIcon
@@ -328,9 +339,77 @@ export default function TeacherPage() {
                   />
                 </button>
               </div>
+              <Disclosure.Panel>
+                <div className="mt-2 space-y-3 p-4 border bg-gray-800 border-gray-600">
+                  <div>
+                    <Listbox value={2} onChange={changeSelection}>
+                      {({ open }) => (
+                        <>
+                          <Listbox.Label className="text-sm block mb-1">
+                            Last edit
+                          </Listbox.Label>
+                          <div className="w-full flex space-x-2">
+                            <div className="w-full relative text-sm">
+                              <Listbox.Button
+                                className={`w-full px-3 py-2 text-left rounded-md border ${
+                                  open
+                                    ? 'ring-2 ring-indigo-500 border-transparent bg-gray-800'
+                                    : 'bg-gray-900 hover:bg-gray-800 active:bg-gray-700 border-gray-600 hover:border-gray-500'
+                                }`}
+                              >
+                                {editTimeList[selected]}
+                              </Listbox.Button>
+                              <Transition
+                                enter="transition duration-100 ease-out"
+                                enterFrom="transform scale-95 opacity-0"
+                                enterTo="transform scale-100 opacity-100"
+                                leave="transition duration-75 ease-out"
+                                leaveFrom="transform scale-100 opacity-100"
+                                leaveTo="transform scale-95 opacity-0"
+                              >
+                                <Listbox.Options className="border border-gray-600 rounded-md bg-gray-900 divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden">
+                                  {editTimeList.map((val, ind) => (
+                                    <Listbox.Option
+                                      className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700"
+                                      key={ind}
+                                      value={ind}
+                                    >
+                                      {val}
+                                    </Listbox.Option>
+                                  ))}
+                                </Listbox.Options>
+                              </Transition>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </Listbox>
+                  </div>
+                  <label className="w-full inline-block text-sm">
+                    Owner
+                    <input
+                      id="owner"
+                      type="text"
+                      className="mt-1 w-full bg-gray-900 text-sm focus:ring-indigo-500 rounded-md"
+                      value={ownerFilter}
+                      onChange={e => setOwnerFilter(e.target.value)}
+                    />
+                  </label>
+                  <label className="w-full inline-block text-sm">
+                    Workspace name
+                    <input
+                      id="workspace"
+                      type="text"
+                      className="mt-1 w-full bg-gray-900 text-sm focus:ring-indigo-500 rounded-md"
+                      value={workspaceFilter}
+                      onChange={e => setWorkspaceFilter(e.target.value)}
+                    />
+                  </label>
+                </div>
+              </Disclosure.Panel>
             </>
           )}
-        </Listbox>
+        </Disclosure>
         <div className="mt-3 border border-gray-600 overflow-x-auto">
           <table className="table-auto w-full bg-gray-800 divide-y divide-gray-600 text-sm">
             <thead>
@@ -379,42 +458,56 @@ export default function TeacherPage() {
                 <tr className="divide-x divide-gray-600" key={ind}>
                   <>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      {data.workspaceName}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      {data.owner}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
                       <a
                         href={`/${data.fileID.slice(1)}`}
                         className="text-indigo-300 hover:underline"
                         target="_blank"
                       >
-                        {data.fileID.slice(1)}
+                        {data.workspaceName}
                       </a>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      {data.lastVerdict === 'correct answer' && (
-                        <span className="text-green-400">
+                      {data.owner}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {data.verdictType === 'pending' && (
+                          <FontAwesomeIcon
+                            icon={{ prefix: 'fas', iconName: 'cog' }}
+                            className="w-3.5 h-3.5 text-gray-400 animate-spin-slow"
+                          />
+                        )}
+                        {data.verdictType === 'empty' && (
+                          <FontAwesomeIcon
+                            icon={{ prefix: 'fas', iconName: 'ellipsis' }}
+                            className="w-3.5 h-3.5 text-gray-500"
+                          />
+                        )}
+                        {data.verdictType === 'error' && (
+                          <FontAwesomeIcon
+                            icon={{
+                              prefix: 'fas',
+                              iconName: 'exclamation-triangle',
+                            }}
+                            className="w-3.5 h-3.5 text-yellow-500"
+                          />
+                        )}
+                        {data.verdictType === 'accepted' && (
+                          <FontAwesomeIcon
+                            icon={{ prefix: 'fas', iconName: 'check' }}
+                            className="w-3.5 h-3.5 text-green-500"
+                          />
+                        )}
+                        {data.verdictType === 'incorrect' && (
+                          <FontAwesomeIcon
+                            icon={{ prefix: 'fas', iconName: 'xmark' }}
+                            className="w-3.5 h-3.5 text-red-500"
+                          />
+                        )}
+                        <span className="ml-2">
                           {capitalize(data.lastVerdict)}
                         </span>
-                      )}
-                      {['no submission', 'no verdict'].includes(
-                        data.lastVerdict
-                      ) && (
-                        <span className="text-white">
-                          {capitalize(data.lastVerdict)}
-                        </span>
-                      )}
-                      {![
-                        'no submission',
-                        'no verdict',
-                        'correct answer',
-                      ].includes(data.lastVerdict) && (
-                        <span className="text-red-400">
-                          {capitalize(data.lastVerdict)}
-                        </span>
-                      )}
+                      </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       {unixToDate(data.lastEdit)}
