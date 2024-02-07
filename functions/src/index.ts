@@ -26,6 +26,7 @@ import {
   onValueUpdated,
 } from 'firebase-functions/v2/database';
 import { randomUUID } from 'crypto';
+import FormData = require('form-data');
 
 require('dotenv').config({ path: '.env.local' });
 
@@ -47,6 +48,8 @@ export const submitproblemsolution = onCall<
       return submitProblemSolutionCodeforces(data);
     case 'atcoder':
       return submitProblemSolutionAtCoder(data);
+    case 'cses':
+      return submitProblemSolutionCSES(data);
     default:
       throw new HttpsError(
         'unimplemented',
@@ -180,6 +183,49 @@ async function submitProblemSolutionAtCoder({
   };
 }
 
+async function submitProblemSolutionCSES({
+  problemID,
+  sourceCode,
+  language,
+}: ProblemSolution): Promise<ClientSubmissionData> {
+  const formData = new FormData();
+  formData.append('csrf_token', csesCsrfToken.value());
+  formData.append('task', problemID);
+  formData.append('file', sourceCode, { filename: 'f' });
+  formData.append(
+    'lang',
+    { cpp: 'C++', py: 'Python3', java: 'Java' }[language]
+  );
+  if (language != 'java') {
+    formData.append('option', { cpp: 'C++17', py: 'PyPy3' }[language]);
+  }
+  formData.append('type', 'course');
+  formData.append('target', 'problemset');
+
+  const response = await fetch(`https://cses.fi/course/send.php`, {
+    headers: {
+      cookie: csesCookie.value(),
+    },
+    body: formData,
+    method: 'POST',
+  });
+  if (response.status !== 200) {
+    throw new Error('submission failed');
+  }
+
+  const text = await response.text();
+  const id = text.match(/\/ajax\/get_status\.php\?entry=([0-9]+)/)?.[1];
+  if (!id) {
+    throw new Error('cannot find submission id');
+  }
+
+  return {
+    id,
+    username: null,
+    platform: 'cses',
+  };
+}
+
 export const cfAPIKey = defineString('CF_API_KEY');
 export const cfAPISecret = defineString('CF_API_SECRET');
 export const cfCsrfToken = defineString('CF_CSRF_TOKEN');
@@ -190,6 +236,7 @@ export const atCoderCookie = defineString('ATCODER_COOKIE');
 export const atCoderCsrfToken = defineString('ATCODER_CSRF_TOKEN');
 
 export const csesCookie = defineString('CSES_COOKIE');
+export const csesCsrfToken = defineString('CSES_CSRF_TOKEN');
 
 const PENDING_TIME_LIMIT_MS = 300000;
 
