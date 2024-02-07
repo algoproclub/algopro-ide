@@ -47,14 +47,11 @@ export const GenericSubmitButton = ({
 
   const handleSubmit = async () => {
     const getSubmitLink = () => {
-      const codeforcesRegex = /^(\d+)([A-Z].*)$/;
       const platform = problem.platform;
       const problemID = problem.id;
-      const matches = problemID.match(codeforcesRegex)!;
-
       let submitLink = '';
       if (platform === 'codeforces') {
-        submitLink = `https://codeforces.com/problemset/problem/${matches[1]}/${matches[2]}`;
+        submitLink = `https://codeforces.com/problemset/submit?submittedProblemCode=${problemID}`;
       }
       if (platform === 'atcoder') {
         submitLink = `https://atcoder.jp/contests/${
