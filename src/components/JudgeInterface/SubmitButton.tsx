@@ -28,7 +28,7 @@ const SolvedStatusForm = () => {
   return (
     <div>
       <div
-        className={`z-0 absolute bottom-full w-full flex items-center px-4 py-4 bg-gray-800 border-t border-gray-600 overflow-x-auto space-x-6 whitespace-nowrap ${
+        className={`z-0 absolute bottom-full -mb-0.5 lg:mb-0 w-full flex items-center px-4 py-4 bg-gray-800 border-t border-gray-600 overflow-x-auto space-x-6 whitespace-nowrap ${
           isOpen ? 'translate-y-0 opacity-100' : 'translate-y-16 opacity-0'
         } duration-200`}
       >
