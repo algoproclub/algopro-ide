@@ -50,6 +50,7 @@ import {
 } from '../../types/problem';
 import { fetchProblemFromDb } from '../../scripts/fetchProblemFromDb';
 import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function Workspace({
   handleRunCode,
