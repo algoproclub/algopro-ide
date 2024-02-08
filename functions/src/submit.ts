@@ -14,7 +14,8 @@ import {
   csesCsrfToken,
 } from './index';
 
-const RETRY_GETSUBMISSIONDATA_TIMEOUT_MS = 5000;
+const GETSUBMISSIONDATA_DELAY_MS = 1000;
+const MAX_GETSUBMISSIONDATA_TRIES = 8;
 
 const CODEFORCES_PROBLEM_REGEX = /^(\d+)([A-Z].*)$/;
 const ATCODER_PROBLEM_REGEX = /(\w+)_(\w+)/;
@@ -30,7 +31,6 @@ export abstract class Submitter {
 
   async submitAndGet(): Promise<ClientSubmissionData> {
     let oldId: string | null = null;
-
     try {
       const oldData = await this.getSubmissionData();
       oldId = oldData.id;
@@ -40,19 +40,17 @@ export abstract class Submitter {
       }
     }
     await this.submit();
-    const startTime = Date.now();
 
-    while (true) {
+    for (let i = 0; i < MAX_GETSUBMISSIONDATA_TRIES; ++i) {
       const newData = await this.getSubmissionData();
       if (newData.id !== oldId) {
         return newData;
       }
-      if (Date.now() - startTime > RETRY_GETSUBMISSIONDATA_TIMEOUT_MS) {
-        throw new TimeOutError(
-          `fetching submission ID for ${this.problemSolution} timed out`
-        );
-      }
+      await new Promise(r => setTimeout(r, GETSUBMISSIONDATA_DELAY_MS));
     }
+    throw new TimeOutError(
+      `fetching submission ID for ${this.problemSolution} timed out`
+    );
   }
 }
 
