@@ -62,19 +62,20 @@ export const submitproblemsolution = onCall<
       java: '//',
       py: '#',
     }[language];
+
     problemSolution.sourceCode =
       `${comment} UUID: ${randomUUID()}\n` + problemSolution.sourceCode;
 
     let submitter: Submitter;
     switch (platform) {
       case 'codeforces':
-        submitter = new CFSubmitter(request.data);
+        submitter = new CFSubmitter(problemSolution);
         break;
       case 'atcoder':
-        submitter = new AtCoderSubmitter(request.data);
+        submitter = new AtCoderSubmitter(problemSolution);
         break;
       case 'cses':
-        submitter = new CSESSubmitter(request.data);
+        submitter = new CSESSubmitter(problemSolution);
         break;
       default:
         throw new HttpsError(
