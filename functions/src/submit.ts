@@ -20,6 +20,7 @@ const CODEFORCES_PROBLEM_REGEX = /^(\d+)([A-Z].*)$/;
 const ATCODER_PROBLEM_REGEX = /(\w+)_(\w+)/;
 
 class TimeOutError extends Error {}
+class IDNotFoundError extends Error {}
 
 export abstract class Submitter {
   protected constructor(readonly problemSolution: ProblemSolution) {}
@@ -28,13 +29,22 @@ export abstract class Submitter {
   abstract getSubmissionData(): Promise<ClientSubmissionData>;
 
   async submitAndGet(): Promise<ClientSubmissionData> {
-    const oldData = await this.getSubmissionData();
-    await this.submit();
+    let oldId: string | null = null;
 
+    try {
+      const oldData = await this.getSubmissionData();
+      oldId = oldData.id;
+    } catch (error) {
+      if (!(error instanceof IDNotFoundError)) {
+        throw error;
+      }
+    }
+    await this.submit();
     const startTime = Date.now();
+
     while (true) {
       const newData = await this.getSubmissionData();
-      if (newData.id !== oldData.id) {
+      if (newData.id !== oldId) {
         return newData;
       }
       if (Date.now() - startTime > RETRY_GETSUBMISSIONDATA_TIMEOUT_MS) {
@@ -112,7 +122,7 @@ export class CFSubmitter extends Submitter {
     const document = cheerio.load(await response.text());
     const id = document('[data-submission-id]').attr('data-submission-id');
     if (!id) {
-      throw new Error('cannot find submission id');
+      throw new IDNotFoundError('cannot find submission id');
     }
     return {
       id,
@@ -166,7 +176,7 @@ export class AtCoderSubmitter extends Submitter {
     const text = await response.text();
     const id = text.match(/\/contests\/\w+\/submissions\/([0-9]+)/)?.[1];
     if (!id) {
-      throw new Error('cannot find submission id');
+      throw new IDNotFoundError('cannot find submission id');
     }
     this.submissionID = id;
   }
@@ -211,11 +221,10 @@ export class CSESSubmitter extends Submitter {
     if (response.status !== 200) {
       throw new Error('submission failed');
     }
-
     const text = await response.text();
     const id = text.match(/\/ajax\/get_status\.php\?entry=([0-9]+)/)?.[1];
     if (!id) {
-      throw new Error('cannot find submission id');
+      throw new IDNotFoundError('cannot find submission id');
     }
     this.submissionID = id;
   }
