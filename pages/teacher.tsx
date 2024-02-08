@@ -147,7 +147,7 @@ export default function TeacherPage() {
   });
   const [sortOptions, setSortOptions] = useState<SortOptions>({
     by: 0,
-    order: 0,
+    order: 1,
   });
   const [fileList, setFileList] = useState<MainFileData[] | null>(null);
   const [ownerFilter, setOwnerFilter] = useState('');
@@ -354,7 +354,7 @@ export default function TeacherPage() {
                                 className={`w-full px-3 py-2 text-left rounded-md border ${
                                   open
                                     ? 'ring-2 ring-indigo-500 border-transparent bg-gray-800'
-                                    : 'bg-gray-900 hover:bg-gray-800 active:bg-gray-700 border-gray-600 hover:border-gray-500'
+                                    : 'bg-gray-900 hover:bg-gray-800 active:bg-gray-700 border-gray-500 hover:border-gray-500'
                                 }`}
                               >
                                 {editTimeList[selected]}
