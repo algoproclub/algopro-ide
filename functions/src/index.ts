@@ -170,8 +170,7 @@ async function submitProblemSolutionAtCoder({
   }
 
   const text = await response.text();
-  const $ = cheerio.load(text);
-  const id = $('tbody > tr > td:last > a').attr('href')?.split('/').pop();
+  const id = text.match(/\/contests\/\w+\/submissions\/([0-9]+)/)?.[1];
   if (!id) {
     throw new Error('cannot find submission id');
   }
