@@ -26,6 +26,7 @@ import {
   onValueUpdated,
 } from 'firebase-functions/v2/database';
 import { randomUUID } from 'crypto';
+import FormData = require('form-data');
 
 require('dotenv').config({ path: '.env.local' });
 
@@ -42,27 +43,29 @@ export const submitproblemsolution = onCall<
   }[language];
   data.sourceCode = `${comment} UUID: ${randomUUID()}\n` + data.sourceCode;
 
-  if (platform !== 'codeforces') {
-    throw new HttpsError(
-      'unimplemented',
-      `platform '${platform}' is unimplemented`
-    );
+  switch (platform) {
+    case 'codeforces':
+      return submitProblemSolutionCodeforces(data);
+    case 'atcoder':
+      return submitProblemSolutionAtCoder(data);
+    case 'cses':
+      return submitProblemSolutionCSES(data);
+    default:
+      throw new HttpsError(
+        'unimplemented',
+        `platform '${platform}' is unimplemented`
+      );
   }
-
-  return submitProblemSolutionCodeforces(data);
 });
 
 const CODEFORCES_PROBLEM_REGEX = /^(\d+)([A-Z].*)$/;
+const ATCODER_PROBLEM_REGEX = /(\w+)_(\w+)/;
 
 async function submitProblemSolutionCodeforces({
   problemID,
   sourceCode,
   language,
 }: ProblemSolution): Promise<ClientSubmissionData> {
-  const csrf_token = getEnv('CF_CSRF_TOKEN');
-  const cookie = getEnv('CF_COOKIE');
-  const username = getEnv('CF_BOT_USERNAME');
-
   const matches = problemID.match(CODEFORCES_PROBLEM_REGEX);
   if (!matches) {
     throw new HttpsError(
@@ -75,11 +78,11 @@ async function submitProblemSolutionCodeforces({
 
   const response = await fetch(
     'https://codeforces.com/problemset/submit?' +
-      new URLSearchParams({ csrf_token }).toString(),
+      new URLSearchParams({ csrf_token: cfCsrfToken.value() }).toString(),
     {
       headers: {
         'content-type': 'application/x-www-form-urlencoded',
-        cookie: cookie,
+        cookie: cfCookie.value(),
         Referer: 'https://codeforces.com/problemset/submit',
         'user-agent':
           'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
@@ -95,7 +98,7 @@ async function submitProblemSolutionCodeforces({
           java: '87', // Java 21 64bit
         }[language],
         tabSize: '4',
-        csrf_token,
+        csrf_token: cfCsrfToken.value(),
         ftaa: '',
         bfaa: '',
         sourceFile: '',
@@ -123,26 +126,122 @@ async function submitProblemSolutionCodeforces({
 
   return {
     id,
-    username,
+    username: cfUsername.value(),
     platform: 'codeforces',
   };
 }
 
-function getEnv(name: string): string {
-  const r = process.env[name];
-  if (!r) throw new Error(`environment variable '${name}' is unset`);
-  return r;
+async function submitProblemSolutionAtCoder({
+  problemID,
+  sourceCode,
+  language,
+}: ProblemSolution): Promise<ClientSubmissionData> {
+  const matches = problemID.match(ATCODER_PROBLEM_REGEX);
+  if (!matches) {
+    throw new HttpsError(
+      'invalid-argument',
+      `'${problemID}' is not a valid AtCoder problem ID`
+    );
+  }
+  const contestId = matches[1];
+
+  const response = await fetch(
+    `https://atcoder.jp/contests/${contestId}/submit`,
+    {
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        cookie: atCoderCookie.value(),
+      },
+      body: new URLSearchParams({
+        'data.TaskScreenName': problemID,
+        sourceCode,
+        'data.LanguageId': {
+          cpp: '5053', // C++ 17 (gcc 12.2)
+          py: '5078', // Python (PyPy 3.10-v7.3.12)
+          java: '5005', // Java (OpenJDK 17)
+        }[language],
+        csrf_token: atCoderCsrfToken.value(),
+      }),
+      method: 'POST',
+    }
+  );
+  if (response.status !== 200) {
+    throw new Error('submission failed');
+  }
+
+  const text = await response.text();
+  const id = text.match(/\/contests\/\w+\/submissions\/([0-9]+)/)?.[1];
+  if (!id) {
+    throw new Error('cannot find submission id');
+  }
+
+  return {
+    id,
+    username: null,
+    platform: 'atcoder',
+  };
+}
+
+async function submitProblemSolutionCSES({
+  problemID,
+  sourceCode,
+  language,
+}: ProblemSolution): Promise<ClientSubmissionData> {
+  const formData = new FormData();
+  formData.append('csrf_token', csesCsrfToken.value());
+  formData.append('task', problemID);
+  formData.append('file', sourceCode, { filename: 'f' });
+  formData.append(
+    'lang',
+    { cpp: 'C++', py: 'Python3', java: 'Java' }[language]
+  );
+  if (language != 'java') {
+    formData.append('option', { cpp: 'C++17', py: 'PyPy3' }[language]);
+  }
+  formData.append('type', 'course');
+  formData.append('target', 'problemset');
+
+  const response = await fetch(`https://cses.fi/course/send.php`, {
+    headers: {
+      cookie: csesCookie.value(),
+    },
+    body: formData,
+    method: 'POST',
+  });
+  if (response.status !== 200) {
+    throw new Error('submission failed');
+  }
+
+  const text = await response.text();
+  const id = text.match(/\/ajax\/get_status\.php\?entry=([0-9]+)/)?.[1];
+  if (!id) {
+    throw new Error('cannot find submission id');
+  }
+
+  return {
+    id,
+    username: null,
+    platform: 'cses',
+  };
 }
 
 export const cfAPIKey = defineString('CF_API_KEY');
 export const cfAPISecret = defineString('CF_API_SECRET');
+export const cfCsrfToken = defineString('CF_CSRF_TOKEN');
+export const cfCookie = defineString('CF_COOKIE');
+export const cfUsername = defineString('CF_BOT_USERNAME');
+
 export const atCoderCookie = defineString('ATCODER_COOKIE');
+export const atCoderCsrfToken = defineString('ATCODER_CSRF_TOKEN');
+
 export const csesCookie = defineString('CSES_COOKIE');
+export const csesCsrfToken = defineString('CSES_CSRF_TOKEN');
 
 const PENDING_TIME_LIMIT_MS = 300000;
+const INCORRECT_DATA_RETRY_LIMIT_MS = 20000;
 
 enum Errors {
-  NO_SUCH_SUBMISSION = 'No such submission exists for the given problem.',
+  NO_SUCH_SUBMISSION = 'No such submission exists for the given problem. Please check if the entered submission ID is correct.',
   UNKNOWN_ERROR = 'Could not retrieve the results due to an unknown error',
   PENDING_TIMEOUT = 'Could not retreive the submission results in time. Please try again later.',
 }
@@ -184,6 +283,12 @@ const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
   } catch (error) {
     let message = Errors.UNKNOWN_ERROR;
     if (error instanceof IncorrectDataError) {
+      if (
+        fetcher.submissionData.creationTime >
+        Date.now() - INCORRECT_DATA_RETRY_LIMIT_MS
+      ) {
+        return;
+      }
       message = Errors.NO_SUCH_SUBMISSION;
     }
     logger.log(error);
