@@ -313,7 +313,6 @@ export default function FilePage() {
     />
   );
   const loadingUI = <MessagePage message="Loading..." showHomeButton={false} />;
-  const oldLink = `https://legacy.ide.usaco.guide/${queryId}`;
   const fileNotFoundUI = (
     <div className="p-8 sm:p-16">
       <div className="max-w-prose mx-auto">
