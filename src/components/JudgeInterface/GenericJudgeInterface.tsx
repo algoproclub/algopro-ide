@@ -1,5 +1,5 @@
 import { useAtomValue } from 'jotai/utils';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { mainEditorValueAtom } from '../../atoms/workspace';
 import { StatusData } from '../../types/problem';
 import SubmitButton from './SubmitButton';
@@ -34,10 +34,9 @@ export default function GenericJudgeInterface({
 }: {
   problem: ProblemData;
 }): JSX.Element {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (ref.current !== null) {
-      renderMathInElement(ref.current, {
+  const refCallback = useCallback((node: HTMLDivElement) => {
+    if (node !== null) {
+      renderMathInElement(node, {
         delimiters: [
           // For Codeforces
           { left: '$$$', right: '$$$', display: false },
@@ -46,12 +45,12 @@ export default function GenericJudgeInterface({
       });
 
       // For AtCoder
-      ref.current.querySelectorAll('var').forEach(element => {
+      node.querySelectorAll('var').forEach((element: HTMLElement) => {
         katex.render(element.textContent ?? '', element);
       });
 
       // For CSES
-      ref.current.querySelectorAll('.math').forEach(element => {
+      node.querySelectorAll('.math').forEach((element: Element) => {
         if (!(element instanceof HTMLElement)) return;
 
         katex.render(element.textContent ?? '', element, {
@@ -59,7 +58,7 @@ export default function GenericJudgeInterface({
         });
       });
     }
-  }, [ref.current]);
+  }, []);
 
   return (
     <div className="relative h-full flex flex-col">
@@ -82,7 +81,7 @@ export default function GenericJudgeInterface({
           <div
             id="problem-statement"
             dangerouslySetInnerHTML={{ __html: problem.statement ?? '' }}
-            ref={ref}
+            ref={refCallback}
           ></div>
           <style jsx global>{`
             #problem-statement p {
