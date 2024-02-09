@@ -30,10 +30,10 @@ export default function useUpdateUserDashboard() {
     let prefix = undefined;
 
     if (userRole === 'teacher' && settings.workspaceName) {
-      prefix = `[${owner}] ${settings.workspaceName}`;
+      prefix = `[${owner}]: ${settings.workspaceName}`;
     }
     if (userRole === 'student') {
-      prefix = problem?.title;
+      prefix = problem?.title ?? settings.workspaceName;
     }
     if (prefix) {
       prefix += ' - ';
