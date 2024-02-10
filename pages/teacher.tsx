@@ -350,6 +350,14 @@ export default function TeacherPage() {
     filter.owner,
   ]);
 
+  useEffect(() => {
+    const maxPage = Math.round(Math.ceil(shownFiles.length / maxPageLength));
+    setPageData({
+      current: 1,
+      max: Math.max(1, maxPage),
+    });
+  }, [shownFiles]);
+
   const sortedFileList = (fileList: MainFileData[]) => {
     if (sortOptions.order) {
       fileList.sort((a, b) => {
@@ -455,11 +463,6 @@ export default function TeacherPage() {
           };
         })
     );
-    const maxPage = Math.round(Math.ceil(newFileList.length / maxPageLength));
-    setPageData({
-      current: 1,
-      max: Math.max(1, maxPage),
-    });
     setFiles(newFileList);
     setLoading(cnt => cnt - 1);
   };
