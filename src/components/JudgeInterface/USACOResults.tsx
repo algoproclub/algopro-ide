@@ -90,43 +90,45 @@ export default function USACOResults({ data }: { data: StatusData }) {
   return (
     <div className="mt-3">
       <div className="pb-3">
-        <p className="font-medium text-gray-200 border-gray-700">
-          <span className="space-x-2">
+        <div className="flex font-medium text-gray-200 border-gray-700 space-x-2">
+          <span>
             {!['error', 'resolved'].includes(data.statusCode) && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'gear' }}
-                className="mr-2 w-4 h-4 text-gray-400 animate-spin-slow"
+                className="w-4 h-4 text-gray-400 animate-spin-slow"
               />
             )}
             {data.statusCode === 'error' && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'exclamation-triangle' }}
-                className="mr-2 text-yellow-500 w-4 h-4"
+                className="text-yellow-500 w-4 h-4"
               />
             )}
             {data.statusCode === 'resolved' &&
               data.message?.toLowerCase() === 'correct answer' && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'check' }}
-                  className="mr-2 text-green-500 w-4 h-4"
+                  className="text-green-500 w-4 h-4"
                 />
               )}
             {data.statusCode === 'resolved' &&
               data.message?.toLowerCase() !== 'correct answer' && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'xmark' }}
-                  className="mr-2 w-4 h-4 text-red-500"
+                  className="w-4 h-4 text-red-500"
                 />
               )}
+          </span>
+          <span className="break-words">
             {data.message ? capitalize(data.message) : null}
             {!['error', 'resolved'].includes(data.statusCode) && '...'}
+            {(data.time || data.memory) && ' ('}
+            {data.time && '' + data.time}
+            {data.time && data.memory && ', '}
+            {data.memory && '' + data.memory}
+            {(data.time || data.memory) && ')'}
           </span>
-          {(data.time || data.memory) && <span> (</span>}
-          {data.time && <span>{data.time}</span>}
-          {data.time && data.memory && <span>, </span>}
-          {data.memory && <span>{data.memory}</span>}
-          {(data.time || data.memory) && <span>)</span>}
-        </p>
+        </div>
         {data.link && (
           <a
             href={data.link}

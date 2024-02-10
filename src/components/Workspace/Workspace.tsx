@@ -254,7 +254,7 @@ export default function Workspace({
           </div>
           <div
             className={classNames(
-              'flex flex-col min-w-0 min-h-0 overflow-hidden min-w-[24rem]',
+              'flex flex-col min-h-0 overflow-hidden min-w-[24rem]',
               !isDesktop && 'col-span-full mt-[6px]',
               !isDesktop && mobileActiveTab !== 'io' && 'hidden',
               isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
