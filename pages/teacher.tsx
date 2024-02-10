@@ -52,29 +52,29 @@ type PageData = {
   max: number;
 };
 
-const VERDICT_TYPES = [
+const SUBMISSION_STATUS = [
   'pending',
   'accepted',
   'incorrect',
   'error',
   'untried',
 ] as const;
-type VerdictTuple = typeof VERDICT_TYPES;
-type VerdictType = VerdictTuple[number];
+type SubmissionTuple = typeof SUBMISSION_STATUS;
+type SubmissionStatus = SubmissionTuple[number];
 
 type MainFileData = {
   workspaceName: string;
   owner: string;
   fileID: string;
   lastVerdict: string;
-  verdictType: VerdictType;
+  submissionStatus: SubmissionStatus;
   hasProblem: boolean;
   lastEdit: number;
   codeSize: number;
 };
 
 type ShowVerdict = {
-  [v in VerdictType]: boolean;
+  [v in SubmissionStatus]: boolean;
 };
 
 const db = getDatabase();
@@ -213,14 +213,16 @@ const TimeDropdown = ({
   );
 };
 
-const VerdictDropdown = ({
+const SubmissionStatusDropdown = ({
   showVerdict,
   setShowVerdict,
 }: {
   showVerdict: ShowVerdict;
   setShowVerdict: React.Dispatch<React.SetStateAction<ShowVerdict>>;
 }) => {
-  let text = VERDICT_TYPES.filter(verdict => showVerdict[verdict]).join(', ');
+  let text = SUBMISSION_STATUS.filter(verdict => showVerdict[verdict]).join(
+    ', '
+  );
   if (text === '') {
     text = '-';
   }
@@ -230,7 +232,7 @@ const VerdictDropdown = ({
         {({ open }) => (
           <>
             <Listbox.Label className="text-sm block mb-1">
-              Verdict
+              Submission status
             </Listbox.Label>
             <div className="w-full flex space-x-2">
               <div className="w-full text-sm relative z-20">
@@ -255,7 +257,7 @@ const VerdictDropdown = ({
                     static
                     className="z-20 border border-gray-600 rounded-md bg-gray-900 divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden"
                   >
-                    {VERDICT_TYPES.map(val => (
+                    {SUBMISSION_STATUS.map(val => (
                       <Listbox.Option
                         className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700 select-none"
                         onClick={(e: any) => {
@@ -388,7 +390,7 @@ export default function TeacherPage() {
           ?.toLowerCase()
           .includes(filter.workspaceName!.toLowerCase()) &&
         fileData.owner.toLowerCase().includes(filter.owner!.toLowerCase()) &&
-        showVerdict[fileData.verdictType]
+        showVerdict[fileData.submissionStatus]
     );
   };
   const updateFileList = async () => {
@@ -425,19 +427,19 @@ export default function TeacherPage() {
           ).val();
 
           let verdictMessage = 'not tried';
-          let verdictType: VerdictType = 'untried';
+          let submissionStatus: SubmissionStatus = 'untried';
           if (submission?.statusCode === 'error') {
             verdictMessage = 'error';
-            verdictType = 'error';
+            submissionStatus = 'error';
           }
           if (submission?.message && submission.statusCode !== 'error') {
             if (submission.statusCode === 'resolved') {
-              verdictType =
+              submissionStatus =
                 submission.message === 'correct answer'
                   ? 'accepted'
                   : 'incorrect';
             } else {
-              verdictType = 'pending';
+              submissionStatus = 'pending';
             }
             verdictMessage = submission.message;
           }
@@ -445,7 +447,7 @@ export default function TeacherPage() {
             workspaceName: fileData.settings?.workspaceName ?? '?',
             owner,
             fileID,
-            verdictType,
+            submissionStatus,
             hasProblem: !!fileData.problem,
             lastVerdict: verdictMessage,
             lastEdit: fileData.teacher!.editTime!,
@@ -511,7 +513,7 @@ export default function TeacherPage() {
               <Disclosure.Panel>
                 <div className="mt-2 space-y-3 px-6 py-5 border bg-gray-800 border-gray-600 z-10 relative">
                   <TimeDropdown selected={selected} setSelected={setSelected} />
-                  <VerdictDropdown
+                  <SubmissionStatusDropdown
                     showVerdict={showVerdict}
                     setShowVerdict={setShowVerdict}
                   />
@@ -638,19 +640,19 @@ export default function TeacherPage() {
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="flex items-center">
-                        {data.verdictType === 'pending' && (
+                        {data.submissionStatus === 'pending' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'cog' }}
                             className="w-3.5 h-3.5 text-gray-400 animate-spin-slow"
                           />
                         )}
-                        {data.verdictType === 'untried' && (
+                        {data.submissionStatus === 'untried' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'ellipsis' }}
                             className="w-3.5 h-3.5 text-gray-500"
                           />
                         )}
-                        {data.verdictType === 'error' && (
+                        {data.submissionStatus === 'error' && (
                           <FontAwesomeIcon
                             icon={{
                               prefix: 'fas',
@@ -659,13 +661,13 @@ export default function TeacherPage() {
                             className="w-3.5 h-3.5 text-yellow-500"
                           />
                         )}
-                        {data.verdictType === 'accepted' && (
+                        {data.submissionStatus === 'accepted' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'check' }}
                             className="w-3.5 h-3.5 text-green-500"
                           />
                         )}
-                        {data.verdictType === 'incorrect' && (
+                        {data.submissionStatus === 'incorrect' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'xmark' }}
                             className="w-3.5 h-3.5 text-red-500"
