@@ -41,7 +41,7 @@ export const Output = ({
     else if (result?.stdout) option = 'stdout';
     else if (result?.stderr) option = 'stderr';
     if (option) setOption(option as OutputTab);
-  }, [result]);
+  }, [result?.status, result?.stdout, result?.stderr]);
 
   useEffect(() => {
     if (statusData) setOption('results');

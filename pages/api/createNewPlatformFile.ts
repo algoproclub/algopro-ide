@@ -5,6 +5,7 @@ import { getDatabase, ServerValue } from 'firebase-admin/database';
 import { getFirestore } from 'firebase-admin/firestore';
 import firebaseApp from '../../src/firebaseAdmin';
 import colorFromUserId from '../../src/scripts/colorFromUserId';
+import { Language } from '../../src/context/UserContext';
 
 type RequestData = {
   platform: Platform;
@@ -12,6 +13,7 @@ type RequestData = {
   userID: string;
   userName: string;
   defaultPermission: string;
+  language: Language;
 };
 
 type ResponseData =
@@ -34,7 +36,8 @@ export default async (
     !data.defaultPermission ||
     !data.userID ||
     !data.problemID ||
-    !data.platform
+    !data.platform ||
+    !data.language
   ) {
     res.status(400).json({
       message: 'Bad data',
@@ -101,7 +104,7 @@ export default async (
         workspaceName: problem.source + ': ' + problem.title,
         defaultPermission: data.defaultPermission,
         creationTime: ServerValue.TIMESTAMP,
-        language: 'cpp', //TODO think about how do we support other languages with this method?
+        language: data.language, //TODO think about how do we support other languages with this method?
         compilerOptions: {
           cpp: '-std=c++17 -O2 -Wall -Wextra -Wshadow -Wconversion -Wfloat-equal -Wduplicated-cond -Wlogical-op',
           java: '',

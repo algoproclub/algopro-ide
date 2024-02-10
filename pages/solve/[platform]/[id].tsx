@@ -46,6 +46,7 @@ export default function CreatePlatformFile(): JSX.Element {
           problemID: problemID,
           userID: firebaseUser.uid,
           userName: firebaseUser.displayName,
+          language: userData.defaultLanguage,
           defaultPermission: userData.defaultPermission,
         }),
       });
