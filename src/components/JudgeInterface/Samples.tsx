@@ -1,7 +1,6 @@
-import React, { ComponentType } from 'react';
+import React from 'react';
 import { PlayCircleIcon } from '@heroicons/react/20/solid';
 import { Sample } from '../../types/problem';
-import SubmitButton from './SubmitButton';
 import { useEditorContext } from '../../context/EditorContext';
 import LoadingIndicator from '../LoadingIndicator';
 import useUserPermission from '../../hooks/useUserPermission';
