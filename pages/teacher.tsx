@@ -400,7 +400,7 @@ export default function TeacherPage() {
     const newFileList = await Promise.all(
       Object.entries(filesObj)
         .filter(([_, fileData]) => {
-          if (!fileData.users) {
+          if (!fileData.users || !fileData.problem) {
             return false;
           }
           const owner = Object.values(fileData.users).find(val => {
