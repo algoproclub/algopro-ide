@@ -37,7 +37,7 @@ const SolvedStatusForm = () => {
             checked={solvedInTheory}
             onChange={solvedInTheoryChanged}
             type="checkbox"
-            className="w-4 h-4 bg-gray-900 checked:bg-indigo-500 checked:focus:bg-indigo-500 checked:focus:hover:bg-indigo-600 checked:hover:bg-indigo-600 accent-indigo-500 focus:ring-0 focus:ring-offset-0"
+            className="w-4 h-4 bg-gray-900 checked:bg-indigo-600 checked:focus:bg-indigo-600 checked:focus:hover:bg-indigo-700 checked:hover:bg-indigo-700 focus:ring-0 focus:ring-offset-0"
           />
           <span className="ml-2 mb-0.5">Solved in theory</span>
         </label>
@@ -46,7 +46,7 @@ const SolvedStatusForm = () => {
             checked={alreadyKnew}
             onChange={alreadyKnewChanged}
             type="checkbox"
-            className="w-4 h-4 bg-gray-900 checked:bg-indigo-500 checked:focus:bg-indigo-500 checked:focus:hover:bg-indigo-600 checked:hover:bg-indigo-600 accent-indigo-500 focus:ring-0 focus:ring-offset-0"
+            className="w-4 h-4 bg-gray-900 checked:bg-indigo-600 checked:focus:bg-indigo-600 checked:focus:hover:bg-indigo-700 checked:hover:bg-indigo-700 focus:ring-0 focus:ring-offset-0"
           />
           <span className="ml-2 mb-0.5">Already knew</span>
         </label>

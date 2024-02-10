@@ -268,14 +268,14 @@ const VerdictDropdown = ({
                         key={val}
                         value={val}
                       >
-                        <label className="cursor-pointer">
+                        <label className="cursor-pointer text-[0.85rem] text-white flex items-center select-none">
                           <input
                             disabled
                             checked={showVerdict[val]}
                             type="checkbox"
-                            className="cursor-pointer mr-1.5 w-4 h-4 bg-gray-800 checked:bg-indigo-600 checked:focus:bg-indigo-600 checked:focus:hover:bg-indigo-700 checked:hover:bg-indigo-700 accent-indigo-600 focus:ring-0 focus:ring-offset-0"
+                            className="cursor-pointer w-4 h-4 bg-gray-900 checked:bg-indigo-600 checked:focus:bg-indigo-600 checked:focus:hover:bg-indigo-700 checked:hover:bg-indigo-700 focus:ring-0 focus:ring-offset-0"
                           />{' '}
-                          {val}
+                          <span className="ml-2 mb-0.5">{val}</span>
                         </label>
                       </Listbox.Option>
                     ))}
@@ -543,14 +543,16 @@ export default function TeacherPage() {
                       }
                     />
                   </label>
-                  <label className="text-sm text-white flex items-center select-none">
+                  <label className="text-[0.85rem] text-white flex items-center select-none">
                     <input
                       checked={showNoProblem}
                       onChange={() => setShowNoProblem(val => !val)}
                       type="checkbox"
-                      className="transition duration-100 cursor-pointer mr-1.5 w-4 h-4 bg-gray-900 checked:bg-indigo-500 checked:focus:bg-indigo-500 checked:focus:hover:bg-indigo-600 checked:hover:bg-indigo-600 accent-indigo-500 focus:ring-0 focus:ring-offset-0"
+                      className="w-4 h-4 bg-gray-900 checked:bg-indigo-600 checked:focus:bg-indigo-600 checked:focus:hover:bg-indigo-700 checked:hover:bg-indigo-700 focus:ring-0 focus:ring-offset-0"
                     />
-                    Show files with missing problem
+                    <span className="ml-2 mb-0.5">
+                      Show files with missing problem
+                    </span>
                   </label>
                 </div>
               </Disclosure.Panel>
