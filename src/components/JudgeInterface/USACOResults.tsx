@@ -19,7 +19,7 @@ const USACOTestCase = ({ data }: { data: TestCase }) => {
       : 'text-red-100';
   return (
     <div
-      className={`m-1 p-1 inline-block w-[5rem] bg-opacity-50 border ${containerClasses} relative rounded`}
+      className={`m-1 p-1 inline-block w-[5rem] bg-opacity-40 border-opacity-60 border ${containerClasses} relative rounded-[4px]`}
       title={capitalize(data.title)}
     >
       <div className={`font-semibold text-center ${textColor} pt-1`}>
@@ -90,7 +90,7 @@ export default function USACOResults({ data }: { data: StatusData }) {
   return (
     <div className="mt-3">
       <div className="pb-3">
-        <p className="font-bold text-gray-200 border-gray-700">
+        <p className="font-medium text-gray-200 border-gray-700">
           <span className="space-x-2">
             {!['error', 'resolved'].includes(data.statusCode) && (
               <FontAwesomeIcon
@@ -161,7 +161,7 @@ export default function USACOResults({ data }: { data: StatusData }) {
       )}
       {data.testCases && (
         <>
-          <div className="mt-3 -mx-1">
+          <div className="my-3 -mx-1">
             {data.testCases.map(tc => (
               <USACOTestCase data={tc} key={tc.trialNum} />
             ))}

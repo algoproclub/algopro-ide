@@ -67,11 +67,12 @@ export const SettingsModal = ({
   );
 
   const [name, setName] = useState<string>('');
+  const [cfUsername, setCfUsername] = useState<string>('');
+  const [discordID, setDiscordID] = useState<string>('');
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
   const [tabSize, setTabSize] = useState<number>(-1);
   const [lightMode, setLightMode] = useState<boolean>(false);
   const [manualSubmission, setManualSubmission] = useState<boolean>(false);
-  const [cfUsername, setCfUsername] = useState<string>('');
   const dirtyRef = useRef<boolean>(false);
 
   const [tab, setTab] = useState<typeof tabs[number]['id']>('workspace');
@@ -83,12 +84,13 @@ export const SettingsModal = ({
       setFileSettings(realFileSettings);
       setName(firebaseUser.displayName ?? ''); // todo this shouldn't really be an empty string ever?
       setCfUsername(userData.usernames.codeforces ?? '');
+      setDiscordID(userData.discordID ?? '');
       setEditorMode(userData.editorMode);
       setTabSize(userData.tabSize);
       setLightMode(userData.lightMode);
       setManualSubmission(userData.manualSubmission);
-      dirtyRef.current = false;
       setTab('workspace');
+      dirtyRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -151,6 +153,7 @@ export const SettingsModal = ({
           if (!data.usernames) {
             data.usernames = {};
           }
+          data.discordID = discordID;
           data.usernames.codeforces = cfUsername;
         } else {
           data = {
@@ -158,6 +161,7 @@ export const SettingsModal = ({
             tabSize: tabSize,
             lightMode: lightMode,
             manualSubmission: manualSubmission,
+            discordID: discordID,
             usernames: {
               codeforces: cfUsername,
             },
@@ -225,7 +229,7 @@ export const SettingsModal = ({
                       <button
                         className={classNames(
                           tab === settingTab.id
-                            ? 'border-indigo-500 text-indigo-600'
+                            ? 'border-indigo-600 text-indigo-700'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
                           'w-1/2 group flex items-center justify-center py-3 px-1 border-b-2 font-medium text-sm focus:outline-none'
                         )}
@@ -235,7 +239,7 @@ export const SettingsModal = ({
                         <settingTab.icon
                           className={classNames(
                             tab === settingTab.id
-                              ? 'text-indigo-500'
+                              ? 'text-indigo-700'
                               : 'text-gray-400 group-hover:text-gray-500',
                             '-ml-0.5 mr-2 h-5 w-5'
                           )}
@@ -256,8 +260,13 @@ export const SettingsModal = ({
                       dirtyRef.current = true;
                     }}
                     cfUsername={cfUsername || ''}
-                    onCfUsernameChange={cfHandle => {
-                      setCfUsername(cfHandle);
+                    onCfUsernameChange={cfUsername => {
+                      setCfUsername(cfUsername);
+                      dirtyRef.current = true;
+                    }}
+                    discordID={discordID || ''}
+                    onDiscordIDChange={discordID => {
+                      setDiscordID(discordID);
                       dirtyRef.current = true;
                     }}
                     editorMode={editorMode}
@@ -306,7 +315,6 @@ export const SettingsModal = ({
                     Save
                   </button>
                 </div>
-
                 {tab === 'user' && (
                   <>
                     <hr className="border-gray-200" />

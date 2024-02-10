@@ -38,7 +38,7 @@ export interface MobileBottomNavProps {
 
 export const MobileBottomNav = (props: MobileBottomNavProps): JSX.Element => {
   return (
-    <div className="bg-[#1E1E1E] grid grid-cols-3">
+    <div className="grid grid-cols-3 pt-2 border-t border-gray-800 bg-[#121212]">
       <MobileBottomNavButton
         IconComponent={CodeBracketIcon}
         label="Code"
