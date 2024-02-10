@@ -101,7 +101,7 @@ export default async (
         workspaceName: problem.source + ': ' + problem.title,
         defaultPermission: data.defaultPermission,
         creationTime: ServerValue.TIMESTAMP,
-        language: 'py', //TODO think about how do we support other languages with this method?
+        language: 'cpp', //TODO think about how do we support other languages with this method?
         compilerOptions: {
           cpp: '-std=c++17 -O2 -Wall -Wextra -Wshadow -Wconversion -Wfloat-equal -Wduplicated-cond -Wlogical-op',
           java: '',
