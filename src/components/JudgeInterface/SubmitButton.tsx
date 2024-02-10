@@ -32,7 +32,7 @@ const SolvedStatusForm = () => {
           isOpen ? 'translate-y-0 opacity-100' : 'translate-y-16 opacity-0'
         } duration-200`}
       >
-        <label className="text-[0.85rem] text-white flex items-center">
+        <label className="text-[0.85rem] text-white flex items-center select-none">
           <input
             checked={solvedInTheory}
             onChange={solvedInTheoryChanged}
@@ -41,7 +41,7 @@ const SolvedStatusForm = () => {
           />
           <span className="ml-2 mb-0.5">Solved in theory</span>
         </label>
-        <label className="text-[0.85rem] text-white flex items-center">
+        <label className="text-[0.85rem] text-white flex items-center select-none">
           <input
             checked={alreadyKnew}
             onChange={alreadyKnewChanged}

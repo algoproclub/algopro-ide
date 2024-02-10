@@ -68,6 +68,7 @@ type MainFileData = {
   fileID: string;
   lastVerdict: string;
   verdictType: VerdictType;
+  hasProblem: boolean;
   lastEdit: number;
   codeSize: number;
 };
@@ -298,6 +299,7 @@ export default function TeacherPage() {
     error: true,
     untried: true,
   });
+  const [showNoProblem, setShowNoProblem] = useState(true);
   const [pageData, setPageData] = useState<PageData>({
     current: 1,
     max: 1,
@@ -341,6 +343,7 @@ export default function TeacherPage() {
     selected,
     showVerdict,
     sortOptions,
+    showNoProblem,
     filter.workspaceName,
     filter.owner,
   ]);
@@ -380,6 +383,7 @@ export default function TeacherPage() {
       fileData =>
         fileData.lastEdit &&
         fileData.lastEdit >= fromTime &&
+        (fileData.hasProblem || showNoProblem) &&
         fileData.workspaceName
           ?.toLowerCase()
           .includes(filter.workspaceName!.toLowerCase()) &&
@@ -400,21 +404,21 @@ export default function TeacherPage() {
     const newFileList = await Promise.all(
       Object.entries(filesObj)
         .filter(([_, fileData]) => {
-          if (!fileData.users || !fileData.problem) {
+          if (!fileData.users) {
             return false;
           }
-          const owner = Object.values(fileData.users).find(val => {
+          const fileOwner = Object.values(fileData.users).find(val => {
             return val.permission === 'OWNER';
           });
           return (
-            owner &&
+            fileOwner &&
             fileData?.teacher?.editTime &&
             (fileData.teacher.editTime ?? 0) >= fromTime
           );
         })
         .map(async ([fileID, fileData]) => {
-          const owner = Object.values(fileData.users!).find(val => {
-            return val.permission === 'OWNER';
+          const owner = Object.values(fileData.users!).find(user => {
+            return user.permission === 'OWNER';
           })!.name;
           const submission: StatusData | null = (
             await get(ref(db, `submissions/${fileID}/statusData`))
@@ -439,10 +443,11 @@ export default function TeacherPage() {
           }
           return {
             workspaceName: fileData.settings?.workspaceName ?? '?',
-            owner: owner,
-            fileID: fileID,
+            owner,
+            fileID,
+            verdictType,
+            hasProblem: !!fileData.problem,
             lastVerdict: verdictMessage,
-            verdictType: verdictType,
             lastEdit: fileData.teacher!.editTime!,
             codeSize: fileData.teacher!.codeSize!,
           };
@@ -537,6 +542,15 @@ export default function TeacherPage() {
                         })
                       }
                     />
+                  </label>
+                  <label className="text-sm text-white flex items-center select-none">
+                    <input
+                      checked={showNoProblem}
+                      onChange={() => setShowNoProblem(val => !val)}
+                      type="checkbox"
+                      className="transition duration-100 cursor-pointer mr-1.5 w-4 h-4 bg-gray-900 checked:bg-indigo-500 checked:focus:bg-indigo-500 checked:focus:hover:bg-indigo-600 checked:hover:bg-indigo-600 accent-indigo-500 focus:ring-0 focus:ring-offset-0"
+                    />
+                    Show files with missing problem
                   </label>
                 </div>
               </Disclosure.Panel>
