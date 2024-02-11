@@ -2,9 +2,14 @@ import { test, expect } from '@playwright/test';
 import {
   host,
   setMainEditorValue,
+  signInUser,
   switchLang,
   waitForEditorToLoad,
 } from './helpers';
+
+test.beforeEach(async ({ page }) => {
+  await signInUser(page);
+});
 
 test.describe('USACO Judge Functionality', () => {
   test('should fetch usaco info correctly', async ({ page, isMobile }) => {

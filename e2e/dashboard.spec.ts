@@ -1,5 +1,9 @@
 import { test, expect, Page } from '@playwright/test';
-import { host } from './helpers';
+import { host, signInUser } from './helpers';
+
+test.beforeEach(async ({ page }) => {
+  await signInUser(page);
+});
 
 test.describe('Dashboard Page', () => {
   test('should show recently accessed files', async ({ page, isMobile }) => {
@@ -44,6 +48,7 @@ test.describe('Dashboard Page', () => {
 
     const context2 = await browser.newContext();
     const page2 = await context2.newPage();
+    await signInUser(page2);
     await page2.goto(page.url());
     await page2.waitForSelector('button:has-text("Run Code")');
     if (!isMobile) {
