@@ -85,7 +85,7 @@ export default function SubmitButton({
       {!isLoading && !isDisabled && <SolvedStatusForm />}
       <button
         className={classNames(
-          'relative z-10 block w-full py-2.5 font-medium focus:outline-none border-t border-gray-600 min-w-[24rem]',
+          'relative z-10 flex items-center justify-center w-full py-2.5 font-medium focus:outline-none border-t border-gray-600 min-w-[24rem]',
           isLoading || isDisabled ? loadingClasses : normalClasses
         )}
         disabled={isLoading || isDisabled}
@@ -93,17 +93,17 @@ export default function SubmitButton({
       >
         {isLoading ? (
           <>
-            <LoadingIndicator className="h-5 w-5 p-0.5 mr-1.5" />
+            <LoadingIndicator className="h-5 w-5 p-0.5 !mx-1.5" />
             <span>Waiting for results...</span>
           </>
         ) : isDisabled ? (
-          <span>
+          <>
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'ban' }}
               className="mr-2.5 w-4 h-4"
             />
             Cannot Submit
-          </span>
+          </>
         ) : (
           <>
             <FontAwesomeIcon

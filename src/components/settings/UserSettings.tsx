@@ -1,7 +1,7 @@
 import { RadioGroup } from '@headlessui/react';
 import classNames from 'classnames';
 import React from 'react';
-import { EditorMode } from '../../context/UserContext';
+import { EditorMode, Language, LANGUAGES } from '../../context/UserContext';
 
 const EDITOR_MODES = ['Normal', 'Vim' /*'Emacs'*/];
 
@@ -12,6 +12,8 @@ export default function UserSettings({
   onCfUsernameChange,
   discordID,
   onDiscordIDChange,
+  defaultLanguage,
+  onDefaultLanguageChange,
   editorMode,
   onEditorModeChange,
   tabSize,
@@ -27,6 +29,8 @@ export default function UserSettings({
   onCfUsernameChange: (cfUsername: string) => void;
   discordID: string;
   onDiscordIDChange: (discordID: string) => void;
+  defaultLanguage: Language;
+  onDefaultLanguageChange: (lang: Language) => void;
   editorMode: EditorMode;
   onEditorModeChange: (mode: EditorMode) => void;
   tabSize: number;
@@ -97,6 +101,97 @@ export default function UserSettings({
             }}
           />
         </div>
+      </div>
+      <div>
+        <RadioGroup value={defaultLanguage} onChange={onDefaultLanguageChange}>
+          <RadioGroup.Label className="text-gray-700 text-[0.92rem] font-medium">
+            Preferred language
+          </RadioGroup.Label>
+          <div className="bg-white rounded-md space-x-4">
+            {LANGUAGES.map(setting => (
+              <RadioGroup.Option
+                key={setting.value}
+                value={setting.value}
+                className="relative inline-flex items-center cursor-pointer focus:outline-none"
+              >
+                {({ active, checked }) => (
+                  <>
+                    <span
+                      className={classNames(
+                        checked
+                          ? 'bg-indigo-600 border-transparent'
+                          : 'bg-white border-gray-300',
+                        active ? 'ring-2 ring-offset-2 ring-indigo-500' : '',
+                        'h-4 w-4 mt-1 cursor-pointer rounded-full border flex items-center justify-center'
+                      )}
+                      aria-hidden="true"
+                    >
+                      <span className="rounded-full bg-white w-1.5 h-1.5" />
+                    </span>
+                    <div className="ml-2 flex flex-col">
+                      <RadioGroup.Label
+                        as="span"
+                        className={classNames(
+                          checked ? 'text-gray-800' : 'text-gray-600',
+                          'block text-sm font-medium'
+                        )}
+                      >
+                        {setting.label}
+                      </RadioGroup.Label>
+                    </div>
+                  </>
+                )}
+              </RadioGroup.Option>
+            ))}
+          </div>
+        </RadioGroup>
+      </div>
+      <div>
+        <RadioGroup
+          value={manualSubmission}
+          onChange={onManualSubmissionChange}
+        >
+          <RadioGroup.Label className="text-[0.92rem] font-medium text-gray-700">
+            Preferred submission mode
+          </RadioGroup.Label>
+          <div className="bg-white rounded-md space-x-4">
+            {[false, true].map(setting => (
+              <RadioGroup.Option
+                key={setting ? 'Manual' : 'Automatic'}
+                value={setting}
+                className="relative inline-flex items-center cursor-pointer focus:outline-none"
+              >
+                {({ active, checked }) => (
+                  <>
+                    <span
+                      className={classNames(
+                        checked
+                          ? 'bg-indigo-600 border-transparent'
+                          : 'bg-white border-gray-300',
+                        active ? 'ring-2 ring-offset-2 ring-indigo-500' : '',
+                        'h-4 w-4 mt-1 cursor-pointer rounded-full border flex items-center justify-center'
+                      )}
+                      aria-hidden="true"
+                    >
+                      <span className="rounded-full bg-white w-1.5 h-1.5" />
+                    </span>
+                    <div className="ml-2 flex flex-col">
+                      <RadioGroup.Label
+                        as="span"
+                        className={classNames(
+                          checked ? 'text-gray-800' : 'text-gray-600',
+                          'block text-sm font-medium'
+                        )}
+                      >
+                        {setting ? 'Manual' : 'Automatic'}
+                      </RadioGroup.Label>
+                    </div>
+                  </>
+                )}
+              </RadioGroup.Option>
+            ))}
+          </div>
+        </RadioGroup>
       </div>
       <div>
         <RadioGroup value={editorMode} onChange={onEditorModeChange}>
@@ -223,53 +318,6 @@ export default function UserSettings({
                         )}
                       >
                         {setting ? 'Light' : 'Dark'}
-                      </RadioGroup.Label>
-                    </div>
-                  </>
-                )}
-              </RadioGroup.Option>
-            ))}
-          </div>
-        </RadioGroup>
-      </div>
-      <div>
-        <RadioGroup
-          value={manualSubmission}
-          onChange={onManualSubmissionChange}
-        >
-          <RadioGroup.Label className="text-[0.92rem] font-medium text-gray-700">
-            Preferred submission mode
-          </RadioGroup.Label>
-          <div className="bg-white rounded-md space-x-4">
-            {[false, true].map(setting => (
-              <RadioGroup.Option
-                key={setting ? 'Manual' : 'Automatic'}
-                value={setting}
-                className="relative inline-flex items-center cursor-pointer focus:outline-none"
-              >
-                {({ active, checked }) => (
-                  <>
-                    <span
-                      className={classNames(
-                        checked
-                          ? 'bg-indigo-600 border-transparent'
-                          : 'bg-white border-gray-300',
-                        active ? 'ring-2 ring-offset-2 ring-indigo-500' : '',
-                        'h-4 w-4 mt-1 cursor-pointer rounded-full border flex items-center justify-center'
-                      )}
-                      aria-hidden="true"
-                    >
-                      <span className="rounded-full bg-white w-1.5 h-1.5" />
-                    </span>
-                    <div className="ml-2 flex flex-col">
-                      <RadioGroup.Label
-                        as="span"
-                        className={classNames(
-                          checked ? 'text-gray-800' : 'text-gray-600',
-                          'block text-sm font-medium'
-                        )}
-                      >
-                        {setting ? 'Manual' : 'Automatic'}
                       </RadioGroup.Label>
                     </div>
                   </>
