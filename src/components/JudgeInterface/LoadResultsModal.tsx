@@ -10,6 +10,9 @@ import { Platform } from '../../types/problem';
 import firebase from 'firebase/compat';
 import HttpsCallableResult = firebase.functions.HttpsCallableResult;
 import { registerSubmission } from '../../scripts/updateStatus';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useAtomValue } from 'jotai';
+import { mainEditorValueAtom } from '../../atoms/workspace';
 
 const TextInput = ({
   text,
@@ -24,7 +27,10 @@ const TextInput = ({
 }) => {
   return (
     <div>
-      <label htmlFor={id} className="block font-medium text-gray-700">
+      <label
+        htmlFor={id}
+        className="block text-[0.92rem] font-medium text-gray-700"
+      >
         {label}
       </label>
       <div className="mt-1">
@@ -38,6 +44,48 @@ const TextInput = ({
         />
       </div>
     </div>
+  );
+};
+
+const CopyButton = () => {
+  const getMainEditorValue = useAtomValue(mainEditorValueAtom);
+  const [copied, setCopied] = useState(0);
+
+  const handleCopyCode = () => {
+    navigator.clipboard
+      .writeText(getMainEditorValue ? getMainEditorValue() : '')
+      .then(() => {
+        setCopied(prevCopied => prevCopied + 1);
+        setTimeout(() => {
+          setCopied(prevCopied => prevCopied - 1);
+        }, 5000);
+      });
+  };
+
+  return (
+    <button
+      className="flex items-center justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      onClick={handleCopyCode}
+    >
+      {copied === 0 && (
+        <>
+          <FontAwesomeIcon
+            icon={{ prefix: 'fas', iconName: 'copy' }}
+            className="mr-2"
+          />
+          Copy code
+        </>
+      )}
+      {copied > 0 && (
+        <>
+          <FontAwesomeIcon
+            icon={{ prefix: 'fas', iconName: 'check' }}
+            className="mr-2"
+          />
+          Code copied
+        </>
+      )}
+    </button>
   );
 };
 
@@ -117,23 +165,24 @@ const LoadResultsModal = ({
                     label="Username"
                     text={username ?? ''}
                     id="username"
-                    onChange={e => setUsername(e.target.value)}
+                    onChange={e => setUsername(e.target.value.trim())}
                   />
                 )}
                 <TextInput
                   label="Submission ID"
                   text={submissionID}
                   id="submissionID"
-                  onChange={e => setSubmissionID(e.target.value)}
+                  onChange={e => setSubmissionID(e.target.value.trim())}
                 />
                 <div className="flex items-center space-x-4">
                   <button
                     type="button"
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-[0.92rem] font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     onClick={confirmedClose}
                   >
                     Cancel
                   </button>
+                  <CopyButton />
                   <button
                     type="button"
                     className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"

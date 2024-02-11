@@ -16,7 +16,7 @@ export const TabBar = ({
   onTabSelect,
 }: TabBarProps): JSX.Element => {
   return (
-    <div className="flex bg-black">
+    <div className="flex bg-black whitespace-nowrap overflow-auto">
       <div className="flex-1">
         {tabs.map(tab => (
           <button
@@ -25,7 +25,7 @@ export const TabBar = ({
               tab.value === activeTab
                 ? 'bg-[#1E1E1E] text-gray-200'
                 : 'text-gray-400 hover:text-gray-300 hover:bg-gray-800 active:bg-gray-800',
-              'px-4 py-0.5 font-medium text-sm focus:outline-none transition'
+              'px-4 py-1 font-medium text-sm focus:outline-none transition'
             )}
             onClick={() => {
               if (onTabSelect) onTabSelect(tab);

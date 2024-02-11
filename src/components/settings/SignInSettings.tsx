@@ -28,13 +28,6 @@ export default function SignInSettings(): JSX.Element {
         the server data.
       </p>
 
-      {firebaseUser && (
-        <p className="mt-1 text-sm text-gray-700">
-          Signed in{firebaseUser.isAnonymous ? ' anonymously' : ''} as{' '}
-          {firebaseUser.displayName}
-        </p>
-      )}
-
       <div className="h-2" />
 
       {!firebaseUser || firebaseUser.isAnonymous ? (

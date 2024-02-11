@@ -16,6 +16,8 @@ export abstract class ResultFetcher {
   abstract getTime(): string | null;
   abstract getLink(): string | null;
 
+  constructor(readonly submissionData: SubmissionData) {}
+
   getTestCaseNum(): number {
     return 0;
   }
@@ -67,10 +69,10 @@ export class CFResultFetcher extends ResultFetcher {
   private submission: any;
 
   constructor(
-    private submissionData: SubmissionData,
+    readonly submissionData: SubmissionData,
     private resultJSON: { [key: string]: any }
   ) {
-    super();
+    super(submissionData);
   }
 
   getStatusText(): string {
@@ -172,8 +174,8 @@ export class AtCoderResultFetcher extends ResultFetcher {
   private summary?: Element;
   private testcases?: Element[];
 
-  constructor(private submissionData: SubmissionData) {
-    super();
+  constructor(readonly submissionData: SubmissionData) {
+    super(submissionData);
     this.headers = {
       Cookie: submissionData.sessionCookie ?? '',
     };
@@ -360,8 +362,8 @@ export class CSESResultFetcher extends ResultFetcher {
   private summary?: Element;
   private testcases?: Element[];
 
-  constructor(private submissionData: SubmissionData) {
-    super();
+  constructor(readonly submissionData: SubmissionData) {
+    super(submissionData);
     this.headers = {
       Cookie: submissionData.sessionCookie ?? '',
     };
@@ -516,7 +518,7 @@ export class CSESResultFetcher extends ResultFetcher {
     }
     this.testcases = Array.from(
       this.document.querySelector('table.narrow.closeable > tbody')?.children ??
-      []
+        []
     );
   }
 }

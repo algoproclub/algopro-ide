@@ -19,7 +19,7 @@ export default function WorkspaceSettingsUI({
         <div>
           <label
             htmlFor={`workspace_name`}
-            className="block font-medium text-gray-700"
+            className="block text-[0.92rem] font-medium text-gray-700"
           >
             Workspace Name
           </label>
@@ -57,12 +57,13 @@ export default function WorkspaceSettingsUI({
           !(userPermission === 'OWNER' || userPermission === 'READ_WRITE')
         }
         options={LANGUAGES}
+        className="text-gray-700 text-[0.92rem] font-medium"
       />
 
       <div>
         <label
           htmlFor={`compiler_options`}
-          className="block font-medium text-gray-700"
+          className="block text-[0.92rem] font-medium text-gray-700"
         >
           {LANGUAGES.find(x => x.value === workspaceSettings.language)!.label}{' '}
           Compiler Options
@@ -72,7 +73,7 @@ export default function WorkspaceSettingsUI({
             type="text"
             name={`compiler_options`}
             id={`compiler_options`}
-            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black font-mono text-sm"
+            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black font-mono text-[0.82rem] text-gray-800"
             value={
               workspaceSettings.compilerOptions[workspaceSettings.language]
             }
@@ -100,6 +101,7 @@ export default function WorkspaceSettingsUI({
           onWorkspaceSettingsChange({ defaultPermission: val })
         }
         isOwner={userPermission === 'OWNER'}
+        className="text-gray-700 text-[0.92rem] font-medium"
       />
     </div>
   );
