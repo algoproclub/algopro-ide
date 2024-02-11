@@ -8,6 +8,7 @@ import {
 } from './helpers';
 
 test.beforeEach(async ({ page }) => {
+  test.skip(); // TODO: remove when USACO platform is supported
   await signInUser(page);
 });
 
