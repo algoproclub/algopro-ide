@@ -5,6 +5,7 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import 'monaco-editor/esm/vs/basic-languages/cpp/cpp.contribution.js';
 import 'monaco-editor/esm/vs/basic-languages/java/java.contribution.js';
 import 'monaco-editor/esm/vs/basic-languages/python/python.contribution.js';
+import 'monaco-editor/esm/vs/basic-languages/html/html.contribution.js';
 import { buildWorkerDefinition } from 'monaco-editor-workers';
 import { initVimMode } from 'monaco-vim';
 import { MonacoServices } from 'monaco-languageclient';
@@ -38,6 +39,7 @@ export default function MonacoEditor({
   options,
   saveViewState = true,
   onMount,
+  onChange,
   language,
   className,
   value = '',
@@ -184,6 +186,12 @@ export default function MonacoEditor({
     // console.log('updating options'); // todo this runs way too often
     editorRef.current!.updateOptions(options ?? {});
   }, [options]);
+
+  useEffect(() => {
+    editorRef.current!.onDidChangeModelContent(e =>
+      onChange?.(editorRef.current!.getValue())
+    );
+  }, [onChange]);
 
   return (
     <div className="flex relative h-full">
