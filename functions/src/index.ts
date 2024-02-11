@@ -1,4 +1,4 @@
-import { defineString } from 'firebase-functions/params';
+import { defineList, defineString } from 'firebase-functions/params';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
@@ -40,8 +40,8 @@ export const cfCsrfToken = defineString('CF_CSRF_TOKEN');
 export const cfCookie = defineString('CF_COOKIE');
 export const cfUsername = defineString('CF_BOT_USERNAME');
 
-export const atCoderCookie = defineString('ATCODER_COOKIE');
-export const atCoderCsrfToken = defineString('ATCODER_CSRF_TOKEN');
+export const atCoderCookie = defineList('ATCODER_COOKIE');
+export const atCoderCsrfToken = defineList('ATCODER_CSRF_TOKEN');
 
 export const csesCookie = defineString('CSES_COOKIE');
 export const csesCsrfToken = defineString('CSES_CSRF_TOKEN');
@@ -100,10 +100,11 @@ const db = admin.database();
 
 const accountData: { [key in Platform]: AccountData } = {
   atcoder: {
-    sessionCookie: atCoderCookie,
+    // result fetching always uses the first account
+    sessionCookie: () => atCoderCookie.value()[0],
   },
   cses: {
-    sessionCookie: csesCookie,
+    sessionCookie: () => csesCookie.value(),
   },
   codeforces: {},
   planets: {},
@@ -226,7 +227,7 @@ const updateResults = async (pending: PendingSubmissions | null) => {
           fileID: fileID,
           platform: platform,
           username: username,
-          sessionCookie: accountData[platform]?.sessionCookie?.value() ?? null,
+          sessionCookie: accountData[platform].sessionCookie?.() ?? null,
           problemID: problemID,
           submissionID: submissionID,
           creationTime: creationTime,
