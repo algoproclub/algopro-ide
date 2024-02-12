@@ -94,7 +94,6 @@ const HTMLEditor = ({
       </div>
       <div className="h-48 md:h-96 w-full relative overflow-scroll">
         <CodeEditor
-          defaultLanguage="html"
           onChange={onChange}
           value={text}
           language="plaintext"
@@ -324,6 +323,7 @@ export default function EditPage() {
 
   const handleChange = useCallback((val: string) => {
     setTranslated(val);
+    setUnsaved(true);
   }, []);
 
   const handleSave = () => {
@@ -339,6 +339,8 @@ export default function EditPage() {
       'statements',
       'hu'
     );
+    console.log(translated);
+    console.log(hints);
     setDoc(problemRef, {
       statement: translated,
       hints: hints,
@@ -354,6 +356,20 @@ export default function EditPage() {
       setHints(prev => [...prev, text]);
     });
     setIsOpen(true);
+  };
+
+  const handleAutoTranslate = async () => {
+    const resp = await fetch('/api/translate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: original,
+      }),
+    });
+    const data = await resp.json();
+    setTranslated(data.translations[0].text);
   };
 
   return (
@@ -395,11 +411,12 @@ export default function EditPage() {
             <Hint
               text={hint}
               key={index}
-              onDelete={() =>
+              onDelete={() => {
+                setUnsaved(true);
                 setHints(prev => {
                   return prev.filter((_, ind) => ind !== index);
-                })
-              }
+                });
+              }}
               onEdit={() => {
                 setHintText(hint);
                 setOnSaveHint(
@@ -419,7 +436,7 @@ export default function EditPage() {
       <div className="p-4 border border-gray-600 bg-gray-800 mt-2 space-x-2 text-[0.95rem]">
         <button
           className="px-4 py-2 rounded-md border border-gray-600 hover:bg-gray-700 active:bg-gray-600"
-          onClick={() => alert('Not implemented yet')}
+          onClick={handleAutoTranslate}
         >
           Auto translate
         </button>
