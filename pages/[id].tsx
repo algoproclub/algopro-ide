@@ -94,11 +94,13 @@ function EditorPage() {
 
   const handleRunCode = async () => {
     // FIXME: Do not store USACO problems directly in the Realtime DB.
-    const problem =
-      fileData.problem && fileData.problem?.platform === 'usaco'
-        ? (fileData.problem as ProblemData)
-        : await fetchProblemFromDb(fileData.problem as PlatformProblem);
-
+    let problem: ProblemData | undefined = undefined;
+    if (fileData.problem) {
+      problem =
+        fileData.problem?.platform === 'usaco'
+          ? (fileData.problem as ProblemData)
+          : await fetchProblemFromDb(fileData.problem as PlatformProblem);
+    }
     const setIsRunning = (isRunning: boolean) => {
       updateFileData({
         isCodeRunning: isRunning,
