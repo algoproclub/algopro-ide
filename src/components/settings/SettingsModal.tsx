@@ -20,7 +20,11 @@ import SignInSettings from './SignInSettings';
 import JudgeResult from '../../types/judge';
 import { ProblemData } from '../../types/problem';
 import useJudgeResults from '../../hooks/useJudgeResults';
-import { EditorMode, useUserContext } from '../../context/UserContext';
+import {
+  EditorMode,
+  Language,
+  useUserContext,
+} from '../../context/UserContext';
 import { FileSettings, useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { update, ref, getDatabase, runTransaction } from 'firebase/database';
@@ -69,6 +73,7 @@ export const SettingsModal = ({
   const [name, setName] = useState<string>('');
   const [cfUsername, setCfUsername] = useState<string>('');
   const [discordID, setDiscordID] = useState<string>('');
+  const [defaultLanguage, setDefaultLanguage] = useState<Language>('cpp');
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
   const [tabSize, setTabSize] = useState<number>(-1);
   const [lightMode, setLightMode] = useState<boolean>(false);
@@ -85,6 +90,7 @@ export const SettingsModal = ({
       setName(firebaseUser.displayName ?? ''); // todo this shouldn't really be an empty string ever?
       setCfUsername(userData.usernames.codeforces ?? '');
       setDiscordID(userData.discordID ?? '');
+      setDefaultLanguage(userData.defaultLanguage ?? '');
       setEditorMode(userData.editorMode);
       setTabSize(userData.tabSize);
       setLightMode(userData.lightMode);
@@ -144,29 +150,19 @@ export const SettingsModal = ({
     await runTransaction(
       ref(getDatabase(), `users/${firebaseUser.uid}/data`),
       (data: any) => {
-        if (data) {
-          data.editorMode = editorMode;
-          data.tabSize = tabSize;
-          data.lightMode = lightMode;
-          data.manualSubmission = manualSubmission;
-
-          if (!data.usernames) {
-            data.usernames = {};
-          }
-          data.discordID = discordID;
-          data.usernames.codeforces = cfUsername;
-        } else {
-          data = {
-            editorMode: editorMode,
-            tabSize: tabSize,
-            lightMode: lightMode,
-            manualSubmission: manualSubmission,
-            discordID: discordID,
-            usernames: {
-              codeforces: cfUsername,
-            },
-          };
+        const newData = {
+          editorMode,
+          tabSize,
+          lightMode,
+          manualSubmission,
+          defaultLanguage,
+          discordID,
+        };
+        data = data ? { ...data, ...newData } : newData;
+        if (!data.usernames) {
+          data.usernames = {};
         }
+        data.usernames.codeforces = cfUsername;
         return data;
       }
     );
@@ -254,19 +250,24 @@ export const SettingsModal = ({
               <div className="p-4 sm:p-6 space-y-6">
                 {tab === 'user' && (
                   <UserSettings
-                    name={name || ''}
+                    name={name}
                     onNameChange={name => {
                       setName(name);
                       dirtyRef.current = true;
                     }}
-                    cfUsername={cfUsername || ''}
+                    cfUsername={cfUsername}
                     onCfUsernameChange={cfUsername => {
                       setCfUsername(cfUsername);
                       dirtyRef.current = true;
                     }}
-                    discordID={discordID || ''}
+                    discordID={discordID}
                     onDiscordIDChange={discordID => {
                       setDiscordID(discordID);
+                      dirtyRef.current = true;
+                    }}
+                    defaultLanguage={defaultLanguage}
+                    onDefaultLanguageChange={language => {
+                      setDefaultLanguage(language);
                       dirtyRef.current = true;
                     }}
                     editorMode={editorMode}

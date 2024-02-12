@@ -1,33 +1,9 @@
-import { useAtomValue } from 'jotai/utils';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { mainEditorValueAtom } from '../../atoms/workspace';
-import { StatusData } from '../../types/problem';
-import SubmitButton from './SubmitButton';
-import { PlayCircleIcon } from '@heroicons/react/20/solid';
-import Markdown from './Markdown';
-import { getFirestore, getDoc, doc, onSnapshot } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { useEditorContext } from '../../context/EditorContext';
-import {
-  ProblemData,
-  ProblemSolution,
-  SubmissionData,
-} from '../../types/problem';
+import React, { useCallback } from 'react';
+import { ProblemData } from '../../types/problem';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
-import { useUserContext } from '../../context/UserContext';
-import LoadResultsModal from './LoadResultsModal';
-import {
-  registerSubmission,
-  resetStatusData,
-} from '../../scripts/updateStatus';
 import 'katex/dist/katex.min.css';
 import renderMathInElement from 'katex/contrib/auto-render';
 import katex from 'katex';
-
-const submitProblemSolution = httpsCallable<ProblemSolution, SubmissionData>(
-  getFunctions(undefined, 'europe-west1'),
-  'submitproblemsolution'
-);
 
 export default function GenericJudgeInterface({
   problem,

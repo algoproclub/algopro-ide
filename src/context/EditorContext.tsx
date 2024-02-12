@@ -99,6 +99,7 @@ export function EditorProvider({
   children: React.ReactNode;
 }): JSX.Element {
   const { userData } = useUserContext();
+  const { userRole } = useUserContext();
   const [fileData, setFileData] = useState<FileData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const doNotInitializeTheseFileIdsRef = useRef<Record<string, boolean>>({});
@@ -147,7 +148,7 @@ export function EditorProvider({
     editorContextValue.fileData.users[userData.id]?.permission ??
     editorContextValue.fileData.settings.defaultPermission;
 
-  if (userPermission === 'PRIVATE') {
+  if (userRole !== 'teacher' && userPermission === 'PRIVATE') {
     return <>{permissionDeniedUI}</>;
   }
 
