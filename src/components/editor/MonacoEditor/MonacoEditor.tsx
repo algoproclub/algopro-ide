@@ -66,6 +66,9 @@ export default function MonacoEditor({
           enabled: true,
         },
         language: language,
+        inlayHints: {
+          enabled: false,
+        },
         ...options,
       },
       {}
