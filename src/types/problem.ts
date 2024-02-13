@@ -18,6 +18,7 @@ export type ProblemData = {
   timeLimit?: string;
   memoryLimit?: string;
   samples: Sample[];
+  hints?: string[];
 };
 
 export type ProblemSolution = {

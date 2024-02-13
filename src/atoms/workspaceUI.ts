@@ -21,6 +21,7 @@ export const tabsListAtom = atom(get => {
   return [
     { label: 'Input', value: 'input' },
     ...(problem ? [{ label: 'Task Overview', value: 'judge' }] : []),
+    ...(problem?.hints ? [{ label: 'Hints', value: 'hints' }] : []),
     ...(problem?.samples.length && problem?.samples[0].output
       ? getSamplesList(problem.samples.length)
       : []),
