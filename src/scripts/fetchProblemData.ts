@@ -53,7 +53,7 @@ async function fetchProblemDataCodeforces(
 
   const url = `https://codeforces.com/problemset/problem/${matches[1]}/${matches[2]}`;
   const problemPage = await fetch(url);
-  if (!problemPage) {
+  if (problemPage.status !== 200) {
     return null;
   }
 
@@ -99,7 +99,7 @@ async function fetchProblemDataAtCoder(
 
   const url = `https://atcoder.jp/contests/${matches[1]}/tasks/${problemID}`;
   const problemPage = await fetch(url);
-  if (!problemPage) {
+  if (problemPage.status !== 200) {
     return null;
   }
 
@@ -149,7 +149,7 @@ async function fetchProblemDataCSES(
 ): Promise<ProblemData | null> {
   const url = `https://cses.fi/problemset/task/${problemID}`;
   const problemPage = await fetch(url);
-  if (!problemPage) {
+  if (problemPage.status !== 200) {
     return null;
   }
 
