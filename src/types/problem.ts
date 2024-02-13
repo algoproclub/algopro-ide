@@ -15,6 +15,8 @@ export type ProblemData = {
   statement: string | null;
   input: string;
   output: string;
+  timeLimit?: string;
+  memoryLimit?: string;
   samples: Sample[];
 };
 
