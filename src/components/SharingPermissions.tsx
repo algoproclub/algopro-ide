@@ -24,11 +24,13 @@ export const SharingPermissions = ({
   onChange,
   isOwner,
   lightMode,
+  className,
 }: {
   value: 'READ_WRITE' | 'READ' | 'PRIVATE' | null;
   onChange: (newVal: 'READ_WRITE' | 'READ' | 'PRIVATE') => void;
   isOwner: boolean;
   lightMode?: boolean;
+  className?: string;
 }): JSX.Element => {
   return (
     <RadioGroupContents
@@ -38,6 +40,7 @@ export const SharingPermissions = ({
       disabled={!isOwner}
       options={sharingOptions}
       lightMode={lightMode}
+      className={className}
     />
   );
 };

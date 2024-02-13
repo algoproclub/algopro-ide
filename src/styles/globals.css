@@ -4,8 +4,17 @@ body,
   height: 100%;
   background-color: #1e1e1e;
 }
+
+#__next {
+  @apply fixed inset-0;
+}
+
 html {
   overscroll-behavior: contain;
+}
+
+body {
+  min-width: 420px;
 }
 
 @keyframes spin {

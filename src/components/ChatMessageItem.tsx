@@ -10,7 +10,7 @@ export const ChatMessageItem = ({
   user: User | null;
 }): JSX.Element => {
   return (
-    <p className="text-gray-300 text-sm leading-4">
+    <p className="text-gray-300 text-sm leading-4 break-words">
       <span style={user?.color ? { color: user?.color } : undefined}>
         {user?.name || 'Unknown User'}
       </span>

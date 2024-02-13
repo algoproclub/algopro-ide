@@ -90,7 +90,7 @@ export const UserListItem = ({ user }: { user: User }): JSX.Element | null => {
             <>
               <div>
                 <Menu.Button
-                  className="bg-[#1E1E1E] rounded-full flex items-center text-gray-500 hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1E1E1E] focus:ring-indigo-500"
+                  className="bg-[#1E1E1E] p-1 rounded-full flex items-center text-gray-500 hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1E1E1E] focus:ring-indigo-500"
                   ref={setReferenceElement}
                 >
                   <span className="sr-only">Open options</span>

@@ -91,17 +91,22 @@ export const FileMenu = (props: { onOpenSettings: Function }): JSX.Element => {
   /* ======= END DROPDOWN ACTIONS ======= */
 
   return (
-    <Menu as="div" className="relative inline-block text-left">
+    <Menu
+      as="div"
+      className="relative inline-block text-left flex-grow min-w-[7rem]"
+    >
       {({ open }) => (
         <>
           <div>
             <Menu.Button
-              className="relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 hover:bg-gray-800 focus:bg-gray-800 focus:outline-none"
+              className={`w-full relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 focus:outline-none ${
+                open ? 'bg-gray-800' : 'hover:bg-gray-800 active:bg-gray-700'
+              }`}
               ref={setReferenceElement}
             >
               File
               <ChevronDownIcon
-                className="-mr-1 ml-2 h-5 w-5"
+                className="absolute right-3 h-[1.3rem] w-[1.3rem]"
                 aria-hidden="true"
               />
             </Menu.Button>

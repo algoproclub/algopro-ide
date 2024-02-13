@@ -162,7 +162,7 @@ export class AtCoderResultFetcher extends ResultFetcher {
   private static codeToVerdict = {
     CE: 'compile error',
     AC: 'correct answer',
-    WA: 'incorrect answer',
+    WA: 'wrong answer',
     RE: 'runtime error',
     TLE: 'time limit exceeded',
     MLE: 'memory limit exceeded',
@@ -407,9 +407,6 @@ export class CSESResultFetcher extends ResultFetcher {
       return status.toLowerCase();
     }
     const value = this.getSummaryValue('result')?.toLowerCase();
-    if (value === 'wrong answer') {
-      return 'incorrect answer';
-    }
     if (value === 'accepted') {
       return 'correct answer';
     }
@@ -464,9 +461,6 @@ export class CSESResultFetcher extends ResultFetcher {
     const verdict = Array.from(
       this.testcases[n].children
     )[1].textContent?.toLowerCase();
-    if (verdict === 'wrong answer') {
-      return 'incorrect answer';
-    }
     if (verdict === 'accepted') {
       return 'correct answer';
     }

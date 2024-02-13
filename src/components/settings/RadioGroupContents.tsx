@@ -9,6 +9,7 @@ export function RadioGroupContents<T>({
   options,
   disabled,
   lightMode,
+  className,
 }: {
   title: string;
   value: T | null;
@@ -19,15 +20,13 @@ export function RadioGroupContents<T>({
   }[];
   disabled?: boolean;
   lightMode?: boolean;
+  className?: string;
 }): JSX.Element {
   return (
     <RadioGroup value={value} onChange={onChange} disabled={disabled}>
       <RadioGroup.Label
         as="div"
-        className={classNames(
-          'font-medium mb-2',
-          lightMode ? 'text-white' : ''
-        )}
+        className={classNames(lightMode ? 'text-white' : 'mb-1', className)}
       >
         {title}
       </RadioGroup.Label>
