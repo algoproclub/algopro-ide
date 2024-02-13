@@ -26,6 +26,7 @@ import { Output } from '../Output';
 import { TabBar } from '../TabBar';
 import { UserList } from '../UserList/UserList';
 import Samples from '../JudgeInterface/Samples';
+import Hints from '../JudgeInterface/Hints';
 import useJudgeResults from '../../hooks/useJudgeResults';
 import USACOJudgeInterface from '../JudgeInterface/USACOJudgeInterface';
 import GenericJudgeInterface from '../JudgeInterface/GenericJudgeInterface';
@@ -208,6 +209,10 @@ export default function Workspace({
                     handleRunCode={handleRunCode}
                   />
                 ))}
+              {problem?.id === fileData.problem?.id &&
+                inputTab === 'hints' &&
+                problem &&
+                problem.hints && <Hints hints={problem.hints} />}
               {problem?.id === fileData.problem?.id &&
                 inputTab.startsWith('Sample') &&
                 problem && (

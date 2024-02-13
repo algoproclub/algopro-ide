@@ -4,7 +4,6 @@ import { mainEditorValueAtom } from '../../atoms/workspace';
 import { Platform, StatusData } from '../../types/problem';
 import SubmitButton from './SubmitButton';
 import { PlayCircleIcon } from '@heroicons/react/20/solid';
-import Markdown from './Markdown';
 import { getFirestore, getDoc, doc, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useEditorContext } from '../../context/EditorContext';

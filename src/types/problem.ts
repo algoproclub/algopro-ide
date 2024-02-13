@@ -16,6 +16,7 @@ export type ProblemData = {
   input: string;
   output: string;
   samples: Sample[];
+  hints?: string[];
 };
 
 export type ProblemSolution = {
