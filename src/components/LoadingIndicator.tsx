@@ -9,7 +9,7 @@ export default function LoadingIndicator({
     <svg
       fill="none"
       viewBox="0 0 24 24"
-      className={classNames('mx-auto inline-block animate-spin ', className)}
+      className={classNames('inline-block mx-auto animate-spin ', className)}
       {...otherProps}
     >
       <circle

@@ -3,20 +3,34 @@ import React, { useEffect, useState } from 'react';
 import LoadingIndicator from '../LoadingIndicator';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEditorContext } from '../../context/EditorContext';
-import { getDatabase, ref, update } from 'firebase/database';
+import { get, getDatabase, ref, update } from 'firebase/database';
 
 const SolvedStatusForm = () => {
   const { fileData } = useEditorContext();
   const [isOpen, setIsOpen] = useState(false);
-  const [solvedInTheory, setSolvedInTheory] = useState(false);
-  const [alreadyKnew, setAlreadyKnew] = useState(false);
+  const [solvedInTheory, setSolvedInTheory] = useState<boolean | null>(null);
+  const [alreadyKnew, setAlreadyKnew] = useState<boolean | null>(null);
 
   useEffect(() => {
+    if (solvedInTheory === null || alreadyKnew === null) {
+      return;
+    }
     update(ref(getDatabase(), `files/${fileData.id}/solvedStatus`), {
       solvedInTheory,
       alreadyKnew,
     });
   }, [solvedInTheory, alreadyKnew]);
+
+  useEffect(() => {
+    const setSolvedStatus = async () => {
+      const solvedStatus = (
+        await get(ref(getDatabase(), `files/${fileData.id}/solvedStatus`))
+      ).val();
+      setSolvedInTheory(solvedStatus?.solvedInTheory ?? false);
+      setAlreadyKnew(solvedStatus?.alreadyKnew ?? false);
+    };
+    setSolvedStatus();
+  }, []);
 
   const solvedInTheoryChanged = () => {
     setSolvedInTheory(val => !val);
@@ -34,7 +48,7 @@ const SolvedStatusForm = () => {
       >
         <label className="text-[0.85rem] text-white flex items-center select-none">
           <input
-            checked={solvedInTheory}
+            checked={solvedInTheory ?? false}
             onChange={solvedInTheoryChanged}
             type="checkbox"
             className="w-4 h-4 bg-gray-900 checked:bg-indigo-600 checked:focus:bg-indigo-600 checked:focus:hover:bg-indigo-700 checked:hover:bg-indigo-700 focus:ring-0 focus:ring-offset-0"
@@ -43,7 +57,7 @@ const SolvedStatusForm = () => {
         </label>
         <label className="text-[0.85rem] text-white flex items-center select-none">
           <input
-            checked={alreadyKnew}
+            checked={alreadyKnew ?? false}
             onChange={alreadyKnewChanged}
             type="checkbox"
             className="w-4 h-4 bg-gray-900 checked:bg-indigo-600 checked:focus:bg-indigo-600 checked:focus:hover:bg-indigo-700 checked:hover:bg-indigo-700 focus:ring-0 focus:ring-offset-0"
@@ -85,7 +99,7 @@ export default function SubmitButton({
       {!isLoading && !isDisabled && <SolvedStatusForm />}
       <button
         className={classNames(
-          'relative z-10 block w-full py-2.5 font-medium focus:outline-none border-t border-gray-600 min-w-[24rem]',
+          'relative z-10 flex items-center justify-center w-full py-2.5 font-medium focus:outline-none border-t border-gray-600 min-w-[24rem]',
           isLoading || isDisabled ? loadingClasses : normalClasses
         )}
         disabled={isLoading || isDisabled}
@@ -93,17 +107,17 @@ export default function SubmitButton({
       >
         {isLoading ? (
           <>
-            <LoadingIndicator className="h-5 w-5 p-0.5 mr-1.5" />
+            <LoadingIndicator className="h-5 w-5 p-0.5 !mx-1.5" />
             <span>Waiting for results...</span>
           </>
         ) : isDisabled ? (
-          <span>
+          <>
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'ban' }}
               className="mr-2.5 w-4 h-4"
             />
             Cannot Submit
-          </span>
+          </>
         ) : (
           <>
             <FontAwesomeIcon

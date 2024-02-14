@@ -119,7 +119,7 @@ export default function USACOResults({ data }: { data: StatusData }) {
                 />
               )}
           </span>
-          <span className="break-words">
+          <span className="break-words overflow-hidden">
             {data.message ? capitalize(data.message) : null}
             {!['error', 'resolved'].includes(data.statusCode) && '...'}
             {(data.time || data.memory) && ' ('}
@@ -132,7 +132,7 @@ export default function USACOResults({ data }: { data: StatusData }) {
         {data.link && (
           <a
             href={data.link}
-            className="text-indigo-300 hover:underline"
+            className="text-indigo-300 hover:underline break-all"
             target="_blank"
           >
             {data.link}

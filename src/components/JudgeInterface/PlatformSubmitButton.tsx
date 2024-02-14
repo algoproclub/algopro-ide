@@ -98,6 +98,10 @@ export const GenericSubmitButton = ({
       }
     }
   };
+  const userPermission =
+    fileData.users[userData.id]?.permission ??
+    fileData.settings.defaultPermission;
+
   return (
     <>
       <LoadResultsModal
@@ -109,7 +113,9 @@ export const GenericSubmitButton = ({
         isLoading={['starting', 'working'].includes(
           statusData?.statusCode ?? ''
         )}
-        isDisabled={!problem.submittable}
+        isDisabled={
+          ['PRIVATE', 'READ'].includes(userPermission) || !problem.submittable
+        }
         onClick={handleSubmit}
       />
     </>
