@@ -1,13 +1,20 @@
+import React, {
+  ChangeEvent,
+  Fragment,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { CodeEditor } from '../../../src/components/editor/CodeEditor';
 import { Dialog, Transition } from '@headlessui/react';
-import React, { Fragment, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Platform, ProblemData } from '../../../src/types/problem';
 import { doc, setDoc, getFirestore, getDoc } from 'firebase/firestore';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
+import { Platform, ProblemData } from '../../../src/types/problem';
+import Markdown from '../../../src/components/JudgeInterface/Markdown';
 import dynamic from 'next/dynamic';
-import { registerSubmission } from '../../../src/scripts/updateStatus';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -107,10 +114,9 @@ const HTMLEditor = ({
           className={`absolute h-48 md:h-96 ${mode === 'code' ? '' : 'hidden'}`}
         />
         {mode === 'preview' && (
-          <div
-            className="inset-x-4 inset-y-2 absolute"
-            dangerouslySetInnerHTML={{ __html: text }}
-          ></div>
+          <div className="absolute inset-x-4 inset-y-2">
+            <HTMLStatement htmlContent={text} />
+          </div>
         )}
       </div>
     </div>
@@ -130,6 +136,21 @@ const EditHintModal = ({
   onSave: (text: string) => void;
   onClose: () => void;
 }) => {
+  const handleKeyDown = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Tab') {
+      event.preventDefault();
+
+      const textarea = event.target;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+
+      textarea.value =
+        textarea.value.substring(0, start) +
+        '\t' +
+        textarea.value.substring(end);
+      textarea.setSelectionRange(start + '\t'.length, start + '\t'.length);
+    }
+  };
   return (
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog
@@ -173,6 +194,7 @@ const EditHintModal = ({
                 <textarea
                   className="font-mono h-60 bg-gray-800 border-gray-700 w-full min-h-[10rem] text-sm"
                   value={text}
+                  onKeyDown={handleKeyDown}
                   onChange={e => setText(e.target.value)}
                 />
                 <div className="flex items-center space-x-4">
@@ -226,7 +248,7 @@ export default function EditPage() {
     return (
       <div className="flex items-stretch justify-between bg-gray-900 divide-x divide-gray-600">
         <div className="px-3 py-2">
-          <pre>{text}</pre>
+          <Markdown>{text}</Markdown>
         </div>
         <div className="space-x-1 px-3 py-2">
           <button
@@ -339,8 +361,6 @@ export default function EditPage() {
       'statements',
       'hu'
     );
-    console.log(translated);
-    console.log(hints);
     setDoc(problemRef, {
       statement: translated,
       hints: hints,
