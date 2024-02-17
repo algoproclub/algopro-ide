@@ -3,8 +3,13 @@ import {
   host,
   setInputEditorValue,
   setMainEditorValue,
+  signInUser,
   waitForEditorToLoad,
 } from './helpers';
+
+test.beforeEach(async ({ page }) => {
+  await signInUser(page);
+});
 
 test.describe('Basic Functionality', () => {
   test('should copy files', async ({ page }) => {

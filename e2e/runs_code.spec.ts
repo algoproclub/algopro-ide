@@ -4,9 +4,14 @@ import {
   forEachLang,
   goToPage,
   host,
+  signInUser,
   testRunCode,
   waitForEditorToLoad,
 } from './helpers';
+
+test.beforeEach(async ({ page }) => {
+  await signInUser(page);
+});
 
 test.describe('Basic Functionality', () => {
   test('should run code', async ({ page, isMobile }) => {
@@ -25,6 +30,7 @@ test.describe('Basic Functionality', () => {
   test('should sync code', async ({ page, browser, isMobile }) => {
     const context2 = await browser.newContext();
     const page2 = await context2.newPage();
+    await signInUser(page2);
 
     await createNew(page);
     await page.waitForSelector('button:has-text("Run Code")');
@@ -52,6 +58,7 @@ test.describe('Basic Functionality', () => {
   test('should sync output', async ({ page, browser, isMobile }) => {
     const context2 = await browser.newContext();
     const page2 = await context2.newPage();
+    await signInUser(page2);
 
     await createNew(page);
     await page.waitForSelector('button:has-text("Run Code")');
