@@ -59,7 +59,7 @@ async function fetchProblemDataCodeforces(
     return null;
   }
 
-  const url = `https://codeforces.com/problemset/problem/${matches[1]}/${matches[2]}`;
+  const url = `https://codeforces.com/contest/${matches[1]}/problem/${matches[2]}`;
   const problemPage = await fetch(url);
   if (problemPage.status !== 200) {
     return null;
