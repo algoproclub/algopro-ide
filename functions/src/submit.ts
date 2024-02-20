@@ -79,7 +79,7 @@ export class CFSubmitter extends Submitter {
           cookie: cfCookie.value(),
           Referer: 'https://codeforces.com/problemset/submit',
           'user-agent':
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0',
         },
         body: new URLSearchParams({
           action: 'submitSolutionFormSubmitted',
