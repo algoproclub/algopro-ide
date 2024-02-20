@@ -10,6 +10,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     body: JSON.stringify({
       text: [req.body.text],
       target_lang: 'HU',
+      tag_handling: 'html',
     }),
   });
   res.status(200).json(await resp.json());
