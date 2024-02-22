@@ -74,8 +74,8 @@ const HTMLEditor = ({
 
   return (
     <div
-      className={`${
-        fullscreen ? 'fixed inset-0 z-50 !m-0' : 'w-full'
+      className={` ${
+        fullscreen ? 'fixed flex flex-col inset-0 z-50 !m-0' : 'w-full'
       } border border-gray-600 bg-gray-800`}
     >
       <div className="flex items-center justify-between w-full px-3 py-2.5 bg-gray-800 border-b border-gray-600">
@@ -135,12 +135,12 @@ const HTMLEditor = ({
         )}
       </div>
       <div
-        className={`${
-          fullscreen ? 'h-full' : 'h-48 md:h-96'
-        } relative divide-x divide-gray-600`}
+        className={`${fullscreen ? `h-full` : 'h-48 md:h-96'} ${
+          mode === 'split' ? 'divide-x divide-gray-600' : ''
+        } relative flex-1`}
       >
         <div
-          className={`absolute ${
+          className={`absolute border-gray-600 ${
             mode === 'preview' ? 'hidden' : ''
           } top-0 left-0 bottom-0 ${
             mode === 'split' ? 'right-1/2' : 'right-0'
