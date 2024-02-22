@@ -8,8 +8,6 @@ export default function HTMLStatement({
 }: {
   htmlContent: string;
 }): JSX.Element {
-  console.log('HTMLCONTENT: ' + htmlContent);
-
   const refCallback = useCallback(
     (node: HTMLDivElement) => {
       if (node !== null) {
