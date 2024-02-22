@@ -61,3 +61,8 @@ export interface TestCase {
   memory: string | null;
   time: string | null;
 }
+
+export type Translation = {
+  statement: string;
+  hints: string[];
+};

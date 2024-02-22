@@ -1,6 +1,6 @@
 import React, {
-  ChangeEvent,
   Fragment,
+  KeyboardEventHandler,
   useCallback,
   useEffect,
   useState,
@@ -15,6 +15,8 @@ import Markdown from '../../../src/components/JudgeInterface/Markdown';
 import dynamic from 'next/dynamic';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { TranslationData } from '../../../functions/src/types';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -22,6 +24,16 @@ const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   {
     ssr: false,
   }
+);
+
+const translate = httpsCallable<string, string>(
+  getFunctions(undefined, 'europe-west1'),
+  'translate'
+);
+
+const updateTranslation = httpsCallable<TranslationData, boolean>(
+  getFunctions(undefined, 'europe-west1'),
+  'updatetranslation'
 );
 
 const HTMLEditor = ({
@@ -58,11 +70,27 @@ const HTMLEditor = ({
     );
   };
   const [mode, setMode] = useState('code');
+  const [fullscreen, setFullscreen] = useState(false);
 
   return (
-    <div className="w-full border border-gray-600">
+    <div
+      className={`${
+        fullscreen ? 'fixed inset-0 z-50 !m-0' : 'w-full'
+      } border border-gray-600 bg-gray-800`}
+    >
       <div className="flex items-center justify-between w-full px-3 py-2.5 bg-gray-800 border-b border-gray-600">
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 items-center">
+          <button
+            className={`flex items-center justify-center px-2.5 py-2 rounded-md mr-0.5 hover:bg-gray-700 border border-gray-700`}
+            onClick={() => setFullscreen(value => !value)}
+          >
+            <FontAwesomeIcon
+              icon={{
+                prefix: 'fas',
+                iconName: `${fullscreen ? 'compress' : 'expand'}`,
+              }}
+            />
+          </button>
           <ModeButton
             text="Code"
             active={mode === 'code'}
@@ -75,6 +103,13 @@ const HTMLEditor = ({
             active={mode === 'preview'}
             onClick={() => {
               setMode('preview');
+            }}
+          />
+          <ModeButton
+            text="Split"
+            active={mode === 'split'}
+            onClick={() => {
+              setMode('split');
             }}
           />
         </div>
@@ -99,22 +134,38 @@ const HTMLEditor = ({
           </div>
         )}
       </div>
-      <div className="h-48 md:h-96 w-full relative overflow-scroll">
-        <CodeEditor
-          onChange={onChange}
-          value={text}
-          language="plaintext"
-          theme="vs-dark"
-          path={path}
-          options={{
-            readOnly: readonly,
-            automaticLayout: true,
-            minimap: { enabled: false },
-          }}
-          className={`absolute h-48 md:h-96 ${mode === 'code' ? '' : 'hidden'}`}
-        />
-        {mode === 'preview' && (
-          <div className="absolute inset-x-4 inset-y-2">
+      <div
+        className={`${
+          fullscreen ? 'h-full' : 'h-48 md:h-96'
+        } relative divide-x divide-gray-600`}
+      >
+        <div
+          className={`absolute ${
+            mode === 'preview' ? 'hidden' : ''
+          } top-0 left-0 bottom-0 ${
+            mode === 'split' ? 'right-1/2' : 'right-0'
+          }`}
+        >
+          <CodeEditor
+            onChange={onChange}
+            value={text}
+            language="plaintext"
+            theme="vs-dark"
+            path={path}
+            options={{
+              readOnly: readonly,
+              wordWrap: 'on',
+              automaticLayout: true,
+              minimap: { enabled: false },
+            }}
+          />
+        </div>
+        {mode !== 'code' && (
+          <div
+            className={`absolute top-0 right-0 bottom-0 ${
+              mode === 'split' ? 'left-1/2' : 'left-0'
+            } px-4 py-2 overflow-scroll`}
+          >
             <HTMLStatement htmlContent={text} />
           </div>
         )}
@@ -136,11 +187,11 @@ const EditHintModal = ({
   onSave: (text: string) => void;
   onClose: () => void;
 }) => {
-  const handleKeyDown = (event: ChangeEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = event => {
     if (event.key === 'Tab') {
       event.preventDefault();
 
-      const textarea = event.target;
+      const textarea = event.target as HTMLTextAreaElement;
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
 
@@ -275,7 +326,7 @@ export default function EditPage() {
   const [hints, setHints] = useState<string[]>([]);
   const [hintText, setHintText] = useState('');
   const [onSaveHint, setOnSaveHint] = useState<(text: string) => void>(
-    () => (text: string) => {}
+    () => (_: string) => {}
   );
   const [unsaved, setUnsaved] = useState(false);
   const router = useRouter();
@@ -294,7 +345,7 @@ export default function EditPage() {
       platform: string,
       id: string
     ): Promise<ProblemData> => {
-      const resp = await fetch('/api/fetchData', {
+      const resp = await fetch('/api/fetchProblemData', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -304,7 +355,7 @@ export default function EditPage() {
           id,
         }),
       });
-      const problemData: ProblemData = await resp.json();
+      const problemData: ProblemData | null = await resp.json();
       if (problemData === null) {
         throw Error('data fetching was unsuccessful');
       }
@@ -317,7 +368,7 @@ export default function EditPage() {
         platform,
         'problems',
         id,
-        'statements',
+        'translations',
         'hu'
       );
       const translation = await getDoc(problemRef);
@@ -352,20 +403,19 @@ export default function EditPage() {
     if (!platform || !problemID) {
       return;
     }
-    const problemRef = doc(
-      getFirestore(),
-      'problemsets',
-      platform,
-      'problems',
-      problemID,
-      'statements',
-      'hu'
-    );
-    setDoc(problemRef, {
-      statement: translated,
-      hints: hints,
-    }).then(_ => {
-      setUnsaved(false);
+    updateTranslation({
+      problem: {
+        platform: platform as Platform,
+        id: problemID,
+      },
+      translation: {
+        statement: translated,
+        hints: hints,
+      },
+    }).then(result => {
+      if (result.data) {
+        setUnsaved(false);
+      }
     });
   };
 
@@ -379,17 +429,8 @@ export default function EditPage() {
   };
 
   const handleAutoTranslate = async () => {
-    const resp = await fetch('/api/translate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: original,
-      }),
-    });
-    const data = await resp.json();
-    setTranslated(data.translations[0].text);
+    const response = await translate(original);
+    setTranslated(response.data);
   };
 
   return (

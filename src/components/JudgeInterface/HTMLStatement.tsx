@@ -8,31 +8,36 @@ export default function HTMLStatement({
 }: {
   htmlContent: string;
 }): JSX.Element {
-  const refCallback = useCallback((node: HTMLDivElement) => {
-    if (node !== null) {
-      renderMathInElement(node, {
-        delimiters: [
-          // For Codeforces
-          { left: '$$$', right: '$$$', display: false },
-          { left: '$$$$$', right: '$$$$$', display: true },
-        ],
-      });
+  console.log('HTMLCONTENT: ' + htmlContent);
 
-      // For AtCoder
-      node.querySelectorAll('var').forEach((element: HTMLElement) => {
-        katex.render(element.textContent ?? '', element);
-      });
-
-      // For CSES
-      node.querySelectorAll('.math').forEach((element: Element) => {
-        if (!(element instanceof HTMLElement)) return;
-
-        katex.render(element.textContent ?? '', element, {
-          displayMode: element.classList.contains('display'),
+  const refCallback = useCallback(
+    (node: HTMLDivElement) => {
+      if (node !== null) {
+        renderMathInElement(node, {
+          delimiters: [
+            // For Codeforces
+            { left: '$$$', right: '$$$', display: false },
+            { left: '$$$$$', right: '$$$$$', display: true },
+          ],
         });
-      });
-    }
-  }, []);
+
+        // For AtCoder
+        node.querySelectorAll('var').forEach((element: HTMLElement) => {
+          katex.render(element.textContent ?? '', element);
+        });
+
+        // For CSES
+        node.querySelectorAll('.math').forEach((element: Element) => {
+          if (!(element instanceof HTMLElement)) return;
+
+          katex.render(element.textContent ?? '', element, {
+            displayMode: element.classList.contains('display'),
+          });
+        });
+      }
+    },
+    [htmlContent]
+  );
 
   return (
     <>

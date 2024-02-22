@@ -1,4 +1,5 @@
 import { StringParam } from 'firebase-functions/lib/params/types';
+import { PlatformProblem, Translation } from '../../src/types/problem';
 
 export type AccountData = {
   sessionCookie?: StringParam;
@@ -20,4 +21,9 @@ export type SubmissionData = {
   problemID: string;
   submissionID: string;
   creationTime: number;
+};
+
+export type TranslationData = {
+  problem: PlatformProblem;
+  translation: Translation;
 };
