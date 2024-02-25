@@ -101,10 +101,16 @@ export class CFSubmitter extends Submitter {
         method: 'POST',
       }
     );
-    if (response.status !== 200) {
-      throw new Error('submission failed');
-    }
     const text = await response.text();
+    if (response.status !== 200) {
+      console.log(
+        'submission response.status: ',
+        response.status,
+        response.statusText
+      );
+      console.log('submission response.text: ', text.replaceAll('\n', ''));
+      throw new Error('submission failed, status: ' + response.status);
+    }
     if (text.includes('You have submitted exactly the same code before')) {
       throw new HttpsError(
         'already-exists',
@@ -148,14 +154,16 @@ export class AtCoderSubmitter extends Submitter {
     }
     const contestId = matches[1];
 
-    const accountCount = atCoderCookie.value().length;
-    if (atCoderCsrfToken.value().length != accountCount) {
+    const accountCount = atCoderCookie.value().split(';').length;
+    if (atCoderCsrfToken.value().split(';').length != accountCount) {
       throw new Error('AtCoder cookie and csrf token count mismatch');
     }
     const accountIdx = Math.floor(Math.random() * accountCount);
-    console.log(`using AtCoder account #${accountIdx}`);
-    const cookie = atCoderCookie.value()[accountIdx];
-    const csrf_token = atCoderCsrfToken.value()[accountIdx];
+    const cookie = atCoderCookie.value().split(';')[accountIdx];
+    const csrf_token = atCoderCsrfToken.value().split(';')[accountIdx];
+    console.log(
+      `using AtCoder account #${accountIdx}, cookie: ${cookie}, csrf_token: ${csrf_token}`
+    );
 
     const response = await fetch(
       `https://atcoder.jp/contests/${contestId}/submit`,
@@ -177,10 +185,16 @@ export class AtCoderSubmitter extends Submitter {
         method: 'POST',
       }
     );
-    if (response.status !== 200) {
-      throw new Error('submission failed');
-    }
     const text = await response.text();
+    if (response.status !== 200) {
+      console.log(
+        'submission response.status: ',
+        response.status,
+        response.statusText
+      );
+      console.log('submission response.text: ', text.replaceAll('\n', ''));
+      throw new Error('submission failed, status: ' + response.status);
+    }
     const id = text.match(/\/contests\/\w+\/submissions\/([0-9]+)/)?.[1];
     if (!id) {
       throw new IDNotFoundError('cannot find submission id');
@@ -225,10 +239,16 @@ export class CSESSubmitter extends Submitter {
       body: formData,
       method: 'POST',
     });
-    if (response.status !== 200) {
-      throw new Error('submission failed');
-    }
     const text = await response.text();
+    if (response.status !== 200) {
+      console.log(
+        'submission response.status: ',
+        response.status,
+        response.statusText
+      );
+      console.log('submission response.text: ', text.replaceAll('\n', ''));
+      throw new Error('submission failed, status: ' + response.status);
+    }
     const id = text.match(/\/ajax\/get_status\.php\?entry=([0-9]+)/)?.[1];
     if (!id) {
       throw new IDNotFoundError('cannot find submission id');
