@@ -18,12 +18,18 @@ import {
   ResultFetcher,
   CSESResultFetcher,
 } from './getResult';
-import { PendingSubmissions, AccountData, SubmissionData } from './types';
+import {
+  PendingSubmissions,
+  AccountData,
+  SubmissionData,
+  TranslationData,
+} from './types';
 import {
   onValueCreated,
   onValueDeleted,
   onValueUpdated,
 } from 'firebase-functions/v2/database';
+
 import { randomUUID } from 'crypto';
 import {
   AtCoderSubmitter,
@@ -35,6 +41,7 @@ import {
 require('dotenv').config({ path: '.env.local' });
 
 export const cfAPIKey = defineString('CF_API_KEY');
+export const deeplAPIKey = defineString('DEEPL_API_KEY');
 export const cfAPISecret = defineString('CF_API_SECRET');
 export const cfCsrfToken = defineString('CF_CSRF_TOKEN');
 export const cfCookie = defineString('CF_COOKIE');
@@ -87,7 +94,65 @@ export const submitproblemsolution = onCall<
   }
 );
 
-enum Errors {
+const isTeacher = async (userID?: string): Promise<boolean> => {
+  if (!userID) {
+    return false;
+  }
+  const role = (await db.ref(`users/${userID}/role`).get()).val();
+  return role === 'teacher';
+};
+
+export const updatetranslation = onCall<TranslationData, Promise<boolean>>(
+  { region: 'europe-west1' },
+  async request => {
+    if (!(await isTeacher(request.auth?.uid))) {
+      return false;
+    }
+    const { problem, translation } = request.data;
+    admin
+      .firestore()
+      .doc(
+        `problemsets/${problem.platform}/problems/${problem.id}/translations/hu`
+      )
+      .set({
+        statement: translation.statement,
+        hints: translation.hints,
+      });
+    return true;
+  }
+);
+
+export const translate = onCall<string, Promise<string | null>>(
+  { region: 'europe-west1' },
+  async request => {
+    if (!(await isTeacher(request.auth?.uid))) {
+      return null;
+    }
+    const text = request.data;
+    const resp = await fetch('https://api-free.deepl.com/v2/translate', {
+      method: 'POST',
+      headers: {
+        Authorization: `DeepL-Auth-Key ${deeplAPIKey.value()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: [text],
+        target_lang: 'HU',
+        tag_handling: 'html',
+      }),
+    });
+    let translation: string | null = null;
+    try {
+      const json = await resp.json();
+      translation = json['translations'][0].text ?? null;
+    } catch (error) {
+      logger.log(error);
+    }
+    return translation;
+  }
+);
+
+export const enum Errors {
   NO_SUCH_SUBMISSION = 'No such submission exists for the given problem. Please check if the entered submission ID is correct.',
   UNKNOWN_ERROR = 'Could not retrieve the results due to an unknown error',
   PENDING_TIMEOUT = 'Could not retreive the submission results in time. Please try again later.',

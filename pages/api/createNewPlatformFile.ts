@@ -1,4 +1,4 @@
-import { Platform } from '../../src/types/problem';
+import { Platform, ProblemData } from '../../src/types/problem';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { fetchProblemData } from '../../src/scripts/fetchProblemData';
 import { getDatabase, ServerValue } from 'firebase-admin/database';
@@ -6,6 +6,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import firebaseApp from '../../src/firebaseAdmin';
 import colorFromUserId from '../../src/scripts/colorFromUserId';
 import { Language } from '../../src/context/UserContext';
+import { fetchData } from './fetchProblemData';
 
 type RequestData = {
   platform: Platform;
@@ -61,34 +62,16 @@ export default async (
     });
     return;
   }
-
-  const problemRef = getFirestore(firebaseApp)
-    .collection('problemsets')
-    .doc(data.platform)
-    .collection('problems')
-    .doc(data.problemID);
-
-  const problemSnap = await problemRef.get();
-
-  let problem = null;
-  if (!problemSnap.exists) {
-    problem = await fetchProblemData({
-      id: data.problemID,
-      platform: data.platform,
+  const problem: ProblemData | null = await fetchData({
+    platform: data.platform,
+    id: data.problemID,
+  });
+  if (problem === null) {
+    res.status(400).json({
+      message: 'Could not fetch problem data.',
     });
-
-    if (problem === null) {
-      res.status(400).json({
-        message: 'Could not fetch problem data.',
-      });
-      return;
-    }
-
-    problemRef.set(problem);
-  } else {
-    problem = problemSnap.data()!;
+    return;
   }
-
   const resp = await getDatabase(firebaseApp)
     .ref('/files')
     .push({

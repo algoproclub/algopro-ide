@@ -1,3 +1,5 @@
+import { PlatformProblem, Translation } from '../../src/types/problem';
+
 export type AccountData = {
   sessionCookie?: () => string;
 };
@@ -18,4 +20,9 @@ export type SubmissionData = {
   problemID: string;
   submissionID: string;
   creationTime: number;
+};
+
+export type TranslationData = {
+  problem: PlatformProblem;
+  translation: Translation;
 };

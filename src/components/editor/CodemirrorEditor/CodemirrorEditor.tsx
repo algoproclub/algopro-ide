@@ -78,6 +78,7 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
       // I don't think this needs to be re-computed every time though (only when extensions changes), but whatever
       value={props.value || props.yjsInfo?.yjsText.toString() || undefined}
       theme={props.theme === 'light' ? githubLight : vscodeDark}
+      onChange={(val: string, _) => props.onChange?.(val)}
       height="100%"
       style={{ fontSize: '13px' }}
       readOnly={props.options?.readOnly ?? false}
