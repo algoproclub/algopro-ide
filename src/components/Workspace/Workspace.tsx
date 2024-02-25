@@ -16,6 +16,7 @@ import {
   mobileActiveTabAtom,
   problemAtom,
   showSidebarAtom,
+  translationsAtom,
 } from '../../atoms/workspaceUI';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { Chat } from '../Chat';
@@ -48,10 +49,21 @@ import {
   PlatformProblem,
   ProblemData,
   StatusData,
+  Translation,
 } from '../../types/problem';
-import { fetchProblemFromDb } from '../../scripts/fetchProblemFromDb';
+import {
+  fetchProblemFromDb,
+  fetchTranslationsFromDb,
+} from '../../scripts/fetchProblemFromDb';
 import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
+export function getHints(
+  problem: ProblemData,
+  translations: Record<string, Translation>
+) {
+  return 'hu' in translations ? translations['hu'].hints : problem.hints ?? [];
+}
 
 export default function Workspace({
   handleRunCode,
@@ -70,6 +82,7 @@ export default function Workspace({
   const setCodemirrorInputEditor = useUpdateAtom(inputCodemirrorEditorAtom);
   const setOutputEditor = useUpdateAtom(outputMonacoEditorAtom);
   const [problem, setProblem] = useAtom(problemAtom);
+  const [translations, setTranslations] = useAtom(translationsAtom);
 
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
@@ -102,14 +115,17 @@ export default function Workspace({
         setProblem(undefined);
         return;
       }
-      const problemData =
-        fileData.problem && fileData.problem.platform === 'usaco'
-          ? (fileData.problem as ProblemData)
-          : await fetchProblemFromDb(fileData.problem as PlatformProblem);
+
+      const problemData = await fetchProblemFromDb(
+        fileData.problem as PlatformProblem
+      );
 
       setProblem(problemData);
       if (problemData) {
         setInputTab('judge');
+        setTranslations(
+          await fetchTranslationsFromDb(fileData.problem as PlatformProblem)
+        );
       }
     })();
   }, [fileData.problem?.platform]);
@@ -200,7 +216,10 @@ export default function Workspace({
                 inputTab === 'judge' &&
                 problem &&
                 (problem.platform !== 'usaco' ? (
-                  <GenericJudgeInterface problem={problem} />
+                  <GenericJudgeInterface
+                    problem={problem}
+                    translations={translations}
+                  />
                 ) : (
                   <USACOJudgeInterface
                     problem={problem}
@@ -212,7 +231,9 @@ export default function Workspace({
               {problem?.id === fileData.problem?.id &&
                 inputTab === 'hints' &&
                 problem &&
-                problem.hints && <Hints hints={problem.hints} />}
+                translations && (
+                  <Hints hints={getHints(problem, translations)} />
+                )}
               {problem?.id === fileData.problem?.id &&
                 inputTab.startsWith('Sample') &&
                 problem && (

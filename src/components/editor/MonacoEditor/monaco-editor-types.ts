@@ -71,6 +71,8 @@ export interface EditorProps {
    */
   overrideServices?: Monaco.editor.IEditorOverrideServices;
 
+  onChange?: (val: string) => void;
+
   /**
    * Indicator whether to save the models' view states between model changes or not
    * Defaults to true
