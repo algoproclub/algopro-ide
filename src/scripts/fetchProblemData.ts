@@ -22,6 +22,14 @@ function htmlToPlaintext(node: domhandler.ChildNode): string {
   return '';
 }
 
+function getTextNode(element: cheerio.Cheerio<domhandler.Element>): string {
+  return element
+    .contents()
+    .filter((_, el) => el.type === 'text')
+    .text()
+    .trim();
+}
+
 const CODEFORCES_PROBLEM_REGEX = /^(\d+)([A-Z].*)$/;
 const CODEFORCES_TITLE_REGEX = /\w+\. (.*)/;
 
@@ -51,9 +59,9 @@ async function fetchProblemDataCodeforces(
     return null;
   }
 
-  const url = `https://codeforces.com/problemset/problem/${matches[1]}/${matches[2]}`;
+  const url = `https://codeforces.com/contest/${matches[1]}/problem/${matches[2]}`;
   const problemPage = await fetch(url);
-  if (!problemPage) {
+  if (problemPage.status !== 200) {
     return null;
   }
 
@@ -85,6 +93,8 @@ async function fetchProblemDataCodeforces(
     input: 'stdin',
     output: 'stdout',
     source: `Codeforces ${problemID}`,
+    timeLimit: getTextNode(document('.time-limit')),
+    memoryLimit: getTextNode(document('.memory-limit')),
     samples,
   };
 }
@@ -99,7 +109,7 @@ async function fetchProblemDataAtCoder(
 
   const url = `https://atcoder.jp/contests/${matches[1]}/tasks/${problemID}`;
   const problemPage = await fetch(url);
-  if (!problemPage) {
+  if (problemPage.status !== 200) {
     return null;
   }
 
@@ -117,18 +127,17 @@ async function fetchProblemDataAtCoder(
       output: inputsAndOutputs[i + 1],
     });
 
-  const title = document('span.h2')
-    .first()
-    .contents()
-    .filter((_, el) => el.type === 'text')
-    .text()
-    .trim();
+  const title = getTextNode(document('span.h2'));
 
   const statement = document('#task-statement .lang-en > div')
     .filter((_, el) => !document('h3', el).text().startsWith('Sample'))
     .map((_, el) => document(el).html())
     .toArray()
     .join('\n');
+
+  const limits = document("p:contains('Time Limit')")
+    .text()
+    .match(/Time Limit: (.*) \/ Memory Limit: (.*)/);
 
   return {
     id: problemID,
@@ -141,6 +150,7 @@ async function fetchProblemDataAtCoder(
     output: 'stdout',
     source: `AtCoder ${problemID}`,
     samples,
+    ...(limits && { timeLimit: limits[1], memoryLimit: limits[2] }),
   };
 }
 
@@ -149,7 +159,7 @@ async function fetchProblemDataCSES(
 ): Promise<ProblemData | null> {
   const url = `https://cses.fi/problemset/task/${problemID}`;
   const problemPage = await fetch(url);
-  if (!problemPage) {
+  if (problemPage.status !== 200) {
     return null;
   }
 
@@ -194,6 +204,12 @@ async function fetchProblemDataCSES(
       .join('\n'),
     input: 'stdin',
     output: 'stdout',
+    timeLimit: getTextNode(
+      document('.task-constraints > li:contains("Time limit:")')
+    ),
+    memoryLimit: getTextNode(
+      document('.task-constraints > li:contains("Memory limit:")')
+    ),
     source: `CSES ${problemID}`,
     samples,
   };

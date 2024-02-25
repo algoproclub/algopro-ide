@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { host, isMonaco, waitForEditorToLoad } from './helpers';
+import { host, isMonaco, signInUser, waitForEditorToLoad } from './helpers';
+
+test.beforeEach(async ({ page }) => {
+  await signInUser(page);
+});
 
 test.describe('Mobile Specific Checks', () => {
   test('should load monaco for desktop and codemirror for mobile', async ({

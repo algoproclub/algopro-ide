@@ -27,6 +27,23 @@ export default function GenericJudgeInterface({
             </a>
           </h3>
           <HTMLStatement htmlContent={problem.statement ?? ''} />
+          {(problem.timeLimit || problem.memoryLimit) && (
+            <div>
+              <h4 style={{ fontSize: '1.125rem', fontWeight: '600' }}>
+                Limits
+              </h4>
+              {problem.timeLimit && (
+                <div>
+                  <b>Time limit:</b> {problem.timeLimit}
+                </div>
+              )}
+              {problem.memoryLimit && (
+                <div>
+                  <b>Memory limit:</b> {problem.memoryLimit}
+                </div>
+              )}
+            </div>
+          )}
         </section>
       </div>
     </div>

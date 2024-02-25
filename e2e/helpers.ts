@@ -2,6 +2,20 @@ import { Page, expect } from '@playwright/test';
 
 export const host = 'http://localhost:3000';
 
+export async function signInUser(page: Page) {
+  await page.goto(host);
+
+  const popupPromise = page.waitForEvent('popup');
+  await page.getByText('Sign in now').click();
+  await page.getByText('Override Data').click();
+
+  const popup = await popupPromise;
+  await popup.getByText('Add new account').click({ delay: 200 });
+  await popup.getByText('Auto-generate').click();
+  await popup.getByText('Sign in').click();
+  await expect(page.getByText('Signed in as')).toBeVisible();
+}
+
 export async function createNew(page1: Page) {
   // page1.on('dialog', dialog => dialog.accept('nice title'));
   await page1.goto(`${host}/n`);

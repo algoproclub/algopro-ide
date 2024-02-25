@@ -79,7 +79,7 @@ export class CFSubmitter extends Submitter {
           cookie: cfCookie.value(),
           Referer: 'https://codeforces.com/problemset/submit',
           'user-agent':
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0',
         },
         body: new URLSearchParams({
           action: 'submitSolutionFormSubmitted',
@@ -148,12 +148,21 @@ export class AtCoderSubmitter extends Submitter {
     }
     const contestId = matches[1];
 
+    const accountCount = atCoderCookie.value().length;
+    if (atCoderCsrfToken.value().length != accountCount) {
+      throw new Error('AtCoder cookie and csrf token count mismatch');
+    }
+    const accountIdx = Math.floor(Math.random() * accountCount);
+    console.log(`using AtCoder account #${accountIdx}`);
+    const cookie = atCoderCookie.value()[accountIdx];
+    const csrf_token = atCoderCsrfToken.value()[accountIdx];
+
     const response = await fetch(
       `https://atcoder.jp/contests/${contestId}/submit`,
       {
         headers: {
           'content-type': 'application/x-www-form-urlencoded',
-          cookie: atCoderCookie.value(),
+          cookie,
         },
         body: new URLSearchParams({
           'data.TaskScreenName': problemID,
@@ -163,7 +172,7 @@ export class AtCoderSubmitter extends Submitter {
             py: '5078', // Python (PyPy 3.10-v7.3.12)
             java: '5005', // Java (OpenJDK 17)
           }[language],
-          csrf_token: atCoderCsrfToken.value(),
+          csrf_token,
         }),
         method: 'POST',
       }

@@ -1,8 +1,7 @@
-import { StringParam } from 'firebase-functions/lib/params/types';
 import { PlatformProblem, Translation } from '../../src/types/problem';
 
 export type AccountData = {
-  sessionCookie?: StringParam;
+  sessionCookie?: () => string;
 };
 
 export type PendingSubmission = {
