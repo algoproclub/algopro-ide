@@ -1,8 +1,24 @@
 import React from 'react';
 import { ProblemData, Translation } from '../../types/problem';
-import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
+import {
+  ArrowTopRightOnSquareIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from '@heroicons/react/20/solid';
 import { Listbox, Transition } from '@headlessui/react';
 import HTMLStatement from './HTMLStatement';
+
+// TODO: We should be getting this from some sort of library.
+const LANGUAGE_INFO: Record<string, { name: string; flag: string }> = {
+  en: {
+    name: 'English',
+    flag: '🇺🇸',
+  },
+  hu: {
+    name: 'magyar',
+    flag: '🇭🇺',
+  },
+};
 
 const LanguageSelectorDropdown = ({
   languages,
@@ -27,7 +43,12 @@ const LanguageSelectorDropdown = ({
                       : 'bg-gray-900 hover:bg-gray-800 active:bg-gray-700 border-gray-500 hover:border-gray-500'
                   }`}
                 >
-                  {language}
+                  {LANGUAGE_INFO[language].flag} {LANGUAGE_INFO[language].name}
+                  {open ? (
+                    <ChevronUpIcon className="h-5 w-5 inline" />
+                  ) : (
+                    <ChevronDownIcon className="h-5 w-5 inline" />
+                  )}
                 </Listbox.Button>
                 <Transition
                   enter="transition duration-100 ease-out"
@@ -47,7 +68,7 @@ const LanguageSelectorDropdown = ({
                         key={val}
                         value={val}
                       >
-                        {val}
+                        {LANGUAGE_INFO[val].flag} {LANGUAGE_INFO[val].name}
                       </Listbox.Option>
                     ))}
                   </Listbox.Options>
@@ -78,7 +99,7 @@ export default function GenericJudgeInterface({
   const languages = Object.keys(translations);
 
   const [language, setLanguage] = React.useState(
-    translations['hu'] ? 'hu' : 'en'
+    'hu' in translations ? 'hu' : 'en'
   );
 
   return (
