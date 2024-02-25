@@ -49,6 +49,7 @@ import {
   PlatformProblem,
   ProblemData,
   StatusData,
+  Translation,
 } from '../../types/problem';
 import {
   fetchProblemFromDb,
@@ -56,6 +57,13 @@ import {
 } from '../../scripts/fetchProblemFromDb';
 import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
+export function getHints(
+  problem: ProblemData,
+  translations: Record<string, Translation>
+) {
+  return 'hu' in translations ? translations['hu'].hints : problem.hints ?? [];
+}
 
 export default function Workspace({
   handleRunCode,
@@ -223,7 +231,9 @@ export default function Workspace({
               {problem?.id === fileData.problem?.id &&
                 inputTab === 'hints' &&
                 problem &&
-                problem.hints && <Hints hints={problem.hints} />}
+                translations && (
+                  <Hints hints={getHints(problem, translations)} />
+                )}
               {problem?.id === fileData.problem?.id &&
                 inputTab.startsWith('Sample') &&
                 problem && (

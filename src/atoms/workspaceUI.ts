@@ -1,5 +1,6 @@
 import { atom } from 'jotai';
 import { ProblemData, Translation } from '../types/problem';
+import { getHints } from '../components/Workspace/Workspace';
 
 export const mobileActiveTabAtom = atom<'code' | 'io' | 'users'>('code');
 export const showSidebarAtom = atom<boolean>(false);
@@ -19,10 +20,14 @@ export const tabsListAtom = atom(get => {
     return res;
   };
   const problem = get(problemAtom);
+  const translations = get(translationsAtom);
+
   return [
     { label: 'Input', value: 'input' },
     ...(problem ? [{ label: 'Task Overview', value: 'judge' }] : []),
-    ...(problem?.hints ? [{ label: 'Hints', value: 'hints' }] : []),
+    ...(problem && getHints(problem, translations).length > 0
+      ? [{ label: 'Hints', value: 'hints' }]
+      : []),
     ...(problem?.samples.length && problem?.samples[0].output
       ? getSamplesList(problem.samples.length)
       : []),
