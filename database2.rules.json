@@ -4,10 +4,7 @@
       "$secretid": {
         ".read": "$secretid == auth.uid",
         ".write": "auth.uid == $secretid",
-        ".indexOn": "lastAccessTime",
-        "role": {
-          ".validate": "!data.exists() && newData.val() === 'student'"
-        }
+        ".indexOn": "lastAccessTime"
       }
     },
     "files": {
@@ -80,7 +77,7 @@
         ".read": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ'"
       }
     },
-    ".read": "root.child('users').child(auth.uid).child('role').val() === 'teacher'",
+    ".read": "auth.token.teacher === true",
     ".write": false
   }
 }

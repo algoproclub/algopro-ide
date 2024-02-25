@@ -65,34 +65,13 @@ if (!firebase.getApps()?.length) {
   }
 }
 
-const ContextValueListener = ({ children }: { children: JSX.Element }) => {
-  const { firebaseUser } = useNullableUserContext();
-
-  useEffect(() => {
-    if (firebaseUser) {
-      const userRef = ref(getDatabase(), `users/${firebaseUser.uid}`);
-      get(userRef).then(userSnap => {
-        if (!userSnap.val()?.role) {
-          update(userRef, {
-            role: 'student',
-          });
-        }
-      });
-    }
-  }, [firebaseUser]);
-
-  return <>{children}</>;
-};
-
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <Toaster position="bottom-right" />
       <UserProvider>
         <ConnectionProvider>
-          <ContextValueListener>
-            <Component {...pageProps} />
-          </ContextValueListener>
+          <Component {...pageProps} />
         </ConnectionProvider>
       </UserProvider>
       <Analytics />
