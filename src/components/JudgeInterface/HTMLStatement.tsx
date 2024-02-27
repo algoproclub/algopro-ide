@@ -53,6 +53,11 @@ export default function HTMLStatement({
           font-size: 1.125rem;
           font-weight: 600;
         }
+
+        .html-statement-container ul {
+          list-style-type: disc;
+          margin-left: 1em;
+        }
       `}</style>
     </>
   );
