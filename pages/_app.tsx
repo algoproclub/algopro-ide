@@ -1,4 +1,5 @@
 import { AppProps } from 'next/app';
+import Head from 'next/head';
 import 'tailwindcss/tailwind.css';
 import '../src/styles/globals.css';
 import * as firebase from 'firebase/app';
@@ -87,6 +88,9 @@ const ContextValueListener = ({ children }: { children: JSX.Element }) => {
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
+      <Head>
+        <meta name="color-scheme" content="dark" />
+      </Head>
       <Toaster position="bottom-right" />
       <UserProvider>
         <ConnectionProvider>
