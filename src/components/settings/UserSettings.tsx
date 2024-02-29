@@ -10,6 +10,8 @@ export default function UserSettings({
   onNameChange,
   cfUsername,
   onCfUsernameChange,
+  atcoderUsername,
+  onAtcoderUsernameChange,
   discordID,
   onDiscordIDChange,
   defaultLanguage,
@@ -27,6 +29,8 @@ export default function UserSettings({
   onNameChange: (name: string) => void;
   cfUsername: string;
   onCfUsernameChange: (cfUsername: string) => void;
+  atcoderUsername: string;
+  onAtcoderUsernameChange: (atcoderUsername: string) => void;
   discordID: string;
   onDiscordIDChange: (discordID: string) => void;
   defaultLanguage: Language;
@@ -78,6 +82,26 @@ export default function UserSettings({
             value={cfUsername}
             onChange={e => {
               onCfUsernameChange(e.target.value);
+            }}
+          />
+        </div>
+      </div>
+      <div>
+        <label
+          htmlFor={`atcoder-username`}
+          className="block text-[0.92rem] font-medium text-gray-700"
+        >
+          AtCoder username
+        </label>
+        <div className="mt-1">
+          <input
+            type="text"
+            name={`atcoder-username`}
+            id={`atcoder-username`}
+            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm"
+            value={atcoderUsername}
+            onChange={e => {
+              onAtcoderUsernameChange(e.target.value);
             }}
           />
         </div>

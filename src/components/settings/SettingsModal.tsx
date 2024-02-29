@@ -72,6 +72,7 @@ export const SettingsModal = ({
 
   const [name, setName] = useState<string>('');
   const [cfUsername, setCfUsername] = useState<string>('');
+  const [atcoderUsername, setAtcoderUsername] = useState<string>('');
   const [discordID, setDiscordID] = useState<string>('');
   const [defaultLanguage, setDefaultLanguage] = useState<Language>('cpp');
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
@@ -80,7 +81,7 @@ export const SettingsModal = ({
   const [manualSubmission, setManualSubmission] = useState<boolean>(false);
   const dirtyRef = useRef<boolean>(false);
 
-  const [tab, setTab] = useState<typeof tabs[number]['id']>('workspace');
+  const [tab, setTab] = useState<(typeof tabs)[number]['id']>('workspace');
 
   const [judgeResults, setJudgeResults] = useJudgeResults();
 
@@ -89,6 +90,7 @@ export const SettingsModal = ({
       setFileSettings(realFileSettings);
       setName(firebaseUser.displayName ?? ''); // todo this shouldn't really be an empty string ever?
       setCfUsername(userData.usernames.codeforces ?? '');
+      setAtcoderUsername(userData.usernames.atcoder ?? '');
       setDiscordID(userData.discordID ?? '');
       setDefaultLanguage(userData.defaultLanguage ?? '');
       setEditorMode(userData.editorMode);
@@ -163,6 +165,7 @@ export const SettingsModal = ({
           data.usernames = {};
         }
         data.usernames.codeforces = cfUsername;
+        data.usernames.atcoder = atcoderUsername;
         return data;
       }
     );
@@ -258,6 +261,11 @@ export const SettingsModal = ({
                     cfUsername={cfUsername}
                     onCfUsernameChange={cfUsername => {
                       setCfUsername(cfUsername);
+                      dirtyRef.current = true;
+                    }}
+                    atcoderUsername={atcoderUsername}
+                    onAtcoderUsernameChange={atcoderUsername => {
+                      setAtcoderUsername(atcoderUsername);
                       dirtyRef.current = true;
                     }}
                     discordID={discordID}
