@@ -82,6 +82,14 @@ const LanguageSelectorDropdown = ({
   );
 };
 
+const PreText = ({ contents }: { contents: string }) => {
+  return (
+    <pre className="px-2 py-2 mt-1 whitespace-pre bg-[#121212] border border-[#363636] rounded-md text-sm overflow-x-scroll">
+      {contents}
+    </pre>
+  );
+};
+
 export default function GenericJudgeInterface({
   problem,
   translations,
@@ -145,6 +153,19 @@ export default function GenericJudgeInterface({
               )}
             </div>
           )}
+          {problem.samples.map((sample, index) => (
+            <div key={index} className="mt-2">
+              <h4 className="text-lg font-semibold">
+                {problem.samples.length === 1
+                  ? 'Example'
+                  : `Example ${index + 1}`}
+              </h4>
+              <h5 className="font-semibold">Input</h5>
+              <PreText contents={sample.input} />
+              <h5 className="font-semibold">Output</h5>
+              <PreText contents={sample.output} />
+            </div>
+          ))}
         </section>
       </div>
     </div>
