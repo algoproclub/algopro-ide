@@ -262,6 +262,15 @@ function EditorPage() {
     }
   };
 
+  const captureCtrlS = (event: KeyboardEvent) => {
+    if (event.ctrlKey && event.key === 's') event.preventDefault();
+  };
+
+  useEffect(() => {
+    window.addEventListener('keydown', captureCtrlS);
+    return () => window.removeEventListener('keydown', captureCtrlS);
+  });
+
   return (
     <div className="h-full">
       <div className="h-full flex flex-col">
