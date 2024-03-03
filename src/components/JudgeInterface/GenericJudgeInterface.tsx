@@ -82,6 +82,14 @@ const LanguageSelectorDropdown = ({
   );
 };
 
+const PreText = ({ contents }: { contents: string }) => {
+  return (
+    <pre className="px-2 py-2 mt-1 whitespace-pre bg-[#121212] border border-[#363636] rounded-md text-sm overflow-x-scroll">
+      {contents}
+    </pre>
+  );
+};
+
 export default function GenericJudgeInterface({
   problem,
   translations,
@@ -105,9 +113,9 @@ export default function GenericJudgeInterface({
   return (
     <div className="relative h-full flex flex-col">
       <div className="flex-1 overflow-y-auto">
-        <section className="p-4 pb-0">
+        <section className="p-4">
           <header className="flex flex-row items-center">
-            <h3 className="flex-1">
+            <h3 className="flex-1 mt-0">
               <a
                 href={problem.url}
                 target="_blank"
@@ -132,9 +140,7 @@ export default function GenericJudgeInterface({
           <HTMLStatement htmlContent={translations[language].statement} />
           {(problem.timeLimit || problem.memoryLimit) && (
             <div>
-              <h4 style={{ fontSize: '1.125rem', fontWeight: '600' }}>
-                Limits
-              </h4>
+              <h4 className="text-lg font-semibold">Limits</h4>
               {problem.timeLimit && (
                 <div>
                   <b>Time limit:</b> {problem.timeLimit}
@@ -147,6 +153,19 @@ export default function GenericJudgeInterface({
               )}
             </div>
           )}
+          {problem.samples.map((sample, index) => (
+            <div key={index} className="mt-2">
+              <h4 className="text-lg font-semibold">
+                {problem.samples.length === 1
+                  ? 'Example'
+                  : `Example ${index + 1}`}
+              </h4>
+              <h5 className="font-semibold">Input</h5>
+              <PreText contents={sample.input} />
+              <h5 className="font-semibold">Output</h5>
+              <PreText contents={sample.output} />
+            </div>
+          ))}
         </section>
       </div>
     </div>

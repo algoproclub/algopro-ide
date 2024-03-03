@@ -150,7 +150,7 @@ export default function Workspace({
       onDragEnd={() => layoutEditors()}
       render={({ getGridProps, getGutterProps }) => (
         <div
-          className={`grid grid-cols-[3fr,3px,2fr,3px,1fr] grid-rows-[1fr,3px,1fr] h-full overflow-hidden`}
+          className={`grid grid-cols-[3fr,3px,2fr,3px,1fr] grid-rows-[2fr,3px,1fr] h-full overflow-hidden`}
           {...getGridProps()}
         >
           <CodeInterface
