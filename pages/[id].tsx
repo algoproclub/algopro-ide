@@ -262,13 +262,14 @@ function EditorPage() {
     }
   };
 
-  const captureCtrlS = (event: KeyboardEvent) => {
+  const handleKeydown = (event: KeyboardEvent) => {
     if (event.ctrlKey && event.key === 's') event.preventDefault();
+    if (event.ctrlKey && event.key === 'Enter') handleRunCode();
   };
 
   useEffect(() => {
-    window.addEventListener('keydown', captureCtrlS);
-    return () => window.removeEventListener('keydown', captureCtrlS);
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
   });
 
   return (
