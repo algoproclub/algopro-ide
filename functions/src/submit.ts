@@ -55,8 +55,10 @@ export abstract class Submitter {
 }
 
 export class CFSubmitter extends Submitter {
+  private accountIdx: number;
   constructor(readonly problemSolution: ProblemSolution) {
     super(problemSolution);
+    this.accountIdx = 0;
   }
   async submit() {
     const { problemID, sourceCode, language } = this.problemSolution;
@@ -70,16 +72,31 @@ export class CFSubmitter extends Submitter {
     const contestId = matches[1];
     const submittedProblemIndex = matches[2];
 
+    const accountCount = cfCookie.value().split(';').length;
+    if (cfCsrfToken.value().split(';').length != accountCount) {
+      throw new Error('CF cookie and csrf token count mismatch');
+    }
+    if (cfUsername.value().split(';').length != accountCount) {
+      throw new Error('CF cookie and username count mismatch');
+    }
+    this.accountIdx = Math.floor(Math.random() * accountCount);
+    const cookie = cfCookie.value().split(';')[this.accountIdx];
+    const csrf_token = cfCsrfToken.value().split(';')[this.accountIdx];
+    const username = cfUsername.value().split(';')[this.accountIdx];
+    console.log(
+      `using CF account #${this.accountIdx}, username: ${username}, cookie: ${cookie}, csrf_token: ${csrf_token}`
+    );
+
     const response = await fetch(
       'https://codeforces.com/problemset/submit?' +
-        new URLSearchParams({ csrf_token: cfCsrfToken.value() }).toString(),
+        new URLSearchParams({ csrf_token: csrf_token }).toString(),
       {
         headers: {
           'content-type': 'application/x-www-form-urlencoded',
-          cookie: cfCookie.value(),
+          cookie,
           Referer: 'https://codeforces.com/problemset/submit',
           'user-agent':
-            'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         },
         body: new URLSearchParams({
           action: 'submitSolutionFormSubmitted',
@@ -92,7 +109,7 @@ export class CFSubmitter extends Submitter {
             java: '87', // Java 21 64bit
           }[language],
           tabSize: '4',
-          csrf_token: cfCsrfToken.value(),
+          csrf_token,
           ftaa: '',
           bfaa: '',
           sourceFile: '',
@@ -101,10 +118,16 @@ export class CFSubmitter extends Submitter {
         method: 'POST',
       }
     );
-    if (response.status !== 200) {
-      throw new Error('submission failed');
-    }
     const text = await response.text();
+    if (response.status !== 200) {
+      console.log(
+        'submission response.status: ',
+        response.status,
+        response.statusText
+      );
+      console.log('submission response.text: ', text.replaceAll('\n', ''));
+      throw new Error('submission failed, status: ' + response.status);
+    }
     if (text.includes('You have submitted exactly the same code before')) {
       throw new HttpsError(
         'already-exists',
@@ -114,8 +137,9 @@ export class CFSubmitter extends Submitter {
   }
 
   async getSubmissionData(): Promise<ClientSubmissionData> {
+    const username = cfUsername.value().split(';')[this.accountIdx];
     const response = await fetch(
-      `https://codeforces.com/submissions/${cfUsername.value()}`
+      `https://codeforces.com/submissions/${username}`
     );
     const document = cheerio.load(await response.text());
     const id = document('[data-submission-id]').attr('data-submission-id');
@@ -124,7 +148,7 @@ export class CFSubmitter extends Submitter {
     }
     return {
       id,
-      username: cfUsername.value(),
+      username,
       platform: 'codeforces',
     };
   }
@@ -148,14 +172,16 @@ export class AtCoderSubmitter extends Submitter {
     }
     const contestId = matches[1];
 
-    const accountCount = atCoderCookie.value().length;
-    if (atCoderCsrfToken.value().length != accountCount) {
+    const accountCount = atCoderCookie.value().split(';').length;
+    if (atCoderCsrfToken.value().split(';').length != accountCount) {
       throw new Error('AtCoder cookie and csrf token count mismatch');
     }
     const accountIdx = Math.floor(Math.random() * accountCount);
-    console.log(`using AtCoder account #${accountIdx}`);
-    const cookie = atCoderCookie.value()[accountIdx];
-    const csrf_token = atCoderCsrfToken.value()[accountIdx];
+    const cookie = atCoderCookie.value().split(';')[accountIdx];
+    const csrf_token = atCoderCsrfToken.value().split(';')[accountIdx];
+    console.log(
+      `using AtCoder account #${accountIdx}, cookie: ${cookie}, csrf_token: ${csrf_token}`
+    );
 
     const response = await fetch(
       `https://atcoder.jp/contests/${contestId}/submit`,
@@ -177,10 +203,16 @@ export class AtCoderSubmitter extends Submitter {
         method: 'POST',
       }
     );
-    if (response.status !== 200) {
-      throw new Error('submission failed');
-    }
     const text = await response.text();
+    if (response.status !== 200) {
+      console.log(
+        'submission response.status: ',
+        response.status,
+        response.statusText
+      );
+      console.log('submission response.text: ', text.replaceAll('\n', ''));
+      throw new Error('submission failed, status: ' + response.status);
+    }
     const id = text.match(/\/contests\/\w+\/submissions\/([0-9]+)/)?.[1];
     if (!id) {
       throw new IDNotFoundError('cannot find submission id');
@@ -225,10 +257,16 @@ export class CSESSubmitter extends Submitter {
       body: formData,
       method: 'POST',
     });
-    if (response.status !== 200) {
-      throw new Error('submission failed');
-    }
     const text = await response.text();
+    if (response.status !== 200) {
+      console.log(
+        'submission response.status: ',
+        response.status,
+        response.statusText
+      );
+      console.log('submission response.text: ', text.replaceAll('\n', ''));
+      throw new Error('submission failed, status: ' + response.status);
+    }
     const id = text.match(/\/ajax\/get_status\.php\?entry=([0-9]+)/)?.[1];
     if (!id) {
       throw new IDNotFoundError('cannot find submission id');

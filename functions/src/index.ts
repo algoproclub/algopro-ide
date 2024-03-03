@@ -1,4 +1,4 @@
-import { defineList, defineString } from 'firebase-functions/params';
+import { defineString } from 'firebase-functions/params';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
@@ -47,8 +47,8 @@ export const cfCsrfToken = defineString('CF_CSRF_TOKEN');
 export const cfCookie = defineString('CF_COOKIE');
 export const cfUsername = defineString('CF_BOT_USERNAME');
 
-export const atCoderCookie = defineList('ATCODER_COOKIE');
-export const atCoderCsrfToken = defineList('ATCODER_CSRF_TOKEN');
+export const atCoderCookie = defineString('ATCODER_COOKIE');
+export const atCoderCsrfToken = defineString('ATCODER_CSRF_TOKEN');
 
 export const csesCookie = defineString('CSES_COOKIE');
 export const csesCsrfToken = defineString('CSES_CSRF_TOKEN');
