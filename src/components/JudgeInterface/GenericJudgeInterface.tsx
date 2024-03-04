@@ -84,7 +84,7 @@ const LanguageSelectorDropdown = ({
 
 const PreText = ({ contents }: { contents: string }) => {
   return (
-    <pre className="px-2 py-2 mt-1 whitespace-pre bg-[#121212] border border-[#363636] rounded-md text-sm overflow-x-scroll">
+    <pre className="px-2 py-2 mt-1 whitespace-pre bg-[#121212] border border-[#363636] rounded-md text-sm overflow-x-auto">
       {contents}
     </pre>
   );
