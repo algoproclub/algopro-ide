@@ -126,7 +126,9 @@ export class CFSubmitter extends Submitter {
         response.statusText
       );
       console.log('submission response.text: ', text.replaceAll('\n', ''));
-      throw new Error('submission failed, status: ' + response.status);
+      throw new Error(
+        'submission failed, user: ' + username + ', status: ' + response.status
+      );
     }
     if (text.includes('You have submitted exactly the same code before')) {
       throw new HttpsError(
