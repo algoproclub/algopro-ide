@@ -154,7 +154,7 @@ export const translate = onCall<string, Promise<string | null>>(
 
 export const enum Errors {
   NO_SUCH_SUBMISSION = 'No such submission exists for the given problem. Please check if the entered submission ID is correct.',
-  UNKNOWN_ERROR = 'Could not retrieve the results due to an unknown error',
+  UNKNOWN_ERROR = 'Could not retrieve the submission results due to an unknown error',
   PENDING_TIMEOUT = 'Could not retreive the submission results in time. Please try again later.',
 }
 
@@ -180,11 +180,14 @@ const updateStatusData = async (
   id: string,
   statusData: Partial<StatusData>
 ) => {
-  const updates: { [key: string]: Partial<StatusData> | null } = {};
+  const updates: { [key: string]: Partial<StatusData> | null | boolean } = {};
   updates[`submissions/${id}/statusData`] = statusData;
 
   if (['error', 'resolved'].includes(statusData.statusCode!)) {
     updates[`submissions/pending/${id}`] = null;
+  }
+  if (statusData.message === 'correct answer') {
+    updates[`files/${id}/solvedStatus/solved`] = true;
   }
   await db.ref().update(updates);
 };
