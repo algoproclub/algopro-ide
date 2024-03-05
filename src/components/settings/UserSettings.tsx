@@ -58,7 +58,7 @@ export default function UserSettings({
             type="text"
             name={`name`}
             id={`name`}
-            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm"
+            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm text-gray-800"
             value={name}
             onChange={e => {
               onNameChange(e.target.value);
@@ -78,7 +78,7 @@ export default function UserSettings({
             type="text"
             name={`cf-username`}
             id={`cf-username`}
-            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm"
+            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm text-gray-800"
             value={cfUsername}
             onChange={e => {
               onCfUsernameChange(e.target.value);
@@ -98,7 +98,7 @@ export default function UserSettings({
             type="text"
             name={`atcoder-username`}
             id={`atcoder-username`}
-            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm"
+            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm text-gray-800"
             value={atcoderUsername}
             onChange={e => {
               onAtcoderUsernameChange(e.target.value);
@@ -118,7 +118,7 @@ export default function UserSettings({
             type="text"
             name={`discord-username`}
             id={`discord-username`}
-            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm"
+            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm text-gray-800"
             value={discordID}
             onChange={e => {
               onDiscordIDChange(e.target.value);
