@@ -9,6 +9,10 @@ import HTMLStatement from './HTMLStatement';
 
 // TODO: We should be getting this from some sort of library.
 const LANGUAGE_INFO: Record<string, { name: string; flag: string }> = {
+  '-': {
+    name: 'original',
+    flag: '—',
+  },
   en: {
     name: 'english',
     flag: '🇺🇸',
@@ -17,9 +21,13 @@ const LANGUAGE_INFO: Record<string, { name: string; flag: string }> = {
     name: 'magyar',
     flag: '🇭🇺',
   },
+  es: {
+    name: 'español',
+    flag: '🇪🇸',
+  },
 };
 
-const LanguageSelectorDropdown = ({
+export const LanguageSelectorDropdown = ({
   languages,
   language,
   setLanguage,

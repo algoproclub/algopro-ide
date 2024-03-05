@@ -108,49 +108,58 @@ export const updatetranslation = onCall<TranslationData, Promise<boolean>>(
     if (!(await isTeacher(request.auth?.uid))) {
       return false;
     }
-    const { problem, translation } = request.data;
-    admin
-      .firestore()
-      .doc(
-        `problemsets/${problem.platform}/problems/${problem.id}/translations/hu`
-      )
-      .set({
-        statement: translation.statement,
-        hints: translation.hints,
-      });
+    const { problem, translation, language } = request.data;
+    const documentPath =
+      language === '-'
+        ? `problemsets/${problem.platform}/problems/${problem.id}`
+        : `problemsets/${problem.platform}/problems/${problem.id}/translations/${language}`;
+
+    const data = {
+      statement: translation.statement,
+      hints: translation.hints,
+    };
+    const document = admin.firestore().doc(documentPath);
+    if (language === '-') {
+      document.update(data);
+    } else {
+      document.set(data);
+    }
     return true;
   }
 );
 
-export const translate = onCall<string, Promise<string | null>>(
-  { region: 'europe-west1' },
-  async request => {
-    if (!(await isTeacher(request.auth?.uid))) {
-      return null;
-    }
-    const text = request.data;
-    const resp = await fetch('https://api-free.deepl.com/v2/translate', {
-      method: 'POST',
-      headers: {
-        Authorization: `DeepL-Auth-Key ${deeplAPIKey.value()}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: [text],
-        target_lang: 'HU',
-        tag_handling: 'html',
-      }),
-    });
-    let translation: string | null = null;
-    try {
-      const json = await resp.json();
-      translation = json['translations'][0].text ?? null;
-    } catch (error) {
-      logger.log(error);
-    }
-    return translation;
+export const translate = onCall<
+  {
+    text: string;
+    lang: string;
+  },
+  Promise<string | null>
+>({ region: 'europe-west1' }, async request => {
+  if (!(await isTeacher(request.auth?.uid))) {
+    return null;
   }
-);
+  const { text, lang } = request.data;
+  const resp = await fetch('https://api-free.deepl.com/v2/translate', {
+    method: 'POST',
+    headers: {
+      Authorization: `DeepL-Auth-Key ${deeplAPIKey.value()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      text: [text],
+      target_lang: lang,
+      tag_handling: 'html',
+    }),
+  });
+  let translation: string | null = null;
+  try {
+    const json = await resp.json();
+    translation = json['translations'][0].text ?? null;
+  } catch (error) {
+    logger.log(error);
+  }
+  return translation;
+});
 
 export const enum Errors {
   NO_SUCH_SUBMISSION = 'No such submission exists for the given problem. Please check if the entered submission ID is correct.',

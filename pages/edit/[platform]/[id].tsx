@@ -8,7 +8,7 @@ import React, {
 import { CodeEditor } from '../../../src/components/editor/CodeEditor';
 import { Dialog, Transition } from '@headlessui/react';
 import { useRouter } from 'next/router';
-import { doc, setDoc, getFirestore, getDoc } from 'firebase/firestore';
+import { doc, getFirestore, getDoc } from 'firebase/firestore';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import { Platform, ProblemData } from '../../../src/types/problem';
 import Markdown from '../../../src/components/JudgeInterface/Markdown';
@@ -17,6 +17,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { TranslationData } from '../../../functions/src/types';
+import { LanguageSelectorDropdown } from '../../../src/components/JudgeInterface/GenericJudgeInterface';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -26,10 +27,13 @@ const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   }
 );
 
-const translate = httpsCallable<string, string>(
-  getFunctions(undefined, 'europe-west1'),
-  'translate'
-);
+const translate = httpsCallable<
+  {
+    text: string;
+    lang: string;
+  },
+  string
+>(getFunctions(undefined, 'europe-west1'), 'translate');
 
 const updateTranslation = httpsCallable<TranslationData, boolean>(
   getFunctions(undefined, 'europe-west1'),
@@ -320,6 +324,7 @@ export default function EditPage() {
   };
   const [original, setOriginal] = useState('');
   const [translated, setTranslated] = useState('');
+  const [initTranslated, setInitTranslated] = useState('');
   const [platform, setPlatform] = useState<string | null>(null);
   const [problemID, setProblemID] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -329,7 +334,49 @@ export default function EditPage() {
     () => (_: string) => {}
   );
   const [unsaved, setUnsaved] = useState(false);
+  const [language, setLanguage] = useState('-');
   const router = useRouter();
+
+  const getTranslated = async (platform: string, id: string) => {
+    if (language === '-') {
+      const problemRef = doc(
+        getFirestore(),
+        'problemsets',
+        platform,
+        'problems',
+        id
+      );
+      const snapshot = await getDoc(problemRef);
+      return snapshot.data();
+    } else {
+      const problemRef = doc(
+        getFirestore(),
+        'problemsets',
+        platform,
+        'problems',
+        id,
+        'translations',
+        language
+      );
+      const snapshot = await getDoc(problemRef);
+      return snapshot.data();
+    }
+  };
+  const updateTranslated = () => {
+    if (!platform || !problemID) {
+      return;
+    }
+    getTranslated(platform, problemID)
+      .then(data => {
+        setUnsaved(false);
+        setInitTranslated(data?.statement ?? '');
+        setTranslated(data?.statement ?? '');
+        setHints(data?.hints ?? []);
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  };
 
   useEffect(() => {
     if (typeof router.query.platform === 'string') {
@@ -361,19 +408,6 @@ export default function EditPage() {
       }
       return problemData;
     };
-    const getTranslated = async (platform: string, id: string) => {
-      const problemRef = doc(
-        getFirestore(),
-        'problemsets',
-        platform,
-        'problems',
-        id,
-        'translations',
-        'hu'
-      );
-      const translation = await getDoc(problemRef);
-      return translation.data();
-    };
     if (!platform || !problemID) {
       return;
     }
@@ -384,20 +418,27 @@ export default function EditPage() {
       .catch(error => {
         console.error(error);
       });
-    getTranslated(platform, problemID)
-      .then(data => {
-        setTranslated(data?.statement ?? '');
-        setHints(data?.hints ?? []);
-      })
-      .catch(error => {
-        console.error(error);
-      });
+    updateTranslated();
   }, [platform, problemID]);
 
+  useEffect(() => {
+    if (!platform || !problemID) {
+      return;
+    }
+    updateTranslated();
+  }, [language]);
+
   const handleChange = useCallback((val: string) => {
-    setTranslated(val);
-    setUnsaved(true);
+    if (translated !== val) {
+      setTranslated(val);
+    }
   }, []);
+
+  useEffect(() => {
+    if (translated !== initTranslated) {
+      setUnsaved(true);
+    }
+  }, [translated]);
 
   const handleSave = () => {
     if (!platform || !problemID) {
@@ -408,6 +449,7 @@ export default function EditPage() {
         platform: platform as Platform,
         id: problemID,
       },
+      language: language,
       translation: {
         statement: translated,
         hints: hints,
@@ -429,12 +471,31 @@ export default function EditPage() {
   };
 
   const handleAutoTranslate = async () => {
-    const response = await translate(original);
+    const response = await translate({
+      text: original,
+      lang: language,
+    });
     setTranslated(response.data);
   };
 
   return (
     <div className="p-3 text-white max-w-[1440px] mx-auto">
+      <div className="relative z-30 mb-2">
+        <LanguageSelectorDropdown
+          languages={['-', 'hu', 'en', 'es']}
+          language={language}
+          setLanguage={(text: string) => {
+            if (
+              !unsaved ||
+              confirm(
+                'The unsaved changes will be lost. Do you want to proceed?'
+              )
+            ) {
+              setLanguage(text);
+            }
+          }}
+        />
+      </div>
       <EditHintModal
         isOpen={isOpen}
         text={hintText}
