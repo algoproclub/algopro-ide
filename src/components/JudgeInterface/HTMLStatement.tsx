@@ -44,21 +44,6 @@ export default function HTMLStatement({
         dangerouslySetInnerHTML={{ __html: htmlContent ?? '' }}
         ref={refCallback}
       ></div>
-      <style jsx global>{`
-        .html-statement-container p {
-          margin-bottom: 0.5rem;
-        }
-
-        .html-statement-container .section-title {
-          font-size: 1.125rem;
-          font-weight: 600;
-        }
-
-        .html-statement-container ul {
-          list-style-type: disc;
-          margin-left: 1em;
-        }
-      `}</style>
     </>
   );
 }
