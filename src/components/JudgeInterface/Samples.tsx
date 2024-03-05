@@ -11,8 +11,8 @@ export function getSampleIndex(inputTab: string): number {
 
 const PreBox = ({ title, text }: { title: string; text: string }) => {
   return (
-    <div className="mx-0 rounded-md mt-4 mb-4 break-all bg-[#121212] border border-t-0 border-[#363636]">
-      <div className="py-2.5 px-4 bg-gray-800 border-b border-t rounded-t-md border-[#363636] font-semibold text-sm">
+    <div className="mx-0 rounded-md mt-4 mb-4 break-all bg-[#121212] border border-t-0 border-gray-700">
+      <div className="py-2.5 px-4 bg-gray-800 border-b border-t rounded-t-md border-gray-700 font-semibold text-sm">
         <span>{title}</span>
       </div>
       <pre className="px-4 py-3 whitespace-pre-wrap">{text}</pre>

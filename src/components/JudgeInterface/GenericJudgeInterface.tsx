@@ -2,7 +2,6 @@ import React from 'react';
 import { ProblemData, Translation } from '../../types/problem';
 import {
   ArrowTopRightOnSquareIcon,
-  ChevronDownIcon,
   ChevronUpIcon,
 } from '@heroicons/react/20/solid';
 import { Listbox, Transition } from '@headlessui/react';
@@ -11,7 +10,7 @@ import HTMLStatement from './HTMLStatement';
 // TODO: We should be getting this from some sort of library.
 const LANGUAGE_INFO: Record<string, { name: string; flag: string }> = {
   en: {
-    name: 'English',
+    name: 'english',
     flag: '🇺🇸',
   },
   hu: {
@@ -37,18 +36,21 @@ const LanguageSelectorDropdown = ({
             <div className="w-full flex space-x-2">
               <div className="w-full text-sm relative z-20">
                 <Listbox.Button
-                  className={`w-full px-3 py-2 text-left rounded-md border text-gray-300 truncate ${
+                  className={`w-full bg-[#121212] px-3.5 py-2.5 flex items-center justify-between truncate rounded-md border text-gray-300 ${
                     open
                       ? 'ring-2 ring-indigo-500 border-transparent bg-gray-800'
-                      : 'bg-gray-900 hover:bg-gray-800 active:bg-gray-700 border-gray-500 hover:border-gray-500'
+                      : 'hover:bg-gray-900 active:bg-gray-700 border-gray-700'
                   }`}
                 >
-                  {LANGUAGE_INFO[language].flag} {LANGUAGE_INFO[language].name}
-                  {open ? (
-                    <ChevronUpIcon className="h-5 w-5 inline" />
-                  ) : (
-                    <ChevronDownIcon className="h-5 w-5 inline" />
-                  )}
+                  <span className="space-x-2">
+                    <span>{LANGUAGE_INFO[language].flag}</span>
+                    <span>{LANGUAGE_INFO[language].name}</span>
+                  </span>
+                  <ChevronUpIcon
+                    className={`h-5 w-5 inline ml-2 ${
+                      open ? '' : 'rotate-180'
+                    } transition duration-200`}
+                  />
                 </Listbox.Button>
                 <Transition
                   enter="transition duration-100 ease-out"
@@ -60,7 +62,7 @@ const LanguageSelectorDropdown = ({
                 >
                   <Listbox.Options
                     static
-                    className="z-20 border border-gray-600 rounded-md bg-gray-900 divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden"
+                    className="z-20 border border-gray-700 rounded-md bg-[#121212] divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden"
                   >
                     {languages.map(val => (
                       <Listbox.Option
@@ -68,7 +70,10 @@ const LanguageSelectorDropdown = ({
                         key={val}
                         value={val}
                       >
-                        {LANGUAGE_INFO[val].flag} {LANGUAGE_INFO[val].name}
+                        <span className="space-x-2">
+                          <span>{LANGUAGE_INFO[val].flag}</span>
+                          <span>{LANGUAGE_INFO[val].name}</span>
+                        </span>
                       </Listbox.Option>
                     ))}
                   </Listbox.Options>
@@ -93,9 +98,13 @@ const PreText = ({ contents }: { contents: string }) => {
 export default function GenericJudgeInterface({
   problem,
   translations,
+  language,
+  setLanguage,
 }: {
   problem: ProblemData;
   translations: Record<string, Translation>;
+  language: string;
+  setLanguage: React.Dispatch<React.SetStateAction<string>>;
 }): JSX.Element {
   // TODO: Move the original text under translations
   if (problem?.statement) {
@@ -106,15 +115,20 @@ export default function GenericJudgeInterface({
   }
   const languages = Object.keys(translations);
 
-  const [language, setLanguage] = React.useState(
-    'hu' in translations ? 'hu' : 'en'
-  );
-
   return (
     <div className="relative h-full flex flex-col">
       <div className="flex-1 overflow-y-auto">
         <section className="p-4">
-          <header className="flex flex-row items-center">
+          <header className="items-center">
+            <div className="mb-2">
+              {languages.length > 1 && (
+                <LanguageSelectorDropdown
+                  languages={languages}
+                  language={language}
+                  setLanguage={setLanguage}
+                />
+              )}
+            </div>
             <h3 className="flex-1 mt-0">
               <a
                 href={problem.url}
@@ -129,13 +143,6 @@ export default function GenericJudgeInterface({
                 />
               </a>
             </h3>
-            {languages.length > 1 && (
-              <LanguageSelectorDropdown
-                languages={languages}
-                language={language}
-                setLanguage={setLanguage}
-              />
-            )}
           </header>
           <HTMLStatement htmlContent={translations[language].statement} />
           {(problem.timeLimit || problem.memoryLimit) && (

@@ -56,7 +56,6 @@ import {
   fetchTranslationsFromDb,
 } from '../../scripts/fetchProblemFromDb';
 import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export function getHints(
   problem: ProblemData,
@@ -145,6 +144,12 @@ export default function Workspace({
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
   const { lightMode } = useUserContext().userData;
 
+  const [language, setLanguage] = React.useState('en');
+
+  useEffect(() => {
+    setLanguage('hu' in translations ? 'hu' : 'en');
+  }, [translations]);
+
   return (
     <Split
       onDragEnd={() => layoutEditors()}
@@ -219,6 +224,8 @@ export default function Workspace({
                   <GenericJudgeInterface
                     problem={problem}
                     translations={translations}
+                    language={language}
+                    setLanguage={setLanguage}
                   />
                 ) : (
                   <USACOJudgeInterface
