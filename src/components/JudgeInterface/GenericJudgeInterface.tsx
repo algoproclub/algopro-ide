@@ -121,15 +121,15 @@ export default function GenericJudgeInterface({
       <div className="flex-1 overflow-y-auto">
         <section className="p-4">
           <header className="items-center">
-            <div className="mb-2">
-              {languages.length > 1 && (
+            {languages.length > 1 && (
+              <div className="mb-2">
                 <LanguageSelectorDropdown
                   languages={languages}
                   language={language}
                   setLanguage={setLanguage}
                 />
-              )}
-            </div>
+              </div>
+            )}
             <h3 className="flex-1 mt-0">
               <a
                 href={problem.url}
@@ -171,7 +171,7 @@ export default function GenericJudgeInterface({
           <div className="mt-2 space-y-3">
             {problem.samples.map((sample, index) => (
               <div key={index} className="mb-4">
-                <div className="mb-3 -space-y-[1px]">
+                <div className="mb-3 -space-y-[1px] text-sm">
                   <PreBox
                     title={`Input ${index + 1}`}
                     text={sample.input}
