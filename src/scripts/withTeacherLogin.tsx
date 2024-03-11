@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessagePage } from './MessagePage';
+import { MessagePage } from '../components/MessagePage';
 import { useNullableUserContext } from '../context/UserContext';
 
 export default function withTeacherLogin(
@@ -8,9 +8,6 @@ export default function withTeacherLogin(
   return () => {
     const { userData, logged, userRole } = useNullableUserContext();
 
-    if (!userData)
-      return <MessagePage message="Loading..." showHomeButton={false} />;
-
     if (!logged)
       return (
         <MessagePage
@@ -18,6 +15,9 @@ export default function withTeacherLogin(
           showHomeButton={true}
         />
       );
+
+    if (!userData)
+      return <MessagePage message="Loading..." showHomeButton={false} />;
 
     if (userRole !== 'teacher')
       return (
