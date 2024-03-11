@@ -38,12 +38,12 @@ export const LanguageSelectorDropdown = ({
   setLanguage: (language: string) => void;
 }) => {
   return (
-    <div className="relative z-0">
+    <div className="relative z-20">
       <Listbox value={language} onChange={setLanguage}>
         {({ open }) => (
           <>
             <div className="w-full flex space-x-2">
-              <div className="w-full text-sm relative z-20">
+              <div className="w-full text-sm">
                 <Listbox.Button
                   className={`w-full bg-[#121212] px-3.5 py-2.5 flex items-center justify-between truncate rounded-md border text-gray-300 ${
                     open
@@ -71,7 +71,7 @@ export const LanguageSelectorDropdown = ({
                 >
                   <Listbox.Options
                     static
-                    className="z-20 border border-gray-700 rounded-md bg-[#121212] divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden"
+                    className="border border-gray-700 rounded-md bg-[#121212] divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden"
                   >
                     {languages.map(val => (
                       <Listbox.Option
