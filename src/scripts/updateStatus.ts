@@ -1,11 +1,9 @@
 import { DataSnapshot, getDatabase, onValue, ref } from 'firebase/database';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import firebase from 'firebase/compat';
-import HttpsCallableResult = firebase.functions.HttpsCallableResult;
 import React from 'react';
 import { StatusData } from '../types/problem';
 
-const registerSubmissionHttps = httpsCallable(
+const registerSubmissionHttps = httpsCallable<unknown, { success: boolean }>(
   getFunctions(undefined, 'europe-west1'),
   'registersubmission'
 );
@@ -45,7 +43,7 @@ export const registerSubmission = (
     fileID: fileID,
     submissionID: submissionID,
     username: username,
-  }).then((response: HttpsCallableResult) => {
+  }).then(response => {
     if (!response.data.success) {
       resetStatusData(fileID, setStatusData);
     }
