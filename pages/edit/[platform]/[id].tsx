@@ -31,11 +31,6 @@ const translate = httpsCallable<string, string>(
   'translate'
 );
 
-const updateTranslation = httpsCallable<TranslationData, boolean>(
-  getFunctions(undefined, 'europe-west1'),
-  'updatetranslation'
-);
-
 const HTMLEditor = ({
   text,
   onChange,
@@ -399,24 +394,21 @@ export default function EditPage() {
     setUnsaved(true);
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!platform || !problemID) {
       return;
     }
-    updateTranslation({
-      problem: {
-        platform: platform as Platform,
-        id: problemID,
-      },
-      translation: {
-        statement: translated,
-        hints: hints,
-      },
-    }).then(result => {
-      if (result.data) {
-        setUnsaved(false);
-      }
-    });
+    const problemRef = doc(
+      getFirestore(),
+      'problemsets',
+      platform,
+      'problems',
+      problemID,
+      'translations',
+      'hu'
+    );
+    await setDoc(problemRef, { statement: translated, hints: hints });
+    setUnsaved(false);
   };
 
   const handleAddNewHint = () => {

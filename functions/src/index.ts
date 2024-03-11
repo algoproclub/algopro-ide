@@ -94,40 +94,13 @@ export const submitproblemsolution = onCall<
   }
 );
 
-const isTeacher = async (userID?: string): Promise<boolean> => {
-  if (!userID) {
-    return false;
-  }
-  const role = (await db.ref(`users/${userID}/role`).get()).val();
-  return role === 'teacher';
-};
-
-export const updatetranslation = onCall<TranslationData, Promise<boolean>>(
-  { region: 'europe-west1' },
-  async request => {
-    if (!(await isTeacher(request.auth?.uid))) {
-      return false;
-    }
-    const { problem, translation } = request.data;
-    admin
-      .firestore()
-      .doc(
-        `problemsets/${problem.platform}/problems/${problem.id}/translations/hu`
-      )
-      .set({
-        statement: translation.statement,
-        hints: translation.hints,
-      });
-    return true;
-  }
-);
-
 export const translate = onCall<string, Promise<string | null>>(
   { region: 'europe-west1' },
   async request => {
-    if (!(await isTeacher(request.auth?.uid))) {
+    if (!(request.auth as any)?.teacher) {
       return null;
     }
+
     const text = request.data;
     const resp = await fetch('https://api-free.deepl.com/v2/translate', {
       method: 'POST',

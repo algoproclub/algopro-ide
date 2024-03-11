@@ -1,0 +1,17 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // TODO: update with proper rules
+    match /problemsets/{problemset}/problems/{problem} {
+      allow read: if true;
+      allow write: if false;
+
+      match /translations/{translation} {
+        allow read: if true;
+        allow write: if request.auth.token.teacher == true;
+      }
+    }
+  }
+}
