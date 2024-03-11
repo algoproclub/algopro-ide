@@ -17,6 +17,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { TranslationData } from '../../../functions/src/types';
+import withTeacherLogin from '../../../src/scripts/withTeacherLogin';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -281,7 +282,7 @@ const EditHintModal = ({
   );
 };
 
-export default function EditPage() {
+export default withTeacherLogin(() => {
   const Hint = ({
     text,
     onDelete,
@@ -502,4 +503,4 @@ export default function EditPage() {
       </div>
     </div>
   );
-}
+});
