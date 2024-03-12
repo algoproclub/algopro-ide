@@ -104,7 +104,7 @@ export class CFSubmitter extends Submitter {
           submittedProblemIndex,
           source: sourceCode,
           programTypeId: {
-            cpp: '73', // GNU G++20 11.2.0 (64 bit, winlibs)
+            cpp: '54', // GNU G++17
             py: '70', // PyPy 3.9.10 (7.3.9, 64bit)
             java: '87', // Java 21 64bit
           }[language],

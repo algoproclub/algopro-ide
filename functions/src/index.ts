@@ -18,12 +18,7 @@ import {
   ResultFetcher,
   CSESResultFetcher,
 } from './getResult';
-import {
-  PendingSubmissions,
-  AccountData,
-  SubmissionData,
-  TranslationData,
-} from './types';
+import { PendingSubmissions, AccountData, SubmissionData } from './types';
 import {
   onValueCreated,
   onValueDeleted,
