@@ -95,7 +95,7 @@ export default function SubmitButton({
     'text-white bg-[#363636] hover:bg-gray-600 hover:border-gray-500 active:bg-gray-500 active:border-gray-400';
 
   return (
-    <div className="relative z-0">
+    <div className="relative z-0 min-w-[24rem]">
       {!isLoading && !isDisabled && <SolvedStatusForm />}
       <button
         className={classNames(

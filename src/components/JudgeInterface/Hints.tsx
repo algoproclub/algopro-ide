@@ -8,26 +8,31 @@ const Hint = ({ index, content }: { index: number; content: string }) => {
   const [hasBeenOpened] = useState(false);
 
   return (
-    <div className="mx-0 rounded-md mt-4 mb-4 bg-[#121212] border border-t-0 border-[#363636]">
+    <div
+      className={`mx-0 text-sm border border-gray-700 bg-[#121212] overflow-hidden`}
+    >
       <button
         type="button"
-        className="flex items-center justify-between py-2.5 px-4 bg-gray-800 border-b border-t rounded-t-md w-full border-[#363636] text-sm"
+        className={`flex items-center justify-between text-gray-300 py-2.5 px-3.5 w-full ${
+          revealed ? 'bg-gray-800' : 'hover:bg-gray-900'
+        }`}
         onClick={() => setRevealed(!revealed)}
       >
-        <span className={hasBeenOpened ? '' : 'font-semibold'}>
-          Hint {index + 1}
-        </span>
-        {revealed ? (
-          <ChevronUpIcon className="h-5 w-5" />
-        ) : (
-          <ChevronDownIcon className="h-5 w-5" />
-        )}
+        <div className="flex items-center">
+          {!hasBeenOpened && (
+            <span className="text-[0.5rem] text-indigo-500 pr-2">&#9679;</span>
+          )}
+          <span>Hint {index + 1}</span>
+        </div>
+        <ChevronUpIcon
+          className={`h-5 w-5 ${
+            revealed ? '' : 'rotate-180'
+          } transition duration-200`}
+        />
       </button>
       <div
-        className={`px-4 ${
-          revealed
-            ? 'py-3 translate-y-0 opacity-100'
-            : 'py-0 h-0 overflow-hidden translate-y-[-1px]'
+        className={`px-3.5 border-t border-gray-700 ${
+          revealed ? 'py-3' : 'h-0 overflow-hidden !border-0'
         } duration-200`}
       >
         <Markdown>{content}</Markdown>
@@ -38,7 +43,7 @@ const Hint = ({ index, content }: { index: number; content: string }) => {
 
 export default function Hints({ hints }: { hints: string[] }): JSX.Element {
   return (
-    <div className="p-4 pb-0 overflow-y-auto h-full">
+    <div className="p-4 pb-0 overflow-y-auto h-full space-y-2">
       {hints.map((hint, i) => (
         <div key={i + 1}>
           <Hint index={i} content={hint} />

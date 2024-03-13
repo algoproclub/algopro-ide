@@ -55,3 +55,28 @@ body {
   outline: none;
   --tw-ring-color: transparent !important;
 }
+
+.html-statement-container {
+  & ul {
+    list-style-type: disc;
+    list-style-position: inside;
+    margin-left: 0.5rem;
+  }
+  & pre {
+    @apply rounded-md px-4 py-2.5 border border-gray-700 bg-[#121212];
+  }
+  .section-title,
+  & h1,
+  & h2,
+  & h3,
+  & h4 {
+    font-size: 1rem;
+    line-height: 1.3rem;
+    margin-bottom: 0.25rem;
+    margin-top: 0.6rem;
+    font-weight: 600;
+  }
+  & p {
+    margin-bottom: 0.5rem;
+  }
+}

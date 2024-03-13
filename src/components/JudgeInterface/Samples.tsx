@@ -9,10 +9,31 @@ export function getSampleIndex(inputTab: string): number {
   return inputTab.length === 6 ? 1 : +inputTab.substring(7);
 }
 
-const PreBox = ({ title, text }: { title: string; text: string }) => {
+export const PreBox = ({
+  title,
+  text,
+  roundedTop,
+  roundedBottom,
+}: {
+  title: string;
+  text: string;
+  roundedTop?: boolean;
+  roundedBottom?: boolean;
+}) => {
+  if (roundedTop === undefined) roundedTop = true;
+  if (roundedBottom === undefined) roundedBottom = true;
+
   return (
-    <div className="mx-0 rounded-md mt-4 mb-4 break-all bg-[#121212] border border-t-0 border-[#363636]">
-      <div className="py-2.5 px-4 bg-gray-800 border-b border-t rounded-t-md border-[#363636] font-semibold text-sm">
+    <div
+      className={`mx-0 rounded-md break-all bg-[#121212] border border-t-0 border-gray-700 ${
+        roundedBottom ? '' : 'rounded-b-none'
+      } ${roundedTop ? '' : 'rounded-t-none'}`}
+    >
+      <div
+        className={`py-2.5 px-4 bg-gray-800 border-b border-t rounded-t-md border-gray-700 font-semibold text-sm ${
+          roundedTop ? '' : 'rounded-t-none'
+        }`}
+      >
         <span>{title}</span>
       </div>
       <pre className="px-4 py-3 whitespace-pre-wrap">{text}</pre>
@@ -60,8 +81,10 @@ export default function Samples({
           )}
         </button>
       </div>
-      <PreBox title="Input" text={sample.input} />
-      <PreBox title="Output" text={sample.output} />
+      <div className="my-4 space-y-4">
+        <PreBox title="Input" text={sample.input} />
+        <PreBox title="Output" text={sample.output} />
+      </div>
     </div>
   );
 }

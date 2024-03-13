@@ -24,5 +24,6 @@ export type SubmissionData = {
 
 export type TranslationData = {
   problem: PlatformProblem;
+  language: string;
   translation: Translation;
 };
