@@ -334,10 +334,11 @@ export default function FilePage() {
         <p className="sm:text-lg mt-3 text-gray-200 max-w-prose mx-auto text-left">
           Please check that the entered file ID is correct.
         </p>
-        <Link href="/">
-          <a className="mt-4 sm:mt-6 inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-[#1E1E1E]">
-            Go Home
-          </a>
+        <Link
+          href="/"
+          className="mt-4 sm:mt-6 inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-[#1E1E1E]"
+        >
+          Go Home
         </Link>
       </div>
     </div>
