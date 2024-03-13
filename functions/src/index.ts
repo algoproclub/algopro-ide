@@ -94,18 +94,10 @@ export const submitproblemsolution = onCall<
   }
 );
 
-const isTeacher = async (userID?: string): Promise<boolean> => {
-  if (!userID) {
-    return false;
-  }
-  const role = (await db.ref(`users/${userID}/role`).get()).val();
-  return role === 'teacher';
-};
-
 export const updatetranslation = onCall<TranslationData, Promise<boolean>>(
   { region: 'europe-west1' },
   async request => {
-    if (!(await isTeacher(request.auth?.uid))) {
+    if (!request.auth?.token?.teacher) {
       return false;
     }
     const { problem, translation, language } = request.data;
@@ -128,42 +120,39 @@ export const updatetranslation = onCall<TranslationData, Promise<boolean>>(
   }
 );
 
-export const translate = onCall<
-  {
-    text: string;
-    lang: string;
-  },
-  Promise<string | null>
->({ region: 'europe-west1' }, async request => {
-  if (!(await isTeacher(request.auth?.uid))) {
-    return null;
+export const translate = onCall<string, Promise<string | null>>(
+  { region: 'europe-west1' },
+  async request => {
+    if (!request.auth?.token?.teacher) {
+      return null;
+    }
+    const text = request.data;
+    const resp = await fetch('https://api-free.deepl.com/v2/translate', {
+      method: 'POST',
+      headers: {
+        Authorization: `DeepL-Auth-Key ${deeplAPIKey.value()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: [text],
+        target_lang: 'HU',
+        tag_handling: 'html',
+      }),
+    });
+    let translation: string | null = null;
+    try {
+      const json = await resp.json();
+      translation = json['translations'][0].text ?? null;
+    } catch (error) {
+      logger.log(error);
+    }
+    return translation;
   }
-  const { text, lang } = request.data;
-  const resp = await fetch('https://api-free.deepl.com/v2/translate', {
-    method: 'POST',
-    headers: {
-      Authorization: `DeepL-Auth-Key ${deeplAPIKey.value()}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      text: [text],
-      target_lang: lang,
-      tag_handling: 'html',
-    }),
-  });
-  let translation: string | null = null;
-  try {
-    const json = await resp.json();
-    translation = json['translations'][0].text ?? null;
-  } catch (error) {
-    logger.log(error);
-  }
-  return translation;
-});
+);
 
 export const enum Errors {
   NO_SUCH_SUBMISSION = 'No such submission exists for the given problem. Please check if the entered submission ID is correct.',
-  UNKNOWN_ERROR = 'Could not retrieve the results due to an unknown error',
+  UNKNOWN_ERROR = 'Could not retrieve the submission results due to an unknown error',
   PENDING_TIMEOUT = 'Could not retreive the submission results in time. Please try again later.',
 }
 
@@ -189,11 +178,14 @@ const updateStatusData = async (
   id: string,
   statusData: Partial<StatusData>
 ) => {
-  const updates: { [key: string]: Partial<StatusData> | null } = {};
+  const updates: { [key: string]: Partial<StatusData> | null | boolean } = {};
   updates[`submissions/${id}/statusData`] = statusData;
 
   if (['error', 'resolved'].includes(statusData.statusCode!)) {
     updates[`submissions/pending/${id}`] = null;
+  }
+  if (statusData.message === 'correct answer') {
+    updates[`files/${id}/solvedStatus/solved`] = true;
   }
   await db.ref().update(updates);
 };

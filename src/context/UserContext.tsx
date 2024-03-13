@@ -86,6 +86,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setUserRole(null);
       } else {
         setLogged(true);
+        user
+          .getIdTokenResult()
+          .then(res => setUserRole(res.claims.teacher ? 'teacher' : 'student'));
         let displayName = user.displayName;
         if (!displayName) {
           displayName =
@@ -107,7 +110,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const handleSnapshot = (snap: DataSnapshot) => {
       const data = snap.val()?.data ?? {};
-      const role = snap.val()?.role;
       setUserData({
         id: user.uid,
         editorMode: data.editorMode ?? 'Normal',
@@ -119,7 +121,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         discordID: data.discordID,
         usernames: data.usernames ?? {},
       });
-      setUserRole(role ?? 'student');
     };
     onValue(ref(getDatabase(), `users/${user.uid}`), handleSnapshot);
     return () =>

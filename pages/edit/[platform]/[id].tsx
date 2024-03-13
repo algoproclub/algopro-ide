@@ -18,6 +18,7 @@ import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement'
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { TranslationData } from '../../../functions/src/types';
 import { LanguageSelectorDropdown } from '../../../src/components/JudgeInterface/GenericJudgeInterface';
+import withTeacherLogin from '../../../src/scripts/withTeacherLogin';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -290,7 +291,7 @@ const EditHintModal = ({
   );
 };
 
-export default function EditPage() {
+export default withTeacherLogin(() => {
   const Hint = ({
     text,
     onDelete,
@@ -426,7 +427,7 @@ export default function EditPage() {
       return;
     }
     updateTranslated();
-  }, [language]);
+  }, [language, original]);
 
   const handleChange = useCallback((val: string) => {
     if (translated !== val) {
@@ -475,7 +476,11 @@ export default function EditPage() {
       text: original,
       lang: language,
     });
-    setTranslated(response.data);
+    if (response.data !== null) {
+      setTranslated(response.data);
+    } else {
+      console.error('unsuccessful translation');
+    }
   };
 
   return (
@@ -571,4 +576,4 @@ export default function EditPage() {
       </div>
     </div>
   );
-}
+});
