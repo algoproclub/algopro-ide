@@ -78,7 +78,8 @@ export class SPOJResultFetcher extends ResultFetcher {
   }
 
   getLink(): string | null {
-    return null;
+    const { problemID, username } = this.submissionData;
+    return `https://www.spoj.com/status/${problemID},${username}/all`;
   }
 
   getMemory(): string | null {
@@ -143,7 +144,9 @@ export class SPOJResultFetcher extends ResultFetcher {
   }
 
   async initialize(): Promise<void> {
-    const { submissionID, problemID, username } = this.submissionData;
+    const { submissionID } = this.submissionData;
+    const username = 'numbdigger';
+    const problemID = 'DCEPC11I';
 
     if (!username) throw new IncorrectDataError('SPOJ: username is missing');
 

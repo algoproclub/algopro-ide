@@ -286,7 +286,7 @@ const updateResults = async (pending: PendingSubmissions | null) => {
         const platform = fileData.problem.platform;
         const problemID = fileData.problem.id;
         const submissionID = fileData.submission.id;
-        const username = fileData.submission.username;
+        const username = fileData.submission.username ?? null;
 
         submissionData.push({
           fileID: fileID,
