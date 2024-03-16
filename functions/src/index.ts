@@ -16,7 +16,6 @@ import {
   AtCoderResultFetcher,
   ResultFetcher,
   CSESResultFetcher,
-  SPOJResultFetcher,
 } from './getResult';
 import {
   PendingSubmissions,
@@ -217,7 +216,7 @@ const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
 const updateResultNonCF = async (submissionData: SubmissionData) => {
   let fetcher: ResultFetcher;
   if (submissionData.platform === 'cses') {
-    fetcher = new SPOJResultFetcher(submissionData);
+    fetcher = new CSESResultFetcher(submissionData);
   } else if (submissionData.platform === 'atcoder') {
     fetcher = new AtCoderResultFetcher(submissionData);
   } else {
