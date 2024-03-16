@@ -65,6 +65,171 @@ export abstract class ResultFetcher {
   }
 }
 
+export class SPOJResultFetcher extends ResultFetcher {
+  private summary?: Element;
+  private error?: Element;
+  private readonly headers: HeadersInit;
+
+  constructor(readonly submissionData: SubmissionData) {
+    super(submissionData);
+    this.headers = {
+      Cookie: submissionData.sessionCookie ?? '',
+    };
+  }
+
+  getLink(): string | null {
+    return null;
+  }
+
+  getMemory(): string | null {
+    const memory = parseFloat(
+      this.summary!.querySelector('td.smemory')
+        ?.textContent?.trim()
+        ?.slice(0, -1) ?? '?'
+    );
+    if (isNaN(memory)) {
+      return null;
+    }
+    return memory + ' MB';
+  }
+
+  getTime(): string | null {
+    const time = parseFloat(
+      this.summary!.querySelector('td.stime')?.textContent?.trim() ?? '?'
+    );
+    if (isNaN(time)) {
+      return null;
+    }
+    return Math.round(1000 * time) + ' ms';
+  }
+
+  getMessage(): string {
+    const message =
+      (
+        this.summary!.querySelector('td.statusres > strong') ??
+        this.summary!.querySelector('td.statusres > a') ??
+        this.summary!.querySelector('td.statusres')
+      )?.childNodes[0].textContent
+        ?.toLowerCase()
+        ?.trim() ?? '';
+
+    if (message.startsWith('compiling') || message.startsWith('running')) {
+      return 'running';
+    }
+    if (message === 'accepted') {
+      return 'correct answer';
+    }
+    return message;
+  }
+
+  getOutput(): string | null {
+    return this.error?.textContent ?? null;
+  }
+
+  getStatusCode(): StatusCode {
+    const message = this.getMessage();
+    if (message === 'running') {
+      return 'working';
+    }
+    return 'resolved';
+  }
+
+  getStatusText(): string | null {
+    const message = this.getMessage();
+    if (message === 'running') {
+      return 'status-working';
+    }
+    return 'status-done';
+  }
+
+  async initialize(): Promise<void> {
+    const { submissionID, problemID, username } = this.submissionData;
+
+    if (!username) throw new IncorrectDataError('SPOJ: username is missing');
+
+    const fetchPage = async (page: number) => {
+      const url = `https://www.spoj.com/status/${problemID},${username}/all/start=${page}`;
+      const resp = await fetch(url, {
+        headers: this.headers,
+      });
+      if (resp.status !== 200) {
+        const errorMessage = `SPOJ: response status is not 200; url: ${url}; response status: ${resp.status}`;
+        throw resp.status === 404
+          ? new IncorrectDataError(errorMessage)
+          : new Error(errorMessage);
+      }
+      return resp;
+    };
+    const getError = async () => {
+      const resp = await fetch(`https://www.spoj.com/error/${submissionID}`, {
+        headers: this.headers,
+      });
+      const respText = await resp.text();
+      const document = new JSDOM(respText).window.document;
+      return document.querySelector('pre > small') ?? undefined;
+    };
+    const getSummary = async () => {
+      const resp = await fetchPage(queryPage);
+      const respText = await resp.text();
+      const document = new JSDOM(respText).window.document;
+      const submissionIDs = Array.from(
+        document.querySelectorAll('td.statustext:not([id])')
+      ).map(element => element.textContent!.trim());
+      const index = submissionIDs.findIndex(id => id === submissionID);
+      if (index === -1) {
+        throw new IncorrectDataError('SPOJ: submission ID not found');
+      }
+      const rows = Array.from(
+        document.querySelector('table.problems > tbody')?.children ?? []
+      );
+      return rows[index];
+    };
+    const getTask = () => {
+      return this.summary!.querySelector('td.sproblem > a')?.getAttribute(
+        'title'
+      );
+    };
+    let queryPage = -1;
+    let lastSubmissionIDs: string[] = [];
+
+    for (let currPage = 0; ; currPage += 20) {
+      const resp = await fetchPage(currPage);
+      const respText = await resp.text();
+      const document = new JSDOM(respText).window.document;
+      const submissionIDs = Array.from(
+        document.querySelectorAll('a.sourcelink.op_window')
+      )
+        .map(element => element.textContent!.trim().padStart(20, '0'))
+        .sort();
+      if (
+        submissionIDs.length === 0 ||
+        submissionIDs.toString() === lastSubmissionIDs.toString()
+      ) {
+        break;
+      }
+      const minID = submissionIDs[0];
+      const maxID = submissionIDs.at(-1)!;
+      const paddedSubmissionID = submissionID.padStart(20, '0');
+      if (paddedSubmissionID >= minID && paddedSubmissionID <= maxID) {
+        queryPage = currPage;
+        break;
+      }
+      lastSubmissionIDs = submissionIDs;
+    }
+    this.summary = await getSummary();
+    this.error = await getError();
+
+    if (!this.summary) {
+      throw new IncorrectDataError('SPOJ: submission ID not found');
+    }
+    if (getTask() !== problemID) {
+      throw new IncorrectDataError(
+        `SPOJ: problem IDs don't match (${getTask()} - ${problemID})`
+      );
+    }
+  }
+}
+
 export class CFResultFetcher extends ResultFetcher {
   private submission: any;
 
