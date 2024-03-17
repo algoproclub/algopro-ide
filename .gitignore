@@ -40,3 +40,4 @@ yarn-error.log*
 serviceAccountKey.json
 
 .env
+accounts.json
