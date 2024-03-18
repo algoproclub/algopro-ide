@@ -58,13 +58,16 @@ async function login(username: string, password: string) {
   for (const [username, password] of accounts) {
     accountInfos.push(await login(username, password));
   }
-  console.log('CF_BOT_USERNAME=' + accounts.map(([u]) => u).join(';'));
+  console.log('CF_BOT_USERNAME="' + accounts.map(([u]) => u).join(';') + '"');
   console.log(
-    'CF_COOKIE=' + accountInfos.map(({ session }) => session).join(';')
+    'CF_COOKIE="' +
+      accountInfos.map(({ session }) => 'JSESSIONID=' + session).join(';') +
+      '"'
   );
   console.log(
-    'CF_CSRF_TOKEN=' +
-      accountInfos.map(({ csrf_token }) => csrf_token).join(';')
+    'CF_CSRF_TOKEN="' +
+      accountInfos.map(({ csrf_token }) => csrf_token).join(';') +
+      '"'
   );
 
   await browser.close();
