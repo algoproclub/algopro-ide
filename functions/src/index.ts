@@ -139,6 +139,7 @@ export const translate = onCall<
     },
     body: JSON.stringify({
       text: [text],
+      tag_handling: 'html',
       target_lang: lang,
     }),
   });
