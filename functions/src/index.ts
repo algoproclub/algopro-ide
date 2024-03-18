@@ -120,35 +120,37 @@ export const updatetranslation = onCall<TranslationData, Promise<boolean>>(
   }
 );
 
-export const translate = onCall<string, Promise<string | null>>(
-  { region: 'europe-west1' },
-  async request => {
-    if (!request.auth?.token?.teacher) {
-      return null;
-    }
-    const text = request.data;
-    const resp = await fetch('https://api-free.deepl.com/v2/translate', {
-      method: 'POST',
-      headers: {
-        Authorization: `DeepL-Auth-Key ${deeplAPIKey.value()}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: [text],
-        target_lang: 'HU',
-        tag_handling: 'html',
-      }),
-    });
-    let translation: string | null = null;
-    try {
-      const json = await resp.json();
-      translation = json['translations'][0].text ?? null;
-    } catch (error) {
-      logger.log(error);
-    }
-    return translation;
+export const translate = onCall<
+  {
+    text: string;
+    lang: string;
+  },
+  Promise<string | null>
+>({ region: 'europe-west1' }, async request => {
+  if (!request.auth?.token?.teacher) {
+    return null;
   }
-);
+  const { text, lang } = request.data;
+  const resp = await fetch('https://api-free.deepl.com/v2/translate', {
+    method: 'POST',
+    headers: {
+      Authorization: `DeepL-Auth-Key ${deeplAPIKey.value()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      text: [text],
+      target_lang: lang,
+    }),
+  });
+  let translation: string | null = null;
+  try {
+    const json = await resp.json();
+    translation = json['translations'][0].text ?? null;
+  } catch (error) {
+    logger.log(error);
+  }
+  return translation;
+});
 
 export const enum Errors {
   NO_SUCH_SUBMISSION = 'No such submission exists for the given problem. Please check if the entered submission ID is correct.',
