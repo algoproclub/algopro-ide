@@ -151,7 +151,7 @@ export default function GenericJudgeInterface({
               <h4 className="text-base font-semibold mt-[0.6rem] mb-[0.25rem]">
                 Limits
               </h4>
-              <ul className="list-disc list-inside ml-2">
+              <ul className="list-disc ml-6">
                 {problem.timeLimit && (
                   <li>
                     <span>Time:</span> {problem.timeLimit}
