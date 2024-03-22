@@ -170,9 +170,8 @@ async function fetchProblemDataCSES(
   // Fix up relative URLs to point to the cses.fi domain
   document('img').each((_, el) => {
     const src = document(el).attr('src');
-    if (src && src.startsWith('/')) {
-      document(el).attr('src', `https://cses.fi${src}`);
-    }
+    if (!src) return;
+    document(el).attr('src', new URL(src, url).href);
   });
 
   const sections: { heading: string | null; children: domhandler.Element[] }[] =
