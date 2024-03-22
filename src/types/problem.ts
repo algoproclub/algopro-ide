@@ -3,7 +3,13 @@ export type PlatformProblem = {
   id: string;
 };
 
-export type Platform = 'codeforces' | 'cses' | 'atcoder' | 'usaco' | 'planets';
+export type Platform =
+  | 'codeforces'
+  | 'cses'
+  | 'atcoder'
+  | 'spoj'
+  | 'usaco'
+  | 'planets';
 
 export type ProblemData = {
   id: string;
