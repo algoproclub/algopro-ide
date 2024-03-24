@@ -66,7 +66,7 @@ const SolvedStatusForm = () => {
         </label>
       </div>
       <button
-        className={`z-20 absolute -translate-y-1/2 top-1/2 right-2 p-2.5 rounded-full flex items-center justify-center hover:bg-gray-600 active:bg-gray-500`}
+        className={`z-20 absolute -translate-y-1/2 top-1/2 right-2 p-2 rounded-full flex items-center justify-center hover:bg-gray-600 active:bg-gray-500`}
         onClick={() => setIsOpen(prevOpen => !prevOpen)}
       >
         <FontAwesomeIcon
