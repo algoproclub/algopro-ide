@@ -18,12 +18,7 @@ import {
   ResultFetcher,
   CSESResultFetcher,
 } from './getResult';
-import {
-  PendingSubmissions,
-  AccountData,
-  SubmissionData,
-  TranslationData,
-} from './types';
+import { PendingSubmissions, AccountData, SubmissionData } from './types';
 import {
   onValueCreated,
   onValueDeleted,
@@ -91,32 +86,6 @@ export const submitproblemsolution = onCall<
         );
     }
     return await submitter.submitAndGet();
-  }
-);
-
-export const updatetranslation = onCall<TranslationData, Promise<boolean>>(
-  { region: 'europe-west1' },
-  async request => {
-    if (!request.auth?.token?.teacher) {
-      return false;
-    }
-    const { problem, translation, language } = request.data;
-    const documentPath =
-      language === '-'
-        ? `problemsets/${problem.platform}/problems/${problem.id}`
-        : `problemsets/${problem.platform}/problems/${problem.id}/translations/${language}`;
-
-    const data = {
-      statement: translation.statement,
-      hints: translation.hints,
-    };
-    const document = admin.firestore().doc(documentPath);
-    if (language === '-') {
-      document.update(data);
-    } else {
-      document.set(data);
-    }
-    return true;
   }
 );
 
