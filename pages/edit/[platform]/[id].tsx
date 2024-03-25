@@ -16,7 +16,6 @@ import dynamic from 'next/dynamic';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { TranslationData } from '../../../functions/src/types';
 import { LanguageSelectorDropdown } from '../../../src/components/JudgeInterface/GenericJudgeInterface';
 import withTeacherLogin from '../../../src/scripts/withTeacherLogin';
 
@@ -35,11 +34,6 @@ const translate = httpsCallable<
   },
   string
 >(getFunctions(undefined, 'europe-west1'), 'translate');
-
-const updateTranslation = httpsCallable<TranslationData, boolean>(
-  getFunctions(undefined, 'europe-west1'),
-  'updatetranslation'
-);
 
 const HTMLEditor = ({
   text,
