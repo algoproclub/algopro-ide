@@ -144,6 +144,7 @@ const accountData: { [key in Platform]: AccountData } = {
   codeforces: {},
   planets: {},
   usaco: {},
+  spoj: {},
 };
 
 const updateStatusData = async (
