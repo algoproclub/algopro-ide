@@ -10,7 +10,11 @@ export async function signInUser(page: Page) {
   await page.getByText('Override Data').click();
 
   const popup = await popupPromise;
-  await popup.getByText('Add new account').click({ delay: 200 });
+  const newAccount = popup.getByText('Add new account');
+  while (!(await popup.getByText('Auto-generate').isVisible())) {
+    await popup.getByText('Add new account').click();
+  }
+  await popup.getByText('Auto-generate').scrollIntoViewIfNeeded();
   await popup.getByText('Auto-generate').click();
   await popup.getByText('Sign in').click();
   await expect(page.getByText('Signed in as')).toBeVisible();

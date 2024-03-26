@@ -1,0 +1,10 @@
+version: '3'
+services:
+  playwright:
+    build: ./e2e
+    volumes:
+      - type: bind
+        source: playwright-report/
+        target: /app/playwright-report
+    network_mode: 'host'
+    depends_on: [web]
