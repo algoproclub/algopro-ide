@@ -1,5 +1,13 @@
 version: '3'
 services:
+  functions:
+    build:
+      context: .
+      dockerfile: functions.Dockerfile
+    volumes:
+      - type: bind
+        source: .
+        target: /app/
   firebase:
     build:
       context: .
@@ -14,6 +22,7 @@ services:
       - type: bind
         source: functions/
         target: /app/functions
+    depends_on: [functions]
   yjs:
     build:
       context: .
