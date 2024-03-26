@@ -59,4 +59,10 @@ services:
       - type: bind
         source: patches/
         target: /app/patches
-    depends_on: [firebase, yjs, execute]
+    depends_on:
+      firebase:
+        condition: service_healthy
+      yjs:
+        condition: service_started
+      execute:
+        condition: service_started
