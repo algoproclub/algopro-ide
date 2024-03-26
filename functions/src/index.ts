@@ -3,7 +3,6 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import fetch from 'node-fetch';
-import * as cheerio from 'cheerio';
 import {
   FileSubmission,
   Platform,
@@ -26,108 +25,108 @@ import {
   onValueUpdated,
 } from 'firebase-functions/v2/database';
 
+import { randomUUID } from 'crypto';
+import {
+  AtCoderSubmitter,
+  CFSubmitter,
+  CSESSubmitter,
+  Submitter,
+} from './submit';
+
+require('dotenv').config({ path: '.env.local' });
+
+export const cfAPIKey = defineString('CF_API_KEY');
+export const deeplAPIKey = defineString('DEEPL_API_KEY');
+export const cfAPISecret = defineString('CF_API_SECRET');
+export const cfCsrfToken = defineString('CF_CSRF_TOKEN');
+export const cfCookie = defineString('CF_COOKIE');
+export const cfUsername = defineString('CF_BOT_USERNAME');
+
+export const atCoderCookie = defineString('ATCODER_COOKIE');
+export const atCoderCsrfToken = defineString('ATCODER_CSRF_TOKEN');
+
+export const csesCookie = defineString('CSES_COOKIE');
+export const csesCsrfToken = defineString('CSES_CSRF_TOKEN');
+
+const PENDING_TIME_LIMIT_MS = 300000;
+const INCORRECT_DATA_RETRY_LIMIT_MS = 20000;
+
 export const submitproblemsolution = onCall<
   ProblemSolution,
   Promise<ClientSubmissionData>
->({ region: 'europe-west1' }, async request => {
-  const { platform } = request.data;
+>(
+  { region: 'europe-west1', maxInstances: 1, concurrency: 1 },
+  async request => {
+    const problemSolution = request.data;
+    const { platform, language } = problemSolution;
+    const comment = {
+      cpp: '//',
+      java: '//',
+      py: '#',
+    }[language];
 
-  if (platform !== 'codeforces') {
-    throw new HttpsError(
-      'unimplemented',
-      `platform '${platform}' is unimplemented`
-    );
+    problemSolution.sourceCode =
+      `${comment} UUID: ${randomUUID()}\n` + problemSolution.sourceCode;
+
+    let submitter: Submitter;
+    switch (platform) {
+      case 'codeforces':
+        submitter = new CFSubmitter(problemSolution);
+        break;
+      case 'atcoder':
+        submitter = new AtCoderSubmitter(problemSolution);
+        break;
+      case 'cses':
+        submitter = new CSESSubmitter(problemSolution);
+        break;
+      default:
+        throw new HttpsError(
+          'unimplemented',
+          `platform '${platform}' is unimplemented`
+        );
+    }
+    return await submitter.submitAndGet();
   }
+);
 
-  return submitProblemSolutionCodeforces(request.data);
+export const translate = onCall<
+  {
+    text: string;
+    lang: string;
+  },
+  Promise<string | null>
+>({ region: 'europe-west1' }, async request => {
+  if (!request.auth?.token?.teacher) {
+    return null;
+  }
+  const { text, lang } = request.data;
+  const resp = await fetch('https://api-free.deepl.com/v2/translate', {
+    method: 'POST',
+    headers: {
+      Authorization: `DeepL-Auth-Key ${deeplAPIKey.value()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      text: [text],
+      tag_handling: 'html',
+      target_lang: lang,
+    }),
+  });
+  let translation: string | null = null;
+  try {
+    const json = await resp.json();
+    translation = json['translations'][0].text ?? null;
+  } catch (error) {
+    logger.log(error);
+  }
+  return translation;
 });
 
-const CODEFORCES_PROBLEM_REGEX = /^(\d+)([A-Z].*)$/;
-
-async function submitProblemSolutionCodeforces({
-  problemID,
-  sourceCode,
-  language,
-}: ProblemSolution): Promise<ClientSubmissionData> {
-  const csrf_token = getEnv('CF_CSRF_TOKEN');
-  const cookie = getEnv('CF_COOKIE');
-  const username = getEnv('CF_BOT_USERNAME');
-
-  const matches = problemID.match(CODEFORCES_PROBLEM_REGEX);
-  if (!matches) {
-    throw new HttpsError(
-      'invalid-argument',
-      `'${problemID}' is not a valid Codeforces problem ID`
-    );
-  }
-  const contestId = matches[1];
-  const submittedProblemIndex = matches[2];
-
-  const response = await fetch(
-    'https://codeforces.com/problemset/submit?' +
-      new URLSearchParams({ csrf_token }).toString(),
-    {
-      headers: {
-        'content-type': 'application/x-www-form-urlencoded',
-        cookie: cookie,
-        Referer: 'https://codeforces.com/problemset/submit',
-        'user-agent':
-          'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-      },
-      body: new URLSearchParams({
-        action: 'submitSolutionFormSubmitted',
-        contestId,
-        submittedProblemIndex,
-        source: sourceCode,
-        programTypeId: {
-          cpp: '54', // GNU G++17 7.3.0
-          py: '70', // PyPy 3.9.10 (7.3.9, 64bit)
-          java: '87', // Java 21 64bit
-        }[language],
-        tabSize: '4',
-        csrf_token,
-        ftaa: '',
-        bfaa: '',
-        sourceFile: '',
-        _tta: '195',
-      }),
-      method: 'POST',
-    }
-  );
-  if (response.status !== 200) {
-    throw new Error('submission failed');
-  }
-
-  const text = await response.text();
-  if (text.includes('You have submitted exactly the same code before')) {
-    throw new HttpsError(
-      'already-exists',
-      `You have submitted exactly the same code before`
-    );
-  }
-  const document = cheerio.load(text);
-  const id = document('[data-submission-id]').attr('data-submission-id');
-  if (!id) {
-    throw new Error('cannot find submission id');
-  }
-
-  return {
-    id,
-    username,
-    platform: 'codeforces',
-  };
+export const enum Errors {
+  NO_SUCH_SUBMISSION = 'No such submission exists for the given problem. Please check if the entered submission ID is correct.',
+  UNKNOWN_ERROR = 'Could not retrieve the submission results due to an unknown error',
+  PENDING_TIMEOUT = 'Could not retreive the submission results in time. Please try again later.',
 }
-
-function getEnv(name: string): string {
-  const r = process.env[name];
-  if (!r) throw new Error(`environment variable '${name}' is unset`);
-  return r;
-}
-
-export const cfAPIKey = defineString('CF_API_KEY');
-export const cfAPISecret = defineString('CF_API_SECRET');
-export const atCoderCookie = defineString('ATCODER_COOKIE');
-export const csesCookie = defineString('CSES_COOKIE');
 
 export class IncorrectDataError extends Error {}
 
@@ -136,10 +135,11 @@ const db = admin.database();
 
 const accountData: { [key in Platform]: AccountData } = {
   atcoder: {
-    sessionCookie: atCoderCookie,
+    // result fetching always uses the first account
+    sessionCookie: () => atCoderCookie.value()[0],
   },
   cses: {
-    sessionCookie: csesCookie,
+    sessionCookie: () => csesCookie.value(),
   },
   codeforces: {},
   planets: {},
@@ -150,10 +150,14 @@ const updateStatusData = async (
   id: string,
   statusData: Partial<StatusData>
 ) => {
-  const updates: { [key: string]: Partial<StatusData> | null } = {};
+  const updates: { [key: string]: Partial<StatusData> | null | boolean } = {};
   updates[`submissions/${id}/statusData`] = statusData;
+
   if (['error', 'resolved'].includes(statusData.statusCode!)) {
     updates[`submissions/pending/${id}`] = null;
+  }
+  if (statusData.message === 'correct answer') {
+    updates[`files/${id}/solvedStatus/solved`] = true;
   }
   await db.ref().update(updates);
 };
@@ -163,9 +167,15 @@ const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
     const data = await fetcher.getResults();
     await updateStatusData(fileID, data);
   } catch (error) {
-    let message = 'Error: unknown error';
+    let message = Errors.UNKNOWN_ERROR;
     if (error instanceof IncorrectDataError) {
-      message = 'Error: incorrect data';
+      if (
+        fetcher.submissionData.creationTime >
+        Date.now() - INCORRECT_DATA_RETRY_LIMIT_MS
+      ) {
+        return;
+      }
+      message = Errors.NO_SUCH_SUBMISSION;
     }
     logger.log(error);
     await updateStatusData(fileID, {
@@ -218,8 +228,8 @@ const updateResultsCF = async (
           statusText: 'status-done',
           message:
             resp.status === 400
-              ? 'Error: incorrect data'
-              : 'Error: unknown error',
+              ? Errors.NO_SUCH_SUBMISSION
+              : Errors.UNKNOWN_ERROR,
         })
       );
     });
@@ -255,7 +265,7 @@ const updateResults = async (pending: PendingSubmissions | null) => {
           fileID: fileID,
           platform: platform,
           username: username,
-          sessionCookie: accountData[platform]?.sessionCookie?.value() ?? null,
+          sessionCookie: accountData[platform].sessionCookie?.() ?? null,
           problemID: problemID,
           submissionID: submissionID,
           creationTime: creationTime,
@@ -264,7 +274,7 @@ const updateResults = async (pending: PendingSubmissions | null) => {
         await updateStatusData(fileID, {
           statusCode: 'error',
           statusText: 'status-done',
-          message: 'Error: incorrect data',
+          message: Errors.NO_SUCH_SUBMISSION,
         });
         logger.log(error);
       }
@@ -374,8 +384,34 @@ const updateStatus = async () => {
   }
   try {
     await new Promise(r => setTimeout(r, 2000));
-    const pending = (await db.ref('submissions/pending').get()).val();
-    await updateResults(pending);
+    const pending: PendingSubmissions = (
+      await db.ref('submissions/pending').get()
+    ).val();
+    const cutoff = Date.now() - PENDING_TIME_LIMIT_MS;
+
+    const filtered: PendingSubmissions = {};
+    const promises: Promise<void>[] = [];
+
+    Object.entries(pending).forEach((entry, index) => {
+      const fileID = entry[0];
+      const creationTime = entry[1].creationTime;
+
+      if (creationTime <= cutoff) {
+        promises.push(
+          updateStatusData(fileID, {
+            statusCode: 'error',
+            statusText: 'status-done',
+            message: Errors.PENDING_TIMEOUT,
+          })
+        );
+      } else {
+        filtered[fileID] = {
+          creationTime,
+        };
+      }
+    });
+    await Promise.all(promises);
+    await updateResults(filtered);
   } catch (error) {
     logger.log(error);
   } finally {

@@ -1,8 +1,15 @@
 import { AppProps } from 'next/app';
+import Head from 'next/head';
 import 'tailwindcss/tailwind.css';
 import '../src/styles/globals.css';
 import * as firebase from 'firebase/app';
-import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
+import {
+  getDatabase,
+  connectDatabaseEmulator,
+  update,
+  ref,
+  get,
+} from 'firebase/database';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { getAnalytics, isSupported } from 'firebase/analytics';
@@ -10,12 +17,17 @@ import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 import { ConnectionProvider } from '../src/context/ConnectionContext';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
-import { UserProvider } from '../src/context/UserContext';
+import {
+  useNullableUserContext,
+  UserProvider,
+} from '../src/context/UserContext';
 import { SHOULD_USE_FIREBASE_EMULATOR } from '../src/dev_constants';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
+import { far } from '@fortawesome/free-regular-svg-icons';
+import { useEffect } from 'react';
 
-library.add(fas);
+library.add(fas, far);
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBYdZ07lyFBG6s8x2e06NUDCDmPh12AaX0',
@@ -57,6 +69,9 @@ if (!firebase.getApps()?.length) {
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
+      <Head>
+        <meta name="color-scheme" content="dark" />
+      </Head>
       <Toaster position="bottom-right" />
       <UserProvider>
         <ConnectionProvider>

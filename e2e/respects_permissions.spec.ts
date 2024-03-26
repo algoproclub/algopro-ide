@@ -7,16 +7,22 @@ import {
   isMonaco,
   setInputEditorValue,
   waitForEditorToLoad,
+  signInUser,
 } from './helpers';
 
 // note: these tests are currently quite bad -- we need error handling for when permission is denied
 // rather than just silently failing.
+
+test.beforeEach(async ({ page }) => {
+  await signInUser(page);
+});
 
 test.describe('Respects Permissions', () => {
   test('should support view only', async ({ page, browser, isMobile }) => {
     const context2 = await browser.newContext();
 
     const page2 = await context2.newPage();
+    await signInUser(page2);
 
     await createNew(page);
     await page.waitForSelector('text="Run Code"');
@@ -139,6 +145,7 @@ test.describe('Respects Permissions', () => {
     const context2 = await browser.newContext();
 
     const page2 = await context2.newPage();
+    await signInUser(page2);
 
     await createNew(page);
     await page.waitForSelector('button:has-text("Run Code")');

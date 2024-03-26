@@ -30,9 +30,12 @@
             ".validate": "!root.child('files').child($secretid).exists() || root.child('files').child($secretid).child('input').child('history').child(newData.child('id').val()).child('a').val() === newData.child('a').val() && newData.hasChildren(['a', 'o', 'id'])"
           }
         },
-
+        "solvedStatus": {
+          ".write": "root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER'"
+        },
         "settings": {
           ".read": true,
+          /* TODO: Find out what is wrong with the rules below. For now, we will allow any writes by the OWNER.
           "$setting": {
             ".write": "!root.child('files').child($secretid).child('settings').child('defaultPermission').exists() || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE'"
           },
@@ -40,9 +43,9 @@
             ".write": "!root.child('files').child($secretid).child('settings').child('defaultPermission').exists() || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER'"
           },
           "creationTime": {
-            /* only write upon creation */
             ".write": "!root.child('files').child($secretid).child('settings').child('creationTime').exists()"
-          }
+          } */
+          ".write": "root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER'"
         },
 
         "chat": {
@@ -54,7 +57,7 @@
           ".read": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ'",
           ".write": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE'"
         },
-          
+
         "state": {
           ".read": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ'",
           ".write": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE'"
@@ -68,7 +71,13 @@
         }
       }
     },
-    ".read": false,
+    "submissions": {
+      "$secretid": {
+        ".write": false,
+        ".read": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ'"
+      }
+    },
+    ".read": "auth.token.teacher === true",
     ".write": false
   }
 }

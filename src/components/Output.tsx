@@ -41,7 +41,7 @@ export const Output = ({
     else if (result?.stdout) option = 'stdout';
     else if (result?.stderr) option = 'stderr';
     if (option) setOption(option as OutputTab);
-  }, [result]);
+  }, [result?.status, result?.stdout, result?.stderr]);
 
   useEffect(() => {
     if (statusData) setOption('results');
@@ -101,17 +101,15 @@ export const Output = ({
           />
         )}
       </div>
-      <div
-        className="text-sm font-mono text-right pr-4 text-gray-200"
-        data-test-id="code-execution-output-status"
-      >
-        {option !== 'results' && result && (
-          <>
-            {result.statusDescription}, {result.time ?? '-'}s,{' '}
-            {result.memory ?? '-'}KB
-          </>
-        )}
-      </div>
+      {option !== 'results' && result && (
+        <div
+          className="text-sm font-mono text-right px-4 py-1 text-gray-300"
+          data-test-id="code-execution-output-status"
+        >
+          {result.statusDescription}, {result.time ?? '-'}s,{' '}
+          {result.memory ?? '-'}KB
+        </div>
+      )}
     </>
   );
 };

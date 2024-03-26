@@ -16,6 +16,7 @@ import {
   mobileActiveTabAtom,
   problemAtom,
   showSidebarAtom,
+  translationsAtom,
 } from '../../atoms/workspaceUI';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { Chat } from '../Chat';
@@ -26,6 +27,7 @@ import { Output } from '../Output';
 import { TabBar } from '../TabBar';
 import { UserList } from '../UserList/UserList';
 import Samples from '../JudgeInterface/Samples';
+import Hints from '../JudgeInterface/Hints';
 import useJudgeResults from '../../hooks/useJudgeResults';
 import USACOJudgeInterface from '../JudgeInterface/USACOJudgeInterface';
 import GenericJudgeInterface from '../JudgeInterface/GenericJudgeInterface';
@@ -47,8 +49,20 @@ import {
   PlatformProblem,
   ProblemData,
   StatusData,
+  Translation,
 } from '../../types/problem';
-import { fetchProblemFromDb } from '../../scripts/fetchProblemFromDb';
+import {
+  fetchProblemFromDb,
+  fetchTranslationsFromDb,
+} from '../../scripts/fetchProblemFromDb';
+import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
+
+export function getHints(
+  problem: ProblemData,
+  translations: Record<string, Translation>
+) {
+  return 'hu' in translations ? translations['hu'].hints : problem.hints ?? [];
+}
 
 export default function Workspace({
   handleRunCode,
@@ -67,6 +81,7 @@ export default function Workspace({
   const setCodemirrorInputEditor = useUpdateAtom(inputCodemirrorEditorAtom);
   const setOutputEditor = useUpdateAtom(outputMonacoEditorAtom);
   const [problem, setProblem] = useAtom(problemAtom);
+  const [translations, setTranslations] = useAtom(translationsAtom);
 
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
@@ -95,14 +110,21 @@ export default function Workspace({
       setStatusData(null);
 
       // FIXME: Do not store USACO problems directly in the Realtime DB.
-      const problemData =
-        fileData.problem && fileData.problem.platform === 'usaco'
-          ? (fileData.problem as ProblemData)
-          : await fetchProblemFromDb(fileData.problem as PlatformProblem);
+      if (!fileData.problem) {
+        setProblem(undefined);
+        return;
+      }
+
+      const problemData = await fetchProblemFromDb(
+        fileData.problem as PlatformProblem
+      );
 
       setProblem(problemData);
       if (problemData) {
         setInputTab('judge');
+        setTranslations(
+          await fetchTranslationsFromDb(fileData.problem as PlatformProblem)
+        );
       }
     })();
   }, [fileData.problem?.platform]);
@@ -122,17 +144,23 @@ export default function Workspace({
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
   const { lightMode } = useUserContext().userData;
 
+  const [language, setLanguage] = React.useState('en');
+
+  useEffect(() => {
+    setLanguage('hu' in translations ? 'hu' : 'en');
+  }, [translations]);
+
   return (
     <Split
       onDragEnd={() => layoutEditors()}
       render={({ getGridProps, getGutterProps }) => (
         <div
-          className={`grid grid-cols-[3fr,3px,2fr,3px,1fr] grid-rows-[1fr,3px,1fr] h-full overflow-hidden`}
+          className={`grid grid-cols-[3fr,3px,2fr,3px,1fr] grid-rows-[2fr,3px,1fr] h-full overflow-hidden`}
           {...getGridProps()}
         >
           <CodeInterface
             className={classNames(
-              'row-span-full min-w-0 overflow-hidden border-t border-black',
+              'row-span-full min-w-0 overflow-hidden',
               !isDesktop && 'col-span-full',
               !isDesktop && mobileActiveTab !== 'code' && 'hidden'
             )}
@@ -144,11 +172,11 @@ export default function Workspace({
             )}
             {...getGutterProps('column', 1)}
           >
-            <div className="absolute h-full left-[6px] right-[6px] bg-black group-hover:bg-gray-600 group-active:bg-gray-600 pointer-events-none transition" />
+            <div className="absolute h-full left-[7px] right-[7px] bg-gray-700 group-hover:bg-gray-600 group-active:bg-gray-600 pointer-events-none transition" />
           </div>
           <div
             className={classNames(
-              'flex flex-col min-w-0 min-h-0 overflow-hidden',
+              'flex flex-col min-h-0 overflow-hidden',
               !isDesktop && 'col-span-full mb-[6px]',
               !isDesktop && mobileActiveTab !== 'io' && 'hidden',
               isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
@@ -159,7 +187,7 @@ export default function Workspace({
               activeTab={inputTab}
               onTabSelect={x => setInputTab(x.value)}
             />
-            <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden">
+            <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden min-w-[24rem]">
               {inputTab === 'input' && (
                 <LazyRealtimeEditor
                   theme={lightMode ? 'light' : 'vs-dark'}
@@ -189,14 +217,15 @@ export default function Workspace({
                   yjsDocumentId={`${fileData.id}.input`}
                 />
               )}
-              {inputTab === 'judge' &&
+              {problem?.id === fileData.problem?.id &&
+                inputTab === 'judge' &&
                 problem &&
-                (isNaN(Number(problem.id)) ? (
+                (problem.platform !== 'usaco' ? (
                   <GenericJudgeInterface
                     problem={problem}
-                    statusData={statusData}
-                    setStatusData={setStatusData}
-                    handleRunCode={handleRunCode}
+                    translations={translations}
+                    language={language}
+                    setLanguage={setLanguage}
                   />
                 ) : (
                   <USACOJudgeInterface
@@ -206,18 +235,33 @@ export default function Workspace({
                     handleRunCode={handleRunCode}
                   />
                 ))}
-              {inputTab.startsWith('Sample') && problem && (
-                <div className="overflow-y-auto h-full">
-                  <div className="p-4 pb-0">
-                    <Samples
-                      samples={problem.samples}
-                      inputTab={inputTab}
-                      handleRunCode={handleRunCode}
-                    />
+              {problem?.id === fileData.problem?.id &&
+                inputTab === 'hints' &&
+                problem &&
+                translations && (
+                  <Hints hints={getHints(problem, translations)} />
+                )}
+              {problem?.id === fileData.problem?.id &&
+                inputTab.startsWith('Sample') &&
+                problem && (
+                  <div className="overflow-y-auto h-full">
+                    <div className="p-4 pb-0 relative h-full">
+                      <Samples
+                        samples={problem.samples}
+                        inputTab={inputTab}
+                        handleRunCode={handleRunCode}
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
+            {problem?.submittable && problem.id === fileData.problem?.id && (
+              <PlatformSubmitButton
+                platform={problem.platform}
+                statusData={statusData}
+                setStatusData={setStatusData}
+              />
+            )}
           </div>
           <div
             className={classNames(
@@ -230,9 +274,9 @@ export default function Workspace({
           >
             <div
               className={classNames(
-                'absolute w-full bg-black group-hover:bg-gray-600 group-active:bg-gray-600 group-focus:bg-gray-600 pointer-events-none transition',
+                'absolute w-full bg-gray-700 group-hover:bg-gray-600 group-active:bg-gray-600 group-focus:bg-gray-600 pointer-events-none transition',
                 isDesktop
-                  ? 'top-[6px] bottom-[6px]'
+                  ? 'top-[7px] bottom-[7px]'
                   : 'inset-y-0 bg-gray-800 flex items-center justify-center'
               )}
             >
@@ -243,7 +287,7 @@ export default function Workspace({
           </div>
           <div
             className={classNames(
-              'flex flex-col min-w-0 min-h-0 overflow-hidden',
+              'flex flex-col min-h-0 overflow-hidden min-w-[24rem]',
               !isDesktop && 'col-span-full mt-[6px]',
               !isDesktop && mobileActiveTab !== 'io' && 'hidden',
               isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
@@ -270,16 +314,16 @@ export default function Workspace({
                 )}
                 {...getGutterProps('column', 3)}
               >
-                <div className="absolute h-full left-[6px] right-[6px] bg-black group-hover:bg-gray-600 group-active:bg-gray-600 pointer-events-none transition" />
+                <div className="absolute h-full left-[7px] right-[7px] bg-gray-700 group-hover:bg-gray-600 group-active:bg-gray-600 pointer-events-none transition" />
               </div>
               <div
                 className={classNames(
-                  'row-span-full min-w-0 bg-[#1E1E1E] text-gray-200 flex flex-col overflow-auto',
+                  'row-span-full min-w-[24rem] bg-[#1E1E1E] text-gray-200 flex flex-col overflow-auto',
                   isDesktop ? 'col-start-5' : 'col-span-full pt-4'
                 )}
               >
-                <UserList className="max-w-full max-h-64" />
-                <Chat className="flex-1 p-4 min-h-0" />
+                <UserList className="max-w-full max-h-64 lg:mt-3" />
+                <Chat className="flex-1 min-h-0" />
               </div>
             </>
           )}

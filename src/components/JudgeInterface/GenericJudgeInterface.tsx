@@ -1,171 +1,198 @@
-import { useAtomValue } from 'jotai/utils';
-import React, { useState, useEffect, useRef } from 'react';
-import { mainEditorValueAtom } from '../../atoms/workspace';
-import { StatusData } from '../../types/problem';
-import SubmitButton from './SubmitButton';
-import { PlayCircleIcon } from '@heroicons/react/20/solid';
-import Markdown from './Markdown';
-import { getFirestore, getDoc, doc, onSnapshot } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { useEditorContext } from '../../context/EditorContext';
+import React from 'react';
+import { ProblemData, Translation } from '../../types/problem';
 import {
-  ProblemData,
-  ProblemSolution,
-  SubmissionData,
-} from '../../types/problem';
-import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
-import { useUserContext } from '../../context/UserContext';
-import LoadResultsModal from './LoadResultsModal';
-import { submitproblemsolution } from '../../../functions/src';
-import {
-  registerSubmission,
-  resetStatusData,
-} from '../../scripts/updateStatus';
-import 'katex/dist/katex.min.css';
-import renderMathInElement from 'katex/contrib/auto-render';
-import katex from 'katex';
+  ArrowTopRightOnSquareIcon,
+  ChevronUpIcon,
+} from '@heroicons/react/20/solid';
+import { Listbox, Transition } from '@headlessui/react';
+import HTMLStatement from './HTMLStatement';
+import { PreBox } from './Samples';
 
-const submitProblemSolution = httpsCallable<ProblemSolution, SubmissionData>(
-  getFunctions(undefined, 'europe-west1'),
-  'submitproblemsolution'
-);
+// TODO: We should be getting this from some sort of library.
+const LANGUAGE_INFO: Record<string, { name: string; flag: string }> = {
+  '-': {
+    name: 'original',
+    flag: '—',
+  },
+  en: {
+    name: 'english',
+    flag: '🇺🇸',
+  },
+  hu: {
+    name: 'magyar',
+    flag: '🇭🇺',
+  },
+  es: {
+    name: 'español',
+    flag: '🇪🇸',
+  },
+};
+
+export const LanguageSelectorDropdown = ({
+  languages,
+  language,
+  setLanguage,
+}: {
+  languages: string[];
+  language: string;
+  setLanguage: (language: string) => void;
+}) => {
+  return (
+    <div className="relative z-20">
+      <Listbox value={language} onChange={setLanguage}>
+        {({ open }) => (
+          <>
+            <div className="w-full flex space-x-2">
+              <div className="w-full text-sm">
+                <Listbox.Button
+                  className={`w-full bg-[#121212] px-3.5 py-2.5 flex items-center justify-between truncate rounded-md border text-gray-300 ${
+                    open
+                      ? 'ring-2 ring-indigo-500 border-transparent bg-gray-800'
+                      : 'hover:bg-gray-900 active:bg-gray-700 border-gray-700'
+                  }`}
+                >
+                  <span className="space-x-2">
+                    <span>{LANGUAGE_INFO[language].flag}</span>
+                    <span>{LANGUAGE_INFO[language].name}</span>
+                  </span>
+                  <ChevronUpIcon
+                    className={`h-5 w-5 inline ml-2 ${
+                      open ? '' : 'rotate-180'
+                    } transition duration-200`}
+                  />
+                </Listbox.Button>
+                <Transition
+                  enter="transition duration-100 ease-out"
+                  enterFrom="transform scale-95 opacity-0"
+                  enterTo="transform scale-100 opacity-100"
+                  leave="transition duration-75 ease-out"
+                  leaveFrom="transform scale-100 opacity-100"
+                  leaveTo="transform scale-95 opacity-0"
+                >
+                  <Listbox.Options
+                    static
+                    className="border border-gray-700 rounded-md bg-[#121212] divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden"
+                  >
+                    {languages.map(val => (
+                      <Listbox.Option
+                        className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700 select-none"
+                        key={val}
+                        value={val}
+                      >
+                        <span className="space-x-2">
+                          <span>{LANGUAGE_INFO[val].flag}</span>
+                          <span>{LANGUAGE_INFO[val].name}</span>
+                        </span>
+                      </Listbox.Option>
+                    ))}
+                  </Listbox.Options>
+                </Transition>
+              </div>
+            </div>
+          </>
+        )}
+      </Listbox>
+    </div>
+  );
+};
 
 export default function GenericJudgeInterface({
   problem,
-  statusData,
-  setStatusData,
-  handleRunCode,
+  translations,
+  language,
+  setLanguage,
 }: {
   problem: ProblemData;
-  statusData: StatusData | null;
-  setStatusData: React.Dispatch<React.SetStateAction<StatusData | null>>;
-  handleRunCode: () => void;
+  translations: Record<string, Translation>;
+  language: string;
+  setLanguage: React.Dispatch<React.SetStateAction<string>>;
 }): JSX.Element {
-  const { fileData } = useEditorContext();
-  const { userData } = useUserContext();
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const getMainEditorValue = useAtomValue(mainEditorValueAtom)!;
-
-  const handleSubmit = async () => {
-    const getSubmitLink = () => {
-      const codeforcesRegex = /^(\d+)([A-Z].*)$/;
-      const platform = problem.platform;
-      const problemID = problem.id;
-      const matches = problemID.match(codeforcesRegex)!;
-
-      let submitLink = '';
-      if (platform === 'codeforces') {
-        submitLink = `https://codeforces.com/problemset/problem/${matches[1]}/${matches[2]}`;
-      }
-      if (platform === 'atcoder') {
-        submitLink = `https://atcoder.jp/contests/${
-          problemID.split('_')[0]
-        }/tasks/${problemID}`;
-      }
-      if (platform === 'cses') {
-        submitLink = `https://cses.fi/problemset/submit/${problemID}/`;
-      }
-      return submitLink;
+  // TODO: Move the original text under translations
+  if (problem?.statement) {
+    translations['en'] = {
+      statement: problem.statement,
+      hints: problem.hints ?? [],
     };
-    if (userData.manualSubmission) {
-      const link = getSubmitLink();
-      window.open(link, '_blank');
-      setIsOpen(true);
-    } else {
-      try {
-        setStatusData({
-          statusCode: 'starting',
-          message: 'starting',
-          statusText: null,
-          link: null,
-          time: null,
-          memory: null,
-          output: null,
-          testCases: null,
-        });
-        const submissionData = await submitProblemSolution({
-          platform: problem.platform,
-          problemID: problem.id,
-          language: fileData.settings.language,
-          sourceCode: getMainEditorValue(),
-        });
-        registerSubmission(
-          fileData.id,
-          submissionData.data.id,
-          submissionData.data.username,
-          setStatusData
-        );
-        console.log('submission success', submissionData);
-      } catch (error) {
-        resetStatusData(fileData.id, setStatusData);
-        console.error(error);
-      }
-    }
-  };
-
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (ref.current !== null) {
-      renderMathInElement(ref.current, {
-        delimiters: [
-          // For Codeforces
-          { left: '$$$', right: '$$$', display: false },
-          { left: '$$$$$', right: '$$$$$', display: true },
-        ],
-      });
-
-      // For AtCoder
-      ref.current.querySelectorAll('var').forEach(element => {
-        katex.render(element.textContent ?? '', element);
-      });
-    }
-  }, [ref.current]);
+  }
+  const languages = Object.keys(translations);
 
   return (
-    <div className="relative h-full flex flex-col">
-      <LoadResultsModal
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        setStatusData={setStatusData}
-      />
+    <div className="relative h-full flex flex-col text-[0.92rem]">
       <div className="flex-1 overflow-y-auto">
-        <section className="p-4 pb-0">
-          <h3>
-            <a
-              href={problem.url}
-              target="_blank"
-              rel="noreferrer"
-              className="font-bold text-xl hover:underline flex flex-row items-center"
-            >
-              {problem.title}
-              <ArrowTopRightOnSquareIcon
-                aria-hidden="true"
-                className="ml-1 h-5 w-5"
-              />
-            </a>
-          </h3>
-          <div
-            id="problem-statement"
-            dangerouslySetInnerHTML={{ __html: problem.statement ?? '' }}
-            ref={ref}
-          ></div>
-          <style jsx global>{`
-            #problem-statement p {
-              margin-bottom: 0.5rem;
-            }
-
-            #problem-statement .section-title {
-              font-size: 1.125rem;
-              font-weight: 600;
-            }
-          `}</style>
+        <section className="p-4">
+          <header className="items-center">
+            {languages.length > 1 && (
+              <div className="mb-2">
+                <LanguageSelectorDropdown
+                  languages={languages}
+                  language={language}
+                  setLanguage={setLanguage}
+                />
+              </div>
+            )}
+            <h3 className="flex-1 mt-0">
+              <a
+                href={problem.url}
+                target="_blank"
+                rel="noreferrer"
+                className="font-bold text-lg hover:underline"
+              >
+                {problem.title}
+                <ArrowTopRightOnSquareIcon
+                  aria-hidden="true"
+                  className="ml-1 h-5 w-5 inline"
+                />
+              </a>
+            </h3>
+          </header>
+          <HTMLStatement htmlContent={translations[language].statement} />
+          {(problem.timeLimit || problem.memoryLimit) && (
+            <div>
+              <h4 className="text-base font-semibold mt-[0.6rem] mb-[0.25rem]">
+                Limits
+              </h4>
+              <ul className="list-disc ml-6">
+                {problem.timeLimit && (
+                  <li>
+                    <span>Time:</span> {problem.timeLimit}
+                  </li>
+                )}
+                {problem.memoryLimit && (
+                  <li>
+                    <span>Memory:</span> {problem.memoryLimit}
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+          {/* Samples are included in the parsed problem statement for SPOJ */}
+          {problem.samples.length > 0 && problem.platform !== 'spoj' && (
+            <>
+              <h4 className="text-base font-semibold mt-[0.6rem] mb-[0.25rem]">
+                Examples
+              </h4>
+              <div className="mt-2 space-y-3">
+                {problem.samples.map((sample, index) => (
+                  <div key={index} className="mb-4">
+                    <div className="mb-3 -space-y-[1px] text-sm">
+                      <PreBox
+                        title={`Input ${index + 1}`}
+                        text={sample.input}
+                        roundedBottom={false}
+                      />
+                      <PreBox
+                        title={`Output ${index + 1}`}
+                        text={sample.output}
+                        roundedTop={false}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </section>
       </div>
-      <SubmitButton
-        isLoading={(statusData?.statusCode ?? 0) <= -8}
-        isDisabled={!problem.submittable}
-        onClick={handleSubmit}
-      />
     </div>
   );
 }

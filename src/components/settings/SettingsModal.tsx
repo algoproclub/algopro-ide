@@ -12,15 +12,20 @@ import {
   ComputerDesktopIcon,
   ServerIcon,
   UserIcon,
+  CodeBracketIcon,
 } from '@heroicons/react/20/solid';
 import UserSettings from './UserSettings';
 import WorkspaceSettingsUI from './WorkspaceSettingsUI';
-
 import SignInSettings from './SignInSettings';
+import TemplateCodeSettings from './TemplateCodeSettings';
 import JudgeResult from '../../types/judge';
 import { ProblemData } from '../../types/problem';
 import useJudgeResults from '../../hooks/useJudgeResults';
-import { EditorMode, useUserContext } from '../../context/UserContext';
+import {
+  EditorMode,
+  Language,
+  useUserContext,
+} from '../../context/UserContext';
 import { FileSettings, useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { update, ref, getDatabase, runTransaction } from 'firebase/database';
@@ -41,13 +46,23 @@ const tabs = [
     label: 'User',
     icon: UserIcon,
   },
+  {
+    id: 'templates',
+    label: 'Templates',
+    icon: CodeBracketIcon,
+  },
 ] as const;
 
 export const SettingsModal = ({
   isOpen,
   onClose,
 }: SettingsDialogProps): JSX.Element => {
-  const { userData, firebaseUser, updateUsername } = useUserContext();
+  const {
+    userData,
+    firebaseUser,
+    updateUsername,
+    templateCode: savedTemplateCode,
+  } = useUserContext();
   const {
     fileData,
     updateFileData: updateRealFileData,
@@ -67,11 +82,18 @@ export const SettingsModal = ({
   );
 
   const [name, setName] = useState<string>('');
+  const [cfUsername, setCfUsername] = useState<string>('');
+  const [atcoderUsername, setAtcoderUsername] = useState<string>('');
+  const [discordID, setDiscordID] = useState<string>('');
+  const [defaultLanguage, setDefaultLanguage] = useState<Language>('cpp');
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
   const [tabSize, setTabSize] = useState<number>(-1);
   const [lightMode, setLightMode] = useState<boolean>(false);
   const [manualSubmission, setManualSubmission] = useState<boolean>(false);
-  const [cfUsername, setCfUsername] = useState<string>('');
+  const [templateCode, setTemplateCode] = useState<
+    Partial<Record<Language, string>>
+  >({});
+  const [templateLanguage, setTemplateLanguage] = useState<Language>('cpp');
   const dirtyRef = useRef<boolean>(false);
 
   const [tab, setTab] = useState<typeof tabs[number]['id']>('workspace');
@@ -83,12 +105,16 @@ export const SettingsModal = ({
       setFileSettings(realFileSettings);
       setName(firebaseUser.displayName ?? ''); // todo this shouldn't really be an empty string ever?
       setCfUsername(userData.usernames.codeforces ?? '');
+      setAtcoderUsername(userData.usernames.atcoder ?? '');
+      setDiscordID(userData.discordID ?? '');
+      setDefaultLanguage(userData.defaultLanguage ?? '');
       setEditorMode(userData.editorMode);
       setTabSize(userData.tabSize);
       setLightMode(userData.lightMode);
       setManualSubmission(userData.manualSubmission);
-      dirtyRef.current = false;
+      setTemplateCode(savedTemplateCode);
       setTab('workspace');
+      dirtyRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -142,27 +168,21 @@ export const SettingsModal = ({
     await runTransaction(
       ref(getDatabase(), `users/${firebaseUser.uid}/data`),
       (data: any) => {
-        if (data) {
-          data.editorMode = editorMode;
-          data.tabSize = tabSize;
-          data.lightMode = lightMode;
-          data.manualSubmission = manualSubmission;
-
-          if (!data.usernames) {
-            data.usernames = {};
-          }
-          data.usernames.codeforces = cfUsername;
-        } else {
-          data = {
-            editorMode: editorMode,
-            tabSize: tabSize,
-            lightMode: lightMode,
-            manualSubmission: manualSubmission,
-            usernames: {
-              codeforces: cfUsername,
-            },
-          };
+        const newData = {
+          editorMode,
+          tabSize,
+          lightMode,
+          manualSubmission,
+          defaultLanguage,
+          discordID,
+        };
+        data = data ? { ...data, ...newData } : newData;
+        if (!data.usernames) {
+          data.usernames = {};
         }
+        data.usernames.codeforces = cfUsername;
+        data.usernames.atcoder = atcoderUsername;
+        data.templateCode = templateCode;
         return data;
       }
     );
@@ -225,7 +245,7 @@ export const SettingsModal = ({
                       <button
                         className={classNames(
                           tab === settingTab.id
-                            ? 'border-indigo-500 text-indigo-600'
+                            ? 'border-indigo-600 text-indigo-700'
                             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
                           'w-1/2 group flex items-center justify-center py-3 px-1 border-b-2 font-medium text-sm focus:outline-none'
                         )}
@@ -235,7 +255,7 @@ export const SettingsModal = ({
                         <settingTab.icon
                           className={classNames(
                             tab === settingTab.id
-                              ? 'text-indigo-500'
+                              ? 'text-indigo-700'
                               : 'text-gray-400 group-hover:text-gray-500',
                             '-ml-0.5 mr-2 h-5 w-5'
                           )}
@@ -250,14 +270,29 @@ export const SettingsModal = ({
               <div className="p-4 sm:p-6 space-y-6">
                 {tab === 'user' && (
                   <UserSettings
-                    name={name || ''}
+                    name={name}
                     onNameChange={name => {
                       setName(name);
                       dirtyRef.current = true;
                     }}
-                    cfUsername={cfUsername || ''}
-                    onCfUsernameChange={cfHandle => {
-                      setCfUsername(cfHandle);
+                    cfUsername={cfUsername}
+                    onCfUsernameChange={cfUsername => {
+                      setCfUsername(cfUsername);
+                      dirtyRef.current = true;
+                    }}
+                    atcoderUsername={atcoderUsername}
+                    onAtcoderUsernameChange={atcoderUsername => {
+                      setAtcoderUsername(atcoderUsername);
+                      dirtyRef.current = true;
+                    }}
+                    discordID={discordID}
+                    onDiscordIDChange={discordID => {
+                      setDiscordID(discordID);
+                      dirtyRef.current = true;
+                    }}
+                    defaultLanguage={defaultLanguage}
+                    onDefaultLanguageChange={language => {
+                      setDefaultLanguage(language);
                       dirtyRef.current = true;
                     }}
                     editorMode={editorMode}
@@ -289,6 +324,17 @@ export const SettingsModal = ({
                     userPermission={userPermission || 'READ'}
                   />
                 )}
+                {tab === 'templates' && (
+                  <TemplateCodeSettings
+                    templateCode={templateCode}
+                    setTemplateCode={code => {
+                      setTemplateCode(code);
+                      dirtyRef.current = true;
+                    }}
+                    language={templateLanguage}
+                    setLanguage={setTemplateLanguage}
+                  />
+                )}
 
                 <div className="flex items-center space-x-4">
                   <button
@@ -306,7 +352,6 @@ export const SettingsModal = ({
                     Save
                   </button>
                 </div>
-
                 {tab === 'user' && (
                   <>
                     <hr className="border-gray-200" />

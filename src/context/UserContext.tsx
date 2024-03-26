@@ -21,6 +21,7 @@ import {
 
 import animals from '../scripts/animals';
 import { Platform } from '../types/problem';
+import defaultCode from '../scripts/defaultCode';
 
 export type Language = 'cpp' | 'java' | 'py';
 export const LANGUAGES: { label: string; value: Language }[] = [
@@ -40,6 +41,7 @@ export const LANGUAGES: { label: string; value: Language }[] = [
 
 export type EditorMode = 'Normal' | 'Vim';
 export type UsernameData = Partial<Record<Platform, string>>;
+export type TemplateCodeData = Partial<Record<Language, string>>;
 
 export type UserData = {
   id: string;
@@ -49,12 +51,17 @@ export type UserData = {
   defaultPermission: 'READ_WRITE' | 'READ' | 'PRIVATE';
   defaultLanguage: Language;
   manualSubmission: boolean;
+  discordID: string;
   usernames: UsernameData;
+  templateCode: TemplateCodeData;
 };
+
+type UserRole = 'student' | 'teacher';
 
 export type UserContextType = {
   firebaseUser: User | null;
   userData: UserData | null;
+  userRole: UserRole | null;
   logged: boolean | null;
   /**
    * Updates firebaseUser.displayName. Normally doing this doesn't trigger rerender
@@ -63,6 +70,7 @@ export type UserContextType = {
    * @returns promise that resolves when firebaseUser is updated
    */
   updateUsername: (username: string) => Promise<any>;
+  templateCode: Record<Language, string> | null;
 };
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -70,16 +78,26 @@ const UserContext = createContext<UserContextType | null>(null);
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [logged, setLogged] = useState<boolean | null>(null);
   const [_, triggerRerender] = useState<number>(0);
+  const [templateCode, setTemplateCode] = useState<Record<
+    Language,
+    string
+  > | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getAuth(), user => {
       if (!user) {
         setLogged(false);
         setUserData(null);
+        setUserRole(null);
+        setTemplateCode(null);
       } else {
         setLogged(true);
+        user
+          .getIdTokenResult()
+          .then(res => setUserRole(res.claims.teacher ? 'teacher' : 'student'));
         let displayName = user.displayName;
         if (!displayName) {
           displayName =
@@ -100,7 +118,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
 
     const handleSnapshot = (snap: DataSnapshot) => {
-      const data = snap.val() ?? {};
+      const data = snap.val()?.data ?? {};
       setUserData({
         id: user.uid,
         editorMode: data.editorMode ?? 'Normal',
@@ -109,16 +127,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         defaultPermission: data.defaultPermission ?? 'READ_WRITE',
         defaultLanguage: data.defaultLanguage ?? 'cpp',
         manualSubmission: data.manualSubmission ?? false,
+        discordID: data.discordID,
         usernames: data.usernames ?? {},
+        templateCode: data.templateCode ?? {},
       });
+      setTemplateCode({ ...defaultCode, ...data?.templateCode });
     };
-    onValue(ref(getDatabase(), `users/${user.uid}/data`), handleSnapshot);
+    onValue(ref(getDatabase(), `users/${user.uid}`), handleSnapshot);
     return () =>
-      off(
-        ref(getDatabase(), `users/${user.uid}/data`),
-        'value',
-        handleSnapshot
-      );
+      off(ref(getDatabase(), `users/${user.uid}`), 'value', handleSnapshot);
   }, [user]);
 
   const updateUsername = useCallback(
@@ -135,7 +152,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <UserContext.Provider
-      value={{ firebaseUser: user, userData, updateUsername, logged }}
+      value={{
+        firebaseUser: user,
+        userData,
+        userRole,
+        updateUsername,
+        logged,
+        templateCode,
+      }}
     >
       {children}
     </UserContext.Provider>
@@ -151,10 +175,11 @@ export function useNullableUserContext() {
 }
 
 export function useUserContext() {
-  const { firebaseUser, userData, updateUsername } = useNullableUserContext();
-  if (!firebaseUser || !userData)
+  const { firebaseUser, userData, userRole, updateUsername, templateCode } =
+    useNullableUserContext();
+  if (!firebaseUser || !userData || !templateCode)
     throw new Error(
       "useUserContext() can only be called after UserProvider has finished loading. If you want to access userContext while it's still loading, use useNullableUserContext() instead"
     );
-  return { firebaseUser, userData, updateUsername };
+  return { firebaseUser, userData, userRole, updateUsername, templateCode };
 }

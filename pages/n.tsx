@@ -1,15 +1,23 @@
-import { useAtomValue } from 'jotai/utils';
 import { useRouter } from 'next/router';
 import React, { useEffect, useRef } from 'react';
-import invariant from 'tiny-invariant';
 import { MessagePage } from '../src/components/MessagePage';
 import { useNullableUserContext } from '../src/context/UserContext';
 import { DEFAULT_COMPILER_OPTIONS } from './new';
 import va from '@vercel/analytics';
 
 export default function NewFilePage() {
-  const { userData, firebaseUser } = useNullableUserContext();
   const router = useRouter();
+  const { userData, firebaseUser, logged } = useNullableUserContext();
+
+  const loginUI = (
+    <MessagePage
+      message="Please login to create files."
+      showHomeButton={true}
+    />
+  );
+  const loadingUI = (
+    <MessagePage showHomeButton={false} message="Creating new file..." />
+  );
 
   const alreadyCreatedFile = useRef<boolean>(false);
 
@@ -42,5 +50,6 @@ export default function NewFilePage() {
     }
   }, [userData, firebaseUser]);
 
-  return <MessagePage showHomeButton={false} message="Creating new file..." />;
+  if (logged === false) return loginUI;
+  return loadingUI;
 }

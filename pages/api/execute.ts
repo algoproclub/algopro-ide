@@ -9,21 +9,37 @@ type RequestData = {
   sourceCode: string;
 };
 
+type StatusType =
+  | 'success'
+  | 'internal_error'
+  | 'wrong_answer'
+  | 'time_limit_exceeded'
+  | 'runtime_error'
+  | 'compile_error';
+
 type ResponseData = {
-  compilationMessage: string;
-  status:
-    | 'success'
-    | 'internal_error'
-    | 'wrong_answer'
-    | 'time_limit_exceeded'
-    | 'runtime_error'
-    | 'compile_error';
+  compilationMessage?: string;
+  message?: string;
+  status: StatusType;
   stdout: string;
   stderr: string;
   time: string;
   memory: string;
 };
 
+function mapResult(verdict: number): StatusType {
+  if (verdict == 1) return 'success';
+  if (verdict == 2) return 'time_limit_exceeded';
+  if (verdict == 4) return 'runtime_error';
+  if (verdict == 8) return 'runtime_error';
+  if (verdict == 16) return 'internal_error';
+  return 'compile_error';
+}
+
+function utf8btoa(input: string): string {
+  const buffer = Buffer.from(input, 'utf-8');
+  return buffer.toString('base64');
+}
 export default async (
   req: NextApiRequest,
   res: NextApiResponse<ResponseData>
@@ -37,15 +53,15 @@ export default async (
     body: JSON.stringify({
       language: requestData.language,
       filename: requestData.filename,
-      source: btoa(requestData.sourceCode),
-      input: btoa(requestData.input),
+      source: utf8btoa(requestData.sourceCode),
+      input: utf8btoa(requestData.input),
     }),
   });
 
   const result = await executeResponse.json();
   if (!result.compiled) {
     res.status(200).json({
-      compilationMessage: result.compiler_output,
+      message: result.compiler_output,
       status: 'compile_error',
       memory: '',
       stderr: '',
@@ -55,11 +71,11 @@ export default async (
   } else {
     res.status(200).json({
       compilationMessage: result.compiler_output,
-      status: 'success', //TODO map from language.Verdict
+      status: mapResult(result.verdict),
       memory: result.memory,
       stderr: result.stderr,
       stdout: result.output,
-      time: result.time,
+      time: (parseInt(result.time) / 1e9).toString(),
     });
   }
 };

@@ -3,9 +3,19 @@ body,
 #__next {
   height: 100%;
   background-color: #1e1e1e;
+  @apply overflow-auto;
 }
+
+#__next {
+  @apply fixed inset-0;
+}
+
 html {
   overscroll-behavior: contain;
+}
+
+body {
+  min-width: 420px;
 }
 
 @keyframes spin {
@@ -44,4 +54,62 @@ html {
 .status-node input:focus {
   outline: none;
   --tw-ring-color: transparent !important;
+}
+
+.html-statement-container {
+  & ul {
+    list-style-type: disc;
+    margin-left: 1.5rem;
+  }
+  & ol {
+    list-style-type: decimal;
+    margin-left: 1.5rem;
+  }
+  & pre {
+    @apply rounded-md px-4 py-2.5 border border-gray-700 bg-[#121212];
+  }
+  .section-title,
+  & h1,
+  & h2,
+  & h3,
+  & h4 {
+    font-size: 1rem;
+    line-height: 1.3rem;
+    margin-bottom: 0.25rem;
+    margin-top: 0.6rem;
+    font-weight: 600;
+  }
+  & p {
+    margin-bottom: 0.5rem;
+    line-height: 1.4em;
+  }
+  & .tex-span {
+    font-family: KaTeX_Main, Times New Roman, serif;
+    font-size: 1.15em;
+  }
+  & .tex-font-style-tt {
+    @apply font-mono;
+  }
+  & .tex-font-style-bf {
+    font-weight: bold;
+  }
+  & .tex-font-style-it {
+    font-style: italic;
+  }
+  & .tex-font-style-underline {
+    text-decoration: underline;
+  }
+  & .tex-font-style-striked {
+    text-decoration: line-through;
+  }
+  & img.tex-formula {
+    display: inline;
+    filter: invert(100%);
+    vertical-align: middle;
+    position: relative;
+    bottom: 2px;
+  }
+  & img.tex-graphics {
+    background-color: white;
+  }
 }

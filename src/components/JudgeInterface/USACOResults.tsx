@@ -19,7 +19,7 @@ const USACOTestCase = ({ data }: { data: TestCase }) => {
       : 'text-red-100';
   return (
     <div
-      className={`m-1 p-1 inline-block w-[5rem] bg-opacity-50 border ${containerClasses} relative rounded`}
+      className={`m-1 p-1 inline-block w-[5rem] bg-opacity-40 border-opacity-60 border ${containerClasses} relative rounded-[4px]`}
       title={capitalize(data.title)}
     >
       <div className={`font-semibold text-center ${textColor} pt-1`}>
@@ -90,47 +90,49 @@ export default function USACOResults({ data }: { data: StatusData }) {
   return (
     <div className="mt-3">
       <div className="pb-3">
-        <p className="font-bold text-gray-200 border-gray-700">
-          <span className="space-x-2">
+        <div className="flex font-medium text-gray-200 border-gray-700 space-x-2">
+          <span>
             {!['error', 'resolved'].includes(data.statusCode) && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'gear' }}
-                className="mr-2 w-4 h-4 text-gray-400 animate-spin-slow"
+                className="w-4 h-4 text-gray-400 animate-spin-slow"
               />
             )}
             {data.statusCode === 'error' && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'exclamation-triangle' }}
-                className="mr-2 text-yellow-500 w-4 h-4"
+                className="text-yellow-500 w-4 h-4"
               />
             )}
             {data.statusCode === 'resolved' &&
               data.message?.toLowerCase() === 'correct answer' && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'check' }}
-                  className="mr-2 text-green-500 w-4 h-4"
+                  className="text-green-500 w-4 h-4"
                 />
               )}
             {data.statusCode === 'resolved' &&
               data.message?.toLowerCase() !== 'correct answer' && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'xmark' }}
-                  className="mr-2 w-4 h-4 text-red-500"
+                  className="w-4 h-4 text-red-500"
                 />
               )}
+          </span>
+          <span className="break-words overflow-hidden">
             {data.message ? capitalize(data.message) : null}
             {!['error', 'resolved'].includes(data.statusCode) && '...'}
+            {(data.time || data.memory) && ' ('}
+            {data.time && '' + data.time}
+            {data.time && data.memory && ', '}
+            {data.memory && '' + data.memory}
+            {(data.time || data.memory) && ')'}
           </span>
-          {(data.time || data.memory) && <span> (</span>}
-          {data.time && <span>{data.time}</span>}
-          {data.time && data.memory && <span>, </span>}
-          {data.memory && <span>{data.memory}</span>}
-          {(data.time || data.memory) && <span>)</span>}
-        </p>
+        </div>
         {data.link && (
           <a
             href={data.link}
-            className="text-indigo-300 hover:underline"
+            className="text-indigo-300 hover:underline break-all"
             target="_blank"
           >
             {data.link}
@@ -161,7 +163,7 @@ export default function USACOResults({ data }: { data: StatusData }) {
       )}
       {data.testCases && (
         <>
-          <div className="mt-3 -mx-1">
+          <div className="my-3 -mx-1">
             {data.testCases.map(tc => (
               <USACOTestCase data={tc} key={tc.trialNum} />
             ))}

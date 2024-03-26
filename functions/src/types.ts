@@ -1,13 +1,13 @@
-import { StringParam } from 'firebase-functions/lib/params/types';
-
 export type AccountData = {
-  sessionCookie?: StringParam;
+  sessionCookie?: () => string;
+};
+
+export type PendingSubmission = {
+  creationTime: number;
 };
 
 export type PendingSubmissions = {
-  [key: string]: {
-    creationTime: number;
-  };
+  [key: string]: PendingSubmission;
 };
 
 export type SubmissionData = {

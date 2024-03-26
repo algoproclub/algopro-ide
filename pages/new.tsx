@@ -123,6 +123,7 @@ export default function NewFilePage() {
           <div className="mb-4">
             <SharingPermissions
               value={defaultPerimssion}
+              className="text-sm"
               onChange={setDefaultPermission}
               isOwner={true}
               lightMode
@@ -151,7 +152,7 @@ export default function NewFilePage() {
                         checked
                           ? 'bg-indigo-800 text-white hover:bg-indigo-700'
                           : 'ring-1 ring-inset ring-gray-700 bg-gray-900 text-gray-100 hover:bg-gray-800',
-                        'flex items-center justify-center rounded-md py-2 px-2 text-sm font-semibold sm:px-4 ring-offset-gray-900'
+                        'flex items-center justify-center rounded-md py-2 px-4 text-sm font-semibold ring-offset-gray-900'
                       )
                     }
                   >
@@ -177,7 +178,7 @@ export default function NewFilePage() {
                 id="compilerOptions"
                 value={compilerOptions}
                 onChange={e => setCompilerOptions(e.target.value)}
-                className="block w-full rounded-md border-0 py-1.5 bg-gray-900 text-gray-100 shadow-sm ring-1 ring-inset ring-gray-700 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-700 sm:text-sm sm:leading-6 font-mono"
+                className="block w-full rounded-md border-0 py-1.5 bg-gray-900 text-gray-100 shadow-sm ring-1 ring-inset ring-gray-700 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-700 text-[0.85rem] sm:leading-6 font-mono"
               />
             </div>
           </div>
@@ -191,10 +192,11 @@ export default function NewFilePage() {
           >
             {isSubmitting ? 'Creating...' : 'Create File'}
           </button>
-          <Link href="/">
-            <a className="rounded-md bg-white/5 py-2.5 px-3.5 text-sm font-semibold text-white shadow-sm hover:bg-white/10 focus-visible:outline-offset-gray-900 focus-visible:outline-2 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-gray-700">
-              Cancel
-            </a>
+          <Link
+            href="/"
+            className="rounded-md bg-white/5 py-2.5 px-3.5 text-sm font-semibold text-white shadow-sm hover:bg-white/10 focus-visible:outline-offset-gray-900 focus-visible:outline-2 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-gray-700"
+          >
+            Cancel
           </Link>
         </div>
       </form>

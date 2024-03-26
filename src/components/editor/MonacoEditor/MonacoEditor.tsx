@@ -5,6 +5,7 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import 'monaco-editor/esm/vs/basic-languages/cpp/cpp.contribution.js';
 import 'monaco-editor/esm/vs/basic-languages/java/java.contribution.js';
 import 'monaco-editor/esm/vs/basic-languages/python/python.contribution.js';
+import 'monaco-editor/esm/vs/basic-languages/html/html.contribution.js';
 import { buildWorkerDefinition } from 'monaco-editor-workers';
 import { initVimMode } from 'monaco-vim';
 import { MonacoServices } from 'monaco-languageclient';
@@ -32,12 +33,37 @@ const viewStates = new Map();
 // @ts-ignore todo find a better way to do this
 window.monaco = monaco;
 
+// HACK: This uses a private API, as addKeybindingRules requires Monaco 0.34.1.
+// https://github.com/microsoft/monaco-editor/issues/102#issuecomment-1282897640
+const rebindAction = (
+  editor: monaco.editor.IStandaloneCodeEditor,
+  id: string,
+  newBinding?: number
+) => {
+  // @ts-ignore
+  editor._standaloneKeybindingService.addDynamicKeybinding(
+    `-${id}`,
+    undefined,
+    () => {}
+  );
+  if (newBinding) {
+    const action = editor.getAction(id);
+    // @ts-ignore
+    editor._standaloneKeybindingService.addDynamicKeybinding(
+      id,
+      newBinding,
+      () => action.run()
+    );
+  }
+};
+
 export default function MonacoEditor({
   path,
   theme,
   options,
   saveViewState = true,
   onMount,
+  onChange,
   language,
   className,
   value = '',
@@ -64,10 +90,21 @@ export default function MonacoEditor({
           enabled: true,
         },
         language: language,
+        inlayHints: {
+          enabled: false,
+        },
         ...options,
       },
       {}
     );
+
+    // Ctrl+Enter for "Insert Line Below" conflicts with our shortcut for running code.
+    rebindAction(
+      editorRef.current,
+      'editor.action.insertLineAfter',
+      monaco.KeyMod.Alt | monaco.KeyCode.Enter
+    );
+
     setEditor(editorRef.current);
 
     if (saveViewState) {
@@ -115,7 +152,7 @@ export default function MonacoEditor({
 
   useEffect(() => {
     // TODO fix LSP connection
-    if (lspEnabled && false) {
+    if (lspEnabled) {
       return createLSPConnection();
     }
   }, [lspEnabled]);
@@ -184,6 +221,12 @@ export default function MonacoEditor({
     // console.log('updating options'); // todo this runs way too often
     editorRef.current!.updateOptions(options ?? {});
   }, [options]);
+
+  useEffect(() => {
+    editorRef.current!.onDidChangeModelContent(e =>
+      onChange?.(editorRef.current!.getValue())
+    );
+  }, [onChange]);
 
   return (
     <div className="flex relative h-full">

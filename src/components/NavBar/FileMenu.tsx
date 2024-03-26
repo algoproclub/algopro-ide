@@ -19,10 +19,10 @@ import {
 } from '../../atoms/workspace';
 import { useAtomValue } from 'jotai';
 import { useEditorContext } from '../../context/EditorContext';
-import defaultCode from '../../scripts/defaultCode';
 import download from '../../scripts/download';
 import { extractJavaFilename } from '../../scripts/judge';
 import useUserPermission from '../../hooks/useUserPermission';
+import { useUserContext } from '../../context/UserContext';
 
 export const FileMenu = (props: { onOpenSettings: Function }): JSX.Element => {
   const { fileData } = useEditorContext();
@@ -30,6 +30,7 @@ export const FileMenu = (props: { onOpenSettings: Function }): JSX.Element => {
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
   const mainCodemirrorEditor = useAtomValue(mainCodemirrorEditorAtom);
   const permission = useUserPermission();
+  const { templateCode } = useUserContext();
 
   const [referenceElement, setReferenceElement] = useState<HTMLElement | null>(
     null
@@ -70,13 +71,13 @@ export const FileMenu = (props: { onOpenSettings: Function }): JSX.Element => {
     }
     if (confirm('Reset current file? Any changes you made will be lost.')) {
       if (mainMonacoEditor)
-        mainMonacoEditor.setValue(defaultCode[fileData.settings.language]);
+        mainMonacoEditor.setValue(templateCode[fileData.settings.language]);
       else if (mainCodemirrorEditor) {
         mainCodemirrorEditor.dispatch({
           changes: {
             from: 0,
             to: mainCodemirrorEditor.state.doc.length,
-            insert: defaultCode[fileData.settings.language],
+            insert: templateCode[fileData.settings.language],
           },
         });
       } else {
@@ -91,17 +92,22 @@ export const FileMenu = (props: { onOpenSettings: Function }): JSX.Element => {
   /* ======= END DROPDOWN ACTIONS ======= */
 
   return (
-    <Menu as="div" className="relative inline-block text-left">
+    <Menu
+      as="div"
+      className="relative inline-block text-left flex-grow min-w-[7rem]"
+    >
       {({ open }) => (
         <>
           <div>
             <Menu.Button
-              className="relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 hover:bg-gray-800 focus:bg-gray-800 focus:outline-none"
+              className={`w-full relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 focus:outline-none ${
+                open ? 'bg-gray-800' : 'hover:bg-gray-800 active:bg-gray-700'
+              }`}
               ref={setReferenceElement}
             >
               File
               <ChevronDownIcon
-                className="-mr-1 ml-2 h-5 w-5"
+                className="absolute right-3 h-[1.3rem] w-[1.3rem]"
                 aria-hidden="true"
               />
             </Menu.Button>

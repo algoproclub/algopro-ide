@@ -3,7 +3,13 @@ export type PlatformProblem = {
   id: string;
 };
 
-export type Platform = 'codeforces' | 'cses' | 'atcoder' | 'usaco' | 'planets';
+export type Platform =
+  | 'codeforces'
+  | 'cses'
+  | 'atcoder'
+  | 'spoj'
+  | 'usaco'
+  | 'planets';
 
 export type ProblemData = {
   id: string;
@@ -15,7 +21,10 @@ export type ProblemData = {
   statement: string | null;
   input: string;
   output: string;
+  timeLimit?: string;
+  memoryLimit?: string;
   samples: Sample[];
+  hints?: string[];
 };
 
 export type ProblemSolution = {
@@ -61,3 +70,8 @@ export interface TestCase {
   memory: string | null;
   time: string | null;
 }
+
+export type Translation = {
+  statement: string;
+  hints: string[];
+};

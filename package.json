@@ -8,7 +8,8 @@
     "start": "next start",
     "prepare": "husky install",
     "lint": "eslint --ext js,jsx,ts,tsx --fix src/",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "login": "tsc src/scripts/login.ts --moduleResolution node --target esnext --module commonjs --skipLibCheck --outDir dist && node dist/login.js"
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.2",
@@ -50,7 +51,7 @@
     "monaco-editor-workers": "^0.33.0",
     "monaco-languageclient": "^2.0.2",
     "monaco-vim": "^0.3.4",
-    "next": "^12.1.6",
+    "next": "^14.1.0",
     "next-global-css": "^1.3.1",
     "normalize-url": "^7.0.3",
     "patch-package": "^6.4.7",

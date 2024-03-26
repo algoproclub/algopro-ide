@@ -16,6 +16,8 @@ export abstract class ResultFetcher {
   abstract getTime(): string | null;
   abstract getLink(): string | null;
 
+  constructor(readonly submissionData: SubmissionData) {}
+
   getTestCaseNum(): number {
     return 0;
   }
@@ -67,24 +69,24 @@ export class CFResultFetcher extends ResultFetcher {
   private submission: any;
 
   constructor(
-    private submissionData: SubmissionData,
+    readonly submissionData: SubmissionData,
     private resultJSON: { [key: string]: any }
   ) {
-    super();
+    super(submissionData);
   }
 
   getStatusText(): string {
-    return this.submission['verdict'] === 'TESTING'
+    return this.submission.verdict === 'TESTING'
       ? 'status-working'
       : 'status-done';
   }
 
   getStatusCode(): StatusCode {
-    return this.submission['verdict'] === 'TESTING' ? 'working' : 'resolved';
+    return this.submission.verdict === 'TESTING' ? 'working' : 'resolved';
   }
 
   getMessage(): string {
-    let formatted = (this.submission['verdict'] as string)
+    let formatted = (this.submission.verdict as string)
       .split('_')
       .join(' ')
       .toLowerCase();
@@ -104,7 +106,7 @@ export class CFResultFetcher extends ResultFetcher {
         'idleness limit exceeded',
       ].includes(formatted)
     ) {
-      formatted += ` on test ${this.submission['passedTestCount'] + 1}`;
+      formatted += ` on test ${this.submission.passedTestCount + 1}`;
     }
     return formatted;
   }
@@ -116,12 +118,12 @@ export class CFResultFetcher extends ResultFetcher {
 
   getMemory(): string | null {
     return (
-      Math.round(this.submission['memoryConsumedBytes'] / 100000) / 10 + ' MB'
+      Math.round(this.submission.memoryConsumedBytes / 100000) / 10 + ' MB'
     );
   }
 
   getTime(): string | null {
-    return this.submission['timeConsumedMillis'] + ' ms';
+    return this.submission.timeConsumedMillis + ' ms';
   }
 
   getOutput(): string | null {
@@ -147,11 +149,12 @@ export class CFResultFetcher extends ResultFetcher {
       this.submission.problem.contestId.toString() +
       this.submission.problem.index;
 
-    if (problemID != respProblemID) {
+    if (problemID !== respProblemID) {
       throw new IncorrectDataError(
         `CF: problem IDs don't match (${problemID} - ${respProblemID})`
       );
     }
+    this.submission.verdict ??= 'TESTING';
   }
 }
 
@@ -159,7 +162,7 @@ export class AtCoderResultFetcher extends ResultFetcher {
   private static codeToVerdict = {
     CE: 'compile error',
     AC: 'correct answer',
-    WA: 'incorrect answer',
+    WA: 'wrong answer',
     RE: 'runtime error',
     TLE: 'time limit exceeded',
     MLE: 'memory limit exceeded',
@@ -171,8 +174,8 @@ export class AtCoderResultFetcher extends ResultFetcher {
   private summary?: Element;
   private testcases?: Element[];
 
-  constructor(private submissionData: SubmissionData) {
-    super();
+  constructor(readonly submissionData: SubmissionData) {
+    super(submissionData);
     this.headers = {
       Cookie: submissionData.sessionCookie ?? '',
     };
@@ -359,8 +362,8 @@ export class CSESResultFetcher extends ResultFetcher {
   private summary?: Element;
   private testcases?: Element[];
 
-  constructor(private submissionData: SubmissionData) {
-    super();
+  constructor(readonly submissionData: SubmissionData) {
+    super(submissionData);
     this.headers = {
       Cookie: submissionData.sessionCookie ?? '',
     };
@@ -404,9 +407,6 @@ export class CSESResultFetcher extends ResultFetcher {
       return status.toLowerCase();
     }
     const value = this.getSummaryValue('result')?.toLowerCase();
-    if (value === 'wrong answer') {
-      return 'incorrect answer';
-    }
     if (value === 'accepted') {
       return 'correct answer';
     }
@@ -461,9 +461,6 @@ export class CSESResultFetcher extends ResultFetcher {
     const verdict = Array.from(
       this.testcases[n].children
     )[1].textContent?.toLowerCase();
-    if (verdict === 'wrong answer') {
-      return 'incorrect answer';
-    }
     if (verdict === 'accepted') {
       return 'correct answer';
     }
