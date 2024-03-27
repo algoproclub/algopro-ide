@@ -121,7 +121,7 @@ export default function createLSPConnection() {
     const protocol = location.protocol === 'https:' ? 'wss' : 'wss';
     return normalizeUrl(`${protocol}://${hostname}:${port}${path}`);
   }
-  function dispose() {
+  async function dispose() {
     if (ping) clearInterval(ping);
     if (!languageClient) {
       // possibly didn't connect to websocket before exiting
@@ -130,7 +130,11 @@ export default function createLSPConnection() {
         webSocket = null;
       }
     } else {
-      languageClient.stop();
+      try {
+        await languageClient.stop();
+      } catch (err) {
+        console.error('Error stopping language client:', err);
+      }
       languageClient = null;
     }
   }
