@@ -85,7 +85,9 @@ export const forEachLang = async (
 
 export const waitForEditorToLoad = async (page: Page): Promise<void> => {
   // wait for monaco / codemirror to load (monaco / codemirror is a lazy component, so it may take some time for it to load)
-  await expect(page.getByTestId('editorLoadingMessage')).toHaveCount(0);
+  await expect(page.getByTestId('editorLoadingMessage')).toHaveCount(0, {
+    timeout: 10000,
+  });
 };
 
 export const isMonaco = async (page: Page): Promise<boolean> => {
