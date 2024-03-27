@@ -73,11 +73,13 @@ export const forEachLang = async (
   page: Page,
   func: () => Promise<unknown>
 ): Promise<void> => {
-  await switchLang(page, 'Java');
-  await func();
+  // FIXME: local executor does not support Java and Python
 
-  await switchLang(page, 'Python 3.8.1');
-  await func();
+  // await switchLang(page, 'Java');
+  // await func();
+
+  //   await switchLang(page, 'Python 3.8.1');
+  //   await func();
 
   await switchLang(page, 'C++');
   await func();
