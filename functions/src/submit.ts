@@ -302,7 +302,7 @@ export class SPOJSubmitter extends Submitter {
     formData.append(
       'lang',
       {
-        cpp: '41', // C++ (g++ 4.3.2)
+        cpp: '1', // C++ (gcc 8.3) (C++14)
         py: '109', // Python 3 (PyPy 3.6.1)
         java: '10', // Java (HotSpot 12)
       }[language]
