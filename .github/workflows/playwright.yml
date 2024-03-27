@@ -8,50 +8,17 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+
+      - uses: KengoTODA/actions-setup-docker-compose@v1
         with:
-          node-version: '18'
+          version: '2.24.6'
 
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
-
-      - name: Cache yarn
-        uses: actions/cache@v3
-        id: yarn-cache
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - name: Install dependencies
+      - name: run tests
         run: |
-          yarn install
-          npm install -g firebase-tools
-          firebase setup:emulators:database
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
-      - name: Build
-        run: IS_TEST_ENV=true yarn build
-
-      - name: Start YJS server
-        run: |
-          cd ..
-          git clone https://github.com/cpinitiative/ide-yjs.git
-          cd ide-yjs
-          npm install
-          npm run dev &
-
-      - name: Setup background services
-        run: echo '{"rules":{".read":true,".write":true}}' > database.rules.json && FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:9099" yarn start &
-
-      - name: Run Playwright tests
-        run: firebase emulators:exec "yarn playwright test"
+          docker compose -f docker-compose.yml -f docker-compose.test.yml up --build --exit-code-from playwright
 
       - uses: actions/upload-artifact@v3
-        if: always()
+        if: failure()
         with:
           name: playwright-report
           path: playwright-report/
