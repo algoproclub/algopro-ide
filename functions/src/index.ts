@@ -30,6 +30,7 @@ import {
   AtCoderSubmitter,
   CFSubmitter,
   CSESSubmitter,
+  SPOJSubmitter,
   Submitter,
 } from './submit';
 
@@ -47,6 +48,8 @@ export const atCoderCsrfToken = defineString('ATCODER_CSRF_TOKEN');
 
 export const csesCookie = defineString('CSES_COOKIE');
 export const csesCsrfToken = defineString('CSES_CSRF_TOKEN');
+
+export const spojCookie = defineString('SPOJ_COOKIE');
 
 const PENDING_TIME_LIMIT_MS = 300000;
 const INCORRECT_DATA_RETRY_LIMIT_MS = 20000;
@@ -78,6 +81,9 @@ export const submitproblemsolution = onCall<
         break;
       case 'cses':
         submitter = new CSESSubmitter(problemSolution);
+        break;
+      case 'spoj':
+        submitter = new SPOJSubmitter(problemSolution);
         break;
       default:
         throw new HttpsError(

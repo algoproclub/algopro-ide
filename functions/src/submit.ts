@@ -12,6 +12,7 @@ import {
   cfUsername,
   csesCookie,
   csesCsrfToken,
+  spojCookie,
 } from './index';
 
 const GETSUBMISSIONDATA_DELAY_MS = 1000;
@@ -280,6 +281,60 @@ export class CSESSubmitter extends Submitter {
       id: this.submissionID ?? '',
       username: null,
       platform: 'cses',
+    };
+  }
+}
+
+export class SPOJSubmitter extends Submitter {
+  private submissionID?: string;
+  constructor(readonly problemSolution: ProblemSolution) {
+    super(problemSolution);
+  }
+
+  async submit(): Promise<void> {
+    const { problemID, sourceCode, language } = this.problemSolution;
+    const formData = new FormData();
+    formData.append('subm_file', sourceCode, {
+      filename: '',
+      contentType: 'application/octet-stream',
+    });
+    formData.append('file', sourceCode);
+    formData.append(
+      'lang',
+      {
+        cpp: '1', // C++ (gcc 8.3) (C++14)
+        py: '109', // Python 3 (PyPy 3.6.1)
+        java: '10', // Java (HotSpot 12)
+      }[language]
+    );
+    formData.append('problemcode', problemID);
+    formData.append('submit', 'Submit!');
+
+    const response = await fetch(`https://www.spoj.com/submit/complete/`, {
+      headers: {
+        cookie: spojCookie.value(),
+      },
+      body: formData,
+      method: 'POST',
+    });
+    const text = await response.text();
+    const id = text.match(/\/status\/\?ns=([0-9]+)/)?.[1];
+    if (response.status !== 200 || !id) {
+      console.log(
+        'submission response.status: ',
+        response.status,
+        response.statusText
+      );
+      console.log('submission response.text: ', text.replaceAll('\n', ''));
+      throw new Error('submission failed, status: ' + response.status);
+    }
+    this.submissionID = id;
+  }
+  async getSubmissionData(): Promise<ClientSubmissionData> {
+    return {
+      id: this.submissionID ?? '',
+      username: null,
+      platform: 'spoj',
     };
   }
 }
