@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Language } from '../../src/context/EditorContext';
+import { SHOULD_USE_DEV_EXECUTE_SERVER } from '../../src/dev_constants';
 
 type RequestData = {
   compilerOptions: string;
@@ -45,7 +46,10 @@ export default async (
   res: NextApiResponse<ResponseData>
 ) => {
   const requestData: RequestData = req.body;
-  const executeResponse = await fetch('http://execute:1235/execute', {
+  const execute_url = SHOULD_USE_DEV_EXECUTE_SERVER
+    ? 'http://execute:1235'
+    : 'http://51.21.132.241:1235';
+  const executeResponse = await fetch(execute_url + '/execute', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
