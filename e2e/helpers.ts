@@ -10,7 +10,11 @@ export async function signInUser(page: Page) {
   await page.getByText('Override Data').click();
 
   const popup = await popupPromise;
-  await popup.getByText('Add new account').click({ delay: 200 });
+  const newAccount = popup.getByText('Add new account');
+  while (!(await popup.getByText('Auto-generate').isVisible())) {
+    await popup.getByText('Add new account').click();
+  }
+  await popup.getByText('Auto-generate').scrollIntoViewIfNeeded();
   await popup.getByText('Auto-generate').click();
   await popup.getByText('Sign in').click();
   await expect(page.getByText('Signed in as')).toBeVisible();
@@ -69,11 +73,13 @@ export const forEachLang = async (
   page: Page,
   func: () => Promise<unknown>
 ): Promise<void> => {
-  await switchLang(page, 'Java');
-  await func();
+  // FIXME: local executor does not support Java and Python
 
-  await switchLang(page, 'Python 3.8.1');
-  await func();
+  // await switchLang(page, 'Java');
+  // await func();
+
+  //   await switchLang(page, 'Python 3.8.1');
+  //   await func();
 
   await switchLang(page, 'C++');
   await func();
@@ -81,7 +87,9 @@ export const forEachLang = async (
 
 export const waitForEditorToLoad = async (page: Page): Promise<void> => {
   // wait for monaco / codemirror to load (monaco / codemirror is a lazy component, so it may take some time for it to load)
-  await expect(page.getByTestId('editorLoadingMessage')).toHaveCount(0);
+  await expect(page.getByTestId('editorLoadingMessage')).toHaveCount(0, {
+    timeout: 10000,
+  });
 };
 
 export const isMonaco = async (page: Page): Promise<boolean> => {

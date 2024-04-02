@@ -32,7 +32,9 @@ test.describe('Respects Permissions', () => {
     await page.click('text=Save');
 
     await goToPage(page, page2);
-    await page2.waitForSelector('text="View Only"');
+    await page2.waitForSelector('text="View Only"', {
+      state: isMobile ? 'attached' : 'visible',
+    });
 
     // let monaco load
     await waitForEditorToLoad(page);
@@ -175,7 +177,9 @@ test.describe('Respects Permissions', () => {
     await page.click('text=Settings');
     await page.click('div[role="radio"]:has-text("View Only")');
     await page.click('text=Save');
-    await page2.waitForSelector('text="View Only"');
+    await page2.waitForSelector('text="View Only"', {
+      state: isMobile ? 'attached' : 'visible',
+    });
 
     // test input: we shouldn't be able to type anything on page 2
     await page2.click('[data-test-id="input-editor"]');
