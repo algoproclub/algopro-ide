@@ -97,7 +97,9 @@ const LoadResultsModal = ({
   const [username, setUsername] = useState<string | null>(null);
   const { fileData } = useEditorContext();
   const { userData } = useUserContext();
-  const needUsername = fileData?.problem?.platform === 'codeforces';
+  const needUsername = ['codeforces', 'spoj'].includes(
+    fileData?.problem?.platform ?? ''
+  );
 
   useEffect(() => {
     if (fileData?.problem?.platform) {

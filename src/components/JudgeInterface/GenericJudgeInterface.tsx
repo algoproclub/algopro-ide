@@ -118,7 +118,7 @@ export default function GenericJudgeInterface({
 
   return (
     <div className="relative h-full flex flex-col text-[0.92rem]">
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-4">
         <header className="items-center">
           {languages.length > 1 && (
             <div className="p-4 border-b border-gray-700">

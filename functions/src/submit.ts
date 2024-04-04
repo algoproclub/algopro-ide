@@ -13,6 +13,7 @@ import {
   csesCookie,
   csesCsrfToken,
   spojCookie,
+  spojUsername,
 } from './index';
 
 const GETSUBMISSIONDATA_DELAY_MS = 1000;
@@ -333,7 +334,7 @@ export class SPOJSubmitter extends Submitter {
   async getSubmissionData(): Promise<ClientSubmissionData> {
     return {
       id: this.submissionID ?? '',
-      username: null,
+      username: spojUsername.value(),
       platform: 'spoj',
     };
   }

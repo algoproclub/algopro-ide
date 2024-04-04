@@ -16,6 +16,7 @@ import {
   AtCoderResultFetcher,
   ResultFetcher,
   CSESResultFetcher,
+  SPOJResultFetcher,
 } from './getResult';
 import { PendingSubmissions, AccountData, SubmissionData } from './types';
 import {
@@ -49,6 +50,7 @@ export const csesCookie = defineString('CSES_COOKIE');
 export const csesCsrfToken = defineString('CSES_CSRF_TOKEN');
 
 export const spojCookie = defineString('SPOJ_COOKIE');
+export const spojUsername = defineString('SPOJ_BOT_USERNAME');
 
 const PENDING_TIME_LIMIT_MS = 300000;
 const INCORRECT_DATA_RETRY_LIMIT_MS = 20000;
@@ -149,7 +151,9 @@ const accountData: { [key in Platform]: AccountData } = {
   codeforces: {},
   planets: {},
   usaco: {},
-  spoj: {},
+  spoj: {
+    sessionCookie: () => spojCookie.value(),
+  },
 };
 
 const updateStatusData = async (
@@ -198,6 +202,8 @@ const updateResultNonCF = async (submissionData: SubmissionData) => {
     fetcher = new CSESResultFetcher(submissionData);
   } else if (submissionData.platform === 'atcoder') {
     fetcher = new AtCoderResultFetcher(submissionData);
+  } else if (submissionData.platform === 'spoj') {
+    fetcher = new SPOJResultFetcher(submissionData);
   } else {
     throw new Error(`invalid platform name (${submissionData.platform})`);
   }
@@ -308,6 +314,9 @@ const updateResults = async (pending: PendingSubmissions | null) => {
     promises.push(updateResultNonCF(obj));
   });
   pendingByPlatform['atcoder']?.forEach(obj => {
+    promises.push(updateResultNonCF(obj));
+  });
+  pendingByPlatform['spoj']?.forEach(obj => {
     promises.push(updateResultNonCF(obj));
   });
   promises.push(updateResultsCF(pendingByPlatform['codeforces']));

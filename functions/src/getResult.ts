@@ -144,12 +144,10 @@ export class SPOJResultFetcher extends ResultFetcher {
   }
 
   async initialize(): Promise<void> {
-    const { submissionID } = this.submissionData;
-    const username = 'numbdigger';
-    const problemID = 'DCEPC11I';
-
-    if (!username) throw new IncorrectDataError('SPOJ: username is missing');
-
+    const { submissionID, username, problemID } = this.submissionData;
+    if (!username) {
+      throw new IncorrectDataError('SPOJ: username is missing');
+    }
     const fetchPage = async (page: number) => {
       const url = `https://www.spoj.com/status/${problemID},${username}/all/start=${page}`;
       const resp = await fetch(url, {
@@ -171,10 +169,7 @@ export class SPOJResultFetcher extends ResultFetcher {
       const document = new JSDOM(respText).window.document;
       return document.querySelector('pre > small') ?? undefined;
     };
-    const getSummary = async () => {
-      const resp = await fetchPage(queryPage);
-      const respText = await resp.text();
-      const document = new JSDOM(respText).window.document;
+    const getSummary = async (document: Document) => {
       const submissionIDs = Array.from(
         document.querySelectorAll('td.statustext:not([id])')
       ).map(element => element.textContent!.trim());
@@ -192,7 +187,6 @@ export class SPOJResultFetcher extends ResultFetcher {
         'title'
       );
     };
-    let queryPage = -1;
     let lastSubmissionIDs: string[] = [];
 
     for (let currPage = 0; ; currPage += 20) {
@@ -213,13 +207,13 @@ export class SPOJResultFetcher extends ResultFetcher {
       const minID = submissionIDs[0];
       const maxID = submissionIDs.at(-1)!;
       const paddedSubmissionID = submissionID.padStart(20, '0');
+
       if (paddedSubmissionID >= minID && paddedSubmissionID <= maxID) {
-        queryPage = currPage;
+        this.summary = await getSummary(document);
         break;
       }
       lastSubmissionIDs = submissionIDs;
     }
-    this.summary = await getSummary();
     this.error = await getError();
 
     if (!this.summary) {
