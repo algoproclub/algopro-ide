@@ -58,7 +58,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
               className="-ml-1 mr-2 w-[1.1rem] h-[1.1rem] text-gray-400"
               aria-hidden="true"
             />
-            {showCopied ? 'URL Copied!' : 'Share'}
+            {showCopied ? 'Copied!' : 'Share'}
           </button>
         }
       </div>

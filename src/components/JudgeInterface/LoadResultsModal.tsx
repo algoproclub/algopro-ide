@@ -33,7 +33,7 @@ const TextInput = ({
           type="text"
           name={id}
           id={id}
-          className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm"
+          className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm text-black"
           value={text}
           onChange={onChange}
         />
@@ -97,7 +97,9 @@ const LoadResultsModal = ({
   const [username, setUsername] = useState<string | null>(null);
   const { fileData } = useEditorContext();
   const { userData } = useUserContext();
-  const needUsername = fileData?.problem?.platform === 'codeforces';
+  const needUsername = ['codeforces', 'spoj'].includes(
+    fileData?.problem?.platform ?? ''
+  );
 
   useEffect(() => {
     if (fileData?.problem?.platform) {

@@ -118,33 +118,33 @@ export default function GenericJudgeInterface({
 
   return (
     <div className="relative h-full flex flex-col text-[0.92rem]">
-      <div className="flex-1 overflow-y-auto">
-        <section className="p-4">
-          <header className="items-center">
-            {languages.length > 1 && (
-              <div className="mb-2">
-                <LanguageSelectorDropdown
-                  languages={languages}
-                  language={language}
-                  setLanguage={setLanguage}
-                />
-              </div>
-            )}
-            <h3 className="flex-1 mt-0">
-              <a
-                href={problem.url}
-                target="_blank"
-                rel="noreferrer"
-                className="font-bold text-lg hover:underline"
-              >
-                {problem.title}
-                <ArrowTopRightOnSquareIcon
-                  aria-hidden="true"
-                  className="ml-1 h-5 w-5 inline"
-                />
-              </a>
-            </h3>
-          </header>
+      <div className="flex-1 overflow-y-auto pb-4">
+        <header className="items-center">
+          {languages.length > 1 && (
+            <div className="p-4 border-b border-gray-700">
+              <LanguageSelectorDropdown
+                languages={languages}
+                language={language}
+                setLanguage={setLanguage}
+              />
+            </div>
+          )}
+        </header>
+        <section className="px-4 pt-2">
+          <h3 className="flex-1">
+            <a
+              href={problem.url}
+              target="_blank"
+              rel="noreferrer"
+              className="font-bold text-lg hover:underline"
+            >
+              {problem.title}
+              <ArrowTopRightOnSquareIcon
+                aria-hidden="true"
+                className="ml-1 h-5 w-5 inline"
+              />
+            </a>
+          </h3>
           <HTMLStatement htmlContent={translations[language].statement} />
           {(problem.timeLimit || problem.memoryLimit) && (
             <div>
