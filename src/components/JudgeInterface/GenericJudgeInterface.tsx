@@ -151,7 +151,7 @@ export default function GenericJudgeInterface({
               <h4 className="text-base font-semibold mt-[0.6rem] mb-[0.25rem]">
                 Limits
               </h4>
-              <ul className="list-disc list-inside ml-2">
+              <ul className="list-disc ml-6">
                 {problem.timeLimit && (
                   <li>
                     <span>Time:</span> {problem.timeLimit}
@@ -165,27 +165,32 @@ export default function GenericJudgeInterface({
               </ul>
             </div>
           )}
-          <h4 className="text-base font-semibold mt-[0.6rem] mb-[0.25rem]">
-            Examples
-          </h4>
-          <div className="mt-2 space-y-3">
-            {problem.samples.map((sample, index) => (
-              <div key={index} className="mb-4">
-                <div className="mb-3 -space-y-[1px] text-sm">
-                  <PreBox
-                    title={`Input ${index + 1}`}
-                    text={sample.input}
-                    roundedBottom={false}
-                  />
-                  <PreBox
-                    title={`Output ${index + 1}`}
-                    text={sample.output}
-                    roundedTop={false}
-                  />
-                </div>
+          {/* Samples are included in the parsed problem statement for SPOJ */}
+          {problem.samples.length > 0 && problem.platform !== 'spoj' && (
+            <>
+              <h4 className="text-base font-semibold mt-[0.6rem] mb-[0.25rem]">
+                Examples
+              </h4>
+              <div className="mt-2 space-y-3">
+                {problem.samples.map((sample, index) => (
+                  <div key={index} className="mb-4">
+                    <div className="mb-3 -space-y-[1px] text-sm">
+                      <PreBox
+                        title={`Input ${index + 1}`}
+                        text={sample.input}
+                        roundedBottom={false}
+                      />
+                      <PreBox
+                        title={`Output ${index + 1}`}
+                        text={sample.output}
+                        roundedTop={false}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </section>
       </div>
     </div>

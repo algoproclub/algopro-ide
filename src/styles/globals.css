@@ -59,8 +59,11 @@ body {
 .html-statement-container {
   & ul {
     list-style-type: disc;
-    list-style-position: inside;
-    margin-left: 0.5rem;
+    margin-left: 1.5rem;
+  }
+  & ol {
+    list-style-type: decimal;
+    margin-left: 1.5rem;
   }
   & pre {
     @apply rounded-md px-4 py-2.5 border border-gray-700 bg-[#121212];
@@ -78,5 +81,35 @@ body {
   }
   & p {
     margin-bottom: 0.5rem;
+    line-height: 1.4em;
+  }
+  & .tex-span {
+    font-family: KaTeX_Main, Times New Roman, serif;
+    font-size: 1.15em;
+  }
+  & .tex-font-style-tt {
+    @apply font-mono;
+  }
+  & .tex-font-style-bf {
+    font-weight: bold;
+  }
+  & .tex-font-style-it {
+    font-style: italic;
+  }
+  & .tex-font-style-underline {
+    text-decoration: underline;
+  }
+  & .tex-font-style-striked {
+    text-decoration: line-through;
+  }
+  & img.tex-formula {
+    display: inline;
+    filter: invert(100%);
+    vertical-align: middle;
+    position: relative;
+    bottom: 2px;
+  }
+  & img.tex-graphics {
+    background-color: white;
   }
 }

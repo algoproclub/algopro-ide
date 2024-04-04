@@ -17,12 +17,7 @@ import {
   ResultFetcher,
   CSESResultFetcher,
 } from './getResult';
-import {
-  PendingSubmissions,
-  AccountData,
-  SubmissionData,
-  TranslationData,
-} from './types';
+import { PendingSubmissions, AccountData, SubmissionData } from './types';
 import {
   onValueCreated,
   onValueDeleted,
@@ -34,6 +29,7 @@ import {
   AtCoderSubmitter,
   CFSubmitter,
   CSESSubmitter,
+  SPOJSubmitter,
   Submitter,
 } from './submit';
 
@@ -51,6 +47,8 @@ export const atCoderCsrfToken = defineString('ATCODER_CSRF_TOKEN');
 
 export const csesCookie = defineString('CSES_COOKIE');
 export const csesCsrfToken = defineString('CSES_CSRF_TOKEN');
+
+export const spojCookie = defineString('SPOJ_COOKIE');
 
 const PENDING_TIME_LIMIT_MS = 300000;
 const INCORRECT_DATA_RETRY_LIMIT_MS = 20000;
@@ -83,6 +81,9 @@ export const submitproblemsolution = onCall<
       case 'cses':
         submitter = new CSESSubmitter(problemSolution);
         break;
+      case 'spoj':
+        submitter = new SPOJSubmitter(problemSolution);
+        break;
       default:
         throw new HttpsError(
           'unimplemented',
@@ -93,61 +94,38 @@ export const submitproblemsolution = onCall<
   }
 );
 
-export const updatetranslation = onCall<TranslationData, Promise<boolean>>(
-  { region: 'europe-west1' },
-  async request => {
-    if (!request.auth?.token?.teacher) {
-      return false;
-    }
-    const { problem, translation, language } = request.data;
-    const documentPath =
-      language === '-'
-        ? `problemsets/${problem.platform}/problems/${problem.id}`
-        : `problemsets/${problem.platform}/problems/${problem.id}/translations/${language}`;
-
-    const data = {
-      statement: translation.statement,
-      hints: translation.hints,
-    };
-    const document = admin.firestore().doc(documentPath);
-    if (language === '-') {
-      document.update(data);
-    } else {
-      document.set(data);
-    }
-    return true;
+export const translate = onCall<
+  {
+    text: string;
+    lang: string;
+  },
+  Promise<string | null>
+>({ region: 'europe-west1' }, async request => {
+  if (!request.auth?.token?.teacher) {
+    return null;
   }
-);
-
-export const translate = onCall<string, Promise<string | null>>(
-  { region: 'europe-west1' },
-  async request => {
-    if (!request.auth?.token?.teacher) {
-      return null;
-    }
-    const text = request.data;
-    const resp = await fetch('https://api-free.deepl.com/v2/translate', {
-      method: 'POST',
-      headers: {
-        Authorization: `DeepL-Auth-Key ${deeplAPIKey.value()}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: [text],
-        target_lang: 'HU',
-        tag_handling: 'html',
-      }),
-    });
-    let translation: string | null = null;
-    try {
-      const json = await resp.json();
-      translation = json['translations'][0].text ?? null;
-    } catch (error) {
-      logger.log(error);
-    }
-    return translation;
+  const { text, lang } = request.data;
+  const resp = await fetch('https://api-free.deepl.com/v2/translate', {
+    method: 'POST',
+    headers: {
+      Authorization: `DeepL-Auth-Key ${deeplAPIKey.value()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      text: [text],
+      tag_handling: 'html',
+      target_lang: lang,
+    }),
+  });
+  let translation: string | null = null;
+  try {
+    const json = await resp.json();
+    translation = json['translations'][0].text ?? null;
+  } catch (error) {
+    logger.log(error);
   }
-);
+  return translation;
+});
 
 export const enum Errors {
   NO_SUCH_SUBMISSION = 'No such submission exists for the given problem. Please check if the entered submission ID is correct.',
@@ -171,6 +149,7 @@ const accountData: { [key in Platform]: AccountData } = {
   codeforces: {},
   planets: {},
   usaco: {},
+  spoj: {},
 };
 
 const updateStatusData = async (

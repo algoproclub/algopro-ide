@@ -14,8 +14,8 @@ export default function HTMLStatement({
         renderMathInElement(node, {
           delimiters: [
             // For Codeforces
+            { left: '$$$$$$', right: '$$$$$$', display: true },
             { left: '$$$', right: '$$$', display: false },
-            { left: '$$$$$', right: '$$$$$', display: true },
           ],
         });
 

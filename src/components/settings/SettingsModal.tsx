@@ -12,11 +12,12 @@ import {
   ComputerDesktopIcon,
   ServerIcon,
   UserIcon,
+  CodeBracketIcon,
 } from '@heroicons/react/20/solid';
 import UserSettings from './UserSettings';
 import WorkspaceSettingsUI from './WorkspaceSettingsUI';
-
 import SignInSettings from './SignInSettings';
+import TemplateCodeSettings from './TemplateCodeSettings';
 import JudgeResult from '../../types/judge';
 import { ProblemData } from '../../types/problem';
 import useJudgeResults from '../../hooks/useJudgeResults';
@@ -45,13 +46,23 @@ const tabs = [
     label: 'User',
     icon: UserIcon,
   },
+  {
+    id: 'templates',
+    label: 'Templates',
+    icon: CodeBracketIcon,
+  },
 ] as const;
 
 export const SettingsModal = ({
   isOpen,
   onClose,
 }: SettingsDialogProps): JSX.Element => {
-  const { userData, firebaseUser, updateUsername } = useUserContext();
+  const {
+    userData,
+    firebaseUser,
+    updateUsername,
+    templateCode: savedTemplateCode,
+  } = useUserContext();
   const {
     fileData,
     updateFileData: updateRealFileData,
@@ -79,9 +90,13 @@ export const SettingsModal = ({
   const [tabSize, setTabSize] = useState<number>(-1);
   const [lightMode, setLightMode] = useState<boolean>(false);
   const [manualSubmission, setManualSubmission] = useState<boolean>(false);
+  const [templateCode, setTemplateCode] = useState<
+    Partial<Record<Language, string>>
+  >({});
+  const [templateLanguage, setTemplateLanguage] = useState<Language>('cpp');
   const dirtyRef = useRef<boolean>(false);
 
-  const [tab, setTab] = useState<(typeof tabs)[number]['id']>('workspace');
+  const [tab, setTab] = useState<typeof tabs[number]['id']>('workspace');
 
   const [judgeResults, setJudgeResults] = useJudgeResults();
 
@@ -97,6 +112,7 @@ export const SettingsModal = ({
       setTabSize(userData.tabSize);
       setLightMode(userData.lightMode);
       setManualSubmission(userData.manualSubmission);
+      setTemplateCode(savedTemplateCode);
       setTab('workspace');
       dirtyRef.current = false;
     }
@@ -166,6 +182,7 @@ export const SettingsModal = ({
         }
         data.usernames.codeforces = cfUsername;
         data.usernames.atcoder = atcoderUsername;
+        data.templateCode = templateCode;
         return data;
       }
     );
@@ -305,6 +322,17 @@ export const SettingsModal = ({
                     workspaceSettings={fileSettings}
                     onWorkspaceSettingsChange={onChange}
                     userPermission={userPermission || 'READ'}
+                  />
+                )}
+                {tab === 'templates' && (
+                  <TemplateCodeSettings
+                    templateCode={templateCode}
+                    setTemplateCode={code => {
+                      setTemplateCode(code);
+                      dirtyRef.current = true;
+                    }}
+                    language={templateLanguage}
+                    setLanguage={setTemplateLanguage}
                   />
                 )}
 

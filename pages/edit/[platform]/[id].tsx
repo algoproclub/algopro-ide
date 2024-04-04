@@ -8,7 +8,7 @@ import React, {
 import { CodeEditor } from '../../../src/components/editor/CodeEditor';
 import { Dialog, Transition } from '@headlessui/react';
 import { useRouter } from 'next/router';
-import { doc, getFirestore, getDoc } from 'firebase/firestore';
+import { doc, getFirestore, getDoc, setDoc } from 'firebase/firestore';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import { Platform, ProblemData } from '../../../src/types/problem';
 import Markdown from '../../../src/components/JudgeInterface/Markdown';
@@ -16,7 +16,6 @@ import dynamic from 'next/dynamic';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { TranslationData } from '../../../functions/src/types';
 import { LanguageSelectorDropdown } from '../../../src/components/JudgeInterface/GenericJudgeInterface';
 import withTeacherLogin from '../../../src/scripts/withTeacherLogin';
 
@@ -35,11 +34,6 @@ const translate = httpsCallable<
   },
   string
 >(getFunctions(undefined, 'europe-west1'), 'translate');
-
-const updateTranslation = httpsCallable<TranslationData, boolean>(
-  getFunctions(undefined, 'europe-west1'),
-  'updatetranslation'
-);
 
 const HTMLEditor = ({
   text,
@@ -441,25 +435,21 @@ export default withTeacherLogin(() => {
     }
   }, [translated]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!platform || !problemID) {
       return;
     }
-    updateTranslation({
-      problem: {
-        platform: platform as Platform,
-        id: problemID,
-      },
-      language: language,
-      translation: {
-        statement: translated,
-        hints: hints,
-      },
-    }).then(result => {
-      if (result.data) {
-        setUnsaved(false);
-      }
-    });
+    const problemRef = doc(
+      getFirestore(),
+      'problemsets',
+      platform,
+      'problems',
+      problemID,
+      'translations',
+      'hu'
+    );
+    await setDoc(problemRef, { statement: translated, hints: hints });
+    setUnsaved(false);
   };
 
   const handleAddNewHint = () => {

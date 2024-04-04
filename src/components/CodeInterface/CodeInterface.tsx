@@ -1,4 +1,3 @@
-import defaultCode from '../../scripts/defaultCode';
 import React, { useEffect, useState } from 'react';
 import classNames from 'classnames';
 import { useAtom } from 'jotai';
@@ -58,7 +57,10 @@ export const CodeInterface = ({
     }
   }, [codemirrorEditor, setCodemirrorEditor]);
 
-  const { tabSize, lightMode } = useUserContext().userData;
+  const {
+    userData: { tabSize, lightMode },
+    templateCode,
+  } = useUserContext();
 
   return (
     <div
@@ -96,7 +98,7 @@ export const CodeInterface = ({
             }, 0);
           }}
           onCodemirrorMount={(view, state) => setCodemirrorEditor(view)}
-          defaultValue={defaultCode[lang]}
+          defaultValue={templateCode[lang]}
           yjsDocumentId={`${fileData.id}.${lang}`}
           useEditorWithVim={true}
           lspEnabled={lang === 'cpp'}
