@@ -15,9 +15,9 @@ import {
 } from 'firebase/firestore';
 import { get, getDatabase, ref } from 'firebase/database';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
-import { Disclosure, Switch } from '@headlessui/react';
+import { Disclosure } from '@headlessui/react';
 import TimeAgoLabel from '../src/components/TimeStamp';
-import Checkbox from '../src/Checkbox';
+import Checkbox from '../src/components/Checkbox';
 
 const groups = ['piton', 'capa', 'kajman', 'sas', 'tigris'];
 const times = ['1 hour', '3 hours', '1 day', '7 days', 'All'];
@@ -190,7 +190,76 @@ const fetchClasses = async (group: Group) => {
   return classes;
 };
 
-const ControlFrame = ({
+const RefreshButton = ({ onRefresh }: { onRefresh: () => void }) => {
+  return (
+    <button
+      className="flex items-center justify-center border border-gray-600 px-4 py-3.5 -mb-1 rounded-lg hover:border-gray-500 bg-gray-900 hover:bg-gray-800 active:bg-gray-700"
+      onClick={onRefresh}
+    >
+      <FontAwesomeIcon
+        icon={{ prefix: 'fas', iconName: 'arrows-rotate' }}
+        className="w-4 text-gray-100"
+      />
+    </button>
+  );
+};
+
+const Controls = ({
+  group,
+  classID,
+  time,
+  highlight,
+  classes,
+  setGroup,
+  setClassID,
+  setTime,
+  toggleHighlight,
+  onRefresh,
+}: {
+  group: number;
+  classID: number;
+  time: number;
+  classes: string[];
+  highlight: boolean;
+  setGroup: (_: number) => void;
+  setClassID: (_: number) => void;
+  setTime: (_: number) => void;
+  toggleHighlight: () => void;
+  onRefresh: () => void;
+}) => {
+  return (
+    <div className="w-full space-y-2.5 px-5 py-3.5 border border-gray-600">
+      <div className="w-full flex space-x-2 items-end">
+        <Dropdown
+          items={groups}
+          label="Group"
+          selected={group}
+          setSelected={setGroup}
+        />
+        <Dropdown
+          items={classes}
+          label="Class"
+          selected={classID}
+          setSelected={setClassID}
+        />
+        <Dropdown
+          items={times}
+          label="Last edit"
+          selected={time}
+          setSelected={setTime}
+        />
+        <RefreshButton onRefresh={onRefresh} />
+      </div>
+      <Checkbox
+        enabled={highlight}
+        toggleEnabled={toggleHighlight}
+        label="Highlight last edited file"
+      />
+    </div>
+  );
+};
+
+const ControlDropdown = ({
   group,
   classID,
   time,
@@ -480,19 +549,35 @@ export default withTeacherLogin(() => {
 
   return (
     <div className="px-2">
-      <div className="mx-auto max-w-7xl mt-4 space-y-3">
-        <ControlFrame
-          group={group}
-          classID={classID}
-          time={time}
-          classes={classes}
-          highlight={highlight}
-          setGroup={index => setGroup(index)}
-          setClassID={index => setClassID(index)}
-          setTime={index => setTime(index)}
-          toggleHighlight={() => setHighlight(val => !val)}
-          onRefresh={handleRefresh}
-        />
+      <div className="mx-auto max-w-7xl mt-4 space-y-4">
+        <div className="md:hidden">
+          <ControlDropdown
+            group={group}
+            classID={classID}
+            time={time}
+            classes={classes}
+            highlight={highlight}
+            setGroup={index => setGroup(index)}
+            setClassID={index => setClassID(index)}
+            setTime={index => setTime(index)}
+            toggleHighlight={() => setHighlight(val => !val)}
+            onRefresh={handleRefresh}
+          />
+        </div>
+        <div className="hidden md:block">
+          <Controls
+            group={group}
+            classID={classID}
+            time={time}
+            classes={classes}
+            highlight={highlight}
+            setGroup={index => setGroup(index)}
+            setClassID={index => setClassID(index)}
+            setTime={index => setTime(index)}
+            toggleHighlight={() => setHighlight(val => !val)}
+            onRefresh={handleRefresh}
+          />
+        </div>
         <GroupData
           problems={filteredProblems}
           students={students}
