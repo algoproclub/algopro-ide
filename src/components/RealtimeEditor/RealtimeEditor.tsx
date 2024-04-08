@@ -24,7 +24,7 @@ export interface RealtimeEditorProps extends EditorProps {
 
 const WEBSOCKET_SERVER = SHOULD_USE_DEV_YJS_SERVER
   ? 'ws://localhost:1234'
-  : 'wss://yjs.algopro.hu';
+  : 'ws://localhost:1234';
 
 const RealtimeEditor = ({
   defaultValue,
