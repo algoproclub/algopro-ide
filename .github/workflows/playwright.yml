@@ -31,6 +31,9 @@ jobs:
           files: |-
             docker-compose.yml
             docker-compose.test.yml
+          set: |
+            *.cache-from=type=gha
+            *.cache-to=type=gha,mode=max
 
       - name: run tests
         run: |

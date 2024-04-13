@@ -4,10 +4,6 @@ services:
     build:
       context: .
       dockerfile: functions.Dockerfile
-      cache_from:
-        - type=gha
-      cache_to:
-        - type=gha
     volumes:
       - type: bind
         source: .
@@ -16,10 +12,6 @@ services:
     build:
       context: .
       dockerfile: firebase.Dockerfile
-      cache_from:
-        - type=gha
-      cache_to:
-        - type=gha
     ports:
       - '9099:9099'
       - '9000:9000'
@@ -35,19 +27,11 @@ services:
     build:
       context: .
       dockerfile: yjs.Dockerfile
-      cache_from:
-        - type=gha
-      cache_to:
-        - type=gha
     ports:
       - '1234:1234'
   execute:
     build:
       context: execute
-      cache_from:
-        - type=gha
-      cache_to:
-        - type=gha
     environment:
       - EXECUTE_DUMMY=true
     ports:
@@ -56,10 +40,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      cache_from:
-        - type=gha
-      cache_to:
-        - type=gha
     environment:
       - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
       - FIRESTORE_EMULATOR_HOST=firebase:8080

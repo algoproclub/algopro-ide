@@ -1,12 +1,7 @@
 version: '3'
 services:
   playwright:
-    build:
-      context: ./e2e
-      cache_from:
-        - type=gha
-      cache_to:
-        - type=gha
+    build: ./e2e
     volumes:
       - type: bind
         source: playwright-report/
