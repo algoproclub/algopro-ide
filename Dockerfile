@@ -2,6 +2,7 @@ FROM node:slim
 WORKDIR /app
 
 COPY package*.json ./
+COPY yarn.lock ./
 RUN yarn install
 COPY tsconfig.json ./
 COPY index.html ./
