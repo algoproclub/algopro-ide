@@ -1,6 +1,6 @@
 FROM node:slim
 RUN apt-get update
-RUN apt-get -y install default-jre
+RUN apt-get -y install default-jre-headless
 
 WORKDIR /app
 
