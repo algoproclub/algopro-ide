@@ -71,7 +71,7 @@ export const CodeInterface = ({
     >
       <div className="flex-1 overflow-hidden">
         <LazyRealtimeEditor
-          theme={lightMode ? 'light' : 'vs-dark'}
+          theme={lightMode ? 'light' : 'dark'}
           language={{ cpp: 'cpp', java: 'java', py: 'python' }[lang]}
           path={`myfile.${lang}`}
           options={

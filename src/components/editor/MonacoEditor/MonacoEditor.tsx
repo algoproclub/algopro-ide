@@ -77,6 +77,8 @@ export default function MonacoEditor({
   const [editor, setEditor] =
     useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
+  theme = { dark: 'vs-dark', light: 'vs' }[theme ?? 'dark'];
+
   useEffect(() => {
     const modelPath = `file:///home/thecodingwizard/${path ?? 'default'}`;
 

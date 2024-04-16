@@ -86,7 +86,7 @@ export const Output = ({
           </div>
         ) : (
           <CodeEditor
-            theme={lightMode ? 'light' : 'vs-dark'}
+            theme={lightMode ? 'light' : 'dark'}
             language={'plaintext'}
             value={outputText}
             saveViewState={false}
