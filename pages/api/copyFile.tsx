@@ -90,7 +90,7 @@ export default async (
   const copyYjsPromies = ['cpp', 'java', 'py', 'input', 'scribble'].map(key => {
     const HOST_URL = SHOULD_USE_DEV_YJS_SERVER
       ? 'http://0.0.0.0:1234'
-      : 'https://yjs.algopro.hu';
+      : 'http://0.0.0.0:1234';
     return fetch(`${HOST_URL}/copyFile`, {
       method: 'POST',
       headers: {

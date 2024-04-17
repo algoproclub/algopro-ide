@@ -61,32 +61,34 @@ export const LanguageSelectorDropdown = ({
                     } transition duration-200`}
                   />
                 </Listbox.Button>
-                <Transition
-                  enter="transition duration-100 ease-out"
-                  enterFrom="transform scale-95 opacity-0"
-                  enterTo="transform scale-100 opacity-100"
-                  leave="transition duration-75 ease-out"
-                  leaveFrom="transform scale-100 opacity-100"
-                  leaveTo="transform scale-95 opacity-0"
-                >
-                  <Listbox.Options
-                    static
-                    className="border border-gray-700 rounded-md bg-[#121212] divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden"
+                <div className="w-full text-sm relative z-20">
+                  <Transition
+                    enter="transition duration-100 ease-out"
+                    enterFrom="transform scale-95 opacity-0"
+                    enterTo="transform scale-100 opacity-100"
+                    leave="transition duration-75 ease-out"
+                    leaveFrom="transform scale-100 opacity-100"
+                    leaveTo="transform scale-95 opacity-0"
                   >
-                    {languages.map(val => (
-                      <Listbox.Option
-                        className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700 select-none"
-                        key={val}
-                        value={val}
-                      >
-                        <span className="space-x-2">
-                          <span>{LANGUAGE_INFO[val].flag}</span>
-                          <span>{LANGUAGE_INFO[val].name}</span>
-                        </span>
-                      </Listbox.Option>
-                    ))}
-                  </Listbox.Options>
-                </Transition>
+                    <Listbox.Options
+                      static
+                      className="border border-gray-700 rounded-md bg-[#121212] divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden"
+                    >
+                      {languages.map(val => (
+                        <Listbox.Option
+                          className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700 select-none"
+                          key={val}
+                          value={val}
+                        >
+                          <span className="space-x-2">
+                            <span>{LANGUAGE_INFO[val].flag}</span>
+                            <span>{LANGUAGE_INFO[val].name}</span>
+                          </span>
+                        </Listbox.Option>
+                      ))}
+                    </Listbox.Options>
+                  </Transition>
+                </div>
               </div>
             </div>
           </>
