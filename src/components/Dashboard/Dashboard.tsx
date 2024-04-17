@@ -1,6 +1,6 @@
 import { useUpdateAtom } from 'jotai/utils';
 import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   getDatabase,
   ref,
@@ -18,15 +18,19 @@ import {
 import { useConnectionContext } from '../../context/ConnectionContext';
 import { isFirebaseId } from '../../editorUtils';
 import FilesList, { File } from './FilesList';
-import { SharingPermissions } from '../SharingPermissions';
 import { RadioGroupContents } from '../settings/RadioGroupContents';
-import {
-  useNullableUserContext,
-  UserData,
-  useUserContext,
-} from '../../context/UserContext';
-import { MessagePage } from '../MessagePage';
+import { useUserContext } from '../../context/UserContext';
 import Link from 'next/link';
+import { TabBar } from '../TabBar';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Checkbox from '../Checkbox';
+import Dropdown from '../Dropdown';
+import TimeAgoLabel from '../TimeStamp';
+
+const tabs = [
+  { label: 'Recent', value: 'recent' },
+  { label: 'Classes', value: 'classes' },
+];
 
 export default function Dashboard() {
   const { firebaseUser, userData } = useUserContext();
@@ -36,51 +40,8 @@ export default function Dashboard() {
 
   const [files, setFiles] = useState<File[] | null>(null);
   const [showHidden, setShowHidden] = useState<boolean>(false);
-  const router = useRouter();
   const connectionContext = useConnectionContext();
-
-  const makeNewWorkspaceWithName = async (name: string) => {
-    if (!firebaseUser) return;
-    const resp = await fetch(`/api/createNewFile`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        workspaceName: name,
-        userID: firebaseUser.uid,
-        userName: firebaseUser.displayName,
-        defaultPermission: userData.defaultPermission,
-      }),
-    });
-    const data = await resp.json();
-    if (resp.ok) {
-      router.push(`/${data.fileID}`);
-    } else {
-      alert('Error: ' + data.message);
-    }
-  };
-
-  // const makeNewClassroomWithName = async (name: string) => {
-  //   if (!firebaseUser) return;
-  //   const resp = await fetch(`/api/createNewClassroom`, {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: JSON.stringify({
-  //       workspaceName: name,
-  //       userID: firebaseUser.uid,
-  //       userName: firebaseUser.displayName,
-  //     }),
-  //   });
-  //   const data = await resp.json();
-  //   if (resp.ok) {
-  //     router.push(`/classrooms/${data.fileID}/instructor`);
-  //   } else {
-  //     alert('Error: ' + data.message);
-  //   }
-  // };
+  const [tab, setTab] = useState('recent');
 
   useEffect(() => {
     if (!firebaseUser) return;
@@ -114,17 +75,6 @@ export default function Dashboard() {
         });
         files.reverse();
         setFiles(files);
-        // const yourOwnedFiles: File[] = [];
-        // const yourOtherFiles: File[] = [];
-        // for (const file of yourFiles) {
-        //   if (file.hidden && !showHidden) continue;
-        //   if (file.lastPermission === 'OWNER') {
-        //     yourOwnedFiles.push(file);
-        //   } else {
-        //     yourOtherFiles.push(file);
-        //   }
-        // }
-        // setOwnedFiles(yourOwnedFiles);
       }
     });
     return () => off(fileQuery, 'value', unsubscribe);
@@ -163,33 +113,151 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="h-12"></div>
+      <div className="h-8"></div>
 
-      <h2 className="text-gray-100 text-2xl md:text-4xl font-black">
-        Your Workspaces
+      <h2 className="text-gray-200 text-xl font-black mb-5">
+        Your workspaces{' '}
+        <FontAwesomeIcon
+          icon={{ prefix: 'fas', iconName: 'computer' }}
+          className="ml-1"
+        />
       </h2>
 
-      <div className="h-6"></div>
-      <RadioGroupContents
-        title="Show Hidden Files?"
-        value={showHidden}
-        onChange={setShowHidden}
-        options={[
-          {
-            label: 'Yes',
-            value: true,
-          },
-          {
-            label: 'No',
-            value: false,
-          },
-        ]}
-        lightMode
-      />
-      <div className="h-6"></div>
-
       {files && files.length > 0 && (
-        <FilesList files={files} showPerms={false} />
+        <>
+          <TabBar
+            tabs={tabs}
+            activeTab={tab}
+            onTabSelect={tab => {
+              setTab(tab.value);
+            }}
+            homepage={true}
+          />
+          {tab === 'recent' && (
+            <div className="border border-gray-700 divide-y divide-gray-600">
+              <div className="text-gray-100 px-3.5 py-3">
+                <Checkbox
+                  label="Show hidden files"
+                  enabled={showHidden}
+                  toggleEnabled={() => setShowHidden(val => !val)}
+                />
+              </div>
+              <FilesList files={files} showPerms={false} />
+              <div className="px-3.5 py-3 flex items-center space-x-2 text-sm bg-gray-800">
+                <button className="flex items-center px-2.5 py-1.5 rounded-md border border-gray-600 bg-gray-800 hover:border-gray-500 active:bg-gray-700">
+                  <FontAwesomeIcon
+                    icon={{ prefix: 'fas', iconName: 'chevron-left' }}
+                    className="mr-1.5 w-3.5 h-3.5"
+                  />
+                  Next
+                </button>
+                <span className="px-2 text-gray-300">Page: 13</span>
+                <button className="flex items-center px-2.5 py-1.5 rounded-md border border-gray-600 bg-gray-800 hover:border-gray-500 active:bg-gray-700">
+                  Previous
+                  <FontAwesomeIcon
+                    icon={{ prefix: 'fas', iconName: 'chevron-right' }}
+                    className="ml-1.5 w-3.5 h-3.5"
+                  />
+                </button>
+              </div>
+            </div>
+          )}
+          {tab === 'classes' && (
+            <div className="divide-y divide-gray-600 border border-gray-700">
+              <div className="flex items-center px-3.5 py-3 space-x-3">
+                <Dropdown
+                  items={['piton', 'capa']}
+                  label={'Group'}
+                  selected={0}
+                  setSelected={() => {}}
+                />
+                <Dropdown
+                  items={['13', '24']}
+                  label={'Class'}
+                  selected={0}
+                  setSelected={() => {}}
+                />
+              </div>
+              <div className="overflow-x-auto">
+                <table className="table-tasks w-full text-sm divide-y divide-gray-700 truncate">
+                  <thead className="bg-gray-800">
+                    <tr>
+                      <th className="text-left">Problem name</th>
+                      <th className="text-left">Verdict</th>
+                      <th className="text-left">Last edit</th>
+                      <th className="text-left">Code size</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700 text-gray-300 bg-gray-900">
+                    <tr>
+                      <td>
+                        <a
+                          href="#"
+                          className="underline text-white hover:text-indigo-200"
+                        >
+                          SPOJ KNAPSACK
+                        </a>
+                      </td>
+                      <td className="text-white">
+                        <div className="flex items-center">
+                          <FontAwesomeIcon
+                            icon={{ prefix: 'fas', iconName: 'xmark' }}
+                            className="text-red-500 mr-2"
+                          />
+                          Time limit exceeded
+                        </div>
+                      </td>
+                      <td>
+                        <TimeAgoLabel date={new Date(Date.now() - 1000000)} />
+                      </td>
+                      <td>197 chars</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a
+                          href="#"
+                          className="underline text-white hover:text-indigo-200"
+                        >
+                          Codeforces 1919E
+                        </a>
+                      </td>
+                      <td className="text-white">
+                        <div className="flex items-center">
+                          <FontAwesomeIcon
+                            icon={{ prefix: 'fas', iconName: 'check' }}
+                            className="text-green-500 mr-2"
+                          />
+                          Correct answer
+                        </div>
+                      </td>
+                      <td>
+                        <TimeAgoLabel date={new Date(Date.now() - 1000000)} />
+                      </td>
+                      <td>360 chars</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-3.5 py-3 flex items-center space-x-2 text-sm bg-gray-800">
+                <button className="flex items-center px-2.5 py-1.5 rounded-md border border-gray-600 bg-gray-800 hover:border-gray-500 active:bg-gray-700">
+                  <FontAwesomeIcon
+                    icon={{ prefix: 'fas', iconName: 'chevron-left' }}
+                    className="mr-1.5 w-3.5 h-3.5"
+                  />
+                  Next
+                </button>
+                <span className="px-2 text-gray-300">Class: 13</span>
+                <button className="flex items-center px-2.5 py-1.5 rounded-md border border-gray-600 bg-gray-800 hover:border-gray-500 active:bg-gray-700">
+                  Previous
+                  <FontAwesomeIcon
+                    icon={{ prefix: 'fas', iconName: 'chevron-right' }}
+                    className="ml-1.5 w-3.5 h-3.5"
+                  />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {!files && <div className="text-gray-400">Loading files...</div>}

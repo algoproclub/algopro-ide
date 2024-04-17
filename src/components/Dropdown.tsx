@@ -13,13 +13,15 @@ const Dropdown = ({
   setSelected: (_: number) => void;
 }) => {
   return (
-    <div className="relative w-full">
+    <div className="relative w-full min-w-0">
       <Listbox value={selected} onChange={index => setSelected(index)}>
         {({ open }) => (
           <>
-            <Listbox.Label className="text-sm block mb-1">
-              {label}
-            </Listbox.Label>
+            {label && (
+              <Listbox.Label className="text-sm block mb-1 px-1 text-gray-300">
+                {label}
+              </Listbox.Label>
+            )}
             <div className="w-full flex flex-col">
               <Listbox.Button
                 className={`relative w-full px-3 py-2 text-left rounded-md border truncate text-sm bg-gray-900 ${
