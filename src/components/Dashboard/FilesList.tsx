@@ -68,7 +68,9 @@ export default function FilesList(props: FilesListProps): JSX.Element {
       <table className="table-filelist divide-y divide-gray-700">
         <thead className="z-20 bg-gray-800">
           <tr className="truncate">
-            <th className="text-left text-sm font-bold text-gray-100">Name</th>
+            <th className="text-left text-sm font-bold text-gray-100 max-w-10 truncate">
+              Name
+            </th>
             <th className="text-left text-sm font-bold text-gray-100">
               Last Accessed
             </th>
@@ -90,11 +92,13 @@ export default function FilesList(props: FilesListProps): JSX.Element {
         <tbody className="divide-y divide-gray-700 bg-gray-900">
           {props.files.map(file => (
             <tr key={file.id}>
-              <td className="text-sm font-medium truncate">
+              <td
+                className={`text-sm font-medium truncate max-w-60 ${
+                  file.hidden ? 'text-gray-400' : 'text-white'
+                }`}
+              >
                 {file.hidden ? (
-                  <span className="text-gray-400">
-                    {file.title || '(Unnamed File)'} (Hidden)
-                  </span>
+                  <span>(Hidden) {file.title || '(Unnamed File)'}</span>
                 ) : (
                   <Link
                     href={`/${file.id.substring(1)}`}

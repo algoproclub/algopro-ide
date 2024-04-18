@@ -1,5 +1,4 @@
 import { useUpdateAtom } from 'jotai/utils';
-import { useRouter } from 'next/router';
 import React, { useState, useEffect } from 'react';
 import {
   getDatabase,
@@ -18,7 +17,6 @@ import {
 import { useConnectionContext } from '../../context/ConnectionContext';
 import { isFirebaseId } from '../../editorUtils';
 import FilesList, { File } from './FilesList';
-import { RadioGroupContents } from '../settings/RadioGroupContents';
 import { useUserContext } from '../../context/UserContext';
 import Link from 'next/link';
 import { TabBar } from '../TabBar';
@@ -26,11 +24,282 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Checkbox from '../Checkbox';
 import Dropdown from '../Dropdown';
 import TimeAgoLabel from '../TimeStamp';
+import {
+  fetchClasses,
+  fetchProblems,
+  fetchSolutionData,
+  ProblemData,
+  SolutionData,
+} from '../../../pages/teacher';
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
+
+const firestore = getFirestore();
 
 const tabs = [
   { label: 'Recent', value: 'recent' },
   { label: 'Classes', value: 'classes' },
 ];
+
+const Pagination = ({
+  page,
+  setPage,
+  minPage,
+  maxPage,
+  label,
+}: {
+  page: number;
+  setPage: (_: number) => void;
+  minPage: number;
+  maxPage: number;
+  label: string;
+}) => {
+  return (
+    <div className="px-3.5 py-3 flex items-center space-x-2 text-sm bg-gray-800">
+      <button
+        className="flex items-center px-2.5 py-1.5 rounded-md border border-gray-600 bg-gray-800 enabled:hover:border-gray-500 enabled:active:bg-gray-700 disabled:text-gray-400"
+        disabled={page === minPage}
+        onClick={() => setPage(Math.max(minPage, page - 1))}
+      >
+        <FontAwesomeIcon
+          icon={{ prefix: 'fas', iconName: 'chevron-left' }}
+          className="mr-1.5 w-3.5 h-3.5"
+        />
+        Next
+      </button>
+      <span className="px-2 text-gray-300">{label}</span>
+      <button
+        className="flex items-center px-2.5 py-1.5 rounded-md border border-gray-600 bg-gray-800 enabled:hover:border-gray-500 enabled:active:bg-gray-700 disabled:text-gray-400"
+        disabled={page === maxPage}
+        onClick={() => setPage(Math.min(page + 1, maxPage))}
+      >
+        Previous
+        <FontAwesomeIcon
+          icon={{ prefix: 'fas', iconName: 'chevron-right' }}
+          className="ml-1.5 w-3.5 h-3.5"
+        />
+      </button>
+    </div>
+  );
+};
+
+const RecentTab = ({
+  files,
+  showHidden,
+  toggleShowHidden,
+}: {
+  files: File[];
+  showHidden: boolean;
+  toggleShowHidden: () => void;
+}) => {
+  const [page, setPage] = useState(1);
+  const displayedFiles = files.slice((page - 1) * 8, page * 8);
+  const maxPage = Math.ceil(files.length / 8);
+
+  useEffect(() => {
+    setPage(Math.min(page, maxPage));
+  });
+
+  return (
+    <div className="border border-gray-700 divide-y divide-gray-600">
+      <div className="text-gray-100 px-3.5 py-3">
+        <Checkbox
+          label="Show hidden files"
+          enabled={showHidden}
+          toggleEnabled={toggleShowHidden}
+        />
+      </div>
+      <FilesList files={displayedFiles} showPerms={false} />
+      <Pagination
+        page={page}
+        setPage={(val: number) => setPage(val)}
+        minPage={1}
+        maxPage={maxPage}
+        label={`Page: ${page}`}
+      />
+    </div>
+  );
+};
+
+const ClassesTab = () => {
+  const { firebaseUser, userData } = useUserContext();
+  const [groups, setGroups] = useState<string[]>([]);
+  const [group, setGroup] = useState(0);
+  const [classID, setClassID] = useState(0);
+  const [classes, setClasses] = useState<string[]>([]);
+  const [problems, setProblems] = useState<ProblemData[]>([]);
+  const [data, setData] = useState<(SolutionData | null)[]>([]);
+
+  useEffect(() => {
+    if (!firebaseUser) {
+      return;
+    }
+    const updateGroups = async () => {
+      const newGroups: string[] | undefined = (
+        await getDoc(doc(firestore, 'userdata', firebaseUser.uid))
+      ).data()?.groups;
+
+      if (!newGroups) {
+        return;
+      }
+      setGroups(newGroups);
+    };
+    updateGroups();
+  }, [firebaseUser]);
+
+  useEffect(() => {
+    if (groups.length === 0) return;
+
+    handleRefresh();
+  }, [group, groups, classID]);
+
+  useEffect(() => {
+    if (groups.length === 0) return;
+
+    fetchClasses(groups[group]).then(res => {
+      setClasses(res);
+    });
+    const timeout = setInterval(() => {
+      handleRefresh();
+    }, 15000);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (groups.length === 0) return;
+
+    const updateProblems = async () => {
+      setProblems(await fetchProblems(groups[group], classes[classID]));
+    };
+    updateProblems();
+  }, [classes]);
+
+  useEffect(() => {
+    if (groups.length === 0) return;
+
+    const updateData = async () => {
+      const problemsPromise = Promise.all(
+        problems.map(problem => {
+          return fetchSolutionData(
+            problem.platform,
+            problem.id,
+            firebaseUser.uid
+          );
+        })
+      );
+      setData(await problemsPromise);
+    };
+    updateData();
+  }, [problems]);
+
+  const handleRefresh = async () => {
+    setClasses(await fetchClasses(groups[group]));
+  };
+
+  return (
+    <div className="divide-y divide-gray-600 border border-gray-700">
+      <div className="flex items-center px-3.5 py-3 space-x-3">
+        <Dropdown
+          items={groups}
+          label={'Group'}
+          selected={group}
+          setSelected={(index: number) => setGroup(index)}
+        />
+        <Dropdown
+          items={classes}
+          label={'Class'}
+          selected={classID}
+          setSelected={(index: number) => setClassID(index)}
+        />
+      </div>
+      <div className="overflow-x-auto">
+        <table className="table-tasks table-fixed w-full text-sm divide-y divide-gray-700 truncate">
+          <thead className="bg-gray-800">
+            <tr>
+              <th className="text-left">Problem</th>
+              <th className="text-left">File</th>
+              <th className="text-left">Verdict</th>
+              <th className="text-left">Last edit</th>
+              <th className="text-left">Code size</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-700 text-gray-300 bg-gray-900">
+            {data.map((row, index) => {
+              if (!row) {
+                return <></>;
+              }
+              return (
+                <tr key={index}>
+                  <td className="truncate">
+                    <a
+                      href={problems[Math.min(index, problems.length - 1)].link}
+                      target="_blank"
+                      className="underline text-white hover:text-indigo-200"
+                    >
+                      {problems[Math.min(index, problems.length - 1)].source}
+                    </a>
+                  </td>
+                  <td>
+                    <a
+                      className="underline text-white hover:text-indigo-200 mr-2"
+                      href={`/${row.fileID.slice(1)}`}
+                      target="_blank"
+                    >
+                      {row.fileID.split('-')[1]}
+                    </a>
+                  </td>
+                  <td>
+                    <div className="flex items-center">
+                      <span className="mr-1.5">
+                        {row.verdict[0].toUpperCase() + row.verdict.slice(1)}
+                      </span>
+                      <span>
+                        {row.verdictType === 'wrong' && (
+                          <FontAwesomeIcon
+                            icon={{ prefix: 'fas', iconName: 'xmark' }}
+                            className="text-red-500"
+                          />
+                        )}
+                        {row.verdictType === 'accepted' && (
+                          <FontAwesomeIcon
+                            icon={{ prefix: 'fas', iconName: 'check' }}
+                            className="text-green-500"
+                          />
+                        )}
+                        {row.verdictType === 'error' && (
+                          <FontAwesomeIcon
+                            icon={{
+                              prefix: 'fas',
+                              iconName: 'triangle-exclamation',
+                            }}
+                            className="text-yellow-500"
+                          />
+                        )}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <TimeAgoLabel date={new Date(row.lastEdit)} />
+                  </td>
+                  <td>{row.codeSize}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <Pagination
+        page={classID}
+        setPage={(val: number) => setClassID(val)}
+        minPage={0}
+        maxPage={classes.length - 1}
+        label={`Class: ${classes[classID]}`}
+      />
+    </div>
+  );
+};
 
 export default function Dashboard() {
   const { firebaseUser, userData } = useUserContext();
@@ -45,10 +314,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!firebaseUser) return;
+
     const db = getDatabase();
     const dbRef = ref(db, `users/${firebaseUser.uid}/files`);
     const fileQuery = query(dbRef, orderByChild('lastAccessTime'));
-    const unsubscribe = onValue(fileQuery, snap => {
+
+    onValue(fileQuery, snap => {
       if (!snap.exists) {
         setFiles([]);
       } else {
@@ -64,7 +335,6 @@ export default function Dashboard() {
               );
             }
           });
-
           if (!showHidden && data.hidden) return;
           if (key?.startsWith('-') && isFirebaseId(key.substring(1))) {
             files.push({
@@ -77,22 +347,15 @@ export default function Dashboard() {
         setFiles(files);
       }
     });
-    return () => off(fileQuery, 'value', unsubscribe);
+    return () => {
+      off(fileQuery, 'value');
+    };
   }, [firebaseUser, showHidden]);
 
   return (
     <div>
-      <div className="flex items-center space-x-4">
-        <Link
-          href="/new"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1E1E1E] focus:ring-indigo-500"
-        >
-          Create New File
-        </Link>
-      </div>
-
       {firebaseUser.isAnonymous ? (
-        <div className="text-gray-400 mt-6">
+        <div className="text-gray-400 mb-6">
           Not signed in.{' '}
           <button
             className="underline text-gray-200 focus:outline-none hover:bg-gray-700 p-1 leading-none transition"
@@ -102,7 +365,7 @@ export default function Dashboard() {
           </button>
         </div>
       ) : (
-        <div className="text-gray-400 mt-6">
+        <div className="text-gray-400 mb-6">
           Signed in as {firebaseUser.displayName}.
           <button
             className="underline text-gray-200 focus:outline-none hover:bg-gray-700 p-1 leading-none transition"
@@ -112,6 +375,15 @@ export default function Dashboard() {
           </button>
         </div>
       )}
+
+      <div className="flex items-center space-x-4">
+        <Link
+          href="/new"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1E1E1E] focus:ring-indigo-500"
+        >
+          Create New File
+        </Link>
+      </div>
 
       <div className="h-8"></div>
 
@@ -134,129 +406,13 @@ export default function Dashboard() {
             homepage={true}
           />
           {tab === 'recent' && (
-            <div className="border border-gray-700 divide-y divide-gray-600">
-              <div className="text-gray-100 px-3.5 py-3">
-                <Checkbox
-                  label="Show hidden files"
-                  enabled={showHidden}
-                  toggleEnabled={() => setShowHidden(val => !val)}
-                />
-              </div>
-              <FilesList files={files} showPerms={false} />
-              <div className="px-3.5 py-3 flex items-center space-x-2 text-sm bg-gray-800">
-                <button className="flex items-center px-2.5 py-1.5 rounded-md border border-gray-600 bg-gray-800 hover:border-gray-500 active:bg-gray-700">
-                  <FontAwesomeIcon
-                    icon={{ prefix: 'fas', iconName: 'chevron-left' }}
-                    className="mr-1.5 w-3.5 h-3.5"
-                  />
-                  Next
-                </button>
-                <span className="px-2 text-gray-300">Page: 13</span>
-                <button className="flex items-center px-2.5 py-1.5 rounded-md border border-gray-600 bg-gray-800 hover:border-gray-500 active:bg-gray-700">
-                  Previous
-                  <FontAwesomeIcon
-                    icon={{ prefix: 'fas', iconName: 'chevron-right' }}
-                    className="ml-1.5 w-3.5 h-3.5"
-                  />
-                </button>
-              </div>
-            </div>
+            <RecentTab
+              files={files}
+              showHidden={showHidden}
+              toggleShowHidden={() => setShowHidden(val => !val)}
+            />
           )}
-          {tab === 'classes' && (
-            <div className="divide-y divide-gray-600 border border-gray-700">
-              <div className="flex items-center px-3.5 py-3 space-x-3">
-                <Dropdown
-                  items={['piton', 'capa']}
-                  label={'Group'}
-                  selected={0}
-                  setSelected={() => {}}
-                />
-                <Dropdown
-                  items={['13', '24']}
-                  label={'Class'}
-                  selected={0}
-                  setSelected={() => {}}
-                />
-              </div>
-              <div className="overflow-x-auto">
-                <table className="table-tasks w-full text-sm divide-y divide-gray-700 truncate">
-                  <thead className="bg-gray-800">
-                    <tr>
-                      <th className="text-left">Problem name</th>
-                      <th className="text-left">Verdict</th>
-                      <th className="text-left">Last edit</th>
-                      <th className="text-left">Code size</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-700 text-gray-300 bg-gray-900">
-                    <tr>
-                      <td>
-                        <a
-                          href="#"
-                          className="underline text-white hover:text-indigo-200"
-                        >
-                          SPOJ KNAPSACK
-                        </a>
-                      </td>
-                      <td className="text-white">
-                        <div className="flex items-center">
-                          <FontAwesomeIcon
-                            icon={{ prefix: 'fas', iconName: 'xmark' }}
-                            className="text-red-500 mr-2"
-                          />
-                          Time limit exceeded
-                        </div>
-                      </td>
-                      <td>
-                        <TimeAgoLabel date={new Date(Date.now() - 1000000)} />
-                      </td>
-                      <td>197 chars</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <a
-                          href="#"
-                          className="underline text-white hover:text-indigo-200"
-                        >
-                          Codeforces 1919E
-                        </a>
-                      </td>
-                      <td className="text-white">
-                        <div className="flex items-center">
-                          <FontAwesomeIcon
-                            icon={{ prefix: 'fas', iconName: 'check' }}
-                            className="text-green-500 mr-2"
-                          />
-                          Correct answer
-                        </div>
-                      </td>
-                      <td>
-                        <TimeAgoLabel date={new Date(Date.now() - 1000000)} />
-                      </td>
-                      <td>360 chars</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div className="px-3.5 py-3 flex items-center space-x-2 text-sm bg-gray-800">
-                <button className="flex items-center px-2.5 py-1.5 rounded-md border border-gray-600 bg-gray-800 hover:border-gray-500 active:bg-gray-700">
-                  <FontAwesomeIcon
-                    icon={{ prefix: 'fas', iconName: 'chevron-left' }}
-                    className="mr-1.5 w-3.5 h-3.5"
-                  />
-                  Next
-                </button>
-                <span className="px-2 text-gray-300">Class: 13</span>
-                <button className="flex items-center px-2.5 py-1.5 rounded-md border border-gray-600 bg-gray-800 hover:border-gray-500 active:bg-gray-700">
-                  Previous
-                  <FontAwesomeIcon
-                    icon={{ prefix: 'fas', iconName: 'chevron-right' }}
-                    className="ml-1.5 w-3.5 h-3.5"
-                  />
-                </button>
-              </div>
-            </div>
-          )}
+          {tab === 'classes' && <ClassesTab />}
         </>
       )}
 
