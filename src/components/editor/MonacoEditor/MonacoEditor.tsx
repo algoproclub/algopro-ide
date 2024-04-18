@@ -28,6 +28,8 @@ monaco.languages.register({
 
 MonacoServices.install(); // todo disposable here...
 
+addEnhancedThemes();
+
 const viewStates = new Map();
 
 // @ts-ignore todo find a better way to do this
@@ -77,6 +79,8 @@ export default function MonacoEditor({
   const [editor, setEditor] =
     useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
+  theme = { dark: 'vs-dark-sema', light: 'vs-sema' }[theme ?? 'dark'];
+
   useEffect(() => {
     const modelPath = `file:///home/thecodingwizard/${path ?? 'default'}`;
 
@@ -93,6 +97,7 @@ export default function MonacoEditor({
         inlayHints: {
           enabled: false,
         },
+        'semanticHighlighting.enabled': true,
         ...options,
       },
       {}
@@ -207,7 +212,7 @@ export default function MonacoEditor({
 
   useUpdate(() => {
     // theme is global
-    monaco.editor.setTheme(theme ?? 'vs-dark');
+    monaco.editor.setTheme(theme ?? 'vs-dark-sema');
   }, [theme]);
 
   useUpdate(() => {
@@ -233,4 +238,56 @@ export default function MonacoEditor({
       <div className={className} ref={ref} style={{ width: '100%' }}></div>
     </div>
   );
+}
+
+// Adds special syntax highlighting for semantic tokens similarly
+// to the default "Dark Modern" and "Light Modern" VSCode themes.
+function addEnhancedThemes() {
+  const COLORS = {
+    'vs-dark': {
+      function: 'dcdcaa',
+      type: '4ec9b0',
+      variable: '9cdcfe',
+      constant: '4fc1ff',
+      macro: '569cd6',
+      escape: 'd7ba7d',
+      hex: 'b5cea8',
+    },
+    vs: {
+      function: '795e26',
+      type: '267f99',
+      variable: '001080',
+      constant: '0070c1',
+      macro: '0000ff',
+      escape: 'ee0000',
+      hex: '098658',
+    },
+  };
+
+  for (const [theme, colors] of Object.entries(COLORS)) {
+    monaco.editor.defineTheme(theme + '-sema', {
+      // @ts-ignore
+      base: theme,
+      inherit: true,
+      rules: [
+        { token: 'function', foreground: colors.function },
+        { token: 'method', foreground: colors.function },
+        { token: 'operator.userDefined', foreground: colors.function },
+        { token: 'class', foreground: colors.type },
+        { token: 'struct', foreground: colors.type },
+        { token: 'type', foreground: colors.type },
+        { token: 'typeParameter', foreground: colors.type },
+        { token: 'namespace', foreground: colors.type },
+        { token: 'variable', foreground: colors.variable },
+        { token: 'parameter', foreground: colors.variable },
+        { token: 'property', foreground: colors.variable },
+        { token: 'variable.readonly', foreground: colors.constant },
+        { token: 'macro', foreground: colors.macro },
+        { token: 'string.escape', foreground: colors.escape },
+        { token: 'number.hex', foreground: colors.hex },
+      ],
+      encodedTokensColors: [],
+      colors: {},
+    });
+  }
 }
