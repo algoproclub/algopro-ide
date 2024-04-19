@@ -34,7 +34,7 @@ if (getApps().length === 0) {
   } else {
     initializeApp({
       projectId: 'algopro-app',
-      databaseURL: 'http://127.0.0.1:9000?ns=algopro-app-default-rtdb',
+      databaseURL: 'http://firebase:9000?ns=algopro-app-default-rtdb',
     });
   }
 }

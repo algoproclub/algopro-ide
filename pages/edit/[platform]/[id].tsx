@@ -149,7 +149,7 @@ const HTMLEditor = ({
             onChange={onChange}
             value={text}
             language="plaintext"
-            theme="vs-dark"
+            theme="dark"
             path={path}
             options={{
               readOnly: readonly,

@@ -130,7 +130,9 @@ export default function createLSPConnection() {
         webSocket = null;
       }
     } else {
-      languageClient.stop();
+      languageClient
+        .stop()
+        .catch(err => console.error('Error stopping language client:', err));
       languageClient = null;
     }
   }

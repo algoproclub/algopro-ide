@@ -72,7 +72,7 @@ body {
     margin-left: 1.5rem;
   }
   & pre {
-    @apply rounded-md px-4 py-2.5 border border-gray-700 bg-[#121212];
+    @apply rounded-md my-2 px-3.5 py-2.5 border border-gray-700 bg-[#121212];
   }
   .section-title,
   & h1,

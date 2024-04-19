@@ -1,0 +1,68 @@
+version: '3'
+services:
+  functions:
+    build:
+      context: .
+      dockerfile: functions.Dockerfile
+    volumes:
+      - type: bind
+        source: .
+        target: /app/
+  firebase:
+    build:
+      context: .
+      dockerfile: firebase.Dockerfile
+    ports:
+      - '9099:9099'
+      - '9000:9000'
+      - '4000:4000'
+      - '8080:8080'
+      - '5001:5001'
+    volumes:
+      - type: bind
+        source: functions/
+        target: /app/functions
+    depends_on: [functions]
+  yjs:
+    build:
+      context: .
+      dockerfile: yjs.Dockerfile
+    ports:
+      - '1234:1234'
+  execute:
+    build:
+      context: execute
+    environment:
+      - EXECUTE_DUMMY=true
+    ports:
+      - '1235'
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
+      - FIRESTORE_EMULATOR_HOST=firebase:8080
+    ports:
+      - '3000:3000'
+      - '127.0.0.1:9229:9229'
+    volumes:
+      - type: bind
+        source: src/
+        target: /app/src
+      - type: bind
+        source: public/
+        target: /app/public
+      - type: bind
+        source: pages/
+        target: /app/pages
+      - type: bind
+        source: patches/
+        target: /app/patches
+    depends_on:
+      firebase:
+        condition: service_healthy
+      yjs:
+        condition: service_started
+      execute:
+        condition: service_started

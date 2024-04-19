@@ -1,6 +1,6 @@
 import type * as Monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import type { ReactCodeMirrorProps } from '@uiw/react-codemirror';
-type Theme = 'vs-dark' | 'light';
+type Theme = 'dark' | 'light';
 
 export type OnMount = (
   editor: Monaco.editor.IStandaloneCodeEditor,
@@ -44,7 +44,7 @@ export interface EditorProps {
 
   /**
    * The theme for the monaco
-   * Available options "vs-dark" | "light"
+   * Available options "dark" | "light"
    * Define new themes by `monaco.editor.defineTheme`
    * Defaults to "light"
    */

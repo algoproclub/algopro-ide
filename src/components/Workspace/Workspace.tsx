@@ -190,7 +190,7 @@ export default function Workspace({
             <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden min-w-[24rem]">
               {inputTab === 'input' && (
                 <LazyRealtimeEditor
-                  theme={lightMode ? 'light' : 'vs-dark'}
+                  theme={lightMode ? 'light' : 'dark'}
                   language={'plaintext'}
                   saveViewState={false}
                   path="input"
