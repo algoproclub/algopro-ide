@@ -5,6 +5,10 @@ import { login } from './login';
 const app = fastify();
 const port = 3100;
 
+app.get('/', () => {
+  return 'ok';
+});
+
 const LoginRequest = z.object({
   username: z.string(),
   password: z.string(),
