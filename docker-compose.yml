@@ -36,6 +36,11 @@ services:
       - EXECUTE_DUMMY=true
     ports:
       - '1235'
+  login-bot:
+    build:
+      context: login-bot
+    ports:
+      - '3100:3100'
   web:
     build:
       context: .
