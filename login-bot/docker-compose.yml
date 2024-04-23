@@ -3,3 +3,11 @@ services:
     build: .
     ports:
       - '3100:3100'
+  caddy:
+    build:
+      context: .
+      dockerfile: caddy.Dockerfile
+    ports:
+      - '443:443'
+    volumes:
+      - /caddy-data:/data
