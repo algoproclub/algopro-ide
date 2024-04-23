@@ -1,0 +1,5 @@
+services:
+  login-bot:
+    build: .
+    ports:
+      - '3100:3100'
