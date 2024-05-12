@@ -3,6 +3,12 @@ export type PlatformProblem = {
   id: string;
 };
 
+export type URLProblem = {
+  id: string | null;
+  url: string;
+  platform: Platform | null;
+};
+
 export type Platform =
   | 'codeforces'
   | 'cses'
