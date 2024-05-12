@@ -8,24 +8,32 @@ export interface TabBarProps {
   }[];
   activeTab: string;
   onTabSelect?: (tab: { label: string; value: string }) => void;
+  homepage?: boolean;
 }
 
 export const TabBar = ({
   tabs,
   activeTab,
   onTabSelect,
+  homepage,
 }: TabBarProps): JSX.Element => {
   return (
-    <div className="flex bg-black whitespace-nowrap overflow-auto">
-      <div className="flex-1">
+    <div
+      className={`flex whitespace-nowrap overflow-auto ${
+        homepage ? '' : 'bg-gray-950 border-b border-[#323232]'
+      }`}
+    >
+      <div className={`flex-1 ${homepage ? 'space-x-1' : ''}`}>
         {tabs.map(tab => (
           <button
             key={tab.value}
             className={classNames(
               tab.value === activeTab
-                ? 'bg-[#1E1E1E] text-gray-200'
+                ? `${homepage ? 'bg-gray-700' : 'bg-[#323232]'} text-gray-200`
                 : 'text-gray-400 hover:text-gray-300 hover:bg-gray-800 active:bg-gray-800',
-              'px-4 py-1 font-medium text-sm focus:outline-none transition'
+              `px-4 py-1 ${
+                homepage ? 'rounded-t-md' : ''
+              } font-medium text-sm focus:outline-none transition`
             )}
             onClick={() => {
               if (onTabSelect) onTabSelect(tab);

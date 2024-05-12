@@ -36,9 +36,10 @@ export default function DashboardPage(): JSX.Element {
           </a>
         </div>
 
-        <div className="h-6"></div>
+        <div className="h-3"></div>
+
         {logged === false ? (
-          <div className="text-gray-400 mt-6">
+          <div className="text-gray-400">
             Not signed in.{' '}
             <button
               className="underline text-gray-200 focus:outline-none hover:bg-gray-700 p-1 leading-none transition"
@@ -48,7 +49,7 @@ export default function DashboardPage(): JSX.Element {
             </button>
           </div>
         ) : !userData ? (
-          <div className="text-gray-400 mt-6">Loading...</div>
+          <div className="text-gray-400">Loading...</div>
         ) : (
           <Dashboard />
         )}

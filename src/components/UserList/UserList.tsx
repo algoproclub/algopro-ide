@@ -33,7 +33,7 @@ export const UserList = ({
   }, [users]);
 
   return (
-    <div className={classNames('flex flex-col mx-4', className)}>
+    <div className={classNames('flex flex-col mx-3', className)}>
       <div className="font-bold py-2.5 px-4 border border-gray-700 rounded-t-md text-sm bg-gray-800">
         Users
       </div>

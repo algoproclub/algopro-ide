@@ -19,7 +19,7 @@ import { Disclosure } from '@headlessui/react';
 import TimeAgoLabel from '../src/components/TimeStamp';
 import Checkbox from '../src/components/Checkbox';
 
-const groups = ['piton', 'capa', 'kajman', 'sas', 'tigris'];
+export const groups = ['piton', 'capa', 'kajman', 'sas', 'tigris'];
 const times = ['1 hour', '3 hours', '1 day', '7 days', 'All'];
 const timeInMs = [
   1000 * 60 * 60,
@@ -34,7 +34,7 @@ type Student = {
   id: string;
   name: string;
 };
-type ProblemData = {
+export type ProblemData = {
   platform: Platform;
   id: string;
   link: string;
@@ -42,7 +42,7 @@ type ProblemData = {
   title: string;
 };
 type VerdictType = 'accepted' | 'wrong' | 'untried' | 'error';
-type SolutionData = {
+export type SolutionData = {
   fileID: string;
   verdict: string;
   verdictType: VerdictType;
@@ -93,7 +93,7 @@ const getVerdict = ({
   return message ?? '-';
 };
 
-const fetchSolutionData = async (
+export const fetchSolutionData = async (
   platform: Platform,
   problemID: string,
   userID: string
@@ -133,7 +133,7 @@ const fetchSolutionData = async (
   };
 };
 
-const fetchProblems = async (
+export const fetchProblems = async (
   group: Group,
   classID?: string
 ): Promise<ProblemData[]> => {
@@ -179,7 +179,7 @@ const fetchStudents = async (group: Group): Promise<Student[]> => {
   return students;
 };
 
-const fetchClasses = async (group: Group) => {
+export const fetchClasses = async (group: Group) => {
   const classes: string[] = [];
   const results = await getDocs(
     query(collection(firestore, 'groups', group, 'classes'))

@@ -64,109 +64,83 @@ export default function FilesList(props: FilesListProps): JSX.Element {
   };
 
   return (
-    <div className="flex flex-col">
-      <div className="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
-        <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-          <table className="min-w-full divide-y divide-gray-600">
-            <thead>
-              <tr>
-                <th
-                  scope="col"
-                  className="py-3.5 pl-4 pr-2 text-left text-sm font-semibold text-gray-100 sm:pl-6 md:pl-0"
+    <div className="flex flex-col overflow-x-auto">
+      <table className="table-filelist divide-y divide-gray-700">
+        <thead className="z-20 bg-gray-800">
+          <tr className="truncate">
+            <th className="text-left text-sm font-bold text-gray-100 max-w-10 truncate">
+              Name
+            </th>
+            <th className="text-left text-sm font-bold text-gray-100">
+              Last Accessed
+            </th>
+            <th className="text-left text-sm font-bold text-gray-100">
+              Created
+            </th>
+            <th className="text-left text-sm font-bold text-gray-100">
+              Language
+            </th>
+            <th className="text-left text-sm font-bold text-gray-100">Owner</th>
+            <th className="text-left text-sm font-bold text-gray-100">
+              Permissions
+            </th>
+            <th className="relative">
+              <span className="sr-only">Edit</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-700 bg-gray-900">
+          {props.files.map(file => (
+            <tr key={file.id}>
+              <td
+                className={`text-sm font-medium truncate max-w-60 ${
+                  file.hidden ? 'text-gray-400' : 'text-white'
+                }`}
+              >
+                {file.hidden ? (
+                  <span>(Hidden) {file.title || '(Unnamed File)'}</span>
+                ) : (
+                  <Link
+                    href={`/${file.id.substring(1)}`}
+                    className="text-gray-100 underline hover:text-indigo-200"
+                  >
+                    {file.title || '(Unnamed File)'}
+                  </Link>
+                )}
+              </td>
+              <td className="whitespace-nowrap text-sm text-gray-400">
+                {dayjs(file.lastAccessTime).fromNow()}
+              </td>
+              <td className="whitespace-nowrap text-sm text-gray-400">
+                {formatCreationTime(file.creationTime)}
+              </td>
+              <td className="whitespace-nowrap text-sm text-gray-400">
+                {formatLanguage(file.language)}
+              </td>
+              <td className="whitespace-nowrap text-sm text-gray-400">
+                {file.owner
+                  ? file.owner.id === firebaseUser.uid
+                    ? 'Me'
+                    : file.owner.name
+                  : ''}
+              </td>
+              <td className="whitespace-nowrap text-sm text-gray-400">
+                {file.lastPermission && file.lastPermission in permissionLabels
+                  ? permissionLabels[file.lastPermission]
+                  : 'Unknown'}
+              </td>
+              <td className="relative whitespace-nowrap text-right text-sm font-medium">
+                <button
+                  className="text-indigo-400 hover:text-indigo-100"
+                  onClick={() => handleToggleHideFile(file)}
                 >
-                  Name
-                </th>
-                <th
-                  scope="col"
-                  className="py-3.5 px-2 text-left text-sm font-semibold text-gray-100"
-                >
-                  Last Accessed
-                </th>
-                <th
-                  scope="col"
-                  className="py-3.5 px-2 text-left text-sm font-semibold text-gray-100"
-                >
-                  Created
-                </th>
-                <th
-                  scope="col"
-                  className="py-3.5 px-2 text-left text-sm font-semibold text-gray-100"
-                >
-                  Language
-                </th>
-                <th
-                  scope="col"
-                  className="py-3.5 px-2 text-left text-sm font-semibold text-gray-100"
-                >
-                  Owner
-                </th>
-                <th
-                  scope="col"
-                  className="py-3.5 px-2 text-left text-sm font-semibold text-gray-100"
-                >
-                  Permissions
-                </th>
-                <th
-                  scope="col"
-                  className="relative py-3.5 pl-3 pr-4 sm:pr-6 md:pr-0"
-                >
-                  <span className="sr-only">Edit</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-700">
-              {props.files.map(file => (
-                <tr key={file.id}>
-                  <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium sm:pl-6 md:pl-0">
-                    {file.hidden ? (
-                      <span className="text-gray-400">
-                        {file.title || '(Unnamed File)'} (Hidden)
-                      </span>
-                    ) : (
-                      <Link
-                        href={`/${file.id.substring(1)}`}
-                        className="text-gray-100 hover:text-white"
-                      >
-                        {file.title || '(Unnamed File)'}
-                      </Link>
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap py-4 px-3 text-sm text-gray-400">
-                    {dayjs(file.lastAccessTime).fromNow()}
-                  </td>
-                  <td className="whitespace-nowrap py-4 px-3 text-sm text-gray-400">
-                    {formatCreationTime(file.creationTime)}
-                  </td>
-                  <td className="whitespace-nowrap py-4 px-3 text-sm text-gray-400">
-                    {formatLanguage(file.language)}
-                  </td>
-                  <td className="whitespace-nowrap py-4 px-3 text-sm text-gray-400">
-                    {file.owner
-                      ? file.owner.id === firebaseUser.uid
-                        ? 'Me'
-                        : file.owner.name
-                      : ''}
-                  </td>
-                  <td className="whitespace-nowrap py-4 px-3 text-sm text-gray-400">
-                    {file.lastPermission &&
-                    file.lastPermission in permissionLabels
-                      ? permissionLabels[file.lastPermission]
-                      : 'Unknown'}
-                  </td>
-                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 md:pr-0">
-                    <button
-                      className="text-indigo-400 hover:text-indigo-100"
-                      onClick={() => handleToggleHideFile(file)}
-                    >
-                      {file.hidden ? 'Unhide' : 'Hide'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                  {file.hidden ? 'Unhide' : 'Hide'}
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
     // <div className="mt-4 -mx-2">
     //   {props.files

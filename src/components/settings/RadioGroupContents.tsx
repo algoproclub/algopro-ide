@@ -30,7 +30,7 @@ export function RadioGroupContents<T>({
       >
         {title}
       </RadioGroup.Label>
-      <div className="rounded-md space-y-2">
+      <div className="mt-1 rounded-md space-y-1">
         {options.map(setting => (
           <RadioGroup.Option
             key={setting.label}

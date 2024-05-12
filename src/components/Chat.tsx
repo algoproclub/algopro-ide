@@ -6,6 +6,7 @@ import { ChatMessageItem } from './ChatMessageItem';
 import useUserPermission from '../hooks/useUserPermission';
 import { useEditorContext } from '../context/EditorContext';
 import { useUserContext } from '../context/UserContext';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export interface ChatMessage {
   timestamp: number;
@@ -57,7 +58,7 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
   };
 
   return (
-    <div className={classNames(className, 'flex flex-col mx-4 my-4')}>
+    <div className={classNames(className, 'flex flex-col mx-3 my-3')}>
       <div className="font-bold text-sm text-white py-2.5 px-4 rounded-t-md border border-gray-700 bg-gray-800">
         Chat
       </div>
@@ -83,7 +84,7 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
       {(userPermission === 'OWNER' || userPermission === 'READ_WRITE') && (
         <form onSubmit={handleSubmit}>
           <textarea
-            className="mt-2 text-white block w-full bg-[#121212] px-3 py-2 border border-gray-700 focus:border-indigo-600 focus:ring-0 focus:placeholder-gray-400 text-sm max-h-[10rem]"
+            className="mt-2 text-white block w-full bg-[#121212] px-3 py-2 border border-gray-700 focus:border-gray-600 focus:ring-0 focus:placeholder-gray-400 text-sm max-h-[10rem] h-28"
             placeholder="Send a message"
             rows={3}
             value={message}
@@ -91,8 +92,12 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
             onKeyDown={handleKeyDown}
             ref={chatInputRef}
           />
-          <button className="mt-2 rounded-md block w-full py-2.5 text-sm font-bold text-indigo-100 hover:text-indigo-100 bg-indigo-800/75 hover:bg-indigo-900/75 active:bg-indigo-900/50 focus:outline-none">
-            Send
+          <button className="rounded-b-md block w-full py-2.5 text-sm font-bold text-indigo-100 hover:text-indigo-100 border border-0 border-gray-600 bg-gray-700 hover:bg-gray-600 active:bg-[#5b5b5b] focus:outline-none">
+            Send{' '}
+            <FontAwesomeIcon
+              icon={{ prefix: 'fas', iconName: 'paper-plane' }}
+              className="ml-1"
+            />
           </button>
         </form>
       )}
