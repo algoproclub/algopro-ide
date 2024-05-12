@@ -13,5 +13,15 @@ service cloud.firestore {
         allow write: if request.auth.token.teacher == true;
       }
     }
+
+    match /groups/{group}/classes/{class} {
+      allow read: if true;
+      allow write: if request.auth.token.teacher == true;
+    }
+
+    match /userdata/{userid} {
+      allow read: if request.auth.uid == userid || request.auth.token.teacher == true;
+      allow write: if false;
+    }
   }
 }
