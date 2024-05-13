@@ -353,15 +353,18 @@ export default withTeacherLogin(() => {
     if (!platform || !problemID) {
       return;
     }
-    const problemDoc = doc(
-      getFirestore(),
-      'problemsets',
-      platform,
-      'problems',
-      problemID,
-      'translations',
-      'hu'
-    );
+    const problemDoc =
+      language !== '-'
+        ? doc(
+            getFirestore(),
+            'problemsets',
+            platform,
+            'problems',
+            problemID,
+            'translations',
+            language
+          )
+        : doc(getFirestore(), 'problemsets', platform, 'problems', problemID);
     await setDoc(problemDoc, { statement: translated, hints: hints });
     setUnsaved(false);
   };
