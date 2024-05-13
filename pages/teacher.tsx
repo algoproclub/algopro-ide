@@ -376,8 +376,8 @@ const GroupData = ({
           <tr className="divide-x divide-gray-700 bg-gray-800">
             <th className="w-40"></th>
             <>
-              {problems.map(problem => (
-                <th className="w-60">
+              {problems.map((problem, index) => (
+                <th key={index} className="w-60">
                   <a
                     href={problem.url}
                     className="hover:text-indigo-200 underline underline-offset-2 truncate"
@@ -396,7 +396,7 @@ const GroupData = ({
         </thead>
         <tbody className="divide-y divide-gray-600">
           {students.map((student, i) => (
-            <tr className="divide-x divide-gray-600">
+            <tr key={i} className="divide-x divide-gray-600">
               <td className="bg-gray-800 px-4 py-3">{student.name}</td>
               <>
                 {data[i].map((_, j) => (

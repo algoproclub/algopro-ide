@@ -1,5 +1,5 @@
 import { useUpdateAtom } from 'jotai/utils';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import {
   getDatabase,
   ref,
@@ -181,13 +181,15 @@ const ClassesTab = () => {
 
     const updateData = async () => {
       const problemsPromise = Promise.all(
-        problems.map(problem => {
-          return fetchSolutionData(
-            problem.platform,
-            problem.id,
-            firebaseUser.uid
-          );
-        })
+        problems
+          .filter(problem => problem.platform && problem.id)
+          .map(problem => {
+            return fetchSolutionData(
+              problem.platform!,
+              problem.id!,
+              firebaseUser.uid
+            );
+          })
       );
       setData(await problemsPromise);
     };
@@ -228,13 +230,13 @@ const ClassesTab = () => {
           <tbody className="divide-y divide-gray-700 text-gray-300 bg-gray-900">
             {data.map((row, index) => {
               if (!row) {
-                return <></>;
+                return <Fragment key={index}></Fragment>;
               }
               return (
                 <tr key={index}>
                   <td className="truncate">
                     <a
-                      href={problems[Math.min(index, problems.length - 1)].link}
+                      href={problems[Math.min(index, problems.length - 1)].url}
                       target="_blank"
                       className="underline text-white hover:text-indigo-200"
                     >
