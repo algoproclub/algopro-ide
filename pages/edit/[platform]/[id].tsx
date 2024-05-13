@@ -17,8 +17,9 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { LanguageSelectorDropdown } from '../../../src/components/JudgeInterface/GenericJudgeInterface';
-import withTeacherLogin from '../../../src/scripts/withTeacherLogin';
+import withTeacherLogin from '../../../src/components/WithTeacherLogin';
 import { EditTextAreaModal } from '../../../src/components/EditTextModal';
+import WithTeacherLogin from '../../../src/components/WithTeacherLogin';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -199,7 +200,7 @@ const EditHintModal = ({
   );
 };
 
-export default withTeacherLogin(() => {
+const PageContent = () => {
   const Hint = ({
     text,
     onDelete,
@@ -483,4 +484,12 @@ export default withTeacherLogin(() => {
       </div>
     </div>
   );
-});
+};
+
+export default function EditPage() {
+  return (
+    <WithTeacherLogin>
+      <PageContent />
+    </WithTeacherLogin>
+  );
+}

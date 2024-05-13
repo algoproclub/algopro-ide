@@ -1,14 +1,8 @@
-import withTeacherLogin from '../src/scripts/withTeacherLogin';
 import Dropdown from '../src/components/Dropdown';
 import dynamic from 'next/dynamic';
 import React, { useEffect, useState } from 'react';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
-import {
-  Platform,
-  PlatformProblem,
-  StatusCode,
-  URLProblem,
-} from '../src/types/problem';
+import { Platform, PlatformProblem, StatusCode } from '../src/types/problem';
 import {
   collection,
   doc,
@@ -25,6 +19,8 @@ import TimeAgoLabel from '../src/components/TimeStamp';
 import Checkbox from '../src/components/Checkbox';
 import { parseProblem } from '../src/scripts/parseProblem';
 import { getPlatformName } from '../src/scripts/getPlatformName';
+import WithTeacherLogin from '../src/components/WithTeacherLogin';
+import { URLProblem } from '../src/types/problem';
 
 export const groups = ['piton', 'capa', 'kajman', 'sas', 'tigris'];
 const times = ['1 hour', '3 hours', '1 day', '7 days', 'All'];
@@ -230,7 +226,7 @@ const Controls = ({
   onRefresh: () => void;
 }) => {
   return (
-    <div className="w-full space-y-2.5 px-5 py-3.5 border border-gray-600">
+    <div className="bg-gray-800 w-full space-y-2.5 px-5 py-3.5 border border-gray-600">
       <div className="w-full flex space-x-2 items-end">
         <Dropdown
           items={groups}
@@ -400,7 +396,7 @@ const GroupData = ({
               <td className="bg-gray-800 px-4 py-3">{student.name}</td>
               <>
                 {data[i].map((_, j) => (
-                  <td className="relative">
+                  <td key={j} className="relative">
                     {data[i][j] && (
                       <>
                         {data[i][j]?.lastEdit === mostRecent[i] &&
@@ -474,7 +470,7 @@ const GroupData = ({
   );
 };
 
-export default withTeacherLogin(() => {
+const PageContent = () => {
   const [group, setGroup] = useState(0);
   const [time, setTime] = useState(0);
   const [classID, setClassID] = useState(0);
@@ -550,7 +546,13 @@ export default withTeacherLogin(() => {
     return maxTime >= currentTime - timeInMs[time];
   });
   const filteredProblems = problems.filter((_, i) => inTimeRange[i]);
-  const filteredData = transpose(data.filter((_, i) => inTimeRange[i]));
+  const transposed = transpose(data.filter((_, i) => inTimeRange[i]));
+
+  const solvedSomething = transposed.map(solutions =>
+    solutions.some(sol => sol !== null)
+  );
+  const filteredStudents = students.filter((_, i) => solvedSomething[i]);
+  const filteredData = transposed.filter((_, i) => solvedSomething[i]);
 
   return (
     <div className="px-2">
@@ -585,11 +587,19 @@ export default withTeacherLogin(() => {
         </div>
         <GroupData
           problems={filteredProblems}
-          students={students}
+          students={filteredStudents}
           data={filteredData}
           highlight={highlight}
         />
       </div>
     </div>
   );
-});
+};
+
+export default function TeacherPage() {
+  return (
+    <WithTeacherLogin>
+      <PageContent />
+    </WithTeacherLogin>
+  );
+}

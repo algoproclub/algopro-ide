@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import withTeacherLogin from '../../src/scripts/withTeacherLogin';
 import { useRouter } from 'next/router';
 import {
   collection,
@@ -17,6 +16,7 @@ import { getPlatformName } from '../../src/scripts/getPlatformName';
 import { EditInlineTextModal } from '../../src/components/EditTextModal';
 import { parseProblem } from '../../src/scripts/parseProblem';
 import { Disclosure } from '@headlessui/react';
+import WithTeacherLogin from '../../src/components/WithTeacherLogin';
 
 const firestore = getFirestore();
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
@@ -140,7 +140,10 @@ const ClassDropdown = ({
               </div>
               <div className="divide-y divide-gray-700 text-sm border-b border-gray-600">
                 {data.tasks.map(({ platform, id, url }, index) => (
-                  <div className="flex items-center justify-between bg-gray-900">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between bg-gray-900"
+                  >
                     <a
                       href={url}
                       className="px-3 py-2 underline hover:text-indigo-200"
@@ -154,6 +157,17 @@ const ClassDropdown = ({
                       {!platform && <>{url}</>}
                     </a>
                     <div className="border-l px-3 py-2 border-gray-700 flex items-center space-x-2">
+                      <a
+                        title="Jump to edit interface"
+                        className="px-2 py-1 rounded-md hover:bg-gray-700"
+                        href={`/edit/${platform}/${id}`}
+                        target="_blank"
+                      >
+                        <FontAwesomeIcon
+                          icon={{ prefix: 'fas', iconName: 'arrow-right' }}
+                          className="w-3.5 h-3.5"
+                        />
+                      </a>
                       <button
                         title="Edit task"
                         className="px-2 py-1 rounded-md hover:bg-gray-700"
@@ -217,7 +231,7 @@ const ClassDropdown = ({
   );
 };
 
-export default withTeacherLogin(() => {
+const PageContent = () => {
   const router = useRouter();
   const [group, setGroup] = useState<string | null>(null);
   const [classes, setClasses] = useState<Classes>({});
@@ -243,7 +257,9 @@ export default withTeacherLogin(() => {
       });
       setClasses(classes);
     };
-    loadData();
+    loadData().then(() => {
+      console.log('done');
+    });
   }, [group]);
 
   const handleDeleteClass = async (id: string) => {
@@ -319,6 +335,7 @@ export default withTeacherLogin(() => {
             )
             .map(([id, data]) => (
               <ClassDropdown
+                key={id}
                 classID={id}
                 data={data}
                 unsaved={unsaved.has(id)}
@@ -331,4 +348,12 @@ export default withTeacherLogin(() => {
       </div>
     </div>
   );
-});
+};
+
+export default function ClassEditPage() {
+  return (
+    <WithTeacherLogin>
+      <PageContent />
+    </WithTeacherLogin>
+  );
+}
