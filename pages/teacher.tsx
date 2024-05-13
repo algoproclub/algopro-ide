@@ -3,7 +3,12 @@ import Dropdown from '../src/components/Dropdown';
 import dynamic from 'next/dynamic';
 import React, { useEffect, useState } from 'react';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
-import { Platform, PlatformProblem, StatusCode } from '../src/types/problem';
+import {
+  Platform,
+  PlatformProblem,
+  StatusCode,
+  URLProblem,
+} from '../src/types/problem';
 import {
   collection,
   doc,
@@ -18,6 +23,8 @@ import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
 import { Disclosure } from '@headlessui/react';
 import TimeAgoLabel from '../src/components/TimeStamp';
 import Checkbox from '../src/components/Checkbox';
+import { parseProblem } from '../src/scripts/parseProblem';
+import { getPlatformName } from '../src/scripts/getPlatformName';
 
 export const groups = ['piton', 'capa', 'kajman', 'sas', 'tigris'];
 const times = ['1 hour', '3 hours', '1 day', '7 days', 'All'];
@@ -35,11 +42,10 @@ type Student = {
   name: string;
 };
 export type ProblemData = {
-  platform: Platform;
-  id: string;
-  link: string;
+  platform: Platform | null;
+  id: string | null;
+  url: string;
   source: string;
-  title: string;
 };
 type VerdictType = 'accepted' | 'wrong' | 'untried' | 'error';
 export type SolutionData = {
@@ -140,27 +146,23 @@ export const fetchProblems = async (
   if (!classID) {
     return [];
   }
-  const problems: PlatformProblem[] | undefined = (
+  const problems: URLProblem[] | undefined = (
     await getDoc(doc(firestore, 'groups', group, 'classes', classID))
   ).data()?.tasks;
 
   if (!problems) {
     return [];
   }
-  return (
-    await Promise.all(
-      problems.map(({ id, platform }) => {
-        return getDoc(doc(firestore, 'problemsets', platform, 'problems', id));
-      })
-    )
-  ).map((snapshot, i) => {
-    const data: any = snapshot.data();
+  return problems.map(({ url }) => {
+    const parsed = parseProblem(url);
     return {
-      id: problems[i].id,
-      platform: problems[i].platform,
-      source: data?.source,
-      title: data?.title,
-      link: data?.url,
+      id: parsed.id,
+      platform: parsed.platform,
+      source:
+        parsed.id && parsed.platform
+          ? getPlatformName(parsed.platform) + ' - ' + parsed.id
+          : parsed.url,
+      url: url,
     };
   });
 };
@@ -377,7 +379,7 @@ const GroupData = ({
               {problems.map(problem => (
                 <th className="w-60">
                   <a
-                    href={problem.link}
+                    href={problem.url}
                     className="hover:text-indigo-200 underline underline-offset-2 truncate"
                     target="_blank"
                   >
@@ -495,7 +497,7 @@ export default withTeacherLogin(() => {
     return () => {
       clearTimeout(timeout);
     };
-  }, []);
+  }, [groups, group]);
 
   useEffect(() => {
     handleRefresh();
@@ -504,17 +506,19 @@ export default withTeacherLogin(() => {
   useEffect(() => {
     const updateData = async () => {
       const problemsPromise = Promise.all(
-        problems.map(problem => {
-          return Promise.all(
-            students.map(student => {
-              return fetchSolutionData(
-                problem.platform,
-                problem.id,
-                student.id
-              );
-            })
-          );
-        })
+        problems
+          .filter(problem => problem.id && problem.platform)
+          .map(problem => {
+            return Promise.all(
+              students.map(student => {
+                return fetchSolutionData(
+                  problem.platform!,
+                  problem.id!,
+                  student.id
+                );
+              })
+            );
+          })
       );
       setData(await problemsPromise);
     };
@@ -533,8 +537,9 @@ export default withTeacherLogin(() => {
     setStudents(await fetchStudents(groups[group]));
   };
   const transpose = (array: (SolutionData | null)[][]) => {
-    const newSize = array.length ? array[0].length : 0;
-    return problems.map((_, j) => array.map(row => row[j])).slice(0, newSize);
+    return array.length > 0
+      ? array[0].map((_, j) => array.map(row => row[j]))
+      : [];
   };
   const currentTime = Date.now();
   const inTimeRange = data.map((_, i) => {
