@@ -17,6 +17,7 @@ import {
   DataSnapshot,
   onValue,
   off,
+  update,
 } from 'firebase/database';
 
 import animals from '../scripts/animals';
@@ -116,6 +117,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!user) return;
+    update(ref(getDatabase(), `users/${user.uid}/data`), {
+      name: user.displayName,
+    });
 
     const handleSnapshot = (snap: DataSnapshot) => {
       const data = snap.val()?.data ?? {};
@@ -141,6 +145,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const updateUsername = useCallback(
     (newName: string) => {
       if (!user) throw new Error('Tried to update username but user is null');
+      update(ref(getDatabase(), `users/${user.uid}/data`), { name: newName });
+
       return updateProfile(user, { displayName: newName }).then(() => {
         // we need to trigger a rerender because firebase user never changes
         // but some parts of the app needs to rerender when firebaseUser.displayName changes

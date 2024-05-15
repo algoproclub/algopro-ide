@@ -12,7 +12,7 @@ import {
   query,
   where,
 } from 'firebase/firestore';
-import { get, getDatabase, ref } from 'firebase/database';
+import { DataSnapshot, get, getDatabase, ref } from 'firebase/database';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
 import { Disclosure } from '@headlessui/react';
 import TimeAgoLabel from '../src/components/TimeStamp';
@@ -164,17 +164,27 @@ export const fetchProblems = async (
 };
 
 const fetchStudents = async (group: Group): Promise<Student[]> => {
-  const students: Student[] = [];
   const results = await getDocs(
     query(
       collection(firestore, 'userdata'),
       where('groups', 'array-contains', group)
     )
   );
+  const promises: Promise<DataSnapshot>[] = [];
+  const userIDs: string[] = [];
+
   results.forEach(doc => {
-    students.push({ id: doc.id, name: doc.data().name });
+    const name = get(ref(database, `users/${doc.id}/data/name`));
+    promises.push(name);
+    userIDs.push(doc.id);
   });
-  return students;
+  const names = await Promise.all(promises);
+  return names.map((name, index) => {
+    return {
+      id: userIDs[index],
+      name: name.val(),
+    };
+  });
 };
 
 export const fetchClasses = async (group: Group) => {
@@ -401,12 +411,12 @@ const GroupData = ({
                       <>
                         {data[i][j]?.lastEdit === mostRecent[i] &&
                           highlight && (
-                            <div className="absolute bg-indigo-800 inset-0" />
+                            <div className="absolute bg-indigo-700 inset-0" />
                           )}
                         <div
                           className={`relative z-10 bg-gray-900 flex flex-col divide-y divide-[#2d2d2d] ${
                             data[i][j]?.lastEdit === mostRecent[i] && highlight
-                              ? 'border border-indigo-900 -m-[1px] opacity-95'
+                              ? 'border border-indigo-900 -m-[1px] opacity-90'
                               : ''
                           }`}
                         >
