@@ -117,9 +117,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!user) return;
-    update(ref(getDatabase(), `users/${user.uid}/data`), {
-      name: user.displayName,
-    });
 
     const handleSnapshot = (snap: DataSnapshot) => {
       const data = snap.val()?.data ?? {};

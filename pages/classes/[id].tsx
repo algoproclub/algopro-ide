@@ -142,7 +142,7 @@ const ClassDropdown = ({
                 {data.tasks.map(({ platform, id, url }, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between bg-gray-900"
+                    className="flex items-stretch justify-between bg-gray-900"
                   >
                     <a
                       href={url}
@@ -157,17 +157,22 @@ const ClassDropdown = ({
                       {!platform && <>{url}</>}
                     </a>
                     <div className="border-l px-3 py-2 border-gray-700 flex items-center space-x-2">
-                      <a
-                        title="Jump to edit interface"
-                        className="px-2 py-1 rounded-md hover:bg-gray-700"
-                        href={`/edit/${platform}/${id}`}
-                        target="_blank"
-                      >
-                        <FontAwesomeIcon
-                          icon={{ prefix: 'fas', iconName: 'arrow-right' }}
-                          className="w-3.5 h-3.5"
-                        />
-                      </a>
+                      {platform && id && (
+                        <a
+                          title="Jump to edit interface"
+                          className="px-2 py-1 rounded-md hover:bg-gray-700"
+                          href={`/edit/${platform}/${id}`}
+                          target="_blank"
+                        >
+                          <FontAwesomeIcon
+                            icon={{ prefix: 'fas', iconName: 'arrow-right' }}
+                            className="w-3.5 h-3.5"
+                          />
+                        </a>
+                      )}
+                      {(!platform || !id) && (
+                        <div className="w-[1.875rem]"></div>
+                      )}
                       <button
                         title="Edit task"
                         className="px-2 py-1 rounded-md hover:bg-gray-700"

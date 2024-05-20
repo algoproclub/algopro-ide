@@ -170,21 +170,11 @@ const fetchStudents = async (group: Group): Promise<Student[]> => {
       where('groups', 'array-contains', group)
     )
   );
-  const promises: Promise<DataSnapshot>[] = [];
-  const userIDs: string[] = [];
-
+  const users: Student[] = [];
   results.forEach(doc => {
-    const name = get(ref(database, `users/${doc.id}/data/name`));
-    promises.push(name);
-    userIDs.push(doc.id);
+    users.push({ id: doc.id, name: doc.data().user_full_name });
   });
-  const names = await Promise.all(promises);
-  return names.map((name, index) => {
-    return {
-      id: userIDs[index],
-      name: name.val(),
-    };
-  });
+  return users;
 };
 
 export const fetchClasses = async (group: Group) => {
@@ -360,13 +350,18 @@ const GroupData = ({
   students,
   data,
   highlight,
+  fromTime,
 }: {
   problems: ProblemData[];
   students: Student[];
   data: (SolutionData | null)[][];
   highlight: boolean;
+  fromTime: number;
 }) => {
-  if (students.length !== data.length) {
+  if (
+    students.length !== data.length ||
+    (data.length > 0 && problems.length !== data[0].length)
+  ) {
     return <></>;
   }
   const mostRecent = students.map((_, i) => {
@@ -417,7 +412,9 @@ const GroupData = ({
                           className={`relative z-10 bg-gray-900 flex flex-col divide-y divide-[#2d2d2d] ${
                             data[i][j]?.lastEdit === mostRecent[i] && highlight
                               ? 'border border-indigo-900 -m-[1px] opacity-90'
-                              : ''
+                              : (data[i][j]?.lastEdit ?? 0) >= fromTime
+                              ? ''
+                              : 'opacity-50'
                           }`}
                         >
                           <div className="truncate w-full px-4 py-1.5">
@@ -548,21 +545,18 @@ const PageContent = () => {
       : [];
   };
   const currentTime = Date.now();
-  const inTimeRange = data.map((_, i) => {
-    const maxTime = Math.max.apply(
-      Math,
-      data[i].map(cell => cell?.lastEdit ?? -Infinity)
-    );
-    return maxTime >= currentTime - timeInMs[time];
+  const problemWithID = problems.map((problem, i) => {
+    return !!problem.id;
   });
-  const filteredProblems = problems.filter((_, i) => inTimeRange[i]);
-  const transposed = transpose(data.filter((_, i) => inTimeRange[i]));
+  const filteredProblems = problems.filter((_, i) => problemWithID[i]);
+  const transposed = transpose(data);
 
-  const solvedSomething = transposed.map(solutions =>
-    solutions.some(sol => sol !== null)
+  const fromTime = currentTime - timeInMs[time];
+  const hasSolution = transposed.map(solutions =>
+    solutions.some(sol => sol !== null && sol.lastEdit >= fromTime)
   );
-  const filteredStudents = students.filter((_, i) => solvedSomething[i]);
-  const filteredData = transposed.filter((_, i) => solvedSomething[i]);
+  const filteredStudents = students.filter((_, i) => hasSolution[i]);
+  const filteredData = transposed.filter((_, i) => hasSolution[i]);
 
   return (
     <div className="px-2">
@@ -600,6 +594,7 @@ const PageContent = () => {
           students={filteredStudents}
           data={filteredData}
           highlight={highlight}
+          fromTime={fromTime}
         />
       </div>
     </div>
