@@ -93,11 +93,11 @@ const RecentTab = ({
 }) => {
   const [page, setPage] = useState(1);
   const displayedFiles = files.slice((page - 1) * 8, page * 8);
-  const maxPage = Math.ceil(files.length / 8);
+  const maxPage = Math.max(1, Math.ceil(files.length / 8));
 
   useEffect(() => {
     setPage(Math.min(page, maxPage));
-  });
+  }, [showHidden]);
 
   return (
     <div className="border border-gray-700 divide-y divide-gray-600">
@@ -296,8 +296,8 @@ const ClassesTab = () => {
         page={classID}
         setPage={(val: number) => setClassID(val)}
         minPage={0}
-        maxPage={classes.length - 1}
-        label={`Class: ${classes[classID]}`}
+        maxPage={Math.max(0, classes.length - 1)}
+        label={`Class: ${classes[classID] ?? '-'}`}
       />
     </div>
   );
@@ -309,9 +309,9 @@ export default function Dashboard() {
   const signInWithGoogle = useUpdateAtom(signInWithGoogleAtom);
   const signOut = useUpdateAtom(signOutAtom);
 
+  const connectionContext = useConnectionContext();
   const [files, setFiles] = useState<File[] | null>(null);
   const [showHidden, setShowHidden] = useState<boolean>(false);
-  const connectionContext = useConnectionContext();
   const [tab, setTab] = useState('recent');
 
   useEffect(() => {
@@ -397,7 +397,7 @@ export default function Dashboard() {
         />
       </h2>
 
-      {files && files.length > 0 && (
+      {files && (
         <>
           <TabBar
             tabs={tabs}

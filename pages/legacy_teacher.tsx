@@ -6,7 +6,8 @@ import { StatusData } from '../src/types/problem';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import LoadingIndicator from '../src/components/LoadingIndicator';
-import withTeacherLogin from '../src/scripts/withTeacherLogin';
+import withTeacherLogin from '../src/components/WithTeacherLogin';
+import WithTeacherLogin from '../src/components/WithTeacherLogin';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -293,7 +294,7 @@ const SubmissionStatusDropdown = ({
   );
 };
 
-export default withTeacherLogin(() => {
+const PageContent = () => {
   const [selected, setSelected] = useState(0);
   const [showVerdict, setShowVerdict] = useState<ShowVerdict>({
     accepted: true,
@@ -710,4 +711,12 @@ export default withTeacherLogin(() => {
       </div>
     </div>
   );
-});
+};
+
+export default function TeacherPage() {
+  return (
+    <WithTeacherLogin>
+      <PageContent />
+    </WithTeacherLogin>
+  );
+}

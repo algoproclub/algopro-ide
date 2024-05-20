@@ -1,14 +1,8 @@
-import withTeacherLogin from '../src/scripts/withTeacherLogin';
 import Dropdown from '../src/components/Dropdown';
 import dynamic from 'next/dynamic';
 import React, { useEffect, useState } from 'react';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
-import {
-  Platform,
-  PlatformProblem,
-  StatusCode,
-  URLProblem,
-} from '../src/types/problem';
+import { Platform, PlatformProblem, StatusCode } from '../src/types/problem';
 import {
   collection,
   doc,
@@ -18,13 +12,15 @@ import {
   query,
   where,
 } from 'firebase/firestore';
-import { get, getDatabase, ref } from 'firebase/database';
+import { DataSnapshot, get, getDatabase, ref } from 'firebase/database';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
 import { Disclosure } from '@headlessui/react';
 import TimeAgoLabel from '../src/components/TimeStamp';
 import Checkbox from '../src/components/Checkbox';
 import { parseProblem } from '../src/scripts/parseProblem';
 import { getPlatformName } from '../src/scripts/getPlatformName';
+import WithTeacherLogin from '../src/components/WithTeacherLogin';
+import { URLProblem } from '../src/types/problem';
 
 export const groups = ['piton', 'capa', 'kajman', 'sas', 'tigris'];
 const times = ['1 hour', '3 hours', '1 day', '7 days', 'All'];
@@ -168,17 +164,17 @@ export const fetchProblems = async (
 };
 
 const fetchStudents = async (group: Group): Promise<Student[]> => {
-  const students: Student[] = [];
   const results = await getDocs(
     query(
       collection(firestore, 'userdata'),
       where('groups', 'array-contains', group)
     )
   );
+  const users: Student[] = [];
   results.forEach(doc => {
-    students.push({ id: doc.id, name: doc.data().name });
+    users.push({ id: doc.id, name: doc.data().user_full_name });
   });
-  return students;
+  return users;
 };
 
 export const fetchClasses = async (group: Group) => {
@@ -230,7 +226,7 @@ const Controls = ({
   onRefresh: () => void;
 }) => {
   return (
-    <div className="w-full space-y-2.5 px-5 py-3.5 border border-gray-600">
+    <div className="bg-gray-800 w-full space-y-2.5 px-5 py-3.5 border border-gray-600">
       <div className="w-full flex space-x-2 items-end">
         <Dropdown
           items={groups}
@@ -354,13 +350,18 @@ const GroupData = ({
   students,
   data,
   highlight,
+  fromTime,
 }: {
   problems: ProblemData[];
   students: Student[];
   data: (SolutionData | null)[][];
   highlight: boolean;
+  fromTime: number;
 }) => {
-  if (students.length !== data.length) {
+  if (
+    students.length !== data.length ||
+    (data.length > 0 && problems.length !== data[0].length)
+  ) {
     return <></>;
   }
   const mostRecent = students.map((_, i) => {
@@ -400,18 +401,20 @@ const GroupData = ({
               <td className="bg-gray-800 px-4 py-3">{student.name}</td>
               <>
                 {data[i].map((_, j) => (
-                  <td className="relative">
+                  <td key={j} className="relative">
                     {data[i][j] && (
                       <>
                         {data[i][j]?.lastEdit === mostRecent[i] &&
                           highlight && (
-                            <div className="absolute bg-indigo-800 inset-0" />
+                            <div className="absolute bg-indigo-700 inset-0" />
                           )}
                         <div
                           className={`relative z-10 bg-gray-900 flex flex-col divide-y divide-[#2d2d2d] ${
                             data[i][j]?.lastEdit === mostRecent[i] && highlight
-                              ? 'border border-indigo-900 -m-[1px] opacity-95'
-                              : ''
+                              ? 'border border-indigo-900 -m-[1px] opacity-90'
+                              : (data[i][j]?.lastEdit ?? 0) >= fromTime
+                              ? ''
+                              : 'opacity-50'
                           }`}
                         >
                           <div className="truncate w-full px-4 py-1.5">
@@ -474,7 +477,7 @@ const GroupData = ({
   );
 };
 
-export default withTeacherLogin(() => {
+const PageContent = () => {
   const [group, setGroup] = useState(0);
   const [time, setTime] = useState(0);
   const [classID, setClassID] = useState(0);
@@ -542,15 +545,18 @@ export default withTeacherLogin(() => {
       : [];
   };
   const currentTime = Date.now();
-  const inTimeRange = data.map((_, i) => {
-    const maxTime = Math.max.apply(
-      Math,
-      data[i].map(cell => cell?.lastEdit ?? -Infinity)
-    );
-    return maxTime >= currentTime - timeInMs[time];
+  const problemWithID = problems.map((problem, i) => {
+    return !!problem.id;
   });
-  const filteredProblems = problems.filter((_, i) => inTimeRange[i]);
-  const filteredData = transpose(data.filter((_, i) => inTimeRange[i]));
+  const filteredProblems = problems.filter((_, i) => problemWithID[i]);
+  const transposed = transpose(data);
+
+  const fromTime = currentTime - timeInMs[time];
+  const hasSolution = transposed.map(solutions =>
+    solutions.some(sol => sol !== null && sol.lastEdit >= fromTime)
+  );
+  const filteredStudents = students.filter((_, i) => hasSolution[i]);
+  const filteredData = transposed.filter((_, i) => hasSolution[i]);
 
   return (
     <div className="px-2">
@@ -585,11 +591,20 @@ export default withTeacherLogin(() => {
         </div>
         <GroupData
           problems={filteredProblems}
-          students={students}
+          students={filteredStudents}
           data={filteredData}
           highlight={highlight}
+          fromTime={fromTime}
         />
       </div>
     </div>
   );
-});
+};
+
+export default function TeacherPage() {
+  return (
+    <WithTeacherLogin>
+      <PageContent />
+    </WithTeacherLogin>
+  );
+}
