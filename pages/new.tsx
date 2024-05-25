@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { getDatabase, ref, update } from 'firebase/database';
 import { SharingPermissions } from '../src/components/SharingPermissions';
 import va from '@vercel/analytics';
+import { RadioGroupContents } from '../src/components/settings/RadioGroupContents';
 
 function classNames(...classes: any[]) {
   return classes.filter(Boolean).join(' ');
@@ -94,13 +95,12 @@ export default function NewFilePage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 lg:p-12 min-h-full flex flex-col max-w-6xl mx-auto">
-      <form className="space-y-6 sm:space-y-8" onSubmit={handleSubmit}>
-        <h1 className="text-white font-semibold md:text-xl xl:text-2xl">
-          Create New File
-        </h1>
-
-        <div className="space-y-4 sm:space-y-6">
+    <div className="min-h-full flex flex-col max-w-6xl mx-auto mt-6">
+      <form className="border border-gray-700" onSubmit={handleSubmit}>
+        <div className="text-white font-semibold py-2 md:px-6 lg:px-8 bg-gray-800">
+          <h1 className="text-lg">Create New File</h1>
+        </div>
+        <div className="border-t border-gray-700 space-y-4 sm:space-y-6 p-4 md:p-6 lg:p-8">
           <div>
             <label
               htmlFor="filename"
@@ -108,14 +108,14 @@ export default function NewFilePage() {
             >
               File Name
             </label>
-            <div className="mt-2">
+            <div className="mt-0">
               <input
                 type="text"
                 name="filename"
                 id="filename"
                 value={fileName}
                 onChange={e => setFileName(e.target.value)}
-                className="block w-full max-w-md rounded-md border-0 py-1.5 bg-gray-900 text-gray-100 shadow-sm ring-1 ring-inset ring-gray-700 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-700 sm:text-sm sm:leading-6"
+                className="text-input"
                 autoFocus
               />
             </div>
@@ -126,44 +126,15 @@ export default function NewFilePage() {
               className="text-sm"
               onChange={setDefaultPermission}
               isOwner={true}
-              lightMode
+              lightMode={false}
             />
           </div>
-          <div>
-            <span className="block text-sm font-medium leading-6 text-gray-100">
-              Language
-            </span>
-            <RadioGroup value={lang} onChange={setLang} className="mt-2">
-              <RadioGroup.Label className="sr-only">
-                {' '}
-                Choose a memory option{' '}
-              </RadioGroup.Label>
-              <div className="flex space-x-3">
-                {LANGUAGES.map(option => (
-                  <RadioGroup.Option
-                    key={option.value}
-                    value={option.value}
-                    className={({ active, checked }) =>
-                      classNames(
-                        'cursor-pointer focus-visible:outline-none',
-                        active
-                          ? 'focus-visible:ring-2 focus-visible:ring-indigo-800 focus-visible:ring-offset-2'
-                          : '',
-                        checked
-                          ? 'bg-indigo-800 text-white hover:bg-indigo-700'
-                          : 'ring-1 ring-inset ring-gray-700 bg-gray-900 text-gray-100 hover:bg-gray-800',
-                        'flex items-center justify-center rounded-md py-2 px-4 text-sm font-semibold ring-offset-gray-900'
-                      )
-                    }
-                  >
-                    <RadioGroup.Label as="span">
-                      {option.label}
-                    </RadioGroup.Label>
-                  </RadioGroup.Option>
-                ))}
-              </div>
-            </RadioGroup>
-          </div>
+          <RadioGroupContents
+            title="Language"
+            value={lang}
+            onChange={setLang}
+            options={LANGUAGES}
+          />
           <div>
             <label
               htmlFor="compilerOptions"
@@ -178,26 +149,25 @@ export default function NewFilePage() {
                 id="compilerOptions"
                 value={compilerOptions}
                 onChange={e => setCompilerOptions(e.target.value)}
-                className="block w-full rounded-md border-0 py-1.5 bg-gray-900 text-gray-100 shadow-sm ring-1 ring-inset ring-gray-700 placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-700 text-[0.85rem] sm:leading-6 font-mono"
+                className="text-input font-mono !text-[0.85rem]"
               />
             </div>
           </div>
-        </div>
-
-        <div className="space-x-4">
-          <button
-            type="submit"
-            disabled={isPageLoading || isSubmitting}
-            className="rounded-md bg-indigo-700 py-2.5 px-3.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            {isSubmitting ? 'Creating...' : 'Create File'}
-          </button>
-          <Link
-            href="/"
-            className="rounded-md bg-white/5 py-2.5 px-3.5 text-sm font-semibold text-white shadow-sm hover:bg-white/10 focus-visible:outline-offset-gray-900 focus-visible:outline-2 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-gray-700"
-          >
-            Cancel
-          </Link>
+          <div className="mt-6 space-x-2.5">
+            <button
+              type="submit"
+              disabled={isPageLoading || isSubmitting}
+              className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              {isSubmitting ? 'Creating...' : 'Create File'}
+            </button>
+            <Link
+              href="/"
+              className="inline-flex items-center px-4 py-2 border border-gray-700 shadow-sm text-[0.92rem] font-medium rounded-md text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              Cancel
+            </Link>
+          </div>
         </div>
       </form>
     </div>

@@ -6,7 +6,7 @@ import { useConnectionContext } from '../../context/ConnectionContext';
 import { useUserContext } from '../../context/UserContext';
 
 const buttonClasses =
-  'inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-400';
+  'inline-flex items-center px-4 py-2 border border-gray-700 shadow-sm text-[0.92rem] font-medium rounded-md text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500';
 
 export default function SignInSettings(): JSX.Element {
   const { firebaseUser } = useUserContext();
@@ -20,8 +20,8 @@ export default function SignInSettings(): JSX.Element {
 
   return (
     <div>
-      <div className="block font-medium text-gray-700">Sign In</div>
-      <p className="text-sm text-gray-700 mt-1">
+      <div className="block font-medium text-gray-200">Sign In</div>
+      <p className="text-sm text-gray-300 mt-1">
         This will sync your files across devices. If this is your first time
         signing in, your data will be linked automatically. However, if this is
         not your first time signing in, your local data will be overwritten by
@@ -71,7 +71,7 @@ export default function SignInSettings(): JSX.Element {
           onClick={handleSignOut}
           type="button"
         >
-          <span>Sign Out</span>
+          <span>Sign out</span>
         </button>
       )}
     </div>

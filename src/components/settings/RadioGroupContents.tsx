@@ -9,6 +9,7 @@ export function RadioGroupContents<T>({
   options,
   disabled,
   lightMode,
+  horizontal,
   className,
 }: {
   title: string;
@@ -20,17 +21,27 @@ export function RadioGroupContents<T>({
   }[];
   disabled?: boolean;
   lightMode?: boolean;
+  horizontal?: boolean;
   className?: string;
 }): JSX.Element {
   return (
     <RadioGroup value={value} onChange={onChange} disabled={disabled}>
       <RadioGroup.Label
         as="div"
-        className={classNames(lightMode ? 'text-white' : 'mb-1', className)}
+        className={classNames(
+          lightMode ? '' : 'mb-1',
+          'text-gray-300',
+          'text-sm',
+          className
+        )}
       >
         {title}
       </RadioGroup.Label>
-      <div className="mt-1 rounded-md space-y-1">
+      <div
+        className={`mt-1 rounded-md ${
+          horizontal ? 'space-x-4 flex' : 'space-y-1'
+        }`}
+      >
         {options.map(setting => (
           <RadioGroup.Option
             key={setting.label}
@@ -40,29 +51,29 @@ export function RadioGroupContents<T>({
             {({ active, checked }) => (
               <>
                 <span
-                  className={classNames(
-                    checked
-                      ? 'bg-indigo-600 border-transparent'
-                      : 'bg-white border-gray-300',
-                    active ? 'ring-2 ring-offset-2 ring-indigo-500' : '',
-                    'h-4 w-4 mt-0.5 cursor-pointer rounded-full border flex items-center justify-center'
-                  )}
+                  className="h-4 w-4 mt-0.5 cursor-pointer rounded-full flex items-center justify-center bg-gray-500"
                   aria-hidden="true"
                 >
-                  <span className="rounded-full bg-white w-1.5 h-1.5" />
+                  <span className="flex items-center justify-center bg-gray-900 w-3.5 h-3.5 rounded-full">
+                    <span
+                      className={`rounded-full ${
+                        checked ? 'bg-indigo-500 scale-100' : 'scale-0'
+                      } transition w-2.5 h-2.5`}
+                    />
+                  </span>
                 </span>
                 <div className="ml-2 flex flex-col">
                   <RadioGroup.Label
                     as="span"
                     className={classNames(
                       checked
-                        ? lightMode
+                        ? !lightMode
                           ? 'text-gray-200'
                           : 'text-gray-800'
-                        : lightMode
+                        : !lightMode
                         ? 'text-gray-400'
                         : 'text-gray-600',
-                      'block text-sm font-medium'
+                      'block text-sm'
                     )}
                   >
                     {setting.label}

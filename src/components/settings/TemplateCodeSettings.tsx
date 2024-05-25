@@ -4,28 +4,50 @@ import { Listbox, Transition } from '@headlessui/react';
 import { ChevronUpIcon } from '@heroicons/react/20/solid';
 import LazyCodeMirrorEditor from '../editor/CodemirrorEditor/LazyCodemirrorEditor';
 import defaultCode from '../../scripts/defaultCode';
+import Dropdown from '../Dropdown';
 
 export default function TemplateCodeSettings({
   templateCode,
-  setTemplateCode,
+  onTemplateCodeChange,
   language,
-  setLanguage,
+  onLanguageChange,
 }: {
   templateCode: Partial<Record<Language, string>>;
-  setTemplateCode: (defaults: Partial<Record<Language, string>>) => void;
+  onTemplateCodeChange: (defaults: Partial<Record<Language, string>>) => void;
   language: Language;
-  setLanguage: (language: Language) => void;
+  onLanguageChange: (language: Language) => void;
 }): JSX.Element {
+  const index = LANGUAGES.findIndex(item => item.value === language);
   return (
     <div>
-      <Listbox value={language} onChange={setLanguage}>
+      <Listbox value={language} onChange={onLanguageChange}>
         {({ open }) => (
-          <div className="flex flex-row items-center mb-4">
-            <Listbox.Label className="text-[0.92rem] block mb-1 text-gray-700 w-auto pr-4">
+          <div className="flex flex-row items-center mb-3">
+            {/*<Listbox.Label className="text-[0.92rem] block mb-1 text-gray-700 w-auto pr-4">
               Language:
-            </Listbox.Label>
+            </Listbox.Label>*/}
 
-            <div className="w-[10rem] flex space-x-2">
+            <div className="w-full space-x-2 flex items-end">
+              <Dropdown
+                items={LANGUAGES.map(item => item.label)}
+                label="Language"
+                selected={index}
+                setSelected={ind => onLanguageChange(LANGUAGES[ind].value)}
+              />
+              <button
+                type="button"
+                className="flex-shrink-0 px-4 py-2 bg-red-600 shadow-sm text-sm font-medium rounded-md text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                onClick={() => {
+                  onTemplateCodeChange({
+                    ...templateCode,
+                    [language]: defaultCode[language],
+                  });
+                }}
+              >
+                Reset to default
+              </button>
+            </div>
+            {/*<div className="w-[10rem] flex space-x-2">
               <div className="w-full text-sm relative z-20">
                 <Listbox.Button
                   className={`w-full px-3.5 py-2 flex items-center justify-between truncate rounded-md border-2 text-gray-800 ${
@@ -66,8 +88,13 @@ export default function TemplateCodeSettings({
                     ))}
                   </Listbox.Options>
                 </Transition>
-              </div>
-            </div>
+       <div className="w-[10rem] flex space-x-2">
+                <div className="w-full text-sm relative z-20">
+                <Listbox.Button
+                className={`w-full px-3.5 py-2 flex items-center justify-between truncate rounded-md border-2 text-gray-800 ${
+                open
+                ? 'ring-2 ring-indigo-       </div>
+            </div>*/}
           </div>
         )}
       </Listbox>
@@ -81,12 +108,12 @@ export default function TemplateCodeSettings({
        *   still wouldn't solve the undo/redo issue, and the UI would flash when
        *   a new editor is rendered.
        */}
-      <div className="h-[18em] sm:h-50vh border-2 border-gray-200 focus:border-black">
+      <div className="h-[18em] sm:h-50vh border border-gray-600 focus:border-black">
         <LazyCodeMirrorEditor
-          theme="light"
+          theme="dark"
           language={{ cpp: 'cpp', java: 'java', py: 'python' }[language]}
           onChange={value =>
-            setTemplateCode({ ...templateCode, [language]: value })
+            onTemplateCodeChange({ ...templateCode, [language]: value })
           }
           value={templateCode[language]}
           saveViewState={false}
@@ -98,21 +125,6 @@ export default function TemplateCodeSettings({
           }}
         />
       </div>
-      <div className="flex justify-end flex-row pt-4">
-        <button
-          type="button"
-          className="px-4 py-2 border border-red-700 shadow-sm text-sm font-medium rounded-md text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          onClick={() => {
-            setTemplateCode({
-              ...templateCode,
-              [language]: defaultCode[language],
-            });
-          }}
-        >
-          Reset to default
-        </button>
-      </div>
-      <hr className="border-gray-200 mt-4 mb-2" />
     </div>
   );
 }

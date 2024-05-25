@@ -29,6 +29,7 @@ import {
 import { FileSettings, useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { update, ref, getDatabase, runTransaction } from 'firebase/database';
+import { updateUserSettings } from '../../scripts/updateSettings';
 
 export interface SettingsDialogProps {
   isOpen: boolean;
@@ -45,11 +46,6 @@ const tabs = [
     id: 'user',
     label: 'User',
     icon: UserIcon,
-  },
-  {
-    id: 'templates',
-    label: 'Templates',
-    icon: CodeBracketIcon,
   },
 ] as const;
 
@@ -96,7 +92,7 @@ export const SettingsModal = ({
   const [templateLanguage, setTemplateLanguage] = useState<Language>('cpp');
   const dirtyRef = useRef<boolean>(false);
 
-  const [tab, setTab] = useState<typeof tabs[number]['id']>('workspace');
+  const [tab, setTab] = useState<(typeof tabs)[number]['id']>('workspace');
 
   const [judgeResults, setJudgeResults] = useJudgeResults();
 
@@ -133,7 +129,7 @@ export const SettingsModal = ({
 
   const saveAndClose = async () => {
     if (!name) {
-      alert('User Name cannot be empty. Fix before saving.');
+      alert('Username cannot be empty. Fix before saving.');
       return;
     }
     let settingsToSet: Partial<FileSettings> = fileSettings;
@@ -165,27 +161,18 @@ export const SettingsModal = ({
     await updateRealFileData({
       settings: { ...realFileSettings, ...settingsToSet },
     });
-    await runTransaction(
-      ref(getDatabase(), `users/${firebaseUser.uid}/data`),
-      (data: any) => {
-        const newData = {
-          editorMode,
-          tabSize,
-          lightMode,
-          manualSubmission,
-          defaultLanguage,
-          discordID,
-        };
-        data = data ? { ...data, ...newData } : newData;
-        if (!data.usernames) {
-          data.usernames = {};
-        }
-        data.usernames.codeforces = cfUsername;
-        data.usernames.atcoder = atcoderUsername;
-        data.templateCode = templateCode;
-        return data;
-      }
-    );
+    updateUserSettings({
+      userID: firebaseUser.uid,
+      cfUsername,
+      atcoderUsername,
+      defaultLanguage,
+      discordID,
+      editorMode,
+      tabSize,
+      lightMode,
+      manualSubmission,
+      templateCode,
+    });
     if (name !== firebaseUser.displayName) {
       await updateUsername(name);
     }
@@ -228,11 +215,11 @@ export const SettingsModal = ({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div className="inline-block bg-white md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
+            <div className="inline-block bg-gray-800 border border-gray-700 text-white md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
               <div className="px-4 sm:px-6 pt-4 pb-2">
                 <Dialog.Title
                   as="h3"
-                  className="text-lg leading-6 font-medium text-gray-900 text-center"
+                  className="text-lg leading-6 font-medium text-center"
                 >
                   Settings
                 </Dialog.Title>
@@ -245,8 +232,8 @@ export const SettingsModal = ({
                       <button
                         className={classNames(
                           tab === settingTab.id
-                            ? 'border-indigo-600 text-indigo-700'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                            ? 'border-indigo-600 text-indigo-400'
+                            : 'border-gray-700 text-gray-400 hover:text-gray-300 hover:border-gray-600',
                           'w-1/2 group flex items-center justify-center py-3 px-1 border-b-2 font-medium text-sm focus:outline-none'
                         )}
                         onClick={() => setTab(settingTab.id)}
@@ -255,8 +242,8 @@ export const SettingsModal = ({
                         <settingTab.icon
                           className={classNames(
                             tab === settingTab.id
-                              ? 'text-indigo-700'
-                              : 'text-gray-400 group-hover:text-gray-500',
+                              ? 'text-indigo-400'
+                              : 'text-gray-400 group-hover:text-gray-300',
                             '-ml-0.5 mr-2 h-5 w-5'
                           )}
                         />
@@ -267,7 +254,7 @@ export const SettingsModal = ({
                 </div>
               </div>
 
-              <div className="p-4 sm:p-6 space-y-6">
+              <div className="p-4 sm:p-6 space-y-3">
                 {tab === 'user' && (
                   <UserSettings
                     name={name}
@@ -315,6 +302,13 @@ export const SettingsModal = ({
                       setManualSubmission(manualSubmission);
                       dirtyRef.current = true;
                     }}
+                    templateCode={templateCode}
+                    onTemplateCodeChange={code => {
+                      setTemplateCode(code);
+                      dirtyRef.current = true;
+                    }}
+                    language={templateLanguage}
+                    onLanguageChange={setTemplateLanguage}
                   />
                 )}
                 {tab === 'workspace' && (
@@ -324,37 +318,25 @@ export const SettingsModal = ({
                     userPermission={userPermission || 'READ'}
                   />
                 )}
-                {tab === 'templates' && (
-                  <TemplateCodeSettings
-                    templateCode={templateCode}
-                    setTemplateCode={code => {
-                      setTemplateCode(code);
-                      dirtyRef.current = true;
-                    }}
-                    language={templateLanguage}
-                    setLanguage={setTemplateLanguage}
-                  />
-                )}
-
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2.5">
                   <button
                     type="button"
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    onClick={() => closeWithoutSaving()}
+                    className="inline-flex items-center px-4 py-2 border border-gray-700 shadow-sm text-[0.92rem] font-medium rounded-md text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onClick={closeWithoutSaving}
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
-                    className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    onClick={() => saveAndClose()}
+                    className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onClick={saveAndClose}
                   >
                     Save
                   </button>
                 </div>
                 {tab === 'user' && (
                   <>
-                    <hr className="border-gray-200" />
+                    <hr className="border-gray-700" />
                     <SignInSettings />
                   </>
                 )}
@@ -362,8 +344,8 @@ export const SettingsModal = ({
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
-                  className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  onClick={() => closeWithoutSaving()}
+                  className="rounded-md text-gray-200 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  onClick={closeWithoutSaving}
                 >
                   <span className="sr-only">Close</span>
                   <XMarkIcon className="h-6 w-6" aria-hidden="true" />
