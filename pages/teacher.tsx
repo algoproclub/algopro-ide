@@ -9,6 +9,7 @@ import {
   getDoc,
   getDocs,
   getFirestore,
+  orderBy,
   query,
   where,
 } from 'firebase/firestore';
@@ -32,7 +33,7 @@ const timeInMs = [
   Infinity,
 ];
 
-type Group = (typeof groups)[number];
+type Group = typeof groups[number];
 type Student = {
   id: string;
   name: string;
@@ -180,7 +181,10 @@ const fetchStudents = async (group: Group): Promise<Student[]> => {
 export const fetchClasses = async (group: Group) => {
   const classes: string[] = [];
   const results = await getDocs(
-    query(collection(firestore, 'groups', group, 'classes'))
+    query(
+      collection(firestore, 'groups', group, 'classes'),
+      orderBy('creationTime', 'desc')
+    )
   );
   results.forEach(doc => {
     classes.push(doc.id);
