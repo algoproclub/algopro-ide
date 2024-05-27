@@ -109,13 +109,6 @@ export default function GenericJudgeInterface({
   language: string;
   setLanguage: React.Dispatch<React.SetStateAction<string>>;
 }): JSX.Element {
-  // TODO: Move the original text under translations
-  if (problem?.statement) {
-    translations['en'] = {
-      statement: problem.statement,
-      hints: problem.hints ?? [],
-    };
-  }
   const languages = Object.keys(translations);
 
   return (
