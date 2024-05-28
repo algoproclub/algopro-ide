@@ -3,23 +3,24 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"strings"
 	"testing/iotest"
 	"time"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+
 	"github.com/mraron/njudge/pkg/language"
 	"github.com/mraron/njudge/pkg/language/langs/cpp"
 	_ "github.com/mraron/njudge/pkg/language/langs/java"
 	_ "github.com/mraron/njudge/pkg/language/langs/pypy3"
 	"github.com/mraron/njudge/pkg/language/memory"
-	slogecho "github.com/samber/slog-echo"
-
 	"github.com/mraron/njudge/pkg/language/sandbox"
 )
 
@@ -72,6 +73,16 @@ type ExecuteRequest struct {
 	Filename string `json:"filename"`
 	Source   []byte `json:"source"`
 	Input    []byte `json:"input"`
+}
+
+func (req ExecuteRequest) Valid() bool {
+	if _, ok := Languages[req.Language]; !ok {
+		return false
+	}
+	if len(req.Filename) == 0 {
+		return false
+	}
+	return true
 }
 
 func (req ExecuteRequest) Run(ctx context.Context, sp sandbox.Provider) (*ExecuteResponse, error) {
@@ -148,9 +159,39 @@ type ExecuteResponse struct {
 	Time    time.Duration   `json:"time"`
 }
 
-func main() {
-	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+type Server struct {
+	logger *slog.Logger
+	sp     sandbox.Provider
+}
 
+func (s Server) PostExecute(w http.ResponseWriter, r *http.Request) {
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	req := ExecuteRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || !req.Valid() {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	s.logger.Info("got request", "req", req, "source", string(req.Source))
+
+	resp, err := req.Run(r.Context(), s.sp)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	s.logger.Info("got response", "req", req, "resp", resp)
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+func main() {
 	sp := sandbox.NewProvider()
 	if os.Getenv("EXECUTE_DUMMY") != "" {
 		for i := 0; i < 10; i++ {
@@ -170,25 +211,16 @@ func main() {
 		}
 	}
 
-	e := echo.New()
-	e.Use(slogecho.New(slog.Default()))
-	e.Use(middleware.Recover())
-	e.POST("/execute", func(c echo.Context) error {
-		req := ExecuteRequest{}
-		if err := c.Bind(&req); err != nil {
-			return err
-		}
+	server := Server{
+		logger: slog.New(slog.NewJSONHandler(os.Stdout, nil)),
+		sp:     sp,
+	}
 
-		slog.Info("got request", "req", req, "source", string(req.Source))
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
-		resp, err := req.Run(c.Request().Context(), sp)
-		if err != nil {
-			return err
-		}
+	r.Post("/execute", server.PostExecute)
 
-		slog.Info("got response", "req", req, "resp", resp)
-
-		return c.JSON(http.StatusOK, resp)
-	})
-	e.Logger.Fatal(e.Start(":" + Port))
+	http.ListenAndServe(net.JoinHostPort("0.0.0.0", Port), r)
 }

@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/mraron/njudge/pkg/language/sandbox"
@@ -176,4 +179,61 @@ func TestExecuteRequestRun(t *testing.T) {
 			logger.Info(fmt.Sprintf("run test %s", test.name), "req", test.req, "resp", resp)
 		})
 	}
+}
+
+func TestPostExecute(t *testing.T) {
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	if *verbose {
+		logger = slog.Default()
+	}
+
+	sp := sandbox.NewProvider()
+	s, err := sandbox.NewIsolate(255, sandbox.IsolateOptionUseLogger(logger))
+	assert.NoError(t, err)
+	sp.Put(s)
+
+	server := Server{logger, sp}
+	tests := []struct {
+		name           string
+		contentType    string
+		body           string
+		wantStatusCode int
+	}{
+		{
+			name:           "empty_request",
+			contentType:    "application/json",
+			body:           "",
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:           "invalid_language",
+			contentType:    "application/json",
+			body:           `{"language": "cppp"}`,
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:           "no_filename",
+			contentType:    "application/json",
+			body:           `{"language": "cpp"}`,
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:           "no_filename",
+			contentType:    "application/json",
+			body:           `{"language": "cpp", "filename": "main.cpp"}`,
+			wantStatusCode: http.StatusOK,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/execute", strings.NewReader(test.body))
+			req.Header.Set("Content-Type", test.contentType)
+			w := httptest.NewRecorder()
+			server.PostExecute(w, req)
+
+			res := w.Result()
+			assert.Equal(t, test.wantStatusCode, res.StatusCode)
+		})
+	}
+
 }

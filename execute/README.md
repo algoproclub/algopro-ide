@@ -33,7 +33,10 @@ request:
 responses:
 
 * 500: 
-   * when: request is malformed/some internal error
+   * when: undefined internal error happened (this shouldn't happen)
+   * response body is undefined
+* 400:
+   * when: request is malformed
    * response body is undefined
 * 200: 
    * when: successful execution (incl. compilation error, TL, RTE etc.)
