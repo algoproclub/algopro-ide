@@ -68,14 +68,14 @@ func (s SandboxWithEnvs) Run(ctx context.Context, config sandbox.RunConfig, toRu
 	return s.Sandbox.Run(ctx, config, toRun, toRunArgs...)
 }
 
-type ExecuteRequest struct {
+type Request struct {
 	Language string `json:"language"`
 	Filename string `json:"filename"`
 	Source   []byte `json:"source"`
 	Input    []byte `json:"input"`
 }
 
-func (req ExecuteRequest) Valid() bool {
+func (req Request) Valid() bool {
 	if _, ok := Languages[req.Language]; !ok {
 		return false
 	}
@@ -85,7 +85,7 @@ func (req ExecuteRequest) Valid() bool {
 	return true
 }
 
-func (req ExecuteRequest) Run(ctx context.Context, sp sandbox.Provider) (*ExecuteResponse, error) {
+func (req Request) Run(ctx context.Context, sp sandbox.Provider) (*Response, error) {
 	sbox, err := sp.Get()
 	if err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func (req ExecuteRequest) Run(ctx context.Context, sp sandbox.Provider) (*Execut
 		Name:   req.Filename,
 		Source: io.NopCloser(bytes.NewBuffer(req.Source)),
 	}, compileError, nil); err != nil {
-		return &ExecuteResponse{
+		return &Response{
 			Compiled:       false,
 			CompilerOutput: compileError.String(),
 			Verdict:        sandbox.VerdictCE,
@@ -135,7 +135,7 @@ func (req ExecuteRequest) Run(ctx context.Context, sp sandbox.Provider) (*Execut
 		return nil, err
 	}
 
-	return &ExecuteResponse{
+	return &Response{
 		Compiled:       true,
 		CompilerOutput: compileError.String(),
 
@@ -148,7 +148,7 @@ func (req ExecuteRequest) Run(ctx context.Context, sp sandbox.Provider) (*Execut
 
 }
 
-type ExecuteResponse struct {
+type Response struct {
 	Compiled       bool   `json:"compiled"`
 	CompilerOutput string `json:"compiler_output"`
 
@@ -170,7 +170,7 @@ func (s Server) PostExecute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := ExecuteRequest{}
+	req := Request{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || !req.Valid() {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -186,8 +186,8 @@ func (s Server) PostExecute(w http.ResponseWriter, r *http.Request) {
 
 	s.logger.Info("got response", "req", req, "resp", resp)
 
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
 }
 
