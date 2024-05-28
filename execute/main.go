@@ -2,9 +2,8 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	"context"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -15,109 +14,57 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/mraron/njudge/pkg/language"
-	_ "github.com/mraron/njudge/pkg/language/langs/cpp"
+	"github.com/mraron/njudge/pkg/language/langs/cpp"
 	_ "github.com/mraron/njudge/pkg/language/langs/java"
 	_ "github.com/mraron/njudge/pkg/language/langs/pypy3"
+	"github.com/mraron/njudge/pkg/language/memory"
 	slogecho "github.com/samber/slog-echo"
 
 	"github.com/mraron/njudge/pkg/language/sandbox"
 )
 
-type Cpp struct {
-	id   string
-	name string
-	ver  string
-}
+var (
+	Port        = "1235"
+	TimeLimit   = 5 * time.Second
+	MemoryLimit = 128 * memory.MiB
 
-func (c Cpp) Id() string {
-	return c.id
-}
+	StdoutLimit = 5000 * memory.Byte
+	StderrLimit = 5000 * memory.Byte
 
-func (c Cpp) Name() string {
-	return c.name
-}
+	CppArgs = strings.Fields("-std=c++17 -O2 -Wall -fsanitize=undefined -fsanitize=address -fno-sanitize-recover=all -g -DONLINE_JUDGE")
+)
 
-func (c Cpp) DefaultFileName() string {
-	return "main.cpp"
-}
-
-func (c Cpp) Compile(s language.Sandbox, r language.File, w io.Writer, e io.Writer, extras []language.File) error {
-	err := s.CreateFile("main.cpp", r.Source)
+func mustLanguage(l language.Language, err error) language.Language {
 	if err != nil {
-		return err
+		panic(err)
 	}
-
-	params := "main.cpp"
-	for _, f := range extras {
-		err := s.CreateFile(f.Name, f.Source)
-		if err != nil {
-			return err
-		}
-
-		if !strings.HasSuffix(f.Name, ".h") {
-			params += " "
-			params += f.Name
-		}
-	}
-
-	errorStream := &bytes.Buffer{}
-	if _, err := s.SetMaxProcesses(200).
-		Env().TimeLimit(10*time.Second).
-		MemoryLimit(2560000).Stdout(errorStream).
-		Stderr(e).WorkingDirectory(s.Pwd()).
-		Run("/usr/bin/g++ -std="+c.ver+" -O2 -Wall -fsanitize=undefined -fsanitize=address -fno-sanitize-recover=all -g -DONLINE_JUDGE "+params, false); err != nil {
-		e.Write(errorStream.Bytes())
-		return err
-	}
-
-	bin, err := s.GetFile("a.out")
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(w, bin)
-	return err
-}
-
-func (Cpp) Run(s language.Sandbox, binary, stdin io.Reader, stdout io.Writer, tl time.Duration, ml int) (language.Status, error) {
-	stat := language.Status{}
-	stat.Verdict = language.VerdictXX
-
-	if err := s.CreateFile("a.out", binary); err != nil {
-		return stat, err
-	}
-
-	if err := s.MakeExecutable("a.out"); err != nil {
-		return stat, err
-	}
-
-	return s.Stdin(stdin).Stdout(stdout).TimeLimit(tl).MemoryLimit(ml/1024).Run("a.out", true)
-}
-
-func (c Cpp) Test(s language.Sandbox) error {
-	return nil
-}
-
-type SandboxProvider struct {
-	sandboxes chan language.Sandbox
-}
-
-func NewSandboxProvider(size int) *SandboxProvider {
-	return &SandboxProvider{make(chan language.Sandbox, size)}
-}
-
-func (sp *SandboxProvider) Get() language.Sandbox {
-	return <-sp.sandboxes
-}
-
-func (sp *SandboxProvider) Put(s language.Sandbox) {
-	sp.sandboxes <- s
+	return l
 }
 
 var Languages = map[string]language.Language{
-	"cpp":  Cpp{"cpp17", "C++17", "c++17"},
-	"java": language.DefaultStore.Get("java"),
-	"py":   language.DefaultStore.Get("pypy3"),
+	"cpp":  cpp.New("cpp17", "C++ 17", cpp.WithCompileArgs(CppArgs)),
+	"java": mustLanguage(language.DefaultStore.Get("java")),
+	"py":   mustLanguage(language.DefaultStore.Get("pypy3")),
+}
+
+type SandboxWithErrorStream struct {
+	sandbox.Sandbox
+	ErrorStream io.Writer
+}
+
+func (s SandboxWithErrorStream) Run(ctx context.Context, config sandbox.RunConfig, toRun string, toRunArgs ...string) (*sandbox.Status, error) {
+	config.Stderr = s.ErrorStream
+	return s.Sandbox.Run(ctx, config, toRun, toRunArgs...)
+}
+
+type SandboxWithEnvs struct {
+	sandbox.Sandbox
+	Envs []string
+}
+
+func (s SandboxWithEnvs) Run(ctx context.Context, config sandbox.RunConfig, toRun string, toRunArgs ...string) (*sandbox.Status, error) {
+	config.Env = append(config.Env, s.Envs...)
+	return s.Sandbox.Run(ctx, config, toRun, toRunArgs...)
 }
 
 type ExecuteRequest struct {
@@ -127,37 +74,52 @@ type ExecuteRequest struct {
 	Input    []byte `json:"input"`
 }
 
-func (req ExecuteRequest) Run(sp *SandboxProvider) (*ExecuteResponse, error) {
-	sandbox := sp.Get()
+func (req ExecuteRequest) Run(ctx context.Context, sp sandbox.Provider) (*ExecuteResponse, error) {
+	sbox, err := sp.Get()
+	if err != nil {
+		return nil, err
+	}
 
-	sandbox.Init(log.Default())
-	defer func() {
-		sandbox.Cleanup()
-		sp.Put(sandbox)
-	}()
+	sbox.Init(ctx)
+	defer func(ctx context.Context) {
+		sbox.Cleanup(ctx)
+		sp.Put(sbox)
+	}(ctx)
 
 	lang := Languages[req.Language]
-	bin, compileError := &bytes.Buffer{}, &bytes.Buffer{}
-	sandbox.AddArg("-s")
-	if err := lang.Compile(sandbox, language.File{
+	var bin *sandbox.File
+	compileError := &bytes.Buffer{}
+
+	if bin, err = lang.Compile(ctx, sbox, sandbox.File{
 		Name:   req.Filename,
-		Source: bytes.NewBuffer(req.Source),
-	}, bin, compileError, nil); err != nil {
-		fmt.Println(err.Error())
+		Source: io.NopCloser(bytes.NewBuffer(req.Source)),
+	}, compileError, nil); err != nil {
 		return &ExecuteResponse{
 			Compiled:       false,
 			CompilerOutput: compileError.String(),
-			Verdict:        language.VerdictCE,
+			Verdict:        sandbox.VerdictCE,
 		}, nil
 	}
 
 	stdout := &bytes.Buffer{}
-	stderr := &bytes.Buffer{}
-	stdoutLimiter := iotest.TruncateWriter(stdout, 5000)
-	stderrLimiter := iotest.TruncateWriter(stderr, 5000)
+	stdoutLimiter := iotest.TruncateWriter(stdout, int64(StdoutLimit))
 
-	sandbox.Stderr(stderrLimiter). /*.AddArg("-s")*/ SetEnv("ASAN_OPTIONS=detect_leaks=0")
-	status, err := lang.Run(sandbox, bin, bytes.NewBuffer(req.Input), stdoutLimiter, 5*time.Second, 128*1024*1024)
+	stderr := &bytes.Buffer{}
+	stderrLimiter := iotest.TruncateWriter(stderr, int64(StderrLimit))
+
+	runSandbox := SandboxWithErrorStream{
+		Sandbox: SandboxWithEnvs{
+			Sandbox: sbox,
+			Envs:    []string{"ASAN_OPTIONS=detect_leaks=0"},
+		},
+		ErrorStream: stderrLimiter,
+	}
+	status, err := lang.Run(
+		ctx,
+		runSandbox,
+		*bin,
+		bytes.NewBuffer(req.Input),
+		stdoutLimiter, TimeLimit, MemoryLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +131,7 @@ func (req ExecuteRequest) Run(sp *SandboxProvider) (*ExecuteResponse, error) {
 		Verdict: status.Verdict,
 		Output:  stdout.String(),
 		Stderr:  stderr.String(),
-		Memory:  status.Memory,
+		Memory:  int(status.Memory / memory.KB),
 		Time:    status.Time,
 	}, nil
 
@@ -179,25 +141,31 @@ type ExecuteResponse struct {
 	Compiled       bool   `json:"compiled"`
 	CompilerOutput string `json:"compiler_output"`
 
-	Verdict language.Verdict `json:"verdict"`
-	Output  string           `json:"output"`
-	Stderr  string           `json:"stderr"`
-	Memory  int              `json:"memory"`
-	Time    time.Duration    `json:"time"`
+	Verdict sandbox.Verdict `json:"verdict"`
+	Output  string          `json:"output"`
+	Stderr  string          `json:"stderr"`
+	Memory  int             `json:"memory"`
+	Time    time.Duration   `json:"time"`
 }
 
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 
-	sp := NewSandboxProvider(10)
+	sp := sandbox.NewProvider()
 	if os.Getenv("EXECUTE_DUMMY") != "" {
 		for i := 0; i < 10; i++ {
-			s := sandbox.NewDummy()
+			s, err := sandbox.NewDummy()
+			if err != nil {
+				panic(err)
+			}
 			sp.Put(s)
 		}
 	} else {
 		for i := 0; i < 2; i++ {
-			s := NewIsolate(255 + i)
+			s, err := sandbox.NewIsolate(255+i, sandbox.IsolateOptionUseLogger(slog.Default()))
+			if err != nil {
+				panic(err)
+			}
 			sp.Put(s)
 		}
 	}
@@ -213,7 +181,7 @@ func main() {
 
 		slog.Info("got request", "req", req, "source", string(req.Source))
 
-		resp, err := req.Run(sp)
+		resp, err := req.Run(c.Request().Context(), sp)
 		if err != nil {
 			return err
 		}
@@ -222,5 +190,5 @@ func main() {
 
 		return c.JSON(http.StatusOK, resp)
 	})
-	e.Logger.Fatal(e.Start(":1235"))
+	e.Logger.Fatal(e.Start(":" + Port))
 }

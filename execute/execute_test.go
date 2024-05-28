@@ -1,15 +1,29 @@
 package main
 
 import (
+	"context"
+	"flag"
+	"fmt"
+	"io"
+	"log/slog"
 	"testing"
 
-	"github.com/mraron/njudge/pkg/language"
+	"github.com/mraron/njudge/pkg/language/sandbox"
 	"github.com/stretchr/testify/assert"
 )
 
+var verbose = flag.Bool("verbose", false, "show req and resp")
+
 func TestExecuteRequestRun(t *testing.T) {
-	sp := NewSandboxProvider(1)
-	sp.Put(NewIsolate(255))
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	if *verbose {
+		logger = slog.Default()
+	}
+
+	sp := sandbox.NewProvider()
+	s, err := sandbox.NewIsolate(255, sandbox.IsolateOptionUseLogger(logger))
+	assert.NoError(t, err)
+	sp.Put(s)
 	tests := []struct {
 		name    string
 		req     ExecuteRequest
@@ -65,7 +79,7 @@ func TestExecuteRequestRun(t *testing.T) {
 			false,
 			ExecuteResponse{
 				Compiled: true,
-				Verdict:  language.VerdictRE,
+				Verdict:  sandbox.VerdictRE,
 			},
 		},
 		{
@@ -78,7 +92,7 @@ func TestExecuteRequestRun(t *testing.T) {
 			false,
 			ExecuteResponse{
 				Compiled: true,
-				Verdict:  language.VerdictRE,
+				Verdict:  sandbox.VerdictRE,
 			},
 		},
 		{
@@ -92,7 +106,7 @@ func TestExecuteRequestRun(t *testing.T) {
 			false,
 			ExecuteResponse{
 				Compiled: false,
-				Verdict:  language.VerdictCE,
+				Verdict:  sandbox.VerdictCE,
 			},
 		},
 		{
@@ -108,7 +122,7 @@ func TestExecuteRequestRun(t *testing.T) {
 			false,
 			ExecuteResponse{
 				Compiled: true,
-				Verdict:  language.VerdictTL,
+				Verdict:  sandbox.VerdictTL,
 			},
 		},
 		{
@@ -127,13 +141,31 @@ func TestExecuteRequestRun(t *testing.T) {
 			false,
 			ExecuteResponse{
 				Compiled: true,
-				Verdict:  language.VerdictRE,
+				Verdict:  sandbox.VerdictRE,
+			},
+		},
+		{
+			`atleast_cpp17`,
+			ExecuteRequest{
+				Language: "cpp",
+				Filename: "main.cpp",
+				Source: []byte(`#include<optional>
+				int main() {
+					std::optional<int> o;
+					o = 23;
+				}
+				`),
+			},
+			false,
+			ExecuteResponse{
+				Compiled: true,
+				Verdict:  sandbox.VerdictOK,
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			resp, err := test.req.Run(sp)
+			resp, err := test.req.Run(context.TODO(), sp)
 			if test.wantErr {
 				assert.NotNil(t, err)
 			} else {
@@ -141,6 +173,7 @@ func TestExecuteRequestRun(t *testing.T) {
 			}
 			assert.Equal(t, test.resp.Compiled, resp.Compiled)
 			assert.Equal(t, test.resp.Verdict, resp.Verdict)
+			logger.Info(fmt.Sprintf("run test %s", test.name), "req", test.req, "resp", resp)
 		})
 	}
 }
