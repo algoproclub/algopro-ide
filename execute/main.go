@@ -13,6 +13,7 @@ import (
 	"testing/iotest"
 	"time"
 
+	"github.com/algopro/algopro-ide/execute/sanitizer"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
@@ -135,7 +136,7 @@ func (req Request) Run(ctx context.Context, sp sandbox.Provider) (*Response, err
 		return nil, err
 	}
 
-	return &Response{
+	resp := &Response{
 		Compiled:       true,
 		CompilerOutput: compileError.String(),
 
@@ -144,7 +145,17 @@ func (req Request) Run(ctx context.Context, sp sandbox.Provider) (*Response, err
 		Stderr:  stderr.String(),
 		Memory:  int(status.Memory / memory.KB),
 		Time:    status.Time,
-	}, nil
+	}
+
+	// try to parse sanitizer error
+	if status.Verdict == sandbox.VerdictRE {
+		res, err := sanitizer.ParseStderr(stderr.String())
+		if err == nil {
+			resp.SanitizerError = res
+		}
+	}
+
+	return resp, nil
 
 }
 
@@ -157,6 +168,8 @@ type Response struct {
 	Stderr  string          `json:"stderr"`
 	Memory  int             `json:"memory"`
 	Time    time.Duration   `json:"time"`
+
+	SanitizerError *sanitizer.Error `json:"sanitizer_error"`
 }
 
 type Server struct {

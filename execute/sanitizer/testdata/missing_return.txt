@@ -1,0 +1,1 @@
+main.cpp:3:5: runtime error: execution reached the end of a value-returning function without returning a value

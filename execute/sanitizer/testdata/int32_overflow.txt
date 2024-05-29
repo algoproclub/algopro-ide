@@ -1,0 +1,1 @@
+main.cpp:5:18: runtime error: signed integer overflow: 100000 * 100000 cannot be represented in type 'int'

@@ -1,0 +1,1 @@
+main.cpp:5:15: runtime error: signed integer overflow: 10000000000 * 10000000000 cannot be represented in type 'long long int'

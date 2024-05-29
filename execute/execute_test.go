@@ -9,15 +9,40 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/algopro/algopro-ide/execute/sanitizer"
 	"github.com/mraron/njudge/pkg/language/sandbox"
 	"github.com/stretchr/testify/assert"
 )
 
 var verbose = flag.Bool("verbose", false, "show req and resp")
+var verboseSandbox = flag.Bool("verboseSandbox", false, "show sandbox logs")
+
+func mustReadFile(name string) []byte {
+	res, err := os.ReadFile(name)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
+func sandboxProvider(t *testing.T, logger *slog.Logger) sandbox.Provider {
+	sp := sandbox.NewProvider()
+	if *verboseSandbox {
+		s, err := sandbox.NewIsolate(255, sandbox.IsolateOptionUseLogger(logger))
+		assert.NoError(t, err)
+		sp.Put(s)
+	} else {
+		s, err := sandbox.NewIsolate(255)
+		assert.NoError(t, err)
+		sp.Put(s)
+	}
+	return sp
+}
 
 func TestExecuteRequestRun(t *testing.T) {
 	TimeLimit = 100 * time.Millisecond // hacky
@@ -26,70 +51,35 @@ func TestExecuteRequestRun(t *testing.T) {
 	if *verbose {
 		logger = slog.Default()
 	}
+	sp := sandboxProvider(t, logger)
 
-	sp := sandbox.NewProvider()
-	s, err := sandbox.NewIsolate(255, sandbox.IsolateOptionUseLogger(logger))
-	assert.NoError(t, err)
-	sp.Put(s)
 	tests := []struct {
 		name    string
 		req     Request
 		wantErr bool
 
-		checkOutput bool
-		checkStderr bool
-		resp        Response
+		checkOutput    bool
+		checkStderr    bool
+		checkSanitizer bool
+		resp           Response
 	}{
 		{
 			name: "cpp_asan",
 			req: Request{
 				Language: "cpp",
 				Filename: "main.cpp",
-				Source: []byte(`#include <bits/stdc++.h>
-using namespace std;
-
-int main() {
-	int t;
-	cin>>t;
-	while(t--){
-		int n;
-		cin>>n;
-		vector<int> v(n);
-		for(int i=0; i<n; i++) cin>>v[i];
-
-	int kulomb = 1;
-	for(int i=0; i<n; i++){
-		if (v[i]==v[i-1]){
-			v[i]++;
-	}
-	}
-	for(int i=1; i<n; i++){
-		if (v[i]=!v[i-1]){
-			kulomb++;
-	}
-	}
-	cout<<kulomb<<endl;
-	}
-
-	
-}
-`),
-				Input: []byte(`5
-				6
-				1 2 2 2 5 6
-				2
-				4 4
-				6
-				1 1 3 4 4 5
-				1
-				1
-				6
-				1 1 1 2 2 2`),
+				Source:   mustReadFile("testdata/cpp_asan.cpp"),
+				Input:    mustReadFile("testdata/cpp_asan.in"),
 			},
-			wantErr: false,
+			wantErr:        false,
+			checkSanitizer: true,
 			resp: Response{
 				Compiled: true,
 				Verdict:  sandbox.VerdictRE,
+				SanitizerError: &sanitizer.Error{
+					Kind: sanitizer.IllegalMemoryAccess,
+					Line: 15,
+				},
 			},
 		},
 		{
@@ -160,10 +150,10 @@ int main() {
 				Language: "cpp",
 				Filename: "main.cpp",
 				Source: []byte(`#include<optional>
-				int main() {
-					std::optional<int> o;
-					o = 23;
-				}
+int main() {
+	std::optional<int> o;
+	o = 23;
+}
 				`),
 			},
 			wantErr: false,
@@ -209,6 +199,9 @@ print("error", file=sys.stderr)`),
 			if test.checkStderr {
 				assert.Equal(t, test.resp.Stderr, resp.Stderr)
 			}
+			if test.checkSanitizer {
+				assert.Equal(t, test.resp.SanitizerError, resp.SanitizerError)
+			}
 
 			logger.Info(fmt.Sprintf("run test %s", test.name), "req", test.req, "resp", resp)
 		})
@@ -220,11 +213,7 @@ func TestPostExecute(t *testing.T) {
 	if *verbose {
 		logger = slog.Default()
 	}
-
-	sp := sandbox.NewProvider()
-	s, err := sandbox.NewIsolate(255, sandbox.IsolateOptionUseLogger(logger))
-	assert.NoError(t, err)
-	sp.Put(s)
+	sp := sandboxProvider(t, logger)
 
 	server := Server{logger, sp}
 	tests := []struct {
