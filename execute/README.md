@@ -12,6 +12,8 @@ Requirements:
 
 Build the binary (`go build`) and run with `./execute` (set the env var `EXECUTE_DUMMY` in order to use unsafe sandboxing)
 
+Important: tests might fail because of [this issue](https://github.com/google/sanitizers/issues/856), run `sudo sysctl vm.mmap_rnd_bits=28` before running the tests. 
+
 ## tests
 
 `go test .` runs a collection of tests that have been collected from the students and teachers. 

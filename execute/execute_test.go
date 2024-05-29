@@ -206,6 +206,9 @@ print("error", file=sys.stderr)`),
 			if test.checkOutput {
 				assert.Equal(t, test.resp.Output, resp.Output)
 			}
+			if test.checkStderr {
+				assert.Equal(t, test.resp.Stderr, resp.Stderr)
+			}
 
 			logger.Info(fmt.Sprintf("run test %s", test.name), "req", test.req, "resp", resp)
 		})
