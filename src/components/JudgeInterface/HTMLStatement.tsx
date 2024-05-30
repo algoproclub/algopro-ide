@@ -19,18 +19,25 @@ export default function HTMLStatement({
           ],
         });
 
+        const render = (element: HTMLElement, displayMode: boolean) => {
+          const math = element.textContent ?? '';
+          try {
+            katex.render(math, element, { displayMode });
+          } catch (e) {
+            element.textContent = math;
+            element.classList.add('math-parse-error');
+            console.error("Failed to render math '" + math + "'", e);
+          }
+        };
+
         // For AtCoder
-        node.querySelectorAll('var').forEach((element: HTMLElement) => {
-          katex.render(element.textContent ?? '', element);
-        });
+        node.querySelectorAll('var').forEach(element => render(element, false));
 
         // For CSES
         node.querySelectorAll('.math').forEach((element: Element) => {
           if (!(element instanceof HTMLElement)) return;
 
-          katex.render(element.textContent ?? '', element, {
-            displayMode: element.classList.contains('display'),
-          });
+          render(element, element.classList.contains('display'));
         });
       }
     },
