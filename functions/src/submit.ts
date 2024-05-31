@@ -4,17 +4,8 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import FormData = require('form-data');
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
-import {
-  atCoderCookie,
-  atCoderCsrfToken,
-  cfCookie,
-  cfCsrfToken,
-  cfUsername,
-  csesCookie,
-  csesCsrfToken,
-  spojCookie,
-  spojUsername,
-} from './index';
+import { loginBotUrl } from './index';
+import { Database } from 'firebase-admin/database';
 
 const GETSUBMISSIONDATA_DELAY_MS = 1000;
 const MAX_GETSUBMISSIONDATA_TRIES = 8;
@@ -26,44 +17,88 @@ class TimeOutError extends Error {}
 class IDNotFoundError extends Error {}
 
 export abstract class Submitter {
-  protected constructor(readonly problemSolution: ProblemSolution) {}
-
-  abstract submit(): Promise<void>;
-  abstract getSubmissionData(): Promise<ClientSubmissionData>;
-
-  async submitAndGet(): Promise<ClientSubmissionData> {
-    let oldId: string | null = null;
-    try {
-      const oldData = await this.getSubmissionData();
-      oldId = oldData.id;
-    } catch (error) {
-      if (!(error instanceof IDNotFoundError)) {
-        throw error;
-      }
+  abstract submit(
+    problemSolution: ProblemSolution,
+    uuid: string
+  ): Promise<ClientSubmissionData>;
+  abstract platformName: string;
+  abstract loginWith(account: object): Promise<boolean>;
+  async login(db: Database): Promise<void> {
+    const accountCount = await db
+      .ref('credentials')
+      .child(this.platformName)
+      .once('value')
+      .then(snapshot => snapshot.numChildren());
+    const accountIdx = Math.floor(Math.random() * accountCount);
+    console.log(`using account #${accountIdx} for ${this.platformName} login`);
+    let account = await db
+      .ref('credentials')
+      .child(this.platformName)
+      .child(accountIdx.toString())
+      .once('value')
+      .then(snapshot => snapshot.val());
+    if (!account) {
+      throw new Error('no account found for ' + this.platformName);
     }
-    await this.submit();
-
-    for (let i = 0; i < MAX_GETSUBMISSIONDATA_TRIES; ++i) {
-      const newData = await this.getSubmissionData();
-      if (newData.id !== oldId) {
-        return newData;
-      }
-      await new Promise(r => setTimeout(r, GETSUBMISSIONDATA_DELAY_MS));
-    }
-    throw new TimeOutError(
-      `fetching submission ID for ${this.problemSolution} timed out`
+    console.log(
+      `trying to login to ${this.platformName} with account #${accountIdx}, ${account.username}`
     );
+    if (await this.loginWith(account)) return;
+    console.warn('login failed, trying to login with login bot');
+    const response = await fetch(loginBotUrl.value() + '/login', {
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ ...account, platform: this.platformName }),
+      method: 'POST',
+    });
+    if (response.status !== 200) {
+      throw new Error('login failed, bot response: ' + (await response.text()));
+    }
+    account = { ...account, ...(await response.json()) };
+    if (!(await this.loginWith(account))) {
+      throw new Error('login failed');
+    }
+    await db
+      .ref('credentials')
+      .child(this.platformName)
+      .child(accountIdx.toString())
+      .set(account);
   }
 }
 
 export class CFSubmitter extends Submitter {
-  private accountIdx: number;
-  constructor(readonly problemSolution: ProblemSolution) {
-    super(problemSolution);
-    this.accountIdx = 0;
+  platformName = 'codeforces';
+  username: string = '';
+  cookie: string = '';
+  csrf_token: string = '';
+  useragent: string = '';
+
+  async loginWith(account: {
+    username: string;
+    cookie: string;
+    csrf_token: string;
+    useragent: string;
+  }): Promise<boolean> {
+    const response = await fetch('https://codeforces.com/settings/general', {
+      headers: {
+        cookie: account.cookie,
+      },
+    });
+    if (response.status !== 200) return false;
+    const text = await response.text();
+    if (!text.includes(account.username)) return false;
+    this.username = account.username;
+    this.cookie = account.cookie;
+    this.csrf_token = account.csrf_token;
+    this.useragent = account.useragent;
+    return true;
   }
-  async submit() {
-    const { problemID, sourceCode, language } = this.problemSolution;
+
+  async submit(
+    { problemID, sourceCode, language }: ProblemSolution,
+    uuid: string
+  ) {
     const matches = problemID.match(CODEFORCES_PROBLEM_REGEX);
     if (!matches) {
       throw new HttpsError(
@@ -74,31 +109,19 @@ export class CFSubmitter extends Submitter {
     const contestId = matches[1];
     const submittedProblemIndex = matches[2];
 
-    const accountCount = cfCookie.value().split(';').length;
-    if (cfCsrfToken.value().split(';').length != accountCount) {
-      throw new Error('CF cookie and csrf token count mismatch');
-    }
-    if (cfUsername.value().split(';').length != accountCount) {
-      throw new Error('CF cookie and username count mismatch');
-    }
-    this.accountIdx = Math.floor(Math.random() * accountCount);
-    const cookie = cfCookie.value().split(';')[this.accountIdx];
-    const csrf_token = cfCsrfToken.value().split(';')[this.accountIdx];
-    const username = cfUsername.value().split(';')[this.accountIdx];
     console.log(
-      `using CF account #${this.accountIdx}, username: ${username}, cookie: ${cookie}, csrf_token: ${csrf_token}`
+      `using CF account ${this.username}, cookie: ${this.cookie}, csrf_token: ${this.csrf_token}`
     );
 
     const response = await fetch(
       'https://codeforces.com/problemset/submit?' +
-        new URLSearchParams({ csrf_token: csrf_token }).toString(),
+        new URLSearchParams({ csrf_token: this.csrf_token }).toString(),
       {
         headers: {
           'content-type': 'application/x-www-form-urlencoded',
-          cookie,
+          cookie: this.cookie,
           Referer: 'https://codeforces.com/problemset/submit',
-          'user-agent':
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'user-agent': this.useragent,
         },
         body: new URLSearchParams({
           action: 'submitSolutionFormSubmitted',
@@ -111,7 +134,7 @@ export class CFSubmitter extends Submitter {
             java: '87', // Java 21 64bit
           }[language],
           tabSize: '4',
-          csrf_token,
+          csrf_token: this.csrf_token,
           ftaa: '',
           bfaa: '',
           sourceFile: '',
@@ -121,15 +144,22 @@ export class CFSubmitter extends Submitter {
       }
     );
     const text = await response.text();
-    if (response.status !== 200) {
+    if (
+      response.status !== 200 ||
+      response.url !== `https://codeforces.com/problemset/status?my=on`
+    ) {
       console.log(
-        'submission response.status: ',
+        'submission response.status:',
+        response.url,
         response.status,
         response.statusText
       );
       console.log('submission response.text: ', text.replaceAll('\n', ''));
       throw new Error(
-        'submission failed, user: ' + username + ', status: ' + response.status
+        'submission failed, user: ' +
+          this.username +
+          ', status: ' +
+          response.status
       );
     }
     if (text.includes('You have submitted exactly the same code before')) {
@@ -138,35 +168,83 @@ export class CFSubmitter extends Submitter {
         `You have submitted exactly the same code before`
       );
     }
-  }
 
-  async getSubmissionData(): Promise<ClientSubmissionData> {
-    const username = cfUsername.value().split(';')[this.accountIdx];
-    const response = await fetch(
-      `https://codeforces.com/submissions/${username}`
-    );
-    const document = cheerio.load(await response.text());
-    const id = document('[data-submission-id]').attr('data-submission-id');
-    if (!id) {
-      throw new IDNotFoundError('cannot find submission id');
+    console.log('submission success, fetching submission ID for uuid', uuid);
+    for (let i = 0; i < MAX_GETSUBMISSIONDATA_TRIES; ++i) {
+      const response = await fetch(
+        `https://codeforces.com/submissions/${this.username}`
+      );
+      const document = cheerio.load(await response.text());
+      const id = document('[data-submission-id]').attr('data-submission-id');
+      if (id) {
+        const response = await fetch(
+          'https://codeforces.com/data/submitSource',
+          {
+            headers: {
+              'content-type': 'application/x-www-form-urlencoded',
+              cookie: this.cookie,
+              Referer: 'https://codeforces.com/problemset/status?my=on',
+              'user-agent': this.useragent,
+            },
+            body: new URLSearchParams({
+              submissionId: id,
+              csrf_token: this.csrf_token,
+            }),
+            method: 'POST',
+          }
+        );
+        if (response.status !== 200) {
+          console.log(
+            'source response.status: ',
+            response.status,
+            response.statusText
+          );
+          console.log('source response.text: ', await response.text());
+          throw new Error(
+            'fetching submission source failed, status: ' + response.status
+          );
+        }
+        const src: string = (await response.json())['source'];
+        console.log('latest submission source: ', src.split('\n')[0]);
+        if (src.includes(uuid))
+          return {
+            id,
+            username: this.username,
+            platform: 'codeforces',
+          } as const;
+      }
+      await new Promise(r => setTimeout(r, GETSUBMISSIONDATA_DELAY_MS));
     }
-    return {
-      id,
-      username,
-      platform: 'codeforces',
-    };
+    throw new TimeOutError(`fetching submission ID for uuid ${uuid} timed out`);
   }
 }
 
 export class AtCoderSubmitter extends Submitter {
-  private submissionID?: string;
+  platformName = 'atcoder';
+  cookie: string = '';
+  csrf_token: string = '';
 
-  constructor(problemSolution: ProblemSolution) {
-    super(problemSolution);
+  async loginWith(account: {
+    username: string;
+    cookie: string;
+    csrf_token: string;
+  }): Promise<boolean> {
+    const response = await fetch('https://atcoder.jp/settings', {
+      headers: {
+        cookie: account.cookie,
+      },
+    });
+    console.log(response);
+    if (response.status !== 200) return false;
+    const text = await response.text();
+    console.log(text);
+    if (!text.includes(account.username)) return false;
+    this.cookie = account.cookie;
+    this.csrf_token = account.csrf_token;
+    return true;
   }
 
-  async submit() {
-    const { problemID, sourceCode, language } = this.problemSolution;
+  async submit({ problemID, sourceCode, language }: ProblemSolution) {
     const matches = problemID.match(ATCODER_PROBLEM_REGEX);
     if (!matches) {
       throw new HttpsError(
@@ -176,23 +254,12 @@ export class AtCoderSubmitter extends Submitter {
     }
     const contestId = matches[1];
 
-    const accountCount = atCoderCookie.value().split(';').length;
-    if (atCoderCsrfToken.value().split(';').length != accountCount) {
-      throw new Error('AtCoder cookie and csrf token count mismatch');
-    }
-    const accountIdx = Math.floor(Math.random() * accountCount);
-    const cookie = atCoderCookie.value().split(';')[accountIdx];
-    const csrf_token = atCoderCsrfToken.value().split(';')[accountIdx];
-    console.log(
-      `using AtCoder account #${accountIdx}, cookie: ${cookie}, csrf_token: ${csrf_token}`
-    );
-
     const response = await fetch(
       `https://atcoder.jp/contests/${contestId}/submit`,
       {
         headers: {
           'content-type': 'application/x-www-form-urlencoded',
-          cookie,
+          cookie: this.cookie,
         },
         body: new URLSearchParams({
           'data.TaskScreenName': problemID,
@@ -202,7 +269,7 @@ export class AtCoderSubmitter extends Submitter {
             py: '5078', // Python (PyPy 3.10-v7.3.12)
             java: '5005', // Java (OpenJDK 17)
           }[language],
-          csrf_token,
+          csrf_token: this.csrf_token,
         }),
         method: 'POST',
       }
@@ -221,27 +288,40 @@ export class AtCoderSubmitter extends Submitter {
     if (!id) {
       throw new IDNotFoundError('cannot find submission id');
     }
-    this.submissionID = id;
-  }
-  async getSubmissionData(): Promise<ClientSubmissionData> {
     return {
-      id: this.submissionID ?? '',
+      id,
       username: null,
       platform: 'atcoder',
-    };
+    } as const;
   }
 }
 
 export class CSESSubmitter extends Submitter {
-  private submissionID?: string;
-  constructor(readonly problemSolution: ProblemSolution) {
-    super(problemSolution);
+  platformName = 'cses';
+  cookie: string = '';
+  csrf_token: string = '';
+
+  async loginWith(account: {
+    username: string;
+    cookie: string;
+    csrf_token: string;
+  }): Promise<boolean> {
+    const response = await fetch('https://cses.fi/', {
+      headers: {
+        cookie: account.cookie,
+      },
+    });
+    if (response.status !== 200) return false;
+    const text = await response.text();
+    if (!text.includes(account.username)) return false;
+    this.cookie = account.cookie;
+    this.csrf_token = account.csrf_token;
+    return true;
   }
 
-  async submit(): Promise<void> {
-    const { problemID, sourceCode, language } = this.problemSolution;
+  async submit({ problemID, sourceCode, language }: ProblemSolution) {
     const formData = new FormData();
-    formData.append('csrf_token', csesCsrfToken.value());
+    formData.append('csrf_token', this.csrf_token);
     formData.append('task', problemID);
     formData.append('file', sourceCode, { filename: 'f' });
     formData.append(
@@ -256,7 +336,7 @@ export class CSESSubmitter extends Submitter {
 
     const response = await fetch(`https://cses.fi/course/send.php`, {
       headers: {
-        cookie: csesCookie.value(),
+        cookie: this.cookie,
       },
       body: formData,
       method: 'POST',
@@ -275,25 +355,40 @@ export class CSESSubmitter extends Submitter {
     if (!id) {
       throw new IDNotFoundError('cannot find submission id');
     }
-    this.submissionID = id;
-  }
-  async getSubmissionData(): Promise<ClientSubmissionData> {
     return {
-      id: this.submissionID ?? '',
+      id,
       username: null,
       platform: 'cses',
-    };
+    } as const;
   }
 }
 
 export class SPOJSubmitter extends Submitter {
-  private submissionID?: string;
-  constructor(readonly problemSolution: ProblemSolution) {
-    super(problemSolution);
+  platformName = 'spoj';
+  username: string = '';
+  cookie: string = '';
+  csrf_token: string = '';
+
+  async loginWith(account: {
+    username: string;
+    cookie: string;
+    csrf_token: string;
+  }): Promise<boolean> {
+    const response = await fetch('https://www.spoj.com/myaccount/', {
+      headers: {
+        cookie: account.cookie,
+      },
+    });
+    if (response.status !== 200) return false;
+    const text = await response.text();
+    if (!text.includes(account.username)) return false;
+    this.username = account.username;
+    this.cookie = account.cookie;
+    this.csrf_token = account.csrf_token;
+    return true;
   }
 
-  async submit(): Promise<void> {
-    const { problemID, sourceCode, language } = this.problemSolution;
+  async submit({ problemID, sourceCode, language }: ProblemSolution) {
     const formData = new FormData();
     formData.append('subm_file', sourceCode, {
       filename: '',
@@ -313,7 +408,7 @@ export class SPOJSubmitter extends Submitter {
 
     const response = await fetch(`https://www.spoj.com/submit/complete/`, {
       headers: {
-        cookie: spojCookie.value(),
+        cookie: this.cookie,
       },
       body: formData,
       method: 'POST',
@@ -329,13 +424,10 @@ export class SPOJSubmitter extends Submitter {
       console.log('submission response.text: ', text.replaceAll('\n', ''));
       throw new Error('submission failed, status: ' + response.status);
     }
-    this.submissionID = id;
-  }
-  async getSubmissionData(): Promise<ClientSubmissionData> {
     return {
-      id: this.submissionID ?? '',
-      username: spojUsername.value(),
+      id,
+      username: this.username,
       platform: 'spoj',
-    };
+    } as const;
   }
 }

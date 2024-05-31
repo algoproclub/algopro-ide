@@ -1,5 +1,5 @@
 export type AccountData = {
-  sessionCookie?: () => string;
+  sessionCookie?: () => Promise<string>;
 };
 
 export type PendingSubmission = {
