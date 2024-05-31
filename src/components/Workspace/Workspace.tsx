@@ -16,6 +16,7 @@ import {
   mobileActiveTabAtom,
   problemAtom,
   showSidebarAtom,
+  statusDataAtom,
   translationsAtom,
 } from '../../atoms/workspaceUI';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -75,13 +76,15 @@ export default function Workspace({
   const layoutEditors = useUpdateAtom(layoutEditorsAtom);
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
   const mobileActiveTab = useAtomValue(mobileActiveTabAtom);
-  const [inputTab, setInputTab] = useAtom(inputTabAtom);
   const showSidebar = useAtomValue(showSidebarAtom);
   const setInputEditor = useUpdateAtom(inputMonacoEditorAtom);
   const setCodemirrorInputEditor = useUpdateAtom(inputCodemirrorEditorAtom);
   const setOutputEditor = useUpdateAtom(outputMonacoEditorAtom);
+  const [inputTab, setInputTab] = useAtom(inputTabAtom);
   const [problem, setProblem] = useAtom(problemAtom);
   const [translations, setTranslations] = useAtom(translationsAtom);
+  const [statusData, setStatusData] = useAtom(statusDataAtom);
+  const [language, setLanguage] = React.useState('en');
 
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
@@ -102,8 +105,6 @@ export default function Workspace({
       layoutEditors();
     }
   }, [isDesktop, mobileActiveTab, layoutEditors]);
-
-  const [statusData, setStatusData] = useState<StatusData | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -143,8 +144,6 @@ export default function Workspace({
 
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
   const { lightMode } = useUserContext().userData;
-
-  const [language, setLanguage] = React.useState('en');
 
   useEffect(() => {
     setLanguage('hu' in translations ? 'hu' : 'en');
@@ -255,13 +254,6 @@ export default function Workspace({
                   </div>
                 )}
             </div>
-            {problem?.submittable && problem.id === fileData.problem?.id && (
-              <PlatformSubmitButton
-                platform={problem.platform}
-                statusData={statusData}
-                setStatusData={setStatusData}
-              />
-            )}
           </div>
           <div
             className={classNames(

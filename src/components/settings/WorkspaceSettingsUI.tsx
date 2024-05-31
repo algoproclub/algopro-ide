@@ -14,21 +14,21 @@ export default function WorkspaceSettingsUI({
   userPermission: string;
 }): JSX.Element {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mb-4">
       {
         <div>
           <label
             htmlFor={`workspace_name`}
-            className="block text-[0.92rem] font-medium text-gray-700"
+            className="block text-[0.92rem] text-gray-300"
           >
-            Workspace Name
+            Workspace name
           </label>
-          <div className="mt-1">
+          <div>
             <input
               type="text"
               name={`workspace_name`}
               id={`workspace_name`}
-              className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm text-gray-800"
+              className="text-input"
               value={workspaceSettings.workspaceName || ''}
               onChange={e =>
                 (userPermission === 'OWNER' ||
@@ -57,23 +57,24 @@ export default function WorkspaceSettingsUI({
           !(userPermission === 'OWNER' || userPermission === 'READ_WRITE')
         }
         options={LANGUAGES}
-        className="text-gray-700 text-[0.92rem] font-medium"
+        lightMode={false}
+        className="text-gray-200 text-[0.92rem] font-medium"
       />
 
       <div>
         <label
           htmlFor={`compiler_options`}
-          className="block text-[0.92rem] font-medium text-gray-700"
+          className="block text-[0.92rem] text-gray-300"
         >
           {LANGUAGES.find(x => x.value === workspaceSettings.language)!.label}{' '}
-          Compiler Options
+          compiler options
         </label>
-        <div className="mt-1">
+        <div>
           <input
             type="text"
             name={`compiler_options`}
             id={`compiler_options`}
-            className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black font-mono text-[0.82rem] text-gray-800"
+            className="text-input !font-mono !text-[0.85rem]"
             value={
               workspaceSettings.compilerOptions[workspaceSettings.language]
             }
@@ -100,8 +101,9 @@ export default function WorkspaceSettingsUI({
           userPermission === 'OWNER' &&
           onWorkspaceSettingsChange({ defaultPermission: val })
         }
+        lightMode={false}
         isOwner={userPermission === 'OWNER'}
-        className="text-gray-700 text-[0.92rem] font-medium"
+        className="text-gray-200 text-[0.92rem] font-medium"
       />
     </div>
   );

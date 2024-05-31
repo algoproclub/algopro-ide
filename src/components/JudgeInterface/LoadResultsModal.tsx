@@ -24,16 +24,16 @@ const TextInput = ({
     <div>
       <label
         htmlFor={id}
-        className="block text-[0.92rem] font-medium text-gray-700"
+        className="block text-[0.92rem] font-medium text-gray-300"
       >
         {label}
       </label>
-      <div className="mt-1">
+      <div>
         <input
           type="text"
           name={id}
           id={id}
-          className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm text-black"
+          className="text-input"
           value={text}
           onChange={onChange}
         />
@@ -147,11 +147,11 @@ const LoadResultsModal = ({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div className="inline-block bg-white md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
+            <div className="inline-block bg-gray-800 border border-gray-700 text-white md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
               <div className="px-4 sm:px-6 pt-4 pb-2">
                 <Dialog.Title
                   as="h3"
-                  className="text-lg leading-6 font-medium text-gray-900 text-center"
+                  className="text-lg leading-6 font-medium text-center"
                 >
                   Load results
                 </Dialog.Title>
@@ -171,10 +171,10 @@ const LoadResultsModal = ({
                   id="submissionID"
                   onChange={e => setSubmissionID(e.target.value.trim())}
                 />
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2.5">
                   <button
                     type="button"
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-[0.92rem] font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="inline-flex items-center px-4 py-2 border border-gray-700 shadow-sm text-[0.92rem] font-medium rounded-md text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     onClick={confirmedClose}
                   >
                     Cancel
@@ -200,8 +200,8 @@ const LoadResultsModal = ({
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
-                  className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  onClick={confirmedClose}
+                  className="rounded-md text-gray-200 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  onClick={onClose}
                 >
                   <span className="sr-only">Close</span>
                   <XMarkIcon className="h-6 w-6" aria-hidden="true" />

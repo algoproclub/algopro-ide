@@ -1,11 +1,12 @@
 import { atom } from 'jotai';
-import { ProblemData, Translation } from '../types/problem';
+import { ProblemData, StatusData, Translation } from '../types/problem';
 import { getHints } from '../components/Workspace/Workspace';
 
 export const mobileActiveTabAtom = atom<'code' | 'io' | 'users'>('code');
 export const showSidebarAtom = atom<boolean>(false);
 export const inputTabAtom = atom<string>('input');
 export const problemAtom = atom<ProblemData | undefined>(undefined);
+export const statusDataAtom = atom<StatusData | null>(null);
 export const translationsAtom = atom<Record<string, Translation>>({});
 export const tabsListAtom = atom(get => {
   const getSamplesList = (length: number) => {

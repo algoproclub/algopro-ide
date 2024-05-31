@@ -5,6 +5,7 @@ import { signInWithGoogleAtom } from '../src/atoms/firebaseUserAtoms';
 import Dashboard from '../src/components/Dashboard/Dashboard';
 import { useConnectionContext } from '../src/context/ConnectionContext';
 import { useNullableUserContext } from '../src/context/UserContext';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function DashboardPage(): JSX.Element {
   const signInWithGoogle = useUpdateAtom(signInWithGoogleAtom);
@@ -36,13 +37,13 @@ export default function DashboardPage(): JSX.Element {
           </a>
         </div>
 
-        <div className="h-3"></div>
+        <div className="h-1"></div>
 
         {logged === false ? (
           <div className="text-gray-400">
             Not signed in.{' '}
             <button
-              className="underline text-gray-200 focus:outline-none hover:bg-gray-700 p-1 leading-none transition"
+              className="mt-3 block items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1E1E1E] focus:ring-indigo-500"
               onClick={() => signInWithGoogle(connectionContext)}
             >
               Sign in now
