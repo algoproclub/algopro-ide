@@ -1,4 +1,4 @@
-import { login } from './login';
+import { bots } from './login';
 import { readFile } from 'fs/promises';
 
 (async () => {
@@ -11,17 +11,17 @@ import { readFile } from 'fs/promises';
   );
   const accountInfos = [];
   for (const [username, password] of accounts) {
-    accountInfos.push(await login(username, password));
+    accountInfos.push(await bots['codeforces'](username, password));
   }
   console.log('CF_BOT_USERNAME="' + accounts.map(([u]) => u).join(';') + '"');
   console.log(
     'CF_COOKIE="' +
-      accountInfos.map(({ session }) => 'JSESSIONID=' + session).join(';') +
+      JSON.stringify(accountInfos.map(({ cookie }) => cookie)) +
       '"'
   );
   console.log(
     'CF_CSRF_TOKEN="' +
-      accountInfos.map(({ csrf_token }) => csrf_token).join(';') +
+      JSON.stringify(accountInfos.map(({ csrf_token }) => csrf_token)) +
       '"'
   );
 })();

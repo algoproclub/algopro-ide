@@ -1,6 +1,6 @@
 import fastify from 'fastify';
 import { z } from 'zod';
-import { login } from './login';
+import { bots } from './login';
 
 const app = fastify();
 const port = 3100;
@@ -10,12 +10,14 @@ app.get('/', () => {
 });
 
 const LoginRequest = z.object({
+  platform: z.enum(['codeforces', 'spoj']),
   username: z.string(),
   password: z.string(),
 });
-app.post('/login/codeforces', async (req, res) => {
-  const { username, password } = LoginRequest.parse(req.body);
-  return await login(username, password);
+app.post('/login', async (req, res) => {
+  const { platform, username, password } = LoginRequest.parse(req.body);
+  console.log('Logging into', platform, 'as', username);
+  return await bots[platform](username, password);
 });
 
 app
