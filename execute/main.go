@@ -2,121 +2,225 @@ package main
 
 import (
 	"bytes"
-	"fmt"
-	"log"
+	"context"
+	"encoding/json"
+	"io"
+	"log/slog"
+	"net"
 	"net/http"
 	"os"
+	"strings"
+	"testing/iotest"
 	"time"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+
 	"github.com/mraron/njudge/pkg/language"
-	_ "github.com/mraron/njudge/pkg/language/langs/cpp"
+	"github.com/mraron/njudge/pkg/language/langs/cpp"
 	_ "github.com/mraron/njudge/pkg/language/langs/java"
 	_ "github.com/mraron/njudge/pkg/language/langs/pypy3"
-	"go.skia.org/infra/go/util/limitwriter"
-
+	"github.com/mraron/njudge/pkg/language/memory"
 	"github.com/mraron/njudge/pkg/language/sandbox"
 )
 
-var Languages = map[string]language.Language{
-	"cpp":  language.DefaultStore.Get("cpp17"),
-	"java": language.DefaultStore.Get("java"),
-	"py":   language.DefaultStore.Get("pypy3"),
+var (
+	Port        = "1235"
+	TimeLimit   = 5 * time.Second
+	MemoryLimit = 128 * memory.MiB
+
+	StdoutLimit = 5000 * memory.Byte
+	StderrLimit = 5000 * memory.Byte
+
+	CppArgs = strings.Fields("-std=c++17 -O2 -Wall -fsanitize=undefined -fsanitize=address -fno-sanitize-recover=all -g -DONLINE_JUDGE")
+)
+
+func mustLanguage(l language.Language, err error) language.Language {
+	if err != nil {
+		panic(err)
+	}
+	return l
 }
 
-type ExecuteRequest struct {
+var Languages = map[string]language.Language{
+	"cpp":  cpp.New("cpp17", "C++ 17", cpp.WithCompileArgs(CppArgs)),
+	"java": mustLanguage(language.DefaultStore.Get("java")),
+	"py":   mustLanguage(language.DefaultStore.Get("pypy3")),
+}
+
+type SandboxWithErrorStream struct {
+	sandbox.Sandbox
+	ErrorStream io.Writer
+}
+
+func (s SandboxWithErrorStream) Run(ctx context.Context, config sandbox.RunConfig, toRun string, toRunArgs ...string) (*sandbox.Status, error) {
+	config.Stderr = s.ErrorStream
+	return s.Sandbox.Run(ctx, config, toRun, toRunArgs...)
+}
+
+type SandboxWithEnvs struct {
+	sandbox.Sandbox
+	Envs []string
+}
+
+func (s SandboxWithEnvs) Run(ctx context.Context, config sandbox.RunConfig, toRun string, toRunArgs ...string) (*sandbox.Status, error) {
+	config.Env = append(config.Env, s.Envs...)
+	return s.Sandbox.Run(ctx, config, toRun, toRunArgs...)
+}
+
+type Request struct {
 	Language string `json:"language"`
 	Filename string `json:"filename"`
 	Source   []byte `json:"source"`
 	Input    []byte `json:"input"`
 }
 
-func (req ExecuteRequest) Run(sp *language.SandboxProvider) (*ExecuteResponse, error) {
-	sandbox, err := sp.Get()
+func (req Request) Valid() bool {
+	if _, ok := Languages[req.Language]; !ok {
+		return false
+	}
+	if len(req.Filename) == 0 {
+		return false
+	}
+	return true
+}
+
+func (req Request) Run(ctx context.Context, sp sandbox.Provider) (*Response, error) {
+	sbox, err := sp.Get()
 	if err != nil {
 		return nil, err
 	}
-	sandbox.Init(log.Default())
-	defer func() {
-		sandbox.Cleanup()
-		sp.Put(sandbox)
-	}()
+
+	sbox.Init(ctx)
+	defer func(ctx context.Context) {
+		sbox.Cleanup(ctx)
+		sp.Put(sbox)
+	}(ctx)
 
 	lang := Languages[req.Language]
-	bin, compileError := &bytes.Buffer{}, &bytes.Buffer{}
-	if err = lang.Compile(sandbox, language.File{
+	var bin *sandbox.File
+	compileError := &bytes.Buffer{}
+
+	if bin, err = lang.Compile(ctx, sbox, sandbox.File{
 		Name:   req.Filename,
-		Source: bytes.NewBuffer(req.Source),
-	}, bin, compileError, nil); err != nil {
-		fmt.Println(err.Error())
-		return &ExecuteResponse{
+		Source: io.NopCloser(bytes.NewBuffer(req.Source)),
+	}, compileError, nil); err != nil {
+		return &Response{
 			Compiled:       false,
 			CompilerOutput: compileError.String(),
-			Verdict:        language.VerdictCE,
+			Verdict:        sandbox.VerdictCE,
 		}, nil
 	}
 
 	stdout := &bytes.Buffer{}
-	stdoutLimiter := limitwriter.New(stdout, 5000)
-	status, err := lang.Run(sandbox, bin, bytes.NewBuffer(req.Input), stdoutLimiter, 5*time.Second, 128*1024*1024)
+	stdoutLimiter := iotest.TruncateWriter(stdout, int64(StdoutLimit))
+
+	stderr := &bytes.Buffer{}
+	stderrLimiter := iotest.TruncateWriter(stderr, int64(StderrLimit))
+
+	runSandbox := SandboxWithErrorStream{
+		Sandbox: SandboxWithEnvs{
+			Sandbox: sbox,
+			Envs:    []string{"ASAN_OPTIONS=detect_leaks=0"},
+		},
+		ErrorStream: stderrLimiter,
+	}
+	status, err := lang.Run(
+		ctx,
+		runSandbox,
+		*bin,
+		bytes.NewBuffer(req.Input),
+		stdoutLimiter, TimeLimit, MemoryLimit)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ExecuteResponse{
+	return &Response{
 		Compiled:       true,
-		CompilerOutput: "",
+		CompilerOutput: compileError.String(),
 
 		Verdict: status.Verdict,
 		Output:  stdout.String(),
-		Stderr:  "not supported yet",
-		Memory:  status.Memory,
+		Stderr:  stderr.String(),
+		Memory:  int(status.Memory / memory.KB),
 		Time:    status.Time,
 	}, nil
 
 }
 
-type ExecuteResponse struct {
+type Response struct {
 	Compiled       bool   `json:"compiled"`
 	CompilerOutput string `json:"compiler_output"`
 
-	Verdict language.Verdict `json:"verdict"`
-	Output  string           `json:"output"`
-	Stderr  string           `json:"stderr"`
-	Memory  int              `json:"memory"`
-	Time    time.Duration    `json:"time"`
+	Verdict sandbox.Verdict `json:"verdict"`
+	Output  string          `json:"output"`
+	Stderr  string          `json:"stderr"`
+	Memory  int             `json:"memory"`
+	Time    time.Duration   `json:"time"`
+}
+
+type Server struct {
+	logger *slog.Logger
+	sp     sandbox.Provider
+}
+
+func (s Server) PostExecute(w http.ResponseWriter, r *http.Request) {
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	req := Request{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || !req.Valid() {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	s.logger.Info("got request", "req", req, "source", string(req.Source))
+
+	resp, err := req.Run(r.Context(), s.sp)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	s.logger.Info("got response", "req", req, "resp", resp)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
 }
 
 func main() {
-	sp := language.NewSandboxProvider()
+	sp := sandbox.NewProvider()
 	if os.Getenv("EXECUTE_DUMMY") != "" {
 		for i := 0; i < 10; i++ {
-			s := sandbox.NewDummy()
+			s, err := sandbox.NewDummy()
+			if err != nil {
+				panic(err)
+			}
 			sp.Put(s)
 		}
 	} else {
-		for i := 0; i < 10; i++ {
-			s := sandbox.NewIsolate(255 + i)
+		for i := 0; i < 2; i++ {
+			s, err := sandbox.NewIsolate(255+i, sandbox.IsolateOptionUseLogger(slog.Default()))
+			if err != nil {
+				panic(err)
+			}
 			sp.Put(s)
 		}
 	}
 
-	e := echo.New()
-	e.Use(middleware.Logger())
-	e.POST("/execute", func(c echo.Context) error {
-		req := ExecuteRequest{}
-		if err := c.Bind(&req); err != nil {
-			return err
-		}
-		fmt.Println(req.Filename, string(req.Input), req.Language, string(req.Source))
+	server := Server{
+		logger: slog.New(slog.NewJSONHandler(os.Stdout, nil)),
+		sp:     sp,
+	}
 
-		resp, err := req.Run(sp)
-		if err != nil {
-			return err
-		}
-		fmt.Println(resp)
-		return c.JSON(http.StatusOK, resp)
-	})
-	e.Logger.Fatal(e.Start(":1235"))
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
+	r.Post("/execute", server.PostExecute)
+
+	http.ListenAndServe(net.JoinHostPort("0.0.0.0", Port), r)
 }
