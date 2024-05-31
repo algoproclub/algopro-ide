@@ -132,4 +132,10 @@ body {
   & img.tex-graphics {
     background-color: white;
   }
+
+  & .math-parse-error {
+    font-family: monospace;
+    font-style: normal;
+    @apply text-red-500;
+  }
 }
