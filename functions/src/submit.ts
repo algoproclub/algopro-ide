@@ -72,11 +72,13 @@ export class CFSubmitter extends Submitter {
   username: string = '';
   cookie: string = '';
   csrf_token: string = '';
+  useragent: string = '';
 
   async loginWith(account: {
     username: string;
     cookie: string;
     csrf_token: string;
+    useragent: string;
   }): Promise<boolean> {
     const response = await fetch('https://codeforces.com/settings/general', {
       headers: {
@@ -89,6 +91,7 @@ export class CFSubmitter extends Submitter {
     this.username = account.username;
     this.cookie = account.cookie;
     this.csrf_token = account.csrf_token;
+    this.useragent = account.useragent;
     return true;
   }
 
@@ -118,8 +121,7 @@ export class CFSubmitter extends Submitter {
           'content-type': 'application/x-www-form-urlencoded',
           cookie: this.cookie,
           Referer: 'https://codeforces.com/problemset/submit',
-          'user-agent':
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'user-agent': this.useragent,
         },
         body: new URLSearchParams({
           action: 'submitSolutionFormSubmitted',
@@ -182,8 +184,7 @@ export class CFSubmitter extends Submitter {
               'content-type': 'application/x-www-form-urlencoded',
               cookie: this.cookie,
               Referer: 'https://codeforces.com/problemset/status?my=on',
-              'user-agent':
-                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+              'user-agent': this.useragent,
             },
             body: new URLSearchParams({
               submissionId: id,

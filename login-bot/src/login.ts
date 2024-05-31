@@ -10,11 +10,7 @@ let browser: Browser | null = null;
 
 async function withContext<T>(fn: (context: BrowserContext) => Promise<T>) {
   browser ??= await chromium.launch();
-  const context = await browser.newContext({
-    recordVideo: {
-      dir: 'videos/',
-    },
-  });
+  const context = await browser.newContext();
   let result: T;
   try {
     result = await fn(context);
@@ -50,7 +46,12 @@ export const bots = {
         .getAttribute('value');
       if (!csrf_token) throw new Error('CSRF token not found');
       console.log('Logged in as ' + username);
-      return { username, cookie: await cookies(context), csrf_token };
+      return {
+        username,
+        cookie: await cookies(context),
+        csrf_token,
+        useragent: await page.evaluate(() => navigator.userAgent),
+      };
     }),
   spoj: (username: string, password: string) =>
     withContext(async context => {
