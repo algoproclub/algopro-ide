@@ -169,7 +169,7 @@ type Response struct {
 	Memory  int             `json:"memory"`
 	Time    time.Duration   `json:"time"`
 
-	SanitizerError *sanitizer.Error `json:"sanitizer_error"`
+	SanitizerError *sanitizer.Error `json:"sanitizer_error,omitempty"`
 }
 
 type Server struct {
@@ -235,5 +235,6 @@ func main() {
 
 	r.Post("/execute", server.PostExecute)
 
+	server.logger.Info("listening on port " + Port)
 	http.ListenAndServe(net.JoinHostPort("0.0.0.0", Port), r)
 }

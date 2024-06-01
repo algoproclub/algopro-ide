@@ -22,9 +22,9 @@ const (
 )
 
 type Error struct {
-	Line   int
-	Column int
-	Kind   ErrorKind
+	Line   int       `json:"line"`
+	Column int       `json:"column"`
+	Kind   ErrorKind `json:"kind"`
 }
 
 var asanLineRegex = regexp.MustCompile(`#(\d*) 0x([0-9a-f]*) in main (.*).cpp:(\d*)`)
