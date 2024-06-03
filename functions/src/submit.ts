@@ -234,10 +234,8 @@ export class AtCoderSubmitter extends Submitter {
         cookie: account.cookie,
       },
     });
-    console.log(response);
     if (response.status !== 200) return false;
     const text = await response.text();
-    console.log(text);
     if (!text.includes(account.username)) return false;
     this.cookie = account.cookie;
     this.csrf_token = account.csrf_token;
