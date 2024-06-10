@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-import { useAtomValue, useUpdateAtom } from 'jotai/utils';
 import { useEditorContext } from '../context/EditorContext';
 
 export type User = {
