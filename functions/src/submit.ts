@@ -154,7 +154,6 @@ export class CFSubmitter extends Submitter {
         response.status,
         response.statusText
       );
-      console.log('submission response.text: ', text.replaceAll('\n', ''));
       throw new Error(
         'submission failed, user: ' +
           this.username +
@@ -199,7 +198,6 @@ export class CFSubmitter extends Submitter {
             response.status,
             response.statusText
           );
-          console.log('source response.text: ', await response.text());
           throw new Error(
             'fetching submission source failed, status: ' + response.status
           );
@@ -279,7 +277,6 @@ export class AtCoderSubmitter extends Submitter {
         response.status,
         response.statusText
       );
-      console.log('submission response.text: ', text.replaceAll('\n', ''));
       throw new Error('submission failed, status: ' + response.status);
     }
     const id = text.match(/\/contests\/\w+\/submissions\/([0-9]+)/)?.[1];
@@ -346,7 +343,6 @@ export class CSESSubmitter extends Submitter {
         response.status,
         response.statusText
       );
-      console.log('submission response.text: ', text.replaceAll('\n', ''));
       throw new Error('submission failed, status: ' + response.status);
     }
     const id = text.match(/\/ajax\/get_status\.php\?entry=([0-9]+)/)?.[1];
@@ -419,7 +415,6 @@ export class SPOJSubmitter extends Submitter {
         response.status,
         response.statusText
       );
-      console.log('submission response.text: ', text.replaceAll('\n', ''));
       throw new Error('submission failed, status: ' + response.status);
     }
     return {
