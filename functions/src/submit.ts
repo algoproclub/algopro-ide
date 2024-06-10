@@ -88,6 +88,13 @@ export class CFSubmitter extends Submitter {
     if (response.status !== 200) return false;
     const text = await response.text();
     if (!text.includes(account.username)) return false;
+    if (
+      text.match(/name='csrf_token' value='([a-z0-9]+)'/)?.[1] !==
+      account.csrf_token
+    ) {
+      console.log('csrf_token mismatch');
+      return false;
+    }
     this.username = account.username;
     this.cookie = account.cookie;
     this.csrf_token = account.csrf_token;
