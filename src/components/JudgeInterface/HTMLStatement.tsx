@@ -30,11 +30,8 @@ export default function HTMLStatement({
           }
         };
 
-        // For AtCoder
-        node.querySelectorAll('var').forEach(element => render(element, false));
-
-        // For CSES
-        node.querySelectorAll('.math').forEach((element: Element) => {
+        // For AtCoder and CSES
+        node.querySelectorAll('var, .math').forEach((element: Element) => {
           if (!(element instanceof HTMLElement)) return;
 
           render(element, element.classList.contains('display'));
