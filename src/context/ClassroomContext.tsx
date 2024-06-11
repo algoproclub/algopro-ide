@@ -1,6 +1,6 @@
 export default {};
 // import firebase from 'firebase/app';
-// import { useAtomValue, useUpdateAtom } from 'jotai/utils';
+// import { useAtomValue, useSetAtom } from 'jotai';
 // import { useRouter } from 'next/router';
 // import { createContext, ReactNode, useContext, useMemo } from 'react';
 // import invariant from 'tiny-invariant';

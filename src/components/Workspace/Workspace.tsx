@@ -1,5 +1,5 @@
 import { EllipsisHorizontalIcon } from '@heroicons/react/20/solid';
-import { useAtomValue, useUpdateAtom } from 'jotai/utils';
+import { useSetAtom, useAtomValue } from 'jotai';
 import classNames from 'classnames';
 import { useAtom } from 'jotai';
 import React, { useEffect, useState } from 'react';
@@ -73,13 +73,13 @@ export default function Workspace({
   tabsList: { label: string; value: string }[];
 }): JSX.Element {
   const { fileData } = useEditorContext();
-  const layoutEditors = useUpdateAtom(layoutEditorsAtom);
+  const layoutEditors = useSetAtom(layoutEditorsAtom);
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
   const mobileActiveTab = useAtomValue(mobileActiveTabAtom);
   const showSidebar = useAtomValue(showSidebarAtom);
-  const setInputEditor = useUpdateAtom(inputMonacoEditorAtom);
-  const setCodemirrorInputEditor = useUpdateAtom(inputCodemirrorEditorAtom);
-  const setOutputEditor = useUpdateAtom(outputMonacoEditorAtom);
+  const setInputEditor = useSetAtom(inputMonacoEditorAtom);
+  const setCodemirrorInputEditor = useSetAtom(inputCodemirrorEditorAtom);
+  const setOutputEditor = useSetAtom(outputMonacoEditorAtom);
   const [inputTab, setInputTab] = useAtom(inputTabAtom);
   const [problem, setProblem] = useAtom(problemAtom);
   const [translations, setTranslations] = useAtom(translationsAtom);

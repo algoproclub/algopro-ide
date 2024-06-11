@@ -1,14 +1,14 @@
 export default {};
-// import { useAtomValue, useUpdateAtom } from 'jotai/utils';
+// import { useAtomValue, useSetAtom } from 'jotai';
 // import { useEffect } from 'react';
 // import { setFirebaseErrorAtom, userRefAtom } from '../atoms/firebaseAtoms';
 // import type firebaseType from 'firebase';
 // import { userPermissionAtom } from '../atoms/workspace';
 
 // export default function useUpdateUserFilePermissions() {
-//   const setUserPermission = useUpdateAtom(userPermissionAtom);
-//   const setFirebaseError = useUpdateAtom(setFirebaseErrorAtom);
-//   const potentiallyUnauthenticatedUserRef = useAtomValue(userRefAtom);
+//   const setUserPermission = useSetAtom(userPermissionAtom);
+//   const setFirebaseError = useSetAtom(setFirebaseErrorAtom);
+//   const potentiallyUnauthenticatedUserRef = useSetAtom(userRefAtom);
 //   useEffect(() => {
 //     if (potentiallyUnauthenticatedUserRef) {
 //       const handleChange = (snap: firebaseType.database.DataSnapshot) => {

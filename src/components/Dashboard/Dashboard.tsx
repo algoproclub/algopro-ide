@@ -1,4 +1,4 @@
-import { useUpdateAtom } from 'jotai/utils';
+import { useSetAtom } from 'jotai';
 import React, { useState, useEffect, Fragment, useRef } from 'react';
 import {
   getDatabase,
@@ -528,8 +528,8 @@ const UserSettingsModal = ({
 export default function Dashboard() {
   const { firebaseUser, userData } = useUserContext();
 
-  const signInWithGoogle = useUpdateAtom(signInWithGoogleAtom);
-  const signOut = useUpdateAtom(signOutAtom);
+  const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
+  const signOut = useSetAtom(signOutAtom);
 
   const connectionContext = useConnectionContext();
   const [files, setFiles] = useState<File[] | null>(null);
