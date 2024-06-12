@@ -15,7 +15,7 @@ import createLSPConnection from './lsp';
 import { MonacoBinding } from 'y-monaco';
 
 buildWorkerDefinition(
-  'monaco-workers',
+  '/monaco-workers',
   new URL('', window.location.href).href,
   false
 );

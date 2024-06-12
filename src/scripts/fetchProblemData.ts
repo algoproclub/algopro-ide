@@ -53,6 +53,15 @@ export async function fetchProblemData({
   }
 }
 
+function delimitedMathToVar(
+  element: cheerio.Cheerio<domhandler.Element>
+): string {
+  let html = element.html() ?? '';
+  return html
+    .replaceAll(/\${6}(.*?)\${6}/g, '<var class="display">$1</var>')
+    .replaceAll(/\${3}(.*?)\${3}/g, '<var>$1</var>');
+}
+
 async function fetchProblemDataCodeforces(
   problemID: string
 ): Promise<ProblemData | null> {
@@ -89,7 +98,7 @@ async function fetchProblemDataCodeforces(
       .text()
       .match(CODEFORCES_TITLE_REGEX)![1],
     statement: document('.problem-statement > :not(.sample-tests, .header)')
-      .map((_, el) => document(el).html())
+      .map((_, el) => delimitedMathToVar(document(el)))
       .toArray()
       .join('\n'),
     input: 'stdin',

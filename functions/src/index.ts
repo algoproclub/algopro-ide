@@ -33,6 +33,7 @@ import {
   SPOJSubmitter,
   Submitter,
 } from './submit';
+import { JSDOM } from 'jsdom';
 
 require('dotenv').config({ path: '.env.local' });
 
@@ -98,7 +99,13 @@ export const translate = onCall<
   if (!request.auth?.token?.teacher) {
     return null;
   }
-  const { text, lang } = request.data;
+  let { text, lang } = request.data;
+
+  const document = new JSDOM(text).window.document;
+  for (const el of document.getElementsByTagName('pre'))
+    el.setAttribute('translate', 'no');
+  text = document.body.innerHTML;
+
   const resp = await fetch('https://api-free.deepl.com/v2/translate', {
     method: 'POST',
     headers: {
