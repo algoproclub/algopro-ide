@@ -69,6 +69,16 @@ func (s SandboxWithEnvs) Run(ctx context.Context, config sandbox.RunConfig, toRu
 	return s.Sandbox.Run(ctx, config, toRun, toRunArgs...)
 }
 
+type SandboxWithMemoryLimit struct {
+	sandbox.Sandbox
+	Limit memory.Amount
+}
+
+func (s SandboxWithMemoryLimit) Run(ctx context.Context, config sandbox.RunConfig, toRun string, toRunArgs ...string) (*sandbox.Status, error) {
+	config.MemoryLimit = s.Limit
+	return s.Sandbox.Run(ctx, config, toRun, toRunArgs...)
+}
+
 type Request struct {
 	Language string `json:"language"`
 	Filename string `json:"filename"`
@@ -102,7 +112,7 @@ func (req Request) Run(ctx context.Context, sp sandbox.Provider) (*Response, err
 	var bin *sandbox.File
 	compileError := &bytes.Buffer{}
 
-	if bin, err = lang.Compile(ctx, sbox, sandbox.File{
+	if bin, err = lang.Compile(ctx, SandboxWithMemoryLimit{sbox, 512 * memory.MiB}, sandbox.File{
 		Name:   req.Filename,
 		Source: io.NopCloser(bytes.NewBuffer(req.Source)),
 	}, compileError, nil); err != nil {
