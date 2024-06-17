@@ -19,27 +19,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
-        uses: docker/bake-action@master
-        with:
-          push: false
-          load: true
-          files: |-
-            docker-compose.yml
-            docker-compose.test.yml
-          set: |
-            functions.cache-from=type=gha,scope=cached-functions
-            functions.cache-to=type=gha,mode=max,scope=cached-functions
-            firebase.cache-from=type=gha,scope=cached-firebase
-            firebase.cache-to=type=gha,mode=max,scope=cached-firebase
-            yjs.cache-from=type=gha,scope=cached-yjs
-            yjs.cache-to=type=gha,mode=max,scope=cached-yjs
-            execute.cache-from=type=gha,scope=cached-execute
-            execute.cache-to=type=gha,mode=max,scope=cached-execute
-            web.cache-from=type=gha,scope=cached-web
-            web.cache-to=type=gha,mode=max,scope=cached-web
-            playwright.cache-from=type=gha,scope=cached-playwright
-            playwright.cache-to=type=gha,mode=max,scope=cached-playwright
+      - uses: jpribyl/action-docker-layer-caching@v0.1.1
 
       - name: run tests
         run: |
