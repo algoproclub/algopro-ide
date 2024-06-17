@@ -34,7 +34,7 @@ export const SharingPermissions = ({
 }): JSX.Element => {
   return (
     <RadioGroupContents
-      title="Default sharing permissions"
+      title="Sharing permissions"
       value={value}
       onChange={onChange}
       disabled={!isOwner}
