@@ -593,51 +593,6 @@ export default function Dashboard() {
   const [isOpen, setIsOpen] = useState(false);
   const [tab, setTab] = useState('recent');
 
-  useEffect(() => {
-    const createFile = async () => {
-      va.track('Create File', { type: 'new-file' });
-      await update(ref(getDatabase(), `users/${firebaseUser.uid}/data`), {
-        defaultLanguage: userData.defaultLanguage,
-        defaultPermission: userData.defaultPermission,
-      });
-      const resp = await fetch(`/api/createNewFile`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          workspaceName: 'Unnamed Workspace',
-          userID: firebaseUser.uid,
-          userName: firebaseUser.displayName,
-          defaultPermission: userData.defaultPermission,
-          language: userData.defaultLanguage,
-          compilerOptions: DEFAULT_COMPILER_OPTIONS,
-        }),
-      });
-      const { fileID } = await resp.json();
-      const fileRef = ref(
-        getDatabase(),
-        `users/${userData.id}/files/${fileID}`
-      );
-      await set(fileRef, {
-        title: 'Unnamed workspace',
-        lastAccessTime: serverTimestamp(),
-        creationTime: serverTimestamp(),
-        lastPermission: 'PUBLIC',
-        lastDefaultPermission: userData.defaultPermission,
-        hidden: false,
-        version: 2,
-        owner: 'fileOwner',
-      });
-    };
-    const createFiles = async () => {
-      for (let i = 0; i < 1000; ++i) {
-        await createFile();
-      }
-    };
-    // createFiles()
-  }, []);
-
   return (
     <div>
       <UserSettingsModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
