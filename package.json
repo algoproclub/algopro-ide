@@ -8,8 +8,7 @@
     "start": "next start",
     "prepare": "husky install",
     "lint": "eslint --ext js,jsx,ts,tsx --fix src/",
-    "postinstall": "patch-package",
-    "login": "tsc src/scripts/login.ts --moduleResolution node --target esnext --module commonjs --skipLibCheck --outDir dist && node dist/login.js"
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.2",

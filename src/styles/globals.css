@@ -62,6 +62,10 @@ body {
   }
 }
 
+.text-input {
+  @apply px-1 block w-full pb-1 border-0 border-b-2 border-gray-700 focus:ring-0 focus:border-indigo-600 text-sm text-gray-100 bg-transparent;
+}
+
 .table-filelist,
 .table-tasks {
   & th {
@@ -127,5 +131,11 @@ body {
   }
   & img.tex-graphics {
     background-color: white;
+  }
+
+  & .math-parse-error {
+    font-family: monospace;
+    font-style: normal;
+    @apply text-red-500;
   }
 }

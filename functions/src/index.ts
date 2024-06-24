@@ -33,24 +33,15 @@ import {
   SPOJSubmitter,
   Submitter,
 } from './submit';
+import { JSDOM } from 'jsdom';
 
 require('dotenv').config({ path: '.env.local' });
 
 export const cfAPIKey = defineString('CF_API_KEY');
 export const deeplAPIKey = defineString('DEEPL_API_KEY');
 export const cfAPISecret = defineString('CF_API_SECRET');
-export const cfCsrfToken = defineString('CF_CSRF_TOKEN');
-export const cfCookie = defineString('CF_COOKIE');
-export const cfUsername = defineString('CF_BOT_USERNAME');
 
-export const atCoderCookie = defineString('ATCODER_COOKIE');
-export const atCoderCsrfToken = defineString('ATCODER_CSRF_TOKEN');
-
-export const csesCookie = defineString('CSES_COOKIE');
-export const csesCsrfToken = defineString('CSES_CSRF_TOKEN');
-
-export const spojCookie = defineString('SPOJ_COOKIE');
-export const spojUsername = defineString('SPOJ_BOT_USERNAME');
+export const loginBotUrl = defineString('LOGIN_BOT_URL');
 
 const PENDING_TIME_LIMIT_MS = 300000;
 const INCORRECT_DATA_RETRY_LIMIT_MS = 20000;
@@ -69,22 +60,23 @@ export const submitproblemsolution = onCall<
       py: '#',
     }[language];
 
+    const uuid = randomUUID();
     problemSolution.sourceCode =
-      `${comment} UUID: ${randomUUID()}\n` + problemSolution.sourceCode;
+      `${comment} UUID: ${uuid}\n` + problemSolution.sourceCode;
 
     let submitter: Submitter;
     switch (platform) {
       case 'codeforces':
-        submitter = new CFSubmitter(problemSolution);
+        submitter = new CFSubmitter();
         break;
       case 'atcoder':
-        submitter = new AtCoderSubmitter(problemSolution);
+        submitter = new AtCoderSubmitter();
         break;
       case 'cses':
-        submitter = new CSESSubmitter(problemSolution);
+        submitter = new CSESSubmitter();
         break;
       case 'spoj':
-        submitter = new SPOJSubmitter(problemSolution);
+        submitter = new SPOJSubmitter();
         break;
       default:
         throw new HttpsError(
@@ -92,7 +84,8 @@ export const submitproblemsolution = onCall<
           `platform '${platform}' is unimplemented`
         );
     }
-    return await submitter.submitAndGet();
+    await submitter.login(db);
+    return await submitter.submit(problemSolution, uuid);
   }
 );
 
@@ -106,7 +99,13 @@ export const translate = onCall<
   if (!request.auth?.token?.teacher) {
     return null;
   }
-  const { text, lang } = request.data;
+  let { text, lang } = request.data;
+
+  const document = new JSDOM(text).window.document;
+  for (const el of document.getElementsByTagName('pre'))
+    el.setAttribute('translate', 'no');
+  text = document.body.innerHTML;
+
   const resp = await fetch('https://api-free.deepl.com/v2/translate', {
     method: 'POST',
     headers: {
@@ -137,22 +136,32 @@ export const enum Errors {
 
 export class IncorrectDataError extends Error {}
 
-admin.initializeApp();
+admin.initializeApp(
+  process.env.FUNCTIONS_EMULATOR
+    ? {
+        projectId: 'algopro-app',
+        databaseURL: 'http://firebase:9000?ns=algopro-app-default-rtdb',
+      }
+    : undefined
+);
 const db = admin.database();
 
 const accountData: { [key in Platform]: AccountData } = {
   atcoder: {
     // result fetching always uses the first account
-    sessionCookie: () => atCoderCookie.value()[0],
+    sessionCookie: async () =>
+      (await db.ref('credentials/atcoder/0/cookie').get()).val(),
   },
   cses: {
-    sessionCookie: () => csesCookie.value(),
+    sessionCookie: async () =>
+      (await db.ref('credentials/cses/0/cookie').get()).val(),
   },
   codeforces: {},
   planets: {},
   usaco: {},
   spoj: {
-    sessionCookie: () => spojCookie.value(),
+    sessionCookie: async () =>
+      (await db.ref('credentials/spoj/0/cookie').get()).val(),
   },
 };
 
@@ -277,7 +286,8 @@ const updateResults = async (pending: PendingSubmissions | null) => {
           fileID: fileID,
           platform: platform,
           username: username,
-          sessionCookie: accountData[platform].sessionCookie?.() ?? null,
+          sessionCookie:
+            (await accountData[platform].sessionCookie?.()) ?? null,
           problemID: problemID,
           submissionID: submissionID,
           creationTime: creationTime,

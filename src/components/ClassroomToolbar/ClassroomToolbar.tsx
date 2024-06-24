@@ -5,7 +5,7 @@ export default {};
 // import { useSettings } from '../SettingsContext';
 // import { ClassroomInfo } from '../../context/ClassroomContext';
 // import { useRouter } from 'next/router';
-// import { useUpdateAtom } from 'jotai/utils';
+// import { useSetAtom } from 'jotai';
 // import { fileIdAtom } from '../../atoms/firebaseAtoms';
 
 // export default function ClassroomToolbar() {
@@ -16,7 +16,7 @@ export default {};
 //   }, [settings?.classroomID]);
 //   const [isInstructorCode, setIsInstructorCode] = useState(false);
 //   const router = useRouter();
-//   const setFileID = useUpdateAtom(fileIdAtom);
+//   const setFileID = useSetAtom(fileIdAtom);
 
 //   const classroomData = useFirebaseRefValue<ClassroomInfo>(classroomRef).value;
 

@@ -19,18 +19,22 @@ export default function HTMLStatement({
           ],
         });
 
-        // For AtCoder
-        node.querySelectorAll('var').forEach((element: HTMLElement) => {
-          katex.render(element.textContent ?? '', element);
-        });
+        const render = (element: HTMLElement, displayMode: boolean) => {
+          const math = element.textContent ?? '';
+          try {
+            katex.render(math, element, { displayMode });
+          } catch (e) {
+            element.textContent = math;
+            element.classList.add('math-parse-error');
+            console.error("Failed to render math '" + math + "'", e);
+          }
+        };
 
-        // For CSES
-        node.querySelectorAll('.math').forEach((element: Element) => {
+        // For AtCoder and CSES
+        node.querySelectorAll('var, .math').forEach((element: Element) => {
           if (!(element instanceof HTMLElement)) return;
 
-          katex.render(element.textContent ?? '', element, {
-            displayMode: element.classList.contains('display'),
-          });
+          render(element, element.classList.contains('display'));
         });
       }
     },

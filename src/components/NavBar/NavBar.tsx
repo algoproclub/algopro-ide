@@ -7,6 +7,10 @@ import {
 import React, { useState } from 'react';
 import { isUserOnline, useOnlineUsers } from '../../hooks/useOnlineUsers';
 import Link from 'next/link';
+import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
+import { useAtom } from 'jotai';
+import { problemAtom, statusDataAtom } from '../../atoms/workspaceUI';
+import { useEditorContext } from '../../context/EditorContext';
 
 export interface DesktopNavBarProps {
   fileMenu: JSX.Element;
@@ -20,6 +24,10 @@ export interface DesktopNavBarProps {
 export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
   const onlineUsers = useOnlineUsers();
   const onlineUserCount = onlineUsers?.filter(isUserOnline).length;
+
+  const { fileData } = useEditorContext();
+  const [problem] = useAtom(problemAtom);
+  const [statusData, setStatusData] = useAtom(statusDataAtom);
 
   const [showCopied, setShowCopied] = useState(false);
   const handleShare = () => {
@@ -48,21 +56,15 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
           <HomeIcon className="h-5 w-5" />
         </Link>
         {props.fileMenu}
-        {
-          <button
-            type="button"
-            className="relative min-w-[7rem] inline-flex items-center justify-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 hover:bg-gray-800 focus:bg-gray-800 focus:outline-none"
-            onClick={() => handleShare()}
-          >
-            <ShareIcon
-              className="-ml-1 mr-2 w-[1.1rem] h-[1.1rem] text-gray-400"
-              aria-hidden="true"
-            />
-            {showCopied ? 'Copied!' : 'Share'}
-          </button>
-        }
       </div>
       {props.runButton}
+      {problem?.submittable && problem.id === fileData.problem?.id && (
+        <PlatformSubmitButton
+          platform={problem?.platform}
+          statusData={statusData}
+          setStatusData={setStatusData}
+        />
+      )}
       <div className="flex items-center divide-x divide-gray-700">
         {props.showViewOnly && (
           <span className="px-4 py-2 text-gray-400 text-sm font-medium whitespace-nowrap hidden sm:inline">

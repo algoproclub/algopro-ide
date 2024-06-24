@@ -150,7 +150,7 @@ const HTMLEditor = ({
           <CodeEditor
             onChange={onChange}
             value={text}
-            language="plaintext"
+            language="html"
             theme="dark"
             path={path}
             options={{

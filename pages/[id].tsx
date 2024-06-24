@@ -6,7 +6,7 @@ import { EditorProvider, useEditorContext } from '../src/context/EditorContext';
 import { RunButton } from '../src/components/RunButton';
 import { submitToJudge } from '../src/scripts/judge';
 import { useAtom, useAtomValue } from 'jotai';
-import { useUpdateAtom } from 'jotai/utils';
+import { useSetAtom } from 'jotai';
 import {
   inputEditorValueAtom,
   inputMonacoEditorAtom,
@@ -50,7 +50,7 @@ import load = Simulate.load;
 function EditorPage() {
   const { fileData, updateFileData } = useEditorContext();
   const { firebaseUser } = useNullableUserContext();
-  const signInWithGoogle = useUpdateAtom(signInWithGoogleAtom);
+  const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
   const connectionContext = useConnectionContext();
   const permission = useUserPermission();
   const loading = useAtomValue(loadingAtom);
@@ -58,7 +58,7 @@ function EditorPage() {
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
-  const layoutEditors = useUpdateAtom(layoutEditorsAtom);
+  const layoutEditors = useSetAtom(layoutEditorsAtom);
   const [mobileActiveTab, setMobileActiveTab] = useAtom(mobileActiveTabAtom);
   const getMainEditorValue = useAtomValue(mainEditorValueAtom);
   const getInputEditorValue = useAtomValue(inputEditorValueAtom);

@@ -1,25 +1,23 @@
 import classNames from 'classnames';
-import React, { useEffect, useState } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import LoadingIndicator from '../LoadingIndicator';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEditorContext } from '../../context/EditorContext';
 import { get, getDatabase, ref, update } from 'firebase/database';
+import { Dialog, Transition } from '@headlessui/react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import Checkbox from '../Checkbox';
 
-const SolvedStatusForm = () => {
+const SolvedStatusModal = ({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) => {
   const { fileData } = useEditorContext();
-  const [isOpen, setIsOpen] = useState(false);
   const [solvedInTheory, setSolvedInTheory] = useState<boolean | null>(null);
   const [alreadyKnew, setAlreadyKnew] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (solvedInTheory === null || alreadyKnew === null) {
-      return;
-    }
-    update(ref(getDatabase(), `files/${fileData.id}/solvedStatus`), {
-      solvedInTheory,
-      alreadyKnew,
-    });
-  }, [solvedInTheory, alreadyKnew]);
 
   useEffect(() => {
     const setSolvedStatus = async () => {
@@ -32,51 +30,103 @@ const SolvedStatusForm = () => {
     setSolvedStatus();
   }, []);
 
-  const solvedInTheoryChanged = () => {
-    setSolvedInTheory(val => !val);
-  };
-  const alreadyKnewChanged = () => {
-    setAlreadyKnew(val => !val);
+  const handleSave = () => {
+    if (solvedInTheory === null || alreadyKnew === null) {
+      return;
+    }
+    update(ref(getDatabase(), `files/${fileData.id}/solvedStatus`), {
+      solvedInTheory,
+      alreadyKnew,
+    });
   };
 
   return (
-    <div>
-      <div
-        className={`z-0 absolute bottom-full -mb-0.5 w-full flex items-center px-4 py-4 bg-gray-800 border-t border-gray-600 overflow-x-auto space-x-6 whitespace-nowrap ${
-          isOpen ? 'translate-y-0 opacity-100' : 'translate-y-16 opacity-0'
-        } duration-200`}
+    <Transition.Root show={isOpen} as={Fragment}>
+      <Dialog
+        as="div"
+        static
+        className="fixed z-10 inset-0 overflow-y-auto"
+        open={isOpen}
+        onClose={onClose}
       >
-        <label className="text-[0.85rem] text-white flex items-center select-none">
-          <input
-            checked={solvedInTheory ?? false}
-            onChange={solvedInTheoryChanged}
-            type="checkbox"
-            className="w-4 h-4 bg-gray-900 checked:bg-indigo-600 checked:focus:bg-indigo-600 checked:focus:hover:bg-indigo-700 checked:hover:bg-indigo-700 focus:ring-0 focus:ring-offset-0"
-          />
-          <span className="ml-2 mb-0.5">Solved in theory</span>
-        </label>
-        <label className="text-[0.85rem] text-white flex items-center select-none">
-          <input
-            checked={alreadyKnew ?? false}
-            onChange={alreadyKnewChanged}
-            type="checkbox"
-            className="w-4 h-4 bg-gray-900 checked:bg-indigo-600 checked:focus:bg-indigo-600 checked:focus:hover:bg-indigo-700 checked:hover:bg-indigo-700 focus:ring-0 focus:ring-offset-0"
-          />
-          <span className="ml-2 mb-0.5">Already knew</span>
-        </label>
-      </div>
-      <button
-        className={`z-20 absolute -translate-y-1/2 top-1/2 right-2 p-2 rounded-full flex items-center justify-center hover:bg-gray-600 active:bg-gray-500`}
-        onClick={() => setIsOpen(prevOpen => !prevOpen)}
-      >
-        <FontAwesomeIcon
-          icon={{ prefix: 'fas', iconName: 'chevron-up' }}
-          className={`${
-            isOpen ? 'rotate-180' : 'rotate-0'
-          } text-white transition duration-200`}
-        />
-      </button>
-    </div>
+        <div className="flex items-end justify-center min-h-full pt-4 pb-20 text-center sm:block sm:p-0">
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-75 transition-opacity" />
+          </Transition.Child>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            enterTo="opacity-100 translate-y-0 sm:scale-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+            leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+          >
+            <div className="inline-block bg-gray-800 border border-gray-700 text-white md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
+              <div className="px-4 sm:px-6 pt-4 pb-2">
+                <Dialog.Title
+                  as="h3"
+                  className="text-lg leading-6 font-medium text-center"
+                >
+                  Status
+                </Dialog.Title>
+              </div>
+              <div className="p-4 sm:p-6 space-y-6">
+                <div className="space-y-1">
+                  <Checkbox
+                    enabled={solvedInTheory ?? false}
+                    label="Solved in theory"
+                    toggleEnabled={() => setSolvedInTheory(val => !val)}
+                  />
+                  <Checkbox
+                    enabled={alreadyKnew ?? false}
+                    label="Already knew"
+                    toggleEnabled={() => setAlreadyKnew(val => !val)}
+                  />
+                </div>
+                <div className="flex items-center space-x-2.5">
+                  <button
+                    type="button"
+                    className="inline-flex items-center px-4 py-2 border border-gray-700 shadow-sm text-[0.92rem] font-medium rounded-md text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onClick={onClose}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onClick={() => {
+                      handleSave();
+                      onClose();
+                    }}
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+              <div className="absolute top-0 right-0 pt-4 pr-4">
+                <button
+                  type="button"
+                  className="rounded-md text-gray-200 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  onClick={onClose}
+                >
+                  <span className="sr-only">Close</span>
+                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+          </Transition.Child>
+        </div>
+      </Dialog>
+    </Transition.Root>
   );
 };
 
@@ -90,16 +140,28 @@ export default function SubmitButton({
   onClick: React.MouseEventHandler<HTMLButtonElement>;
 }): JSX.Element {
   const loadingClasses =
-    'cursor-not-allowed bg-[#363636] bg-opacity-80 text-white opacity-80';
+    'cursor-not-allowed bg-opacity-80 text-white opacity-80';
   const normalClasses =
-    'text-white bg-[#363636] hover:bg-gray-600 hover:border-gray-500 active:bg-gray-500 active:border-gray-400';
+    'text-white bg-gray-800 border-x hover:bg-[#363636] active:bg-gray-700 active:border-gray-600';
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="relative z-0 min-w-[24rem]">
-      {!isLoading && !isDisabled && <SolvedStatusForm />}
+    <div className="relative">
+      <SolvedStatusModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      {!isLoading && !isDisabled && (
+        <button
+          className={`z-20 absolute -translate-y-1/2 top-1/2 right-2 p-1.5 rounded-full flex items-center justify-center hover:bg-[#363636] active:bg-gray-700`}
+          onClick={() => setIsOpen(prevOpen => !prevOpen)}
+        >
+          <FontAwesomeIcon
+            icon={{ prefix: 'fas', iconName: 'ellipsis-vertical' }}
+            className={`w-3.5 h-3.5 text-gray-200 transition duration-200`}
+          />
+        </button>
+      )}
       <button
         className={classNames(
-          'relative z-10 flex items-center justify-center w-full py-2.5 font-medium focus:outline-none border-t border-gray-600 min-w-[24rem]',
+          'relative z-10 border-x border-gray-700 bg-gray-800 flex items-center justify-left pl-4 sm:pl-6 w-full py-2 text-sm focus:outline-none min-w-[8rem] sm:min-w-[9rem]',
           isLoading || isDisabled ? loadingClasses : normalClasses
         )}
         disabled={isLoading || isDisabled}
@@ -107,14 +169,14 @@ export default function SubmitButton({
       >
         {isLoading ? (
           <>
-            <LoadingIndicator className="h-5 w-5 p-0.5 !mx-1.5" />
-            <span>Waiting for results...</span>
+            <LoadingIndicator className="h-4 w-4 p-0.5 !mx-1.5" />
+            <span>Waiting...</span>
           </>
         ) : isDisabled ? (
           <>
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'ban' }}
-              className="mr-2.5 w-4 h-4"
+              className="mr-2.5 w-3.5 h-3.5"
             />
             Cannot Submit
           </>
@@ -122,7 +184,7 @@ export default function SubmitButton({
           <>
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'paper-plane' }}
-              className="mr-2.5 w-4 h-4"
+              className="mr-2.5 w-3.5 h-3.5"
             />
             <span>Submit</span>
           </>

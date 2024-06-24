@@ -19,7 +19,6 @@ import {
   set,
   remove,
 } from 'firebase/database';
-import { useUpdateAtom } from 'jotai/utils';
 
 export type ConnectionContextType = {
   addConnectionRef: (ref: DatabaseReference) => void;
