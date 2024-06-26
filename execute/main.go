@@ -49,36 +49,6 @@ var Languages = map[string]language.Language{
 	"py":   mustLanguage(language.DefaultStore.Get("pypy3")),
 }
 
-type SandboxWithErrorStream struct {
-	sandbox.Sandbox
-	ErrorStream io.Writer
-}
-
-func (s SandboxWithErrorStream) Run(ctx context.Context, config sandbox.RunConfig, toRun string, toRunArgs ...string) (*sandbox.Status, error) {
-	config.Stderr = s.ErrorStream
-	return s.Sandbox.Run(ctx, config, toRun, toRunArgs...)
-}
-
-type SandboxWithEnvs struct {
-	sandbox.Sandbox
-	Envs []string
-}
-
-func (s SandboxWithEnvs) Run(ctx context.Context, config sandbox.RunConfig, toRun string, toRunArgs ...string) (*sandbox.Status, error) {
-	config.Env = append(config.Env, s.Envs...)
-	return s.Sandbox.Run(ctx, config, toRun, toRunArgs...)
-}
-
-type SandboxWithMemoryLimit struct {
-	sandbox.Sandbox
-	Limit memory.Amount
-}
-
-func (s SandboxWithMemoryLimit) Run(ctx context.Context, config sandbox.RunConfig, toRun string, toRunArgs ...string) (*sandbox.Status, error) {
-	config.MemoryLimit = s.Limit
-	return s.Sandbox.Run(ctx, config, toRun, toRunArgs...)
-}
-
 type Request struct {
 	Language string `json:"language"`
 	Filename string `json:"filename"`
@@ -96,8 +66,14 @@ func (req Request) Valid() bool {
 	return true
 }
 
-func (req Request) Run(ctx context.Context, sp sandbox.Provider) (*Response, error) {
-	sbox, err := sp.Get()
+type Executor struct {
+	sp sandbox.Provider
+
+	precompiledBitsPath *string
+}
+
+func (e Executor) Run(ctx context.Context, req *Request) (*Response, error) {
+	sbox, err := e.sp.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -105,13 +81,16 @@ func (req Request) Run(ctx context.Context, sp sandbox.Provider) (*Response, err
 	sbox.Init(ctx)
 	defer func(ctx context.Context) {
 		sbox.Cleanup(ctx)
-		sp.Put(sbox)
+		e.sp.Put(sbox)
 	}(ctx)
 
 	lang := Languages[req.Language]
 	var bin *sandbox.File
 	compileError := &bytes.Buffer{}
 
+	if req.Language == "cpp" && e.precompiledBitsPath != nil {
+		sbox = SandboxPrecompileBits{sbox, *e.precompiledBitsPath}
+	}
 	if bin, err = lang.Compile(ctx, SandboxWithMemoryLimit{sbox, 512 * memory.MiB}, sandbox.File{
 		Name:   req.Filename,
 		Source: io.NopCloser(bytes.NewBuffer(req.Source)),
@@ -166,7 +145,6 @@ func (req Request) Run(ctx context.Context, sp sandbox.Provider) (*Response, err
 	}
 
 	return resp, nil
-
 }
 
 type Response struct {
@@ -184,7 +162,7 @@ type Response struct {
 
 type Server struct {
 	logger *slog.Logger
-	sp     sandbox.Provider
+	e      Executor
 }
 
 func (s Server) PostExecute(w http.ResponseWriter, r *http.Request) {
@@ -201,7 +179,7 @@ func (s Server) PostExecute(w http.ResponseWriter, r *http.Request) {
 
 	s.logger.Info("got request", "req", req, "source", string(req.Source))
 
-	resp, err := req.Run(r.Context(), s.sp)
+	resp, err := s.e.Run(r.Context(), &req)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -234,9 +212,16 @@ func main() {
 		}
 	}
 
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger.Info("precompiling bits/stdc++.h")
+	bitsPath, err := CreateTempPrecompiledBits()
+	if err != nil {
+		logger.Error(err.Error())
+	}
+
 	server := Server{
-		logger: slog.New(slog.NewJSONHandler(os.Stdout, nil)),
-		sp:     sp,
+		logger: logger,
+		e:      Executor{sp, &bitsPath},
 	}
 
 	r := chi.NewRouter()
@@ -246,5 +231,5 @@ func main() {
 	r.Post("/execute", server.PostExecute)
 
 	server.logger.Info("listening on port " + Port)
-	http.ListenAndServe(net.JoinHostPort("0.0.0.0", Port), r)
+	panic(http.ListenAndServe(net.JoinHostPort("0.0.0.0", Port), r))
 }

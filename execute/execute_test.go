@@ -30,7 +30,7 @@ func mustReadFile(name string) []byte {
 	return res
 }
 
-func sandboxProvider(t *testing.T, logger *slog.Logger) sandbox.Provider {
+func sandboxProvider(t assert.TestingT, logger *slog.Logger) sandbox.Provider {
 	sp := sandbox.NewProvider()
 	if *verboseSandbox {
 		s, err := sandbox.NewIsolate(255, sandbox.IsolateOptionUseLogger(logger))
@@ -52,6 +52,7 @@ func TestExecuteRequestRun(t *testing.T) {
 		logger = slog.Default()
 	}
 	sp := sandboxProvider(t, logger)
+	exec := Executor{sp, nil}
 
 	tests := []struct {
 		name    string
@@ -185,7 +186,7 @@ print("error", file=sys.stderr)`),
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			assert.True(t, test.req.Valid())
-			resp, err := test.req.Run(context.TODO(), sp)
+			resp, err := exec.Run(context.TODO(), &test.req)
 			if test.wantErr {
 				assert.NotNil(t, err)
 			} else {
@@ -215,7 +216,7 @@ func TestPostExecute(t *testing.T) {
 	}
 	sp := sandboxProvider(t, logger)
 
-	server := Server{logger, sp}
+	server := Server{logger, Executor{sp, nil}}
 	tests := []struct {
 		name        string
 		contentType string
@@ -306,4 +307,41 @@ func TestPostExecute(t *testing.T) {
 		})
 	}
 
+}
+
+func BenchmarkExecutorRun(b *testing.B) {
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	sp := sandboxProvider(b, logger)
+	exec := Executor{sp, nil}
+	for i := 0; i < b.N; i++ {
+		req := Request{
+			Language: "cpp",
+			Filename: "main.cpp",
+			Source:   mustReadFile("testdata/cpp_bits_helloworld.cpp"),
+		}
+		resp, err := exec.Run(context.Background(), &req)
+		assert.NoError(b, err)
+		assert.Equal(b, sandbox.VerdictOK, resp.Verdict)
+	}
+}
+
+var precompiledBitsPath = flag.String("precompiledBitsPath", "", "path to precompiled bits/ directory")
+
+func BenchmarkExecutorRunWithPrecompiled(b *testing.B) {
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	sp := sandboxProvider(b, logger)
+	if *precompiledBitsPath == "" {
+		b.Skip("set -precompiledBitsPath")
+	}
+	exec := Executor{sp, precompiledBitsPath}
+	for i := 0; i < b.N; i++ {
+		req := Request{
+			Language: "cpp",
+			Filename: "main.cpp",
+			Source:   mustReadFile("testdata/cpp_bits_helloworld.cpp"),
+		}
+		resp, err := exec.Run(context.Background(), &req)
+		assert.NoError(b, err)
+		assert.Equal(b, sandbox.VerdictOK, resp.Verdict)
+	}
 }

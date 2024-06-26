@@ -5,10 +5,11 @@ WORKDIR /app
 COPY go.mod ./
 COPY go.sum ./
 
-RUN go mod download
-RUN go mod verify
+RUN go mod download && go mod verify
 
-COPY main.go ./
+COPY testdata/ ./testdata
+COPY sanitizer/ ./sanitizer
+COPY *.go ./
 RUN go build -o execute
 
 ENTRYPOINT ["/app/execute"]
