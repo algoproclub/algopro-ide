@@ -176,6 +176,11 @@ async function fetchProblemDataCSES(
 
   const document = cheerio.load(await problemPage.text());
 
+  // CSES returns 200 OK for non-existent problem IDs
+  if (document('.title-block').length === 0) {
+    return null;
+  }
+
   // Fix up relative URLs to point to the cses.fi domain
   document('img').each((_, el) => {
     const src = document(el).attr('src');
@@ -209,7 +214,7 @@ async function fetchProblemDataCSES(
     url,
     title: document('.title-block > h1').text(),
     statement: sections
-      .filter(s => s.heading?.startsWith('Example'))
+      .filter(s => !s.heading?.startsWith('Example'))
       .map(s => s.children.map(c => document(c).prop('outerHTML')).join('\n'))
       .join('\n'),
     input: 'stdin',
