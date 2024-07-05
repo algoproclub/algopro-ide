@@ -188,9 +188,13 @@ async function fetchProblemDataCSES(
     document(el).attr('src', new URL(src, url).href);
   });
 
-  const sections: { heading: string | null; children: domhandler.Element[] }[] =
-    [{ heading: null, children: [] }];
-  for (const el of document('.md').first().children()) {
+  const sections: {
+    heading: string | null;
+    children: (domhandler.Element | domhandler.Text)[];
+  }[] = [{ heading: null, children: [] }];
+  for (const el of document('.md').first().contents()) {
+    if (el.type !== ElementType.Tag && el.type !== ElementType.Text) continue;
+
     if (el.type === ElementType.Tag && el.tagName === 'h1') {
       sections.push({ heading: document(el).text(), children: [el] });
     } else {
@@ -207,6 +211,9 @@ async function fetchProblemDataCSES(
       return { input, output };
     });
 
+  const nodeContents = (c: domhandler.Element | domhandler.Text) =>
+    c.type === ElementType.Text ? c.data : document(c).prop('outerHTML');
+
   return {
     id: problemID,
     submittable: true,
@@ -215,7 +222,7 @@ async function fetchProblemDataCSES(
     title: document('.title-block > h1').text(),
     statement: sections
       .filter(s => !s.heading?.startsWith('Example'))
-      .map(s => s.children.map(c => document(c).prop('outerHTML')).join('\n'))
+      .map(s => s.children.map(nodeContents).join(''))
       .join('\n'),
     input: 'stdin',
     output: 'stdout',
