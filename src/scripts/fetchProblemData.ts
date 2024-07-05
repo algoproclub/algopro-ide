@@ -97,7 +97,7 @@ async function fetchProblemDataCodeforces(
     title: document('.header > .title')
       .text()
       .match(CODEFORCES_TITLE_REGEX)![1],
-    statement: document('.problem-statement > :not(.sample-tests, .header)')
+    statement: document('.problem-statement > :not(.header)')
       .map((_, el) => delimitedMathToVar(document(el)))
       .toArray()
       .join('\n'),
@@ -126,6 +126,8 @@ async function fetchProblemDataAtCoder(
 
   const document = cheerio.load(await problemPage.text());
 
+  document().remove('span.btn');
+
   const samples: Sample[] = [];
   const inputsAndOutputs = document('#task-statement .lang-en > div')
     .filter((_, el) => document('h3', el).text().startsWith('Sample'))
@@ -141,7 +143,6 @@ async function fetchProblemDataAtCoder(
   const title = getTextNode(document('span.h2'));
 
   const statement = document('#task-statement .lang-en > div')
-    .filter((_, el) => !document('h3', el).text().startsWith('Sample'))
     .map((_, el) => document(el).html())
     .toArray()
     .join('\n');
@@ -221,7 +222,6 @@ async function fetchProblemDataCSES(
     url,
     title: document('.title-block > h1').text(),
     statement: sections
-      .filter(s => !s.heading?.startsWith('Example'))
       .map(s => s.children.map(nodeContents).join(''))
       .join('\n'),
     input: 'stdin',
