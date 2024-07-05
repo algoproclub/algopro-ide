@@ -193,14 +193,14 @@ async function fetchProblemDataCSES(
     }
   }
 
-  const inputsAndOutputs: string[] | undefined = sections
-    .find(s => s.heading === 'Example')
-    ?.children.filter(el => el.type === ElementType.Tag && el.tagName === 'pre')
-    .map(htmlToPlaintext);
-
-  let samples: Sample[] = inputsAndOutputs
-    ? [{ input: inputsAndOutputs[0], output: inputsAndOutputs[1] }]
-    : [];
+  const samples = sections
+    .filter(s => s.heading?.startsWith('Example'))
+    .map(s => {
+      const [input, output] = s.children
+        .filter(el => el.type === ElementType.Tag && el.tagName === 'pre')
+        .map(htmlToPlaintext);
+      return { input, output };
+    });
 
   return {
     id: problemID,
@@ -209,7 +209,7 @@ async function fetchProblemDataCSES(
     url,
     title: document('.title-block > h1').text(),
     statement: sections
-      .filter(s => s.heading !== 'Example')
+      .filter(s => s.heading?.startsWith('Example'))
       .map(s => s.children.map(c => document(c).prop('outerHTML')).join('\n'))
       .join('\n'),
     input: 'stdin',
