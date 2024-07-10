@@ -97,7 +97,7 @@ async function fetchProblemDataCodeforces(
     title: document('.header > .title')
       .text()
       .match(CODEFORCES_TITLE_REGEX)![1],
-    statement: document('.problem-statement > :not(.sample-tests, .header)')
+    statement: document('.problem-statement > :not(.header)')
       .map((_, el) => delimitedMathToVar(document(el)))
       .toArray()
       .join('\n'),
@@ -126,6 +126,8 @@ async function fetchProblemDataAtCoder(
 
   const document = cheerio.load(await problemPage.text());
 
+  document().remove('span.btn');
+
   const samples: Sample[] = [];
   const inputsAndOutputs = document('#task-statement .lang-en > div')
     .filter((_, el) => document('h3', el).text().startsWith('Sample'))
@@ -141,7 +143,6 @@ async function fetchProblemDataAtCoder(
   const title = getTextNode(document('span.h2'));
 
   const statement = document('#task-statement .lang-en > div')
-    .filter((_, el) => !document('h3', el).text().startsWith('Sample'))
     .map((_, el) => document(el).html())
     .toArray()
     .join('\n');
@@ -176,6 +177,11 @@ async function fetchProblemDataCSES(
 
   const document = cheerio.load(await problemPage.text());
 
+  // CSES returns 200 OK for non-existent problem IDs
+  if (document('.title-block').length === 0) {
+    return null;
+  }
+
   // Fix up relative URLs to point to the cses.fi domain
   document('img').each((_, el) => {
     const src = document(el).attr('src');
@@ -183,9 +189,13 @@ async function fetchProblemDataCSES(
     document(el).attr('src', new URL(src, url).href);
   });
 
-  const sections: { heading: string | null; children: domhandler.Element[] }[] =
-    [{ heading: null, children: [] }];
-  for (const el of document('.md').first().children()) {
+  const sections: {
+    heading: string | null;
+    children: (domhandler.Element | domhandler.Text)[];
+  }[] = [{ heading: null, children: [] }];
+  for (const el of document('.md').first().contents()) {
+    if (el.type !== ElementType.Tag && el.type !== ElementType.Text) continue;
+
     if (el.type === ElementType.Tag && el.tagName === 'h1') {
       sections.push({ heading: document(el).text(), children: [el] });
     } else {
@@ -193,14 +203,17 @@ async function fetchProblemDataCSES(
     }
   }
 
-  const inputsAndOutputs: string[] | undefined = sections
-    .find(s => s.heading === 'Example')
-    ?.children.filter(el => el.type === ElementType.Tag && el.tagName === 'pre')
-    .map(htmlToPlaintext);
+  const samples = sections
+    .filter(s => s.heading?.startsWith('Example'))
+    .map(s => {
+      const [input, output] = s.children
+        .filter(el => el.type === ElementType.Tag && el.tagName === 'pre')
+        .map(htmlToPlaintext);
+      return { input, output };
+    });
 
-  let samples: Sample[] = inputsAndOutputs
-    ? [{ input: inputsAndOutputs[0], output: inputsAndOutputs[1] }]
-    : [];
+  const nodeContents = (c: domhandler.Element | domhandler.Text) =>
+    c.type === ElementType.Text ? c.data : document(c).prop('outerHTML');
 
   return {
     id: problemID,
@@ -209,8 +222,7 @@ async function fetchProblemDataCSES(
     url,
     title: document('.title-block > h1').text(),
     statement: sections
-      .filter(s => s.heading !== 'Example')
-      .map(s => s.children.map(c => document(c).prop('outerHTML')).join('\n'))
+      .map(s => s.children.map(nodeContents).join(''))
       .join('\n'),
     input: 'stdin',
     output: 'stdout',
