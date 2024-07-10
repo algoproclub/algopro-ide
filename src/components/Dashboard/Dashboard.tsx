@@ -9,7 +9,11 @@ import {
   set,
   child,
   off,
-  runTransaction,
+  update,
+  push,
+  serverTimestamp,
+  DataSnapshot,
+  get,
 } from 'firebase/database';
 import {
   signInWithGoogleAtom,
@@ -40,16 +44,21 @@ import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import UserSettings from '../settings/UserSettings';
 import { Dialog, Transition } from '@headlessui/react';
 import SignInSettings from '../settings/SignInSettings';
-import { FileSettings } from '../../context/EditorContext';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { updateUserSettings } from '../../scripts/updateSettings';
+import { DEFAULT_COMPILER_OPTIONS } from '../../../pages/new';
+import va from '@vercel/analytics';
+import colorFromUserId from '../../scripts/colorFromUserId';
+import { ServerValue } from 'firebase-admin/database';
 
 const firestore = getFirestore();
+const db = getDatabase();
 
 const tabs = [
   { label: 'Recent', value: 'recent' },
   { label: 'Classes', value: 'classes' },
 ];
+const PAGE_SIZE = 8;
 
 const Pagination = ({
   page,
@@ -94,17 +103,65 @@ const Pagination = ({
 };
 
 const RecentTab = ({
-  files,
   showHidden,
   toggleShowHidden,
 }: {
-  files: File[];
   showHidden: boolean;
   toggleShowHidden: () => void;
 }) => {
+  const { firebaseUser } = useUserContext();
   const [page, setPage] = useState(1);
-  const displayedFiles = files.slice((page - 1) * 8, page * 8);
-  const maxPage = Math.max(1, Math.ceil(files.length / 8));
+  const [maxPage, setMaxPage] = useState(1);
+  const [files, setFiles] = useState<File[] | null>(null);
+  const [allFiles, setAllFiles] = useState<File[]>([]);
+
+  useEffect(() => {
+    if (!firebaseUser) return;
+
+    const dbRef = ref(db, `users/${firebaseUser.uid}/files`);
+    const fileQuery = query(dbRef, orderByChild('lastAccessTime'));
+
+    onValue(fileQuery, snap => {
+      if (!snap.exists) {
+        setAllFiles([]);
+      } else {
+        const allFiles: File[] = [];
+        snap.forEach(file => {
+          const data = file.val();
+          if (showHidden || !data.hidden) {
+            allFiles.push({ id: file.key, ...data });
+          }
+        });
+        setAllFiles(allFiles.reverse());
+      }
+    });
+    return () => {
+      off(fileQuery, 'value');
+    };
+  }, [firebaseUser, showHidden]);
+
+  useEffect(() => {
+    const getFiles = async () => {
+      return await Promise.all(
+        allFiles
+          .slice(PAGE_SIZE * (page - 1), PAGE_SIZE * page)
+          .map(async file => {
+            const language = (
+              await get(ref(db, `files/${file.id}/settings/language`))
+            ).val();
+            return {
+              ...file,
+              language,
+            };
+          })
+      );
+    };
+    setMaxPage(Math.max(1, Math.ceil(allFiles.length / PAGE_SIZE)));
+    setPage(Math.min(page, Math.ceil(allFiles.length / PAGE_SIZE)));
+    getFiles().then(newFiles => {
+      setFiles(newFiles);
+    });
+  }, [allFiles, page]);
 
   useEffect(() => {
     setPage(Math.min(page, maxPage));
@@ -119,7 +176,7 @@ const RecentTab = ({
           toggleEnabled={toggleShowHidden}
         />
       </div>
-      <FilesList files={displayedFiles} showPerms={false} />
+      {files && <FilesList files={files} showPerms={false} />}
       <Pagination
         page={page}
         setPage={(val: number) => setPage(val)}
@@ -532,50 +589,9 @@ export default function Dashboard() {
   const signOut = useSetAtom(signOutAtom);
 
   const connectionContext = useConnectionContext();
-  const [files, setFiles] = useState<File[] | null>(null);
   const [showHidden, setShowHidden] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState(false);
   const [tab, setTab] = useState('recent');
-
-  useEffect(() => {
-    if (!firebaseUser) return;
-
-    const db = getDatabase();
-    const dbRef = ref(db, `users/${firebaseUser.uid}/files`);
-    const fileQuery = query(dbRef, orderByChild('lastAccessTime'));
-
-    onValue(fileQuery, snap => {
-      if (!snap.exists) {
-        setFiles([]);
-      } else {
-        const files: File[] = [];
-        snap.forEach(file => {
-          const data = file.val();
-          const key = file.key;
-          onValue(ref(db, 'files/' + key), snapp => {
-            if (snapp.exists()) {
-              set(
-                child(dbRef, key + '/language'),
-                snapp.val().settings.language
-              );
-            }
-          });
-          if (!showHidden && data.hidden) return;
-          if (key?.startsWith('-') && isFirebaseId(key.substring(1))) {
-            files.push({
-              id: key,
-              ...data,
-            });
-          }
-        });
-        files.reverse();
-        setFiles(files);
-      }
-    });
-    return () => {
-      off(fileQuery, 'value');
-    };
-  }, [firebaseUser, showHidden]);
 
   return (
     <div>
@@ -642,29 +658,21 @@ export default function Dashboard() {
           className="ml-1"
         />
       </h2>
-
-      {files && (
-        <>
-          <TabBar
-            tabs={tabs}
-            activeTab={tab}
-            onTabSelect={tab => {
-              setTab(tab.value);
-            }}
-            homepage={true}
-          />
-          {tab === 'recent' && (
-            <RecentTab
-              files={files}
-              showHidden={showHidden}
-              toggleShowHidden={() => setShowHidden(val => !val)}
-            />
-          )}
-          {tab === 'classes' && <ClassesTab />}
-        </>
+      <TabBar
+        tabs={tabs}
+        activeTab={tab}
+        onTabSelect={tab => {
+          setTab(tab.value);
+        }}
+        homepage={true}
+      />
+      {tab === 'recent' && (
+        <RecentTab
+          showHidden={showHidden}
+          toggleShowHidden={() => setShowHidden(val => !val)}
+        />
       )}
-
-      {!files && <div className="text-gray-400">Loading files...</div>}
+      {tab === 'classes' && <ClassesTab />}
     </div>
   );
 }
