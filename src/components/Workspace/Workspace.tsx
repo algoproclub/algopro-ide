@@ -22,7 +22,6 @@ import {
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { Chat } from '../Chat';
 import { CodeInterface } from '../CodeInterface/CodeInterface';
-import PlanetsJudgeInterface from '../JudgeInterface/PlanetsJudgeInterface';
 import { LazyRealtimeEditor } from '../RealtimeEditor/LazyRealtimeEditor';
 import { Output } from '../Output';
 import { TabBar } from '../TabBar';
@@ -35,7 +34,6 @@ import GenericJudgeInterface from '../JudgeInterface/GenericJudgeInterface';
 import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import {
   DataSnapshot,
   getDatabase,

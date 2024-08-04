@@ -168,31 +168,33 @@ export default function GenericJudgeInterface({
             </div>
           )}
           {/* Samples are included in the parsed problem statement for SPOJ */}
-          {problem.samples.length > 0 && problem.platform !== 'spoj' && (
-            <>
-              <h4 className="text-base font-semibold mt-[0.6rem] mb-[0.25rem]">
-                Examples
-              </h4>
-              <div className="mt-2 space-y-3">
-                {problem.samples.map((sample, index) => (
-                  <div key={index} className="mb-4">
-                    <div className="mb-3 -space-y-[1px] text-sm">
-                      <PreBox
-                        title={`Input ${index + 1}`}
-                        text={sample.input}
-                        roundedBottom={false}
-                      />
-                      <PreBox
-                        title={`Output ${index + 1}`}
-                        text={sample.output}
-                        roundedTop={false}
-                      />
+          {problem.samples.length > 0 &&
+            problem.samples[0].output &&
+            !['spoj', 'planets'].includes(problem.platform) && (
+              <>
+                <h4 className="text-base font-semibold mt-[0.6rem] mb-[0.25rem]">
+                  Examples
+                </h4>
+                <div className="mt-2 space-y-3">
+                  {problem.samples.map((sample, index) => (
+                    <div key={index} className="mb-4">
+                      <div className="mb-3 -space-y-[1px] text-sm">
+                        <PreBox
+                          title={`Input ${index + 1}`}
+                          text={sample.input}
+                          roundedBottom={false}
+                        />
+                        <PreBox
+                          title={`Output ${index + 1}`}
+                          text={sample.output}
+                          roundedTop={false}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+                  ))}
+                </div>
+              </>
+            )}
         </section>
       </div>
     </div>

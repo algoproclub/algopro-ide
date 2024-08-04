@@ -17,6 +17,7 @@ import {
   ResultFetcher,
   CSESResultFetcher,
   SPOJResultFetcher,
+  PlanetsResultFetcher,
 } from './getResult';
 import { PendingSubmissions, AccountData, SubmissionData } from './types';
 import {
@@ -33,6 +34,7 @@ import {
   SPOJSubmitter,
   Submitter,
 } from './submit';
+import { getFirestore } from 'firebase-admin/firestore';
 
 require('dotenv').config({ path: '.env.local' });
 
@@ -78,6 +80,23 @@ export const submitproblemsolution = onCall<
         submitter = new SPOJSubmitter();
         break;
       default:
+        /*const firestore = getFirestore();
+        firestore.doc("submissions/abc").set({
+          "verdict": "Wrong answer",
+          "test_results": [
+            {
+              "verdict": "Accepted",
+              "memory": 1234567,
+              "time": 3141592
+            },
+            {
+              "verdict": "Wrong answer",
+              "memory": 3141592,
+              "time": 1234567
+            }
+          ],
+        });
+        return {id: "abc", platform: "planets", username: null};*/
         throw new HttpsError(
           'unimplemented',
           `platform '${platform}' is unimplemented`
@@ -199,7 +218,6 @@ const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
 };
 
 const updateResultNonCF = async (submissionData: SubmissionData) => {
-  console.log(submissionData.platform, submissionData.problemID);
   let fetcher: ResultFetcher;
   if (submissionData.platform === 'cses') {
     fetcher = new CSESResultFetcher(submissionData);
@@ -207,6 +225,8 @@ const updateResultNonCF = async (submissionData: SubmissionData) => {
     fetcher = new AtCoderResultFetcher(submissionData);
   } else if (submissionData.platform === 'spoj') {
     fetcher = new SPOJResultFetcher(submissionData);
+  } else if (submissionData.platform === 'planets') {
+    fetcher = new PlanetsResultFetcher(submissionData);
   } else {
     throw new Error(`invalid platform name (${submissionData.platform})`);
   }
