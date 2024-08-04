@@ -199,6 +199,7 @@ const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
 };
 
 const updateResultNonCF = async (submissionData: SubmissionData) => {
+  console.log(submissionData.platform, submissionData.problemID);
   let fetcher: ResultFetcher;
   if (submissionData.platform === 'cses') {
     fetcher = new CSESResultFetcher(submissionData);
@@ -313,15 +314,11 @@ const updateResults = async (pending: PendingSubmissions | null) => {
   );
 
   const promises: Promise<void>[] = [];
-  pendingByPlatform['cses']?.forEach(obj => {
-    promises.push(updateResultNonCF(obj));
-  });
-  pendingByPlatform['atcoder']?.forEach(obj => {
-    promises.push(updateResultNonCF(obj));
-  });
-  pendingByPlatform['spoj']?.forEach(obj => {
-    promises.push(updateResultNonCF(obj));
-  });
+  for (const platform of ['cses', 'atcoder', 'spoj', 'planets']) {
+    pendingByPlatform[platform]?.forEach(obj => {
+      promises.push(updateResultNonCF(obj));
+    });
+  }
   promises.push(updateResultsCF(pendingByPlatform['codeforces']));
   await Promise.all(promises);
 };

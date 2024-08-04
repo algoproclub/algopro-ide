@@ -3,6 +3,7 @@ import { Sample } from '../types/judge';
 import { ElementType } from 'domelementtype';
 import * as domhandler from 'domhandler';
 import * as cheerio from 'cheerio';
+import { getFirestore, getDoc, doc } from 'firebase/firestore';
 
 // FIXME: We might need to escape HTML entities (?)
 function htmlToPlaintext(node: domhandler.ChildNode): string {
@@ -48,9 +49,23 @@ export async function fetchProblemData({
       return fetchProblemDataCSES(id);
     case 'spoj':
       return fetchProblemDataSPOJ(id);
+    case 'planets':
+      return fetchProblemDataPlanets(id);
     default:
       throw new Error(`platform '${platform}' is unimplemented`);
   }
+}
+
+const db = getFirestore(/*"planets"*/);
+async function fetchProblemDataPlanets(
+  problemID: string
+): Promise<ProblemData | null> {
+  const problem = await getDoc(doc(db, `problems/${problemID}`));
+  if (!problem.exists()) {
+    throw Error('Problem ID not found.');
+  }
+  const data = problem.data();
+  return { ...data } as ProblemData;
 }
 
 async function fetchProblemDataCodeforces(
