@@ -74,14 +74,14 @@ export class PlanetsResultFetcher extends ResultFetcher {
   }
 
   private mapVerdictToSymbol(verdict: string): string {
-    if (verdict == 'Accepted') return '✓';
-    if (verdict == 'Did not run') return '?';
+    if (verdict === 'Accepted') return '✓';
+    if (verdict === 'Did not run') return '?';
     return 'x';
   }
 
   private mapVerdictToTitle(verdict: string): string {
-    if (verdict == 'Accepted') return 'Correct answer';
-    if (verdict == 'Wrong answer') return 'Incorrect answer';
+    if (verdict === 'Accepted') return 'correct answer';
+    if (verdict === 'Wrong answer') return 'incorrect answer';
     return verdict;
   }
 
@@ -111,7 +111,7 @@ export class PlanetsResultFetcher extends ResultFetcher {
         : null,
       time: Number.isFinite(time) ? Math.round(time / 1000000) + ' ms' : null,
       statusText: statusCode === 'working' ? 'status-working' : 'status-done',
-      message: result.verdict,
+      message: this.mapVerdictToTitle(result.verdict),
       statusCode: statusCode,
       output: result.compiler_output ?? '',
       testCases:

@@ -16,6 +16,8 @@ import {
   mobileActiveTabAtom,
   problemAtom,
   showSidebarAtom,
+  solutionsAtom,
+  solvedAtom,
   statusDataAtom,
   translationsAtom,
 } from '../../atoms/workspaceUI';
@@ -41,6 +43,7 @@ import {
   off,
   ref,
   update,
+  get,
 } from 'firebase/database';
 import LoadResultsModal from '../JudgeInterface/LoadResultsModal';
 import {
@@ -52,9 +55,13 @@ import {
 } from '../../types/problem';
 import {
   fetchProblemFromDb,
+  fetchSolutionsFromDb,
   fetchTranslationsFromDb,
 } from '../../scripts/fetchProblemFromDb';
 import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
+import Dropdown from '../Dropdown';
+import { CodeEditor } from '../editor/CodeEditor';
+import Solutions from '../JudgeInterface/Solutions';
 
 export function getHints(
   problem: ProblemData,
@@ -81,6 +88,8 @@ export default function Workspace({
   const [inputTab, setInputTab] = useAtom(inputTabAtom);
   const [problem, setProblem] = useAtom(problemAtom);
   const [translations, setTranslations] = useAtom(translationsAtom);
+  const [solutions, setSolutions] = useAtom(solutionsAtom);
+  const [solved, setSolved] = useAtom(solvedAtom);
   const [statusData, setStatusData] = useAtom(statusDataAtom);
   const [language, setLanguage] = React.useState('en');
 
@@ -124,9 +133,33 @@ export default function Workspace({
         setTranslations(
           await fetchTranslationsFromDb(fileData.problem as PlatformProblem)
         );
+        setSolutions(
+          await fetchSolutionsFromDb(fileData.problem as PlatformProblem)
+        );
       }
     })();
   }, [fileData.problem?.platform]);
+
+  useEffect(() => {
+    get(ref(db, `files/${fileData.id}/solvedStatus/solved`)).then(
+      (snapshot: DataSnapshot) => {
+        const initSolved = snapshot.val();
+        setSolved(initSolved);
+        if (!initSolved) {
+          onValue(
+            ref(db, `files/${fileData.id}/solvedStatus/solved`),
+            (snapshot: DataSnapshot) => {
+              setSolved(snapshot.val());
+              setInputTab('solutions');
+            }
+          );
+        }
+      }
+    );
+    return () => {
+      off(ref(db, `files/${fileData.id}/solvedStatus/solved`));
+    };
+  }, []);
 
   useEffect(() => {
     onValue(
@@ -248,6 +281,15 @@ export default function Workspace({
                         inputTab={inputTab}
                         handleRunCode={handleRunCode}
                       />
+                    </div>
+                  </div>
+                )}
+              {problem?.id === fileData.problem?.id &&
+                inputTab === 'solutions' &&
+                problem && (
+                  <div className="overflow-y-hidden h-full">
+                    <div className="p-4 pb-0 relative h-full">
+                      <Solutions problem={problem} solutions={solutions} />
                     </div>
                   </div>
                 )}

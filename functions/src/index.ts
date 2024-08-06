@@ -82,7 +82,7 @@ export const submitproblemsolution = onCall<
       default:
         /*const firestore = getFirestore();
         firestore.doc("submissions/abc").set({
-          "verdict": "Wrong answer",
+          "verdict": "Accepted",
           "test_results": [
             {
               "verdict": "Accepted",
@@ -90,13 +90,13 @@ export const submitproblemsolution = onCall<
               "time": 3141592
             },
             {
-              "verdict": "Wrong answer",
+              "verdict": "Accepted",
               "memory": 3141592,
               "time": 1234567
             }
           ],
-        });
-        return {id: "abc", platform: "planets", username: null};*/
+        });*/
+        return { id: 'abc', platform: 'planets', username: null };
         throw new HttpsError(
           'unimplemented',
           `platform '${platform}' is unimplemented`

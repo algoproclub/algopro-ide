@@ -8,7 +8,7 @@ const Dropdown = ({
   label,
 }: {
   items: string[];
-  label: string;
+  label?: string;
   selected: number;
   setSelected: (_: number) => void;
 }) => {
