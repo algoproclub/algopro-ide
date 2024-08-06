@@ -74,14 +74,14 @@ export class PlanetsResultFetcher extends ResultFetcher {
   }
 
   private mapVerdictToSymbol(verdict: string): string {
-    if (verdict == 'Accepted') return '✓';
-    if (verdict == 'Did not run') return '?';
+    if (verdict === 'Accepted') return '✓';
+    if (verdict === 'Did not run') return '?';
     return 'x';
   }
 
   private mapVerdictToTitle(verdict: string): string {
-    if (verdict == 'Accepted') return 'Correct answer';
-    if (verdict == 'Wrong answer') return 'Incorrect answer';
+    if (verdict === 'Accepted') return 'correct answer';
+    if (verdict === 'Wrong answer') return 'incorrect answer';
     return verdict;
   }
 

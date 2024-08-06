@@ -4,6 +4,7 @@ import { ElementType } from 'domelementtype';
 import * as domhandler from 'domhandler';
 import * as cheerio from 'cheerio';
 import { getFirestore, getDoc, doc } from 'firebase/firestore';
+import { SHOULD_USE_FIREBASE_EMULATOR } from '../dev_constants';
 
 // FIXME: We might need to escape HTML entities (?)
 function htmlToPlaintext(node: domhandler.ChildNode): string {
@@ -56,7 +57,9 @@ export async function fetchProblemData({
   }
 }
 
-const db = getFirestore(/*"planets"*/);
+const db = SHOULD_USE_FIREBASE_EMULATOR
+  ? getFirestore()
+  : getFirestore('planets');
 async function fetchProblemDataPlanets(
   problemID: string
 ): Promise<ProblemData | null> {
