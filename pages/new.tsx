@@ -95,12 +95,12 @@ export default function NewFilePage() {
   };
 
   return (
-    <div className="min-h-full flex flex-col max-w-6xl mx-auto mt-6">
+    <div className="min-h-full flex flex-col max-w-6xl mx-auto lg:mt-6">
       <form className="border border-gray-700" onSubmit={handleSubmit}>
-        <div className="text-white font-semibold py-2 md:px-6 lg:px-8 bg-gray-800">
+        <div className="text-white font-semibold py-2 px-4 lg:px-8 bg-gray-800">
           <h1 className="text-lg">Create New File</h1>
         </div>
-        <div className="border-t border-gray-700 space-y-4 sm:space-y-6 p-4 md:p-6 lg:p-8">
+        <div className="border-t border-gray-700 space-y-4 sm:space-y-6 p-4 lg:p-8">
           <div>
             <label
               htmlFor="filename"
