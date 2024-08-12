@@ -31,6 +31,7 @@ import {
   AtCoderSubmitter,
   CFSubmitter,
   CSESSubmitter,
+  PlanetsSubmitter,
   SPOJSubmitter,
   Submitter,
 } from './submit';
@@ -78,6 +79,11 @@ export const submitproblemsolution = onCall<
         break;
       case 'spoj':
         submitter = new SPOJSubmitter();
+        break;
+      case 'planets':
+        submitter = new PlanetsSubmitter(
+          request.rawRequest.headers.authorization ?? ''
+        );
         break;
       default:
         /*const firestore = getFirestore();

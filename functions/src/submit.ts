@@ -431,3 +431,52 @@ export class SPOJSubmitter extends Submitter {
     } as const;
   }
 }
+
+export class PlanetsSubmitter extends Submitter {
+  platformName = 'planets';
+  authorization: string;
+
+  constructor(authorization: string) {
+    if (!authorization)
+      throw new Error('attempt to submit to planets without logging in');
+    super();
+    this.authorization = authorization;
+  }
+
+  async loginWith(_: {}): Promise<boolean> {
+    return true;
+  }
+
+  async submit({ problemID, sourceCode, language }: ProblemSolution) {
+    const res = await fetch(
+      'http://127.0.0.1:5001/algopro-app/europe-west1/planetssubmit',
+      {
+        headers: {
+          'content-type': 'application/json',
+          authorization: this.authorization,
+        },
+        body: JSON.stringify({
+          data: {
+            problem_id: problemID,
+            language: {
+              cpp: 'cpp17',
+              java: 'java',
+              py: 'python3',
+            }[language],
+            solution: sourceCode,
+          },
+        }),
+        method: 'POST',
+      }
+    );
+    if (res.status !== 200) {
+      throw new Error(
+        'planets submission failed, status: ' +
+          res.status +
+          ' ' +
+          (await res.json()).error.message
+      );
+    }
+    return await res.json();
+  }
+}
