@@ -3,7 +3,7 @@ import { Sample } from '../types/judge';
 import { ElementType } from 'domelementtype';
 import * as domhandler from 'domhandler';
 import * as cheerio from 'cheerio';
-import { getFirestore, getDoc, doc } from 'firebase/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 import { SHOULD_USE_FIREBASE_EMULATOR } from '../dev_constants';
 
 // FIXME: We might need to escape HTML entities (?)
@@ -57,14 +57,15 @@ export async function fetchProblemData({
   }
 }
 
-const db = SHOULD_USE_FIREBASE_EMULATOR
-  ? getFirestore()
-  : getFirestore('planets');
+const db = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+  ? getFirestore('planets')
+  : getFirestore();
+
 async function fetchProblemDataPlanets(
   problemID: string
 ): Promise<ProblemData | null> {
-  const problem = await getDoc(doc(db, `problems/${problemID}`));
-  if (!problem.exists()) {
+  const problem = await db.doc(`problems/${problemID}`).get();
+  if (!problem.exists) {
     throw Error('Problem ID not found.');
   }
   const data = problem.data();
