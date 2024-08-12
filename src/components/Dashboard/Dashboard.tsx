@@ -73,6 +73,7 @@ const Pagination = ({
   maxPage: number;
   label: string;
 }) => {
+  console.log(page, minPage, maxPage);
   return (
     <div className="px-3.5 py-3 flex items-center space-x-2 text-sm bg-gray-800">
       <button
@@ -157,7 +158,9 @@ const RecentTab = ({
       );
     };
     setMaxPage(Math.max(1, Math.ceil(allFiles.length / PAGE_SIZE)));
-    setPage(Math.min(page, Math.ceil(allFiles.length / PAGE_SIZE)));
+    setPage(
+      Math.max(1, Math.min(page, Math.ceil(allFiles.length / PAGE_SIZE)))
+    );
     getFiles().then(newFiles => {
       setFiles(newFiles);
     });
