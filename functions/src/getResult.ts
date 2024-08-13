@@ -3,6 +3,7 @@ import * as jsdom from 'jsdom';
 import { cfAPIKey, cfAPISecret, IncorrectDataError } from './index';
 import { SubmissionData } from './types';
 import { StatusCode, StatusData, TestCase } from '../../src/types/problem';
+import { getFirestore } from 'firebase-admin/firestore';
 
 const { JSDOM } = jsdom;
 
@@ -62,6 +63,113 @@ export abstract class ResultFetcher {
       link: this.getLink(),
       testCases: this.getTestCases(),
     };
+  }
+}
+
+export class PlanetsResultFetcher extends ResultFetcher {
+  private resultData?: StatusData;
+
+  constructor(submissionData: SubmissionData) {
+    super(submissionData);
+  }
+
+  private mapVerdictToSymbol(verdict: string): string {
+    if (verdict === 'Accepted') return '✓';
+    if (verdict === 'Did not run') return '?';
+    return 'x';
+  }
+
+  private mapVerdictToTitle(verdict: string): string {
+    if (verdict === 'Accepted') return 'correct answer';
+    if (verdict === 'Wrong answer') return 'incorrect answer';
+    return verdict;
+  }
+
+  private mapVerdictToStatusCode(verdict: string): StatusCode {
+    if (verdict.startsWith('Starting') || verdict.startsWith('Running'))
+      return 'working';
+    return 'resolved';
+  }
+  async initialize(): Promise<void> {
+    const firestore = process.env.FUNCTIONS_EMULATOR
+      ? getFirestore()
+      : getFirestore('planets');
+    const snapshot = await firestore
+      .doc(`submissions/${this.submissionData.submissionID}`)
+      .get();
+    if (!snapshot.exists) {
+      throw new IncorrectDataError('Planets: submission ID not found');
+    }
+    const result = snapshot.data()!;
+    const statusCode = this.mapVerdictToStatusCode(result.verdict);
+    const memory = Math.max(...result.test_results?.map((t: any) => t.memory));
+    const time = Math.max(...result.test_results?.map((t: any) => t.time));
+    this.resultData = {
+      link: null,
+      memory: Number.isFinite(memory)
+        ? Math.round(memory / 10000) / 100 + ' MB'
+        : null,
+      time: Number.isFinite(time) ? Math.round(time / 1000000) + ' ms' : null,
+      statusText: statusCode === 'working' ? 'status-working' : 'status-done',
+      message: result.verdict,
+      statusCode: statusCode,
+      output: result.compiler_output ?? '',
+      testCases:
+        result.test_results == undefined
+          ? []
+          : result.test_results.map((t: any) => ({
+              title: this.mapVerdictToTitle(t.verdict),
+              trialNum: t.index,
+              symbol: this.mapVerdictToSymbol(t.verdict),
+              memory: Math.round(t.memory / 10000) / 100 + ' MB',
+              time: Math.round(t.time / 1000000) + ' ms',
+            })),
+    };
+  }
+
+  getTestCaseNum(): number {
+    return this.resultData!.testCases!.length;
+  }
+
+  getTestCaseTitle(n: number): string {
+    return this.resultData!.testCases![n].title;
+  }
+  getTestCaseSymbol(n: number): string {
+    return this.resultData!.testCases![n].symbol;
+  }
+  getTestCaseTime(n: number): string | null {
+    return this.resultData!.testCases![n].time;
+  }
+  getTestCaseMemory(n: number): string | null {
+    return this.resultData!.testCases![n].memory;
+  }
+
+  getLink(): string | null {
+    return this.resultData!.link;
+  }
+
+  getMemory(): string | null {
+    return this.resultData!.memory;
+  }
+
+  getMessage(): string {
+    return this.resultData!.message!;
+  }
+
+  getOutput(): string | null {
+    return this.resultData!.output;
+  }
+
+  getStatusCode(): StatusCode {
+    return this.resultData!.statusCode;
+  }
+
+  getStatusText(): string | null {
+    return this.resultData!.statusText;
+  }
+
+  getTime(): string | null {
+    return this.resultData!.time;
   }
 }
 

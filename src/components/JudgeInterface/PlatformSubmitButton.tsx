@@ -63,9 +63,13 @@ export const GenericSubmitButton = ({
       return submitLink;
     };
     if (userData.manualSubmission) {
-      const link = getSubmitLink();
-      window.open(link, '_blank');
-      setIsOpen(true);
+      if (!['cses', 'planets'].includes(problem.platform)) {
+        const link = getSubmitLink();
+        window.open(link, '_blank');
+        setIsOpen(true);
+      } else {
+        alert(`This platform does not support manual submission.`);
+      }
     } else {
       try {
         setStatusData({

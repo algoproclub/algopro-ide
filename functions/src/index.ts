@@ -17,6 +17,7 @@ import {
   ResultFetcher,
   CSESResultFetcher,
   SPOJResultFetcher,
+  PlanetsResultFetcher,
 } from './getResult';
 import { PendingSubmissions, AccountData, SubmissionData } from './types';
 import {
@@ -213,6 +214,8 @@ const updateResultNonCF = async (submissionData: SubmissionData) => {
     fetcher = new AtCoderResultFetcher(submissionData);
   } else if (submissionData.platform === 'spoj') {
     fetcher = new SPOJResultFetcher(submissionData);
+  } else if (submissionData.platform === 'planets') {
+    fetcher = new PlanetsResultFetcher(submissionData);
   } else {
     throw new Error(`invalid platform name (${submissionData.platform})`);
   }
@@ -320,15 +323,11 @@ const updateResults = async (pending: PendingSubmissions | null) => {
   );
 
   const promises: Promise<void>[] = [];
-  pendingByPlatform['cses']?.forEach(obj => {
-    promises.push(updateResultNonCF(obj));
-  });
-  pendingByPlatform['atcoder']?.forEach(obj => {
-    promises.push(updateResultNonCF(obj));
-  });
-  pendingByPlatform['spoj']?.forEach(obj => {
-    promises.push(updateResultNonCF(obj));
-  });
+  for (const platform of ['cses', 'atcoder', 'spoj', 'planets']) {
+    pendingByPlatform[platform]?.forEach(obj => {
+      promises.push(updateResultNonCF(obj));
+    });
+  }
   promises.push(updateResultsCF(pendingByPlatform['codeforces']));
   await Promise.all(promises);
 };
