@@ -41,6 +41,7 @@ test.describe('Dashboard Page', () => {
     await page.locator('text=Settings').click();
     // Click user button tab
     await page.locator('text="User"').click();
+    await page.locator('text="User data"').click();
     await page.locator('input[name="name"]').click();
     await page.locator('input[name="name"]').press('Control+a');
     await page.locator('input[name="name"]').fill('My Name');

@@ -6,7 +6,6 @@ import {
 } from '@heroicons/react/20/solid';
 import { Listbox, Transition } from '@headlessui/react';
 import HTMLStatement from './HTMLStatement';
-import { PreBox } from './Samples';
 
 // TODO: We should be getting this from some sort of library.
 const LANGUAGE_INFO: Record<string, { name: string; flag: string }> = {
@@ -109,13 +108,6 @@ export default function GenericJudgeInterface({
   language: string;
   setLanguage: React.Dispatch<React.SetStateAction<string>>;
 }): JSX.Element {
-  // TODO: Move the original text under translations
-  if (problem?.statement) {
-    translations['en'] = {
-      statement: problem.statement,
-      hints: problem.hints ?? [],
-    };
-  }
   const languages = Object.keys(translations);
 
   return (
@@ -167,34 +159,6 @@ export default function GenericJudgeInterface({
               </ul>
             </div>
           )}
-          {/* Samples are included in the parsed problem statement for SPOJ */}
-          {problem.samples.length > 0 &&
-            problem.samples[0].output &&
-            !['spoj', 'planets'].includes(problem.platform) && (
-              <>
-                <h4 className="text-base font-semibold mt-[0.6rem] mb-[0.25rem]">
-                  Examples
-                </h4>
-                <div className="mt-2 space-y-3">
-                  {problem.samples.map((sample, index) => (
-                    <div key={index} className="mb-4">
-                      <div className="mb-3 -space-y-[1px] text-sm">
-                        <PreBox
-                          title={`Input ${index + 1}`}
-                          text={sample.input}
-                          roundedBottom={false}
-                        />
-                        <PreBox
-                          title={`Output ${index + 1}`}
-                          text={sample.output}
-                          roundedTop={false}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
         </section>
       </div>
     </div>

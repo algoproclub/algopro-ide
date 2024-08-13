@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
-import { useUpdateAtom } from 'jotai/utils';
+import { useSetAtom } from 'jotai';
 import { signInWithGoogleAtom } from '../src/atoms/firebaseUserAtoms';
 import Dashboard from '../src/components/Dashboard/Dashboard';
 import { useConnectionContext } from '../src/context/ConnectionContext';
@@ -8,7 +8,7 @@ import { useNullableUserContext } from '../src/context/UserContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function DashboardPage(): JSX.Element {
-  const signInWithGoogle = useUpdateAtom(signInWithGoogleAtom);
+  const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
   const connectionContext = useConnectionContext();
   const { userData, logged } = useNullableUserContext();
 

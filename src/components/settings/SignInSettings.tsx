@@ -1,6 +1,6 @@
 import React from 'react';
 import { signOut, getAuth } from 'firebase/auth';
-import { useAtomValue, useUpdateAtom } from 'jotai/utils';
+import { useSetAtom } from 'jotai';
 import { signInWithGoogleAtom } from '../../atoms/firebaseUserAtoms';
 import { useConnectionContext } from '../../context/ConnectionContext';
 import { useUserContext } from '../../context/UserContext';
@@ -11,7 +11,7 @@ const buttonClasses =
 export default function SignInSettings(): JSX.Element {
   const { firebaseUser } = useUserContext();
   const connectionContext = useConnectionContext();
-  const handleSignInWithGoogle = useUpdateAtom(signInWithGoogleAtom);
+  const handleSignInWithGoogle = useSetAtom(signInWithGoogleAtom);
 
   const handleSignOut = () => {
     connectionContext.clearConnectionRefs();

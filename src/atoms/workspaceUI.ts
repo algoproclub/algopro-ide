@@ -7,7 +7,10 @@ export const showSidebarAtom = atom<boolean>(false);
 export const inputTabAtom = atom<string>('input');
 export const problemAtom = atom<ProblemData | undefined>(undefined);
 export const statusDataAtom = atom<StatusData | null>(null);
-export const translationsAtom = atom<Record<string, Translation>>({});
+export const translationsAtom = atom<Record<string, Translation> | undefined>(
+  undefined
+);
+export const languageAtom = atom<string>('en');
 export const tabsListAtom = atom(get => {
   const getSamplesList = (length: number) => {
     const res = [];
@@ -22,11 +25,12 @@ export const tabsListAtom = atom(get => {
   };
   const problem = get(problemAtom);
   const translations = get(translationsAtom);
+  const language = get(languageAtom);
 
   return [
     { label: 'Input', value: 'input' },
     ...(problem ? [{ label: 'Task Overview', value: 'judge' }] : []),
-    ...(problem && getHints(problem, translations).length > 0
+    ...(problem && translations && getHints(translations, language).length > 0
       ? [{ label: 'Hints', value: 'hints' }]
       : []),
     ...(problem?.samples.length && problem?.samples[0].output

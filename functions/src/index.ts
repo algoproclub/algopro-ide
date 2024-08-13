@@ -34,7 +34,7 @@ import {
   SPOJSubmitter,
   Submitter,
 } from './submit';
-import { getFirestore } from 'firebase-admin/firestore';
+import { JSDOM } from 'jsdom';
 
 require('dotenv').config({ path: '.env.local' });
 
@@ -80,23 +80,6 @@ export const submitproblemsolution = onCall<
         submitter = new SPOJSubmitter();
         break;
       default:
-        /*const firestore = getFirestore();
-        firestore.doc("submissions/abc").set({
-          "verdict": "Wrong answer",
-          "test_results": [
-            {
-              "verdict": "Accepted",
-              "memory": 1234567,
-              "time": 3141592
-            },
-            {
-              "verdict": "Wrong answer",
-              "memory": 3141592,
-              "time": 1234567
-            }
-          ],
-        });
-        return {id: "abc", platform: "planets", username: null};*/
         throw new HttpsError(
           'unimplemented',
           `platform '${platform}' is unimplemented`
@@ -117,7 +100,13 @@ export const translate = onCall<
   if (!request.auth?.token?.teacher) {
     return null;
   }
-  const { text, lang } = request.data;
+  let { text, lang } = request.data;
+
+  const document = new JSDOM(text).window.document;
+  for (const el of document.getElementsByTagName('pre'))
+    el.setAttribute('translate', 'no');
+  text = document.body.innerHTML;
+
   const resp = await fetch('https://api-free.deepl.com/v2/translate', {
     method: 'POST',
     headers: {
