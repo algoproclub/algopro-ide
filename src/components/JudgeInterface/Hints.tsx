@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import Markdown from './Markdown';
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/20/solid';
+import { Hint } from '../../types/problem';
+import { useEditorContext } from '../../context/EditorContext';
 
 const Hint = ({ index, content }: { index: number; content: string }) => {
   const [revealed, setRevealed] = useState(false);
@@ -41,14 +43,17 @@ const Hint = ({ index, content }: { index: number; content: string }) => {
   );
 };
 
-export default function Hints({ hints }: { hints: string[] }): JSX.Element {
+export default function Hints({ hints }: { hints: Hint[] }): JSX.Element {
+  const { fileData } = useEditorContext();
   return (
     <div className="p-4 pb-0 overflow-y-auto h-full space-y-2">
-      {hints.map((hint, i) => (
-        <div key={i + 1}>
-          <Hint index={i} content={hint} />
-        </div>
-      ))}
+      {hints
+        .filter(hint => !hint.lang || hint.lang == fileData.settings.language)
+        .map((hint, i) => (
+          <div key={i}>
+            <Hint index={i} content={hint.text} />
+          </div>
+        ))}
     </div>
   );
 }

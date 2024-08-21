@@ -17,6 +17,11 @@ export type Platform =
   | 'usaco'
   | 'planets';
 
+export type Hint = {
+  lang?: string;
+  text: string;
+};
+
 export type ProblemData = {
   id: string;
   submittable: boolean;
@@ -30,7 +35,7 @@ export type ProblemData = {
   timeLimit?: string;
   memoryLimit?: string;
   samples: Sample[];
-  hints?: string[];
+  hints: Hint[];
 };
 
 export type ProblemSolution = {
@@ -79,5 +84,5 @@ export interface TestCase {
 
 export type Translation = {
   statement: string;
-  hints: string[];
+  hints: Hint[];
 };
