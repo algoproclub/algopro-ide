@@ -8,7 +8,13 @@ import React, {
 import { CodeEditor } from '../../../src/components/editor/CodeEditor';
 import { Dialog, Transition } from '@headlessui/react';
 import { useRouter } from 'next/router';
-import { doc, getFirestore, getDoc, setDoc } from 'firebase/firestore';
+import {
+  doc,
+  getFirestore,
+  getDoc,
+  setDoc,
+  updateDoc,
+} from 'firebase/firestore';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import { Platform, ProblemData } from '../../../src/types/problem';
 import Markdown from '../../../src/components/JudgeInterface/Markdown';
@@ -281,7 +287,7 @@ const PageContent = () => {
         setUnsaved(false);
         setInitTranslated(data?.statement ?? '');
         setTranslated(data?.statement ?? '');
-        setHints(data?.hints ?? []);
+        setHints(data?.hints.map(x => x.text) ?? []);
       })
       .catch(error => {
         console.error(error);
@@ -366,7 +372,18 @@ const PageContent = () => {
             language
           )
         : doc(getFirestore(), 'problemsets', platform, 'problems', problemID);
-    await setDoc(problemDoc, { statement: translated, hints: hints });
+
+    const newData = {
+      statement: translated,
+      hints: hints.map(text => {
+        return { text, lang: null };
+      }),
+    };
+    if (language === '-') {
+      await updateDoc(problemDoc, newData);
+    } else {
+      await setDoc(problemDoc, newData);
+    }
     setUnsaved(false);
   };
 
