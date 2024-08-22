@@ -19,11 +19,7 @@ export type Platform =
 
 export type Language = 'cpp' | 'py' | 'java';
 
-export type Hint =
-  | string
-  | {
-      [lang in Language]: string;
-    };
+export type Hint = string | Partial<Record<Language, string>>;
 
 export type ProblemData = {
   id: string;

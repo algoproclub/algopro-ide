@@ -33,7 +33,7 @@ const timeInMs = [
   Infinity,
 ];
 
-type Group = typeof groups[number];
+type Group = (typeof groups)[number];
 type Student = {
   id: string;
   name: string;
@@ -253,8 +253,8 @@ const Controls = ({
         <RefreshButton onRefresh={onRefresh} />
       </div>
       <Checkbox
-        enabled={highlight}
-        toggleEnabled={toggleHighlight}
+        checked={highlight}
+        toggleChecked={toggleHighlight}
         label="Highlight last edited file"
       />
     </div>
@@ -338,8 +338,8 @@ const ControlDropdown = ({
               setSelected={setTime}
             />
             <Checkbox
-              enabled={highlight}
-              toggleEnabled={toggleHighlight}
+              checked={highlight}
+              toggleChecked={toggleHighlight}
               label="Highlight last edited file"
             />
           </Disclosure.Panel>

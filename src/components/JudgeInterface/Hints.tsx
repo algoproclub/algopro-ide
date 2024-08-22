@@ -50,11 +50,13 @@ export default function Hints({ hints }: { hints: Hint[] }): JSX.Element {
   );
   return (
     <div className="p-4 pb-0 overflow-y-auto h-full space-y-2">
-      {langHints.map((hint, i) => (
-        <div key={i}>
-          <Hint index={i} content={hint} />
-        </div>
-      ))}
+      {langHints
+        .filter(x => x)
+        .map((hint, i) => (
+          <div key={i}>
+            <Hint index={i} content={hint!} />
+          </div>
+        ))}
     </div>
   );
 }
