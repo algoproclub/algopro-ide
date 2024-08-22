@@ -45,15 +45,16 @@ const Hint = ({ index, content }: { index: number; content: string }) => {
 
 export default function Hints({ hints }: { hints: Hint[] }): JSX.Element {
   const { fileData } = useEditorContext();
+  const langHints = hints.map(hint =>
+    typeof hint == 'string' ? hint : hint[fileData.settings.language]
+  );
   return (
     <div className="p-4 pb-0 overflow-y-auto h-full space-y-2">
-      {hints
-        .filter(hint => !hint.lang || hint.lang == fileData.settings.language)
-        .map((hint, i) => (
-          <div key={i}>
-            <Hint index={i} content={hint.text} />
-          </div>
-        ))}
+      {langHints.map((hint, i) => (
+        <div key={i}>
+          <Hint index={i} content={hint} />
+        </div>
+      ))}
     </div>
   );
 }

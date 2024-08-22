@@ -17,10 +17,13 @@ export type Platform =
   | 'usaco'
   | 'planets';
 
-export type Hint = {
-  lang?: string;
-  text: string;
-};
+export type Language = 'cpp' | 'py' | 'java';
+
+export type Hint =
+  | string
+  | {
+      [lang in Language]: string;
+    };
 
 export type ProblemData = {
   id: string;
@@ -42,7 +45,7 @@ export type ProblemSolution = {
   problemID: string;
   platform: Platform;
   sourceCode: string;
-  language: 'cpp' | 'java' | 'py';
+  language: Language;
 };
 
 export type SubmissionData = {

@@ -1,12 +1,5 @@
-import React, {
-  Fragment,
-  KeyboardEventHandler,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { CodeEditor } from '../../../src/components/editor/CodeEditor';
-import { Dialog, Transition } from '@headlessui/react';
 import { useRouter } from 'next/router';
 import {
   doc,
@@ -19,13 +12,12 @@ import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import { Platform, ProblemData } from '../../../src/types/problem';
 import Markdown from '../../../src/components/JudgeInterface/Markdown';
 import dynamic from 'next/dynamic';
-import { XMarkIcon } from '@heroicons/react/24/outline';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { LanguageSelectorDropdown } from '../../../src/components/JudgeInterface/GenericJudgeInterface';
-import withTeacherLogin from '../../../src/components/WithTeacherLogin';
 import { EditTextAreaModal } from '../../../src/components/EditTextModal';
 import WithTeacherLogin from '../../../src/components/WithTeacherLogin';
+import { Hint } from '../../../src/types/problem';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -287,7 +279,7 @@ const PageContent = () => {
         setUnsaved(false);
         setInitTranslated(data?.statement ?? '');
         setTranslated(data?.statement ?? '');
-        setHints(data?.hints.map(x => x.text) ?? []);
+        setHints(data?.hints?.filter((x: Hint) => typeof x == 'string') ?? []);
       })
       .catch(error => {
         console.error(error);
@@ -375,9 +367,7 @@ const PageContent = () => {
 
     const newData = {
       statement: translated,
-      hints: hints.map(text => {
-        return { text, lang: null };
-      }),
+      hints,
     };
     if (language === '-') {
       await updateDoc(problemDoc, newData);
