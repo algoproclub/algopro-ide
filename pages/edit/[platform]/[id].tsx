@@ -193,6 +193,21 @@ const EditHintModal = ({
   onClose: () => void;
 }) => {
   const [selected, setSelected] = useState(0);
+  const confirmedToggle = () => {
+    if (
+      confirm(
+        "If you switch, the hint's content will be deleted. Do you want to proceed?"
+      )
+    ) {
+      setHint(h => {
+        if (typeof h == 'string') {
+          return {} as Hint;
+        } else {
+          return '';
+        }
+      });
+    }
+  };
 
   const checked = typeof hint != 'string';
   const langs: Language[] = ['cpp', 'py', 'java'];
@@ -219,15 +234,7 @@ const EditHintModal = ({
           <Checkbox
             checked={checked}
             label="Language-dependent hint"
-            toggleChecked={() =>
-              setHint(h => {
-                if (typeof h == 'string') {
-                  return {} as Hint;
-                } else {
-                  return '';
-                }
-              })
-            }
+            toggleChecked={confirmedToggle}
           />
         </div>
         <textarea
