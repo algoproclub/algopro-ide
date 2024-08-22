@@ -449,7 +449,7 @@ export class PlanetsSubmitter extends Submitter {
 
   async submit({ problemID, sourceCode, language }: ProblemSolution) {
     const res = await fetch(
-      'http://127.0.0.1:5001/algopro-app/europe-west1/planetssubmit',
+      'https://europe-west1-algopro-app.cloudfunctions.net/planetssubmit',
       {
         headers: {
           'content-type': 'application/json',
