@@ -551,35 +551,43 @@ const PageContent = () => {
             />
           </button>
         </div>
-        <table className="max-h-[16rem] text-sm bg-gray-900 border-collapse border-b border-gray-700">
-          <tbody className="divide-y divide-gray-700">
-            {hints.map((hint: Hint, index: number) => (
-              <Hint
-                hint={hint}
-                hintNum={index + 1}
-                key={index}
-                onDelete={() => {
-                  setUnsaved(true);
-                  setHints(prev => {
-                    return prev.filter((_, ind) => ind !== index);
-                  });
-                }}
-                onEdit={() => {
-                  setEditedHint(hint);
-                  setOnSaveHint(
-                    () => (h: Hint) =>
+        <div className="max-h-[16rem] border-b border-gray-700 overflow-auto">
+          <table className="text-sm bg-gray-900 border-collapse">
+            <tbody className="divide-y divide-gray-700">
+              {hints.map((hint: Hint, index: number) => (
+                <Hint
+                  hint={hint}
+                  hintNum={index + 1}
+                  key={index}
+                  onDelete={() => {
+                    if (
+                      confirm(
+                        'The hint will be deleted. Do you want to proceed?'
+                      )
+                    ) {
+                      setUnsaved(true);
                       setHints(prev => {
-                        setUnsaved(true);
-                        prev[index] = h;
-                        return prev;
-                      })
-                  );
-                  setIsOpen(true);
-                }}
-              />
-            ))}
-          </tbody>
-        </table>
+                        return prev.filter((_, ind) => ind !== index);
+                      });
+                    }
+                  }}
+                  onEdit={() => {
+                    setEditedHint(hint);
+                    setOnSaveHint(
+                      () => (h: Hint) =>
+                        setHints(prev => {
+                          setUnsaved(true);
+                          prev[index] = h;
+                          return prev;
+                        })
+                    );
+                    setIsOpen(true);
+                  }}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       <div className="p-4 border border-gray-600 bg-gray-800 mt-2 space-x-2 text-[0.95rem]">
         <button
