@@ -17,21 +17,24 @@ const Solutions = ({
   const languages = Object.keys(solutions);
   return (
     <>
-      {problem.platform === 'planets' && (
-        <div className="border-b border-[#363636] -mx-4 px-4 pb-4 mb-4">
+      {problem.platform === 'cses' && (
+        <div className="border-b border-[#363636] -mx-4 px-4 pb-4 mb-4 space-y-1.5">
           <Link
             href={`https://planets.algopro.hu/map#${problem.topicID}`}
             target="_blank"
           >
-            <button className="inline-flex items-center px-4 py-2.5 bg-indigo-900 hover:bg-indigo-800 active:bg-indigo-700 rounded-md text-sm font-medium w-40">
+            <button className="inline-flex items-center whitespace-nowrap px-4 py-2.5 bg-indigo-900 hover:bg-indigo-800 active:bg-indigo-700 rounded-md text-sm font-medium">
               <FontAwesomeIcon
                 className="mr-2 h-4 w-4"
                 aria-hidden="true"
                 icon={{ iconName: 'arrow-left', prefix: 'fas' }}
               />
-              <span className="text-center flex-1">View topic</span>
+              <span className="text-center flex-1">Back to the planet</span>
             </button>
           </Link>
+          <p className="text-gray-400 text-sm">
+            You can see the task on the roadmap, and the next steps.
+          </p>
         </div>
       )}
       <div className="flex items-end space-x-3">
