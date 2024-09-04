@@ -1,25 +1,29 @@
-import React, {
-  Fragment,
-  KeyboardEventHandler,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { CodeEditor } from '../../../src/components/editor/CodeEditor';
-import { Dialog, Transition } from '@headlessui/react';
 import { useRouter } from 'next/router';
-import { doc, getFirestore, getDoc, setDoc } from 'firebase/firestore';
+import {
+  doc,
+  getFirestore,
+  getDoc,
+  setDoc,
+  updateDoc,
+} from 'firebase/firestore';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
-import { Platform, ProblemData } from '../../../src/types/problem';
+import { Language, Platform, ProblemData } from '../../../src/types/problem';
 import Markdown from '../../../src/components/JudgeInterface/Markdown';
 import dynamic from 'next/dynamic';
-import { XMarkIcon } from '@heroicons/react/24/outline';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { LanguageSelectorDropdown } from '../../../src/components/JudgeInterface/GenericJudgeInterface';
-import withTeacherLogin from '../../../src/components/WithTeacherLogin';
-import { EditTextAreaModal } from '../../../src/components/EditTextModal';
+import {
+  EditTextAreaModal,
+  EditTextModal,
+  handleKeyDown,
+} from '../../../src/components/EditTextModal';
 import WithTeacherLogin from '../../../src/components/WithTeacherLogin';
+import { Hint } from '../../../src/types/problem';
+import Dropdown from '../../../src/components/Dropdown';
+import Checkbox from '../../../src/components/Checkbox';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -177,59 +181,157 @@ const HTMLEditor = ({
 
 const EditHintModal = ({
   isOpen,
-  text,
-  setText,
+  hint,
+  setHint,
   onSave,
   onClose,
 }: {
   isOpen: boolean;
-  text: string;
-  setText: React.Dispatch<React.SetStateAction<string>>;
-  onSave: (text: string) => void;
+  hint: Hint;
+  setHint: React.Dispatch<React.SetStateAction<Hint>>;
+  onSave: (h: Hint) => void;
   onClose: () => void;
 }) => {
+  const [selected, setSelected] = useState(0);
+  const confirmedToggle = () => {
+    if (
+      confirm(
+        "If you switch, the hint's content will be deleted. Do you want to proceed?"
+      )
+    ) {
+      setHint(h => {
+        if (typeof h == 'string') {
+          return {} as Hint;
+        } else {
+          return '';
+        }
+      });
+    }
+  };
+
+  const checked = typeof hint != 'string';
+  const langs: Language[] = ['cpp', 'py', 'java'];
+  const selectedLang = langs[selected];
+  const text = checked ? hint[selectedLang] ?? '' : hint;
+
   return (
-    <EditTextAreaModal
+    <EditTextModal
       isOpen={isOpen}
-      text={text}
       title="Edit hint"
-      setText={setText}
-      onSave={onSave}
+      text={text}
+      onSave={(_: string) => onSave(hint)}
       onClose={onClose}
-    />
+    >
+      <div className="space-y-2">
+        <Dropdown
+          items={['cpp', 'py', 'java']}
+          label="Language"
+          selected={selected}
+          setSelected={setSelected}
+          disabled={!checked}
+        />
+        <div className="pl-1">
+          <Checkbox
+            checked={checked}
+            label="Language-dependent hint"
+            toggleChecked={confirmedToggle}
+          />
+        </div>
+        <textarea
+          className="font-mono h-60 bg-gray-900 border-gray-700 w-full min-h-[10rem] text-sm"
+          value={text}
+          onKeyDown={handleKeyDown}
+          onChange={e =>
+            setHint(h => {
+              const val = e.target.value;
+              if (typeof h == 'string') {
+                return val;
+              } else if (val !== '') {
+                return { ...h, [selectedLang]: val };
+              } else {
+                return Object.fromEntries(
+                  Object.entries(h).filter(([key]) => key !== selectedLang)
+                ) as Hint;
+              }
+            })
+          }
+        />
+      </div>
+    </EditTextModal>
   );
 };
 
 const PageContent = () => {
   const Hint = ({
-    text,
+    hint,
+    hintNum,
     onDelete,
     onEdit,
   }: {
-    text: string;
+    hint: Hint;
+    hintNum: number;
     onDelete: () => void;
     onEdit: () => void;
   }) => {
+    const isEmpty = (obj: Object): boolean => {
+      return Object.keys(obj).length === 0;
+    };
+    const hintObj =
+      typeof hint == 'string'
+        ? { '': hint }
+        : isEmpty(hint)
+        ? { '': 'No hint specified' }
+        : hint;
+    const rowCount = Object.keys(hintObj).length;
     return (
-      <div className="flex items-stretch justify-between bg-gray-900 divide-x divide-gray-600">
-        <div className="px-3 py-2">
-          <Markdown>{text}</Markdown>
-        </div>
-        <div className="space-x-1 px-3 py-2">
-          <button
-            className="px-2 py-1 rounded-md hover:bg-gray-700"
-            onClick={onEdit}
-          >
-            <FontAwesomeIcon icon={{ prefix: 'fas', iconName: 'edit' }} />
-          </button>
-          <button
-            className="px-2 py-1 rounded-md hover:bg-gray-700"
-            onClick={onDelete}
-          >
-            <FontAwesomeIcon icon={{ prefix: 'fas', iconName: 'trash' }} />
-          </button>
-        </div>
-      </div>
+      <>
+        {Object.entries(hintObj).map(([lang, text], i) => (
+          <tr key={i}>
+            {i === 0 && (
+              <td
+                className="w-10 py-2 px-3 border-x border-gray-700"
+                rowSpan={rowCount}
+              >
+                {hintNum}
+              </td>
+            )}
+            {lang !== '' && (
+              <td className="w-16 py-2 px-3 border-x border-gray-700">
+                {lang}
+              </td>
+            )}
+            <td
+              className={`py-2 px-3 border-x border-gray-700 ${
+                isEmpty(hint) ? 'text-gray-400' : ''
+              }`}
+              colSpan={lang === '' ? 2 : 1}
+            >
+              {text}
+            </td>
+            {i === 0 && (
+              <td
+                className="space-x-1 px-3 py-2 w-24 border-x border-gray-700"
+                rowSpan={rowCount}
+              >
+                <button
+                  className="px-2 py-1 rounded-md hover:bg-gray-700"
+                  onClick={onEdit}
+                >
+                  <FontAwesomeIcon icon={{ prefix: 'fas', iconName: 'edit' }} />
+                </button>
+                <button
+                  className="px-2 py-1 rounded-md hover:bg-gray-700"
+                  onClick={onDelete}
+                >
+                  <FontAwesomeIcon
+                    icon={{ prefix: 'fas', iconName: 'trash' }}
+                  />
+                </button>
+              </td>
+            )}
+          </tr>
+        ))}
+      </>
     );
   };
   const [original, setOriginal] = useState('');
@@ -238,10 +340,10 @@ const PageContent = () => {
   const [platform, setPlatform] = useState<string | null>(null);
   const [problemID, setProblemID] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [hints, setHints] = useState<string[]>([]);
-  const [hintText, setHintText] = useState('');
-  const [onSaveHint, setOnSaveHint] = useState<(text: string) => void>(
-    () => (_: string) => {}
+  const [hints, setHints] = useState<Hint[]>([]);
+  const [editedHint, setEditedHint] = useState<Hint>('');
+  const [onSaveHint, setOnSaveHint] = useState<() => (h: Hint) => void>(
+    () => _ => {}
   );
   const [unsaved, setUnsaved] = useState(false);
   const [language, setLanguage] = useState('-');
@@ -366,15 +468,24 @@ const PageContent = () => {
             language
           )
         : doc(getFirestore(), 'problemsets', platform, 'problems', problemID);
-    await setDoc(problemDoc, { statement: translated, hints: hints });
+
+    const newData = {
+      statement: translated,
+      hints,
+    };
+    if (language === '-') {
+      await updateDoc(problemDoc, newData);
+    } else {
+      await setDoc(problemDoc, newData);
+    }
     setUnsaved(false);
   };
 
   const handleAddNewHint = () => {
-    setHintText('');
-    setOnSaveHint((_: any) => (text: string) => {
+    setEditedHint('');
+    setOnSaveHint(() => (h: Hint) => {
       setUnsaved(true);
-      setHints(prev => [...prev, text]);
+      setHints(prev => [...prev, h]);
     });
     setIsOpen(true);
   };
@@ -411,8 +522,8 @@ const PageContent = () => {
       </div>
       <EditHintModal
         isOpen={isOpen}
-        text={hintText}
-        setText={setHintText}
+        hint={editedHint}
+        setHint={setEditedHint}
         onSave={onSaveHint}
         onClose={() => setIsOpen(false)}
       />
@@ -426,8 +537,8 @@ const PageContent = () => {
           unsaved={unsaved}
         />
       </div>
-      <div className="border border-gray-600 bg-gray-800 mt-2 flex flex-col">
-        <div className="flex items-center justify-between bg-gray-800 px-3 py-2 border-b border-gray-600 text-sm space-x-2">
+      <div className="bg-gray-800 mt-2 flex flex-col">
+        <div className="border border-gray-600 flex items-center justify-between bg-gray-800 px-3 py-2 border-b text-sm space-x-2">
           <span className="font-bold">Hints</span>
           <button
             className="rounded-md border border-gray-600 px-2 py-1 hover:bg-gray-700 active:bg-gray-600"
@@ -440,32 +551,42 @@ const PageContent = () => {
             />
           </button>
         </div>
-        <div className="max-h-[16rem] overflow-y-auto divide-y divide-gray-700 text-sm">
-          {hints.length === 0 && <div className="bg-gray-900 h-6"></div>}
-          {hints.map((hint: string, index: number) => (
-            <Hint
-              text={hint}
-              key={index}
-              onDelete={() => {
-                setUnsaved(true);
-                setHints(prev => {
-                  return prev.filter((_, ind) => ind !== index);
-                });
-              }}
-              onEdit={() => {
-                setHintText(hint);
-                setOnSaveHint(
-                  (_: any) => (text: string) =>
-                    setHints(prev => {
+        <div className="max-h-[16rem] border-b border-gray-700 overflow-auto">
+          <table className="text-sm bg-gray-900 border-collapse">
+            <tbody className="divide-y divide-gray-700">
+              {hints.map((hint: Hint, index: number) => (
+                <Hint
+                  hint={hint}
+                  hintNum={index + 1}
+                  key={index}
+                  onDelete={() => {
+                    if (
+                      confirm(
+                        'The hint will be deleted. Do you want to proceed?'
+                      )
+                    ) {
                       setUnsaved(true);
-                      prev[index] = text;
-                      return prev;
-                    })
-                );
-                setIsOpen(true);
-              }}
-            />
-          ))}
+                      setHints(prev => {
+                        return prev.filter((_, ind) => ind !== index);
+                      });
+                    }
+                  }}
+                  onEdit={() => {
+                    setEditedHint(hint);
+                    setOnSaveHint(
+                      () => (h: Hint) =>
+                        setHints(prev => {
+                          setUnsaved(true);
+                          prev[index] = h;
+                          return prev;
+                        })
+                    );
+                    setIsOpen(true);
+                  }}
+                />
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
       <div className="p-4 border border-gray-600 bg-gray-800 mt-2 space-x-2 text-[0.95rem]">

@@ -17,6 +17,10 @@ export type Platform =
   | 'usaco'
   | 'planets';
 
+export type Language = 'cpp' | 'py' | 'java';
+
+export type Hint = string | Partial<Record<Language, string>>;
+
 export type ProblemData = {
   id: string;
   submittable: boolean;
@@ -30,14 +34,14 @@ export type ProblemData = {
   timeLimit?: string;
   memoryLimit?: string;
   samples: Sample[];
-  hints?: string[];
+  hints: Hint[];
 };
 
 export type ProblemSolution = {
   problemID: string;
   platform: Platform;
   sourceCode: string;
-  language: 'cpp' | 'java' | 'py';
+  language: Language;
 };
 
 export type SubmissionData = {
@@ -79,5 +83,5 @@ export interface TestCase {
 
 export type Translation = {
   statement: string;
-  hints: string[];
+  hints: Hint[];
 };

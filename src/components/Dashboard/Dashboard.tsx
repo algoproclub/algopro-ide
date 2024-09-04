@@ -175,8 +175,8 @@ const RecentTab = ({
       <div className="text-gray-100 px-3.5 py-3">
         <Checkbox
           label="Show hidden files"
-          enabled={showHidden}
-          toggleEnabled={toggleShowHidden}
+          checked={showHidden}
+          toggleChecked={toggleShowHidden}
         />
       </div>
       {files && <FilesList files={files} showPerms={false} />}
