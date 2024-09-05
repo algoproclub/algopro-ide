@@ -17,8 +17,8 @@ const Solutions = ({
   const languages = Object.keys(solutions);
   return (
     <>
-      {problem.platform === 'cses' && (
-        <div className="border-b border-[#363636] -mx-4 px-4 pb-4 mb-4 space-y-1.5">
+      {problem.platform === 'planets' && problem.topicID && (
+        <div className="border-b border-[#363636] -mx-4 px-4 pb-4 mb-4 space-y-2">
           <Link
             href={`https://planets.algopro.hu/map#${problem.topicID}`}
             target="_blank"
@@ -32,9 +32,9 @@ const Solutions = ({
               <span className="text-center flex-1">Back to the planet</span>
             </button>
           </Link>
-          <p className="text-gray-400 text-sm">
+          <div className="text-gray-400 text-sm">
             You can see the task on the roadmap, and the next steps.
-          </p>
+          </div>
         </div>
       )}
       <div className="flex items-end space-x-3">
