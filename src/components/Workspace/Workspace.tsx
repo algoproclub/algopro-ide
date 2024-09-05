@@ -162,7 +162,7 @@ export default function Workspace({
       (snapshot: DataSnapshot) => {
         const initSolved = snapshot.val();
         setSolved(initSolved);
-        if (!initSolved) {
+        if (!initSolved && Object.keys(solutions).length > 0) {
           onValue(
             ref(db, `files/${fileData.id}/solvedStatus/solved`),
             (snapshot: DataSnapshot) => {

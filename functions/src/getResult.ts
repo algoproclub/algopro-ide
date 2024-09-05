@@ -100,10 +100,17 @@ export class PlanetsResultFetcher extends ResultFetcher {
     if (!snapshot.exists) {
       throw new IncorrectDataError('Planets: submission ID not found');
     }
+    const parseMemory = (x: string) => parseInt(x.slice(0, x.length - 1));
     const result = snapshot.data()!;
     const statusCode = this.mapVerdictToStatusCode(result.verdict);
-    const memory = Math.max(...result.test_results?.map((t: any) => t.memory));
-    const time = Math.max(...result.test_results?.map((t: any) => t.time));
+    const memory = Math.max(
+      ...(result.test_results ?? []).map((t: any) => parseMemory(t.memory))
+    );
+    const time = Math.max(
+      ...(result.test_results ?? []).map((t: any) => t.time)
+    );
+    const output = result.compiler_output;
+
     this.resultData = {
       link: null,
       memory: Number.isFinite(memory)
@@ -113,7 +120,7 @@ export class PlanetsResultFetcher extends ResultFetcher {
       statusText: statusCode === 'working' ? 'status-working' : 'status-done',
       message: this.mapVerdictToTitle(result.verdict),
       statusCode: statusCode,
-      output: result.compiler_output ?? '',
+      output: statusCode === 'resolved' ? output ?? '' : '',
       testCases:
         result.test_results == undefined
           ? []
@@ -121,7 +128,7 @@ export class PlanetsResultFetcher extends ResultFetcher {
               title: this.mapVerdictToTitle(t.verdict),
               trialNum: t.index,
               symbol: this.mapVerdictToSymbol(t.verdict),
-              memory: Math.round(t.memory / 10000) / 100 + ' MB',
+              memory: Math.round(parseMemory(t.memory) / 10000) / 100 + ' MB',
               time: Math.round(t.time / 1000000) + ' ms',
             })),
     };

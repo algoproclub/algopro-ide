@@ -437,9 +437,9 @@ export class PlanetsSubmitter extends Submitter {
   authorization: string;
 
   constructor(authorization: string) {
+    super();
     if (!authorization)
       throw new Error('attempt to submit to planets without logging in');
-    super();
     this.authorization = authorization;
   }
 
@@ -477,6 +477,11 @@ export class PlanetsSubmitter extends Submitter {
           (await res.json()).error.message
       );
     }
-    return await res.json();
+    const data = await res.json();
+    return {
+      id: data.result.id,
+      username: null,
+      platform: 'planets',
+    } as const;
   }
 }
