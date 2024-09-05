@@ -158,10 +158,6 @@ export default function Workspace({
   }, [fileData.problem?.platform]);
 
   useEffect(() => {
-    console.log('Translations: ', translations);
-  }, [translations]);
-
-  useEffect(() => {
     get(ref(db, `files/${fileData.id}/solvedStatus/solved`)).then(
       (snapshot: DataSnapshot) => {
         const initSolved = snapshot.val();

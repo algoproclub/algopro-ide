@@ -109,7 +109,6 @@ export default function GenericJudgeInterface({
   setLanguage: React.Dispatch<React.SetStateAction<string>>;
 }): JSX.Element {
   const languages = Object.keys(translations);
-  console.log(translations);
 
   return (
     <div className="relative h-full flex flex-col text-[0.92rem]">
