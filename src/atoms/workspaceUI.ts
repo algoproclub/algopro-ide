@@ -10,6 +10,7 @@ export const statusDataAtom = atom<StatusData | null>(null);
 export const solvedAtom = atom<boolean>(false);
 export const translationsAtom = atom<Record<string, Translation>>({});
 export const solutionsAtom = atom<Record<string, string>>({});
+export const languageAtom = atom<string>('en');
 export const tabsListAtom = atom(get => {
   const getSamplesList = (length: number) => {
     const res = [];
@@ -26,11 +27,12 @@ export const tabsListAtom = atom(get => {
   const translations = get(translationsAtom);
   const solutions = get(solutionsAtom);
   const solved = get(solvedAtom);
+  const language = get(languageAtom);
 
   return [
     { label: 'Input', value: 'input' },
     ...(problem ? [{ label: 'Task Overview', value: 'judge' }] : []),
-    ...(problem && getHints(problem, translations).length > 0
+    ...(problem && translations && getHints(translations, language).length > 0
       ? [{ label: 'Hints', value: 'hints' }]
       : []),
     ...(problem?.samples.length && problem?.samples[0].output

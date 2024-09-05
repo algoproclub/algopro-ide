@@ -1,5 +1,5 @@
 import { EllipsisHorizontalIcon } from '@heroicons/react/20/solid';
-import { useAtomValue, useUpdateAtom } from 'jotai/utils';
+import { useSetAtom, useAtomValue } from 'jotai';
 import classNames from 'classnames';
 import { useAtom } from 'jotai';
 import React, { useEffect, useState } from 'react';
@@ -13,6 +13,7 @@ import {
 import {
   inputTabAtom,
   inputTabIndexAtom,
+  languageAtom,
   mobileActiveTabAtom,
   problemAtom,
   showSidebarAtom,
@@ -64,10 +65,18 @@ import { CodeEditor } from '../editor/CodeEditor';
 import Solutions from '../JudgeInterface/Solutions';
 
 export function getHints(
-  problem: ProblemData,
-  translations: Record<string, Translation>
+  translations: Record<string, Translation>,
+  language: string
 ) {
-  return 'hu' in translations ? translations['hu'].hints : problem.hints ?? [];
+  const firstNonEmpty = <T,>(...arrays: T[][]): T[] =>
+    arrays.find(arr => Array.isArray(arr) && arr.length > 0) || [];
+
+  return firstNonEmpty(
+    translations[language]?.hints,
+    translations['en']?.hints,
+    translations['hu']?.hints,
+    []
+  );
 }
 
 export default function Workspace({
@@ -78,20 +87,20 @@ export default function Workspace({
   tabsList: { label: string; value: string }[];
 }): JSX.Element {
   const { fileData } = useEditorContext();
-  const layoutEditors = useUpdateAtom(layoutEditorsAtom);
+  const layoutEditors = useSetAtom(layoutEditorsAtom);
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
   const mobileActiveTab = useAtomValue(mobileActiveTabAtom);
   const showSidebar = useAtomValue(showSidebarAtom);
-  const setInputEditor = useUpdateAtom(inputMonacoEditorAtom);
-  const setCodemirrorInputEditor = useUpdateAtom(inputCodemirrorEditorAtom);
-  const setOutputEditor = useUpdateAtom(outputMonacoEditorAtom);
+  const setInputEditor = useSetAtom(inputMonacoEditorAtom);
+  const setCodemirrorInputEditor = useSetAtom(inputCodemirrorEditorAtom);
+  const setOutputEditor = useSetAtom(outputMonacoEditorAtom);
   const [inputTab, setInputTab] = useAtom(inputTabAtom);
   const [problem, setProblem] = useAtom(problemAtom);
   const [translations, setTranslations] = useAtom(translationsAtom);
   const [solutions, setSolutions] = useAtom(solutionsAtom);
-  const [solved, setSolved] = useAtom(solvedAtom);
+  const setSolved = useSetAtom(solvedAtom);
   const [statusData, setStatusData] = useAtom(statusDataAtom);
-  const [language, setLanguage] = React.useState('en');
+  const [language, setLanguage] = useAtom(languageAtom);
 
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
@@ -130,15 +139,27 @@ export default function Workspace({
       setProblem(problemData);
       if (problemData) {
         setInputTab('judge');
-        setTranslations(
-          await fetchTranslationsFromDb(fileData.problem as PlatformProblem)
+        const translations = await fetchTranslationsFromDb(
+          fileData.problem as PlatformProblem
         );
+        if (problemData?.statement) {
+          translations['en'] ??= {
+            statement: problemData.statement,
+            hints: problemData.hints ?? [],
+          };
+        }
+        setTranslations(translations);
         setSolutions(
           await fetchSolutionsFromDb(fileData.problem as PlatformProblem)
         );
+        setLanguage('hu' in translations ? 'hu' : 'en');
       }
     })();
   }, [fileData.problem?.platform]);
+
+  useEffect(() => {
+    console.log('Translations: ', translations);
+  }, [translations]);
 
   useEffect(() => {
     get(ref(db, `files/${fileData.id}/solvedStatus/solved`)).then(
@@ -250,6 +271,7 @@ export default function Workspace({
               {problem?.id === fileData.problem?.id &&
                 inputTab === 'judge' &&
                 problem &&
+                Object.keys(translations).length > 0 &&
                 (problem.platform !== 'usaco' ? (
                   <GenericJudgeInterface
                     problem={problem}
@@ -267,9 +289,8 @@ export default function Workspace({
                 ))}
               {problem?.id === fileData.problem?.id &&
                 inputTab === 'hints' &&
-                problem &&
                 translations && (
-                  <Hints hints={getHints(problem, translations)} />
+                  <Hints hints={getHints(translations, language)} />
                 )}
               {problem?.id === fileData.problem?.id &&
                 inputTab.startsWith('Sample') &&

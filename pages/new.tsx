@@ -66,7 +66,7 @@ export default function NewFilePage() {
       va.track('Create File', { type: 'new-file' });
       update(ref(getDatabase(), `users/${firebaseUser.uid}/data`), {
         defaultLanguage: lang,
-        defaultPermission: defaultPerimssion,
+        defaultPermission: 'READ_WRITE',
       });
       const resp = await fetch(`/api/createNewFile`, {
         method: 'POST',

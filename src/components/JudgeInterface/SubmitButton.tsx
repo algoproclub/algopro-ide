@@ -82,14 +82,14 @@ const SolvedStatusModal = ({
               <div className="p-4 sm:p-6 space-y-6">
                 <div className="space-y-1">
                   <Checkbox
-                    enabled={solvedInTheory ?? false}
+                    checked={solvedInTheory ?? false}
                     label="Solved in theory"
-                    toggleEnabled={() => setSolvedInTheory(val => !val)}
+                    toggleChecked={() => setSolvedInTheory(val => !val)}
                   />
                   <Checkbox
-                    enabled={alreadyKnew ?? false}
+                    checked={alreadyKnew ?? false}
                     label="Already knew"
-                    toggleEnabled={() => setAlreadyKnew(val => !val)}
+                    toggleChecked={() => setAlreadyKnew(val => !val)}
                   />
                 </div>
                 <div className="flex items-center space-x-2.5">

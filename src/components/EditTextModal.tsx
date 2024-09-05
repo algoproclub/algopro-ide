@@ -2,7 +2,7 @@ import React, { Fragment, KeyboardEventHandler } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
-const EditTextModal = ({
+export const EditTextModal = ({
   isOpen,
   title,
   text,
@@ -17,21 +17,6 @@ const EditTextModal = ({
   onClose: () => void;
   children: JSX.Element;
 }) => {
-  const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = event => {
-    if (event.key === 'Tab') {
-      event.preventDefault();
-
-      const textarea = event.target as HTMLTextAreaElement;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-
-      textarea.value =
-        textarea.value.substring(0, start) +
-        '\t' +
-        textarea.value.substring(end);
-      textarea.setSelectionRange(start + '\t'.length, start + '\t'.length);
-    }
-  };
   return (
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog
@@ -72,7 +57,7 @@ const EditTextModal = ({
                 </Dialog.Title>
               </div>
               <div className="p-4 sm:p-6 space-y-6">
-                {children}
+                <div>{children}</div>
                 <div className="flex items-center space-x-2.5">
                   <button
                     type="button"
@@ -111,6 +96,22 @@ const EditTextModal = ({
   );
 };
 
+export const handleKeyDown: KeyboardEventHandler<
+  HTMLTextAreaElement
+> = event => {
+  if (event.key === 'Tab') {
+    event.preventDefault();
+
+    const textarea = event.target as HTMLTextAreaElement;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    textarea.value =
+      textarea.value.substring(0, start) + '\t' + textarea.value.substring(end);
+    textarea.setSelectionRange(start + '\t'.length, start + '\t'.length);
+  }
+};
+
 export const EditTextAreaModal = ({
   isOpen,
   text,
@@ -122,25 +123,10 @@ export const EditTextAreaModal = ({
   isOpen: boolean;
   text: string;
   title: string;
-  setText: React.Dispatch<React.SetStateAction<string>>;
+  setText: (text: string) => void;
   onSave: (text: string) => void;
   onClose: () => void;
 }) => {
-  const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = event => {
-    if (event.key === 'Tab') {
-      event.preventDefault();
-
-      const textarea = event.target as HTMLTextAreaElement;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-
-      textarea.value =
-        textarea.value.substring(0, start) +
-        '\t' +
-        textarea.value.substring(end);
-      textarea.setSelectionRange(start + '\t'.length, start + '\t'.length);
-    }
-  };
   return (
     <EditTextModal
       isOpen={isOpen}
