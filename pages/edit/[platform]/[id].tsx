@@ -310,7 +310,7 @@ const PageContent = () => {
             </td>
             {i === 0 && (
               <td
-                className="space-x-1 px-3 py-2 w-24 border-x border-gray-700"
+                className="space-x-1 px-3 py-2 w-[5.5rem] border-x border-gray-700"
                 rowSpan={rowCount}
               >
                 <button
@@ -552,7 +552,7 @@ const PageContent = () => {
           </button>
         </div>
         <div className="max-h-[16rem] border-b border-gray-700 overflow-auto">
-          <table className="text-sm bg-gray-900 border-collapse">
+          <table className="text-sm bg-gray-900 border-collapse w-full">
             <tbody className="divide-y divide-gray-700">
               {hints.map((hint: Hint, index: number) => (
                 <Hint
