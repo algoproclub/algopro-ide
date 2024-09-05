@@ -17,6 +17,8 @@ import {
   mobileActiveTabAtom,
   problemAtom,
   showSidebarAtom,
+  solutionsAtom,
+  solvedAtom,
   statusDataAtom,
   translationsAtom,
 } from '../../atoms/workspaceUI';
@@ -42,6 +44,7 @@ import {
   off,
   ref,
   update,
+  get,
 } from 'firebase/database';
 import LoadResultsModal from '../JudgeInterface/LoadResultsModal';
 import {
@@ -53,9 +56,13 @@ import {
 } from '../../types/problem';
 import {
   fetchProblemFromDb,
+  fetchSolutionsFromDb,
   fetchTranslationsFromDb,
 } from '../../scripts/fetchProblemFromDb';
 import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
+import Dropdown from '../Dropdown';
+import { CodeEditor } from '../editor/CodeEditor';
+import Solutions from '../JudgeInterface/Solutions';
 
 export function getHints(
   translations: Record<string, Translation>,
@@ -90,6 +97,8 @@ export default function Workspace({
   const [inputTab, setInputTab] = useAtom(inputTabAtom);
   const [problem, setProblem] = useAtom(problemAtom);
   const [translations, setTranslations] = useAtom(translationsAtom);
+  const [solutions, setSolutions] = useAtom(solutionsAtom);
+  const setSolved = useSetAtom(solvedAtom);
   const [statusData, setStatusData] = useAtom(statusDataAtom);
   const [language, setLanguage] = useAtom(languageAtom);
 
@@ -133,8 +142,6 @@ export default function Workspace({
         const translations = await fetchTranslationsFromDb(
           fileData.problem as PlatformProblem
         );
-
-        // TODO: Move the original text under translations
         if (problemData?.statement) {
           translations['en'] ??= {
             statement: problemData.statement,
@@ -142,10 +149,34 @@ export default function Workspace({
           };
         }
         setTranslations(translations);
+        setSolutions(
+          await fetchSolutionsFromDb(fileData.problem as PlatformProblem)
+        );
         setLanguage('hu' in translations ? 'hu' : 'en');
       }
     })();
   }, [fileData.problem?.platform]);
+
+  useEffect(() => {
+    get(ref(db, `files/${fileData.id}/solvedStatus/solved`)).then(
+      (snapshot: DataSnapshot) => {
+        const initSolved = snapshot.val();
+        setSolved(initSolved);
+        if (!initSolved) {
+          onValue(
+            ref(db, `files/${fileData.id}/solvedStatus/solved`),
+            (snapshot: DataSnapshot) => {
+              setSolved(snapshot.val());
+              setInputTab('solutions');
+            }
+          );
+        }
+      }
+    );
+    return () => {
+      off(ref(db, `files/${fileData.id}/solvedStatus/solved`));
+    };
+  }, []);
 
   useEffect(() => {
     onValue(
@@ -161,6 +192,10 @@ export default function Workspace({
 
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
   const { lightMode } = useUserContext().userData;
+
+  useEffect(() => {
+    setLanguage('hu' in translations ? 'hu' : 'en');
+  }, [translations]);
 
   return (
     <Split
@@ -232,7 +267,7 @@ export default function Workspace({
               {problem?.id === fileData.problem?.id &&
                 inputTab === 'judge' &&
                 problem &&
-                translations &&
+                Object.keys(translations).length > 0 &&
                 (problem.platform !== 'usaco' ? (
                   <GenericJudgeInterface
                     problem={problem}
@@ -263,6 +298,15 @@ export default function Workspace({
                         inputTab={inputTab}
                         handleRunCode={handleRunCode}
                       />
+                    </div>
+                  </div>
+                )}
+              {problem?.id === fileData.problem?.id &&
+                inputTab === 'solutions' &&
+                problem && (
+                  <div className="overflow-y-hidden h-full">
+                    <div className="p-4 pb-0 relative h-full">
+                      <Solutions problem={problem} solutions={solutions} />
                     </div>
                   </div>
                 )}

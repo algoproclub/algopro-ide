@@ -35,6 +35,7 @@ export type ProblemData = {
   memoryLimit?: string;
   samples: Sample[];
   hints?: Hint[];
+  topicID?: string;
 };
 
 export type ProblemSolution = {

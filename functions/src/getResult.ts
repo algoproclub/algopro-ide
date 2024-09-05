@@ -111,7 +111,7 @@ export class PlanetsResultFetcher extends ResultFetcher {
         : null,
       time: Number.isFinite(time) ? Math.round(time / 1000000) + ' ms' : null,
       statusText: statusCode === 'working' ? 'status-working' : 'status-done',
-      message: result.verdict,
+      message: this.mapVerdictToTitle(result.verdict),
       statusCode: statusCode,
       output: result.compiler_output ?? '',
       testCases:

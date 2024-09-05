@@ -40,3 +40,23 @@ export async function fetchTranslationsFromDb(
     ])
   );
 }
+
+export async function fetchSolutionsFromDb(
+  problem: PlatformProblem
+): Promise<Record<string, string>> {
+  const collectionRef = collection(
+    getFirestore(),
+    'problemsets',
+    problem.platform,
+    'problems',
+    problem.id,
+    'solutions'
+  );
+
+  return Object.fromEntries(
+    (await getDocs(collectionRef)).docs.map(doc => [
+      doc.id,
+      doc.data().content as string,
+    ])
+  );
+}
