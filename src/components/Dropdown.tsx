@@ -12,7 +12,7 @@ const Dropdown = ({
   label: string;
   selected: number;
   setSelected: (_: number) => void;
-  disabled: boolean;
+  disabled?: boolean;
 }) => {
   return (
     <div className="relative w-full min-w-0">
