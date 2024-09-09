@@ -17,7 +17,7 @@ const Solutions = ({
   const languages = Object.keys(solutions);
   return (
     <>
-      {problem.platform === 'cses' && (
+      {problem.platform === 'planets' && (
         <div className="border-b border-[#363636] -mx-4 px-4 pb-4 mb-4 space-y-2">
           <Link
             href={`https://planets.algopro.hu/map#${problem.topicID}`}
