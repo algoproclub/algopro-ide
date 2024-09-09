@@ -63,6 +63,7 @@ import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
 import Dropdown from '../Dropdown';
 import { CodeEditor } from '../editor/CodeEditor';
 import Solutions from '../JudgeInterface/Solutions';
+import { doc, getDoc, getFirestore, onSnapshot } from 'firebase/firestore';
 
 export function getHints(
   translations: Record<string, Translation>,
@@ -87,6 +88,7 @@ export default function Workspace({
   tabsList: { label: string; value: string }[];
 }): JSX.Element {
   const { fileData } = useEditorContext();
+  const { userData } = useUserContext();
   const layoutEditors = useSetAtom(layoutEditorsAtom);
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
   const mobileActiveTab = useAtomValue(mobileActiveTabAtom);
@@ -98,7 +100,7 @@ export default function Workspace({
   const [problem, setProblem] = useAtom(problemAtom);
   const [translations, setTranslations] = useAtom(translationsAtom);
   const [solutions, setSolutions] = useAtom(solutionsAtom);
-  const setSolved = useSetAtom(solvedAtom);
+  const [solved, setSolved] = useAtom(solvedAtom);
   const [statusData, setStatusData] = useAtom(statusDataAtom);
   const [language, setLanguage] = useAtom(languageAtom);
 
@@ -149,34 +151,35 @@ export default function Workspace({
           };
         }
         setTranslations(translations);
-        setSolutions(
-          await fetchSolutionsFromDb(fileData.problem as PlatformProblem)
-        );
+        try {
+          setSolutions(
+            await fetchSolutionsFromDb(fileData.problem as PlatformProblem)
+          );
+        } catch (e) {
+          console.error(e);
+        }
         setLanguage('hu' in translations ? 'hu' : 'en');
       }
     })();
-  }, [fileData.problem?.platform]);
+  }, [fileData.problem?.platform, solved]);
 
   useEffect(() => {
-    get(ref(db, `files/${fileData.id}/solvedStatus/solved`)).then(
-      (snapshot: DataSnapshot) => {
-        const initSolved = snapshot.val();
-        setSolved(initSolved);
-        if (!initSolved && Object.keys(solutions).length > 0) {
-          onValue(
-            ref(db, `files/${fileData.id}/solvedStatus/solved`),
-            (snapshot: DataSnapshot) => {
-              setSolved(snapshot.val());
-              setInputTab('solutions');
-            }
-          );
-        }
+    if (!fileData.problem) {
+      return;
+    }
+    const unsubscribe = onSnapshot(
+      doc(
+        getFirestore(),
+        `problemsets/${fileData.problem?.platform}/problems/${fileData.problem?.id}/solvedStatus/${userData.id}`
+      ),
+      doc => {
+        setSolved(doc.data()?.solved);
       }
     );
     return () => {
-      off(ref(db, `files/${fileData.id}/solvedStatus/solved`));
+      unsubscribe();
     };
-  }, []);
+  }, [fileData.problem]);
 
   useEffect(() => {
     onValue(

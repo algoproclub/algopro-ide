@@ -39,7 +39,7 @@ export const tabsListAtom = atom(get => {
       ? getSamplesList(problem.samples.length)
       : []),
     ...(solved &&
-    (Object.keys(solutions).length > 0 || problem?.platform === 'planets')
+    (Object.keys(solutions).length > 0 || problem?.platform === 'cses')
       ? [{ label: 'Solutions', value: 'solutions' }]
       : []),
   ];

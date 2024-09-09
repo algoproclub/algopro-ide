@@ -17,7 +17,7 @@ const Solutions = ({
   const languages = Object.keys(solutions);
   return (
     <>
-      {problem.platform === 'planets' && problem.topicID && (
+      {problem.platform === 'cses' && (
         <div className="border-b border-[#363636] -mx-4 px-4 pb-4 mb-4 space-y-2">
           <Link
             href={`https://planets.algopro.hu/map#${problem.topicID}`}
@@ -37,31 +37,35 @@ const Solutions = ({
           </div>
         </div>
       )}
-      <div className="flex items-end space-x-3">
-        <Dropdown
-          items={languages}
-          label="Language"
-          selected={selected}
-          setSelected={(k: number) => setSelected(k)}
-        />
-        <Link href="#" target="_blank">
-          <button className="px-4 py-2.5 bg-indigo-900 hover:bg-indigo-800 active:bg-indigo-700 rounded-md text-sm font-medium w-20">
-            Visit
-          </button>
-        </Link>
-      </div>
-      <div className="h-full mt-4 -mx-4 border-y border-gray-700">
-        <CodeEditor
-          value={solutions[languages[selected]]}
-          language={languages[selected]}
-          options={{
-            readOnly: true,
-            wordWrap: 'on',
-            automaticLayout: true,
-            minimap: { enabled: false },
-          }}
-        />
-      </div>
+      {Object.keys(solutions).length > 0 && (
+        <>
+          <div className="flex items-end space-x-3">
+            <Dropdown
+              items={languages}
+              label="Language"
+              selected={selected}
+              setSelected={(k: number) => setSelected(k)}
+            />
+            <Link href="#" target="_blank">
+              <button className="px-4 py-2.5 bg-indigo-900 hover:bg-indigo-800 active:bg-indigo-700 rounded-md text-sm font-medium w-20">
+                Visit
+              </button>
+            </Link>
+          </div>
+          <div className="h-full mt-4 -mx-4 border-y border-gray-700">
+            <CodeEditor
+              value={solutions[languages[selected]]}
+              language={languages[selected]}
+              options={{
+                readOnly: true,
+                wordWrap: 'on',
+                automaticLayout: true,
+                minimap: { enabled: false },
+              }}
+            />
+          </div>
+        </>
+      )}
     </>
   );
 };

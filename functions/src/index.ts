@@ -1,6 +1,6 @@
 import { defineString } from 'firebase-functions/params';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { logger } from 'firebase-functions';
+import { Change, logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import {
   FileSubmission,
@@ -21,9 +21,11 @@ import {
 } from './getResult';
 import { PendingSubmissions, AccountData, SubmissionData } from './types';
 import {
+  DatabaseEvent,
   onValueCreated,
   onValueDeleted,
   onValueUpdated,
+  onValueWritten,
 } from 'firebase-functions/v2/database';
 
 import { randomUUID } from 'crypto';
@@ -36,6 +38,10 @@ import {
   Submitter,
 } from './submit';
 import { JSDOM } from 'jsdom';
+import { ParamsOf } from 'firebase-functions/lib/common/params';
+import { database } from 'firebase-admin';
+import DataSnapshot = database.DataSnapshot;
+import { getFirestore } from 'firebase-admin/firestore';
 
 require('dotenv').config({ path: '.env.local' });
 
@@ -449,6 +455,30 @@ const updateStatus = async () => {
   }
 };
 
+const handleSolve = async (
+  event: DatabaseEvent<
+    Change<DataSnapshot>,
+    ParamsOf<'files/{fileID}/solvedStatus/solved'>
+  >
+) => {
+  const fileID = event.params.fileID;
+  const userID = Object.entries(
+    (await db.ref(`files/${fileID}/users`).get()).val()
+  )
+    .find(([_, v]: [string, any]) => {
+      return v.permission === 'OWNER';
+    })
+    ?.at(0);
+  const { platform, id } = (
+    await db.ref(`files/${fileID}/problem`).get()
+  ).val();
+  await getFirestore()
+    .doc(`problemsets/${platform}/problems/${id}/solvedStatus/${userID}`)
+    .set({
+      solved: event.data.after.val(),
+    });
+};
+
 const region = process.env.IS_TEST_ENV ? 'us-central1' : 'europe-west1';
 
 exports.onlockdeleted = onValueDeleted(
@@ -462,4 +492,8 @@ exports.onpendingcreated = onValueCreated(
 exports.onpendingupdated = onValueUpdated(
   { ref: 'submissions/pending', region },
   updateStatus
+);
+exports.onsolve = onValueWritten(
+  { ref: 'files/{fileID}/solvedStatus/solved', region },
+  handleSolve
 );

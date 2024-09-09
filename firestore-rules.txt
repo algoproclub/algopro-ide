@@ -2,7 +2,10 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
+    function canReadSolution(problemset, problem, userID) {
+      return exists(/databases/$(database)/documents/problemsets/$(problemset)/problems/$(problem)/solvedStatus/$(userID)) &&
+             get(/databases/$(database)/documents/problemsets/$(problemset)/problems/$(problem)/solvedStatus/$(userID)).data.solved == true;
+    }
     // TODO: update with proper rules
     match /problemsets/{problemset}/problems/{problem} {
       allow read: if true;
@@ -11,6 +14,13 @@ service cloud.firestore {
       match /translations/{translation} {
         allow read: if true;
         allow write: if request.auth.token.teacher == true;
+      }
+      match /solutions/{solution} {
+        allow read: if canReadSolution(problemset, problem, request.auth.uid) || request.auth.token.teacher == true;
+        allow write: if request.auth.token.teacher == true;
+      }
+      match /solvedStatus/{userid} {
+        allow read: if request.auth.uid == userid || request.auth.token.teacher == true;
       }
     }
 
