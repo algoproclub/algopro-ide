@@ -160,7 +160,7 @@ export default function Workspace({
   useEffect(() => {
     get(ref(db, `files/${fileData.id}/solvedStatus/solved`)).then(
       (snapshot: DataSnapshot) => {
-        const initSolved = snapshot.val();
+        const initSolved = snapshot.val() ?? false;
         setSolved(initSolved);
         if (!initSolved && Object.keys(solutions).length > 0) {
           onValue(
@@ -176,7 +176,7 @@ export default function Workspace({
     return () => {
       off(ref(db, `files/${fileData.id}/solvedStatus/solved`));
     };
-  }, []);
+  }, [solutions]);
 
   useEffect(() => {
     onValue(
