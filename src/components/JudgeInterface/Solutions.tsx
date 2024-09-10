@@ -1,9 +1,10 @@
 import Dropdown from '../Dropdown';
 import { CodeEditor } from '../editor/CodeEditor';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ProblemData } from '../../types/problem';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useEditorContext } from '../../context/EditorContext';
 
 const Solutions = ({
   problem,
@@ -12,8 +13,19 @@ const Solutions = ({
   problem: ProblemData;
   solutions: Record<string, string>;
 }) => {
-  const [selected, setSelected] = useState(0);
+  const { fileData } = useEditorContext();
   const languages = Object.keys(solutions);
+  const [selected, setSelected] = useState(0);
+
+  useEffect(() => {
+    if (fileData) {
+      const index = languages.findIndex(x => x == fileData.settings.language);
+      if (index !== -1) {
+        setSelected(index);
+      }
+    }
+  }, [fileData]);
+
   return (
     <>
       <div className="border-b border-[#363636] -mx-4 px-4 pb-4 mb-4 space-y-2">
