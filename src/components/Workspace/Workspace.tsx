@@ -166,8 +166,10 @@ export default function Workspace({
           onValue(
             ref(db, `files/${fileData.id}/solvedStatus/solved`),
             (snapshot: DataSnapshot) => {
-              setSolved(snapshot.val());
-              setInputTab('solutions');
+              if (snapshot.val()) {
+                setSolved(snapshot.val());
+                setInputTab('solutions');
+              }
             }
           );
         }
