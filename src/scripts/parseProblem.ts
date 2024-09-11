@@ -7,6 +7,7 @@ export const parseProblem = (url: string): URLProblem => {
   const rAtCoder = /atcoder.jp\/contests\/[A-Za-z0-9]+\/tasks\/([A-Za-z0-9_]+)/;
   const rCSES = /cses.fi\/problemset\/task\/([0-9]+)/;
   const rSPOJ = /spoj.com\/problems\/([A-Z0-9]+)/;
+  const rPlanets = /planets.algopro.hu\/taskoverview\/([0-9a-z_]+)/;
 
   let platformProblem: PlatformProblem | null = null;
   if (rCodeforces1.test(url)) {
@@ -37,6 +38,12 @@ export const parseProblem = (url: string): URLProblem => {
     platformProblem = {
       platform: 'spoj',
       id: url.match(rSPOJ)!.at(1)!,
+    };
+  }
+  if (rPlanets.test(url)) {
+    platformProblem = {
+      platform: 'planets',
+      id: url.match(rPlanets)!.at(1)!,
     };
   }
   if (!platformProblem) {

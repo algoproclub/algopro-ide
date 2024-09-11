@@ -10,6 +10,8 @@ export const getPlatformName = (platform: Platform) => {
       return 'CSES';
     case 'spoj':
       return 'SPOJ';
+    case 'planets':
+      return 'Planets';
   }
   return 'Unknown';
 };
