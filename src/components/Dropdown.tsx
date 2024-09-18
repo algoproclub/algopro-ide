@@ -38,7 +38,7 @@ const Dropdown = ({
               >
                 {!disabled ? items[selected] ?? '-' : '-'}
               </Listbox.Button>
-              <div className="w-full text-sm relative z-20">
+              <div className="w-full text-sm relative z-50">
                 <Transition
                   enter="transition duration-100 ease-out"
                   enterFrom="transform scale-95 opacity-0"
