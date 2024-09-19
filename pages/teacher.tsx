@@ -379,14 +379,14 @@ const GroupData = ({
       <table className="table-auto data-table text-sm w-full !border-separate !border-spacing-0 divide-y divide-gray-600">
         <thead>
           <tr className="divide-x divide-gray-700 bg-gray-800">
-            <th className="!sticky !top-0 !left-0 !z-30 bg-gray-800 border-r border-gray-700 border-b"></th>
+            <th className="!sticky !top-0 !left-0 !z-40 bg-gray-800 border-r border-gray-700 border-b"></th>
             <>
               {problems.map((problem, index) => (
                 <th
                   key={index}
                   className={`w-60 ${
                     index == 0 ? '!border-l-0' : ''
-                  } !sticky top-0 !z-20 bg-gray-800 border-b`}
+                  } !sticky top-0 !z-30 bg-gray-800 border-b`}
                 >
                   <a
                     href={problem.url}
@@ -407,7 +407,7 @@ const GroupData = ({
         <tbody className="divide-y divide-gray-600">
           {students.map((student, i) => (
             <tr key={i} className="divide-x divide-gray-600">
-              <td className="bg-gray-800 sticky left-0 z-10 px-4 py-3 border-r border-b border-gray-600">
+              <td className="bg-gray-800 sticky left-0 !z-20 px-4 py-3 border-r border-b border-gray-600">
                 {student.name}
               </td>
               <>
