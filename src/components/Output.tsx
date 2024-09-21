@@ -8,10 +8,12 @@ import { StatusData } from '../types/problem';
 import { useUserContext } from '../context/UserContext';
 import { useEditorContext } from '../context/EditorContext';
 import { CodeEditor } from './editor/CodeEditor';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export interface OutputProps {
   result: JudgeResult | null;
   statusData: StatusData | null;
+  statusDataHistory: StatusData[];
   onMount: EditorProps['onMount'];
 }
 
@@ -27,6 +29,7 @@ const tabs = [
 export const Output = ({
   result,
   statusData,
+  statusDataHistory,
   onMount,
 }: OutputProps): JSX.Element => {
   const [option, setOption] = useState<OutputTab>('stdout');
@@ -83,6 +86,72 @@ export const Output = ({
         {option === 'results' ? (
           <div className="px-4 h-full overflow-y-auto">
             {statusData && <USACOResults data={statusData} />}
+            {statusDataHistory && (
+              <table
+                className={
+                  'text-gray-200 table-tasks border-gray-700 space-x-2 rounded'
+                }
+                style={{
+                  border: '1px solid #141414',
+                  marginBottom: '20px',
+                  marginTop: '20px',
+                }}
+              >
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Verdict</th>
+                    <th>Time</th>
+                    <th>Memory</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {statusDataHistory
+                    .slice()
+                    .reverse()
+                    .map((item, index) => (
+                      <tr
+                        style={{
+                          backgroundColor: index % 2 ? '#1e1e1e' : '#121212',
+                        }}
+                      >
+                        <td>{statusDataHistory.length - index}</td>
+                        <td>
+                          <a href={item.link || undefined} target="_blank">
+                            {item.message?.toLowerCase() ===
+                            'correct answer' ? (
+                              <FontAwesomeIcon
+                                icon={{ prefix: 'fas', iconName: 'check' }}
+                                className="text-green-500 w-3.5 h-3.5 mr-2"
+                              />
+                            ) : (
+                              <FontAwesomeIcon
+                                icon={{ prefix: 'fas', iconName: 'xmark' }}
+                                className="w-3.5 h-3.5 text-red-500 mr-2"
+                              />
+                            )}
+                            {item.message}
+                            {item.link && (
+                              <FontAwesomeIcon
+                                icon={{
+                                  prefix: 'fas',
+                                  iconName: 'up-right-from-square',
+                                }}
+                                className="w-3.5 h-3.5 ml-1"
+                              />
+                            )}
+                          </a>
+                        </td>
+                        <td>{item.time ?? '-'}</td>
+                        <td>
+                          {item.memory ?? '-'}
+                          {item.memory && <p>KB</p>}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            )}
           </div>
         ) : (
           <CodeEditor

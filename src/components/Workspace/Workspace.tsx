@@ -20,6 +20,7 @@ import {
   solutionsAtom,
   solvedAtom,
   statusDataAtom,
+  statusDataHistoryAtom,
   translationsAtom,
 } from '../../atoms/workspaceUI';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -100,6 +101,9 @@ export default function Workspace({
   const [solutions, setSolutions] = useAtom(solutionsAtom);
   const setSolved = useSetAtom(solvedAtom);
   const [statusData, setStatusData] = useAtom(statusDataAtom);
+  const [statusDataHistory, setStatusDataHistory] = useAtom(
+    statusDataHistoryAtom
+  );
   const [language, setLanguage] = useAtom(languageAtom);
 
   const permission = useUserPermission();
@@ -189,6 +193,18 @@ export default function Workspace({
     );
     return () => {
       off(ref(db, `submissions/${fileData.id}/statusData`));
+    };
+  }, []);
+
+  useEffect(() => {
+    onValue(
+      ref(db, `submissions/${fileData.id}/statusDataHistory`),
+      (snapshot: DataSnapshot) => {
+        setStatusDataHistory(snapshot.val());
+      }
+    );
+    return () => {
+      off(ref(db, `submissions/${fileData.id}/statusDataHistory`));
     };
   }, []);
 
@@ -347,6 +363,7 @@ export default function Workspace({
             <Output
               result={judgeResults[inputTabIndex]}
               statusData={statusData}
+              statusDataHistory={statusDataHistory}
               onMount={e => {
                 setOutputEditor(e);
                 setTimeout(() => {
