@@ -97,12 +97,13 @@ export const Output = ({
                   marginTop: '20px',
                 }}
               >
-                <thead>
+                <thead style={{ backgroundColor: '#121212' }}>
                   <tr>
                     <th></th>
                     <th>Verdict</th>
                     <th>Time</th>
                     <th>Memory</th>
+                    <th>Testcases</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -112,7 +113,7 @@ export const Output = ({
                     .map((item, index) => (
                       <tr
                         style={{
-                          backgroundColor: index % 2 ? '#1e1e1e' : '#121212',
+                          backgroundColor: index % 2 ? '#121212' : '#1e1e1e',
                         }}
                       >
                         <td>{statusDataHistory.length - index}</td>
@@ -146,6 +147,38 @@ export const Output = ({
                         <td>
                           {item.memory ?? '-'}
                           {item.memory && <p>KB</p>}
+                        </td>
+                        <td>
+                          {item.testCases &&
+                            item.testCases.map(tc =>
+                              tc.title == 'correct answer' ? (
+                                <FontAwesomeIcon
+                                  title={tc.title}
+                                  icon={{ prefix: 'fas', iconName: 'check' }}
+                                  className="text-green-500 w-3.5 h-3.5 mr-2"
+                                />
+                              ) : (
+                                <FontAwesomeIcon
+                                  title={tc.title}
+                                  icon={{
+                                    prefix: (() => {
+                                      if (tc.title === 'time limit exceeded')
+                                        return 'far';
+                                      return 'fas';
+                                    })(),
+
+                                    iconName: (() => {
+                                      if (tc.title === 'time limit exceeded')
+                                        return 'clock';
+                                      if (tc.title === 'runtime error')
+                                        return 'bug';
+                                      return 'xmark';
+                                    })(),
+                                  }}
+                                  className="w-3.5 h-3.5 text-red-500 mr-2"
+                                />
+                              )
+                            )}
                         </td>
                       </tr>
                     ))}
