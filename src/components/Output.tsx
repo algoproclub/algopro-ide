@@ -117,18 +117,18 @@ export const Output = ({
                         }}
                       >
                         <td>{statusDataHistory.length - index}</td>
-                        <td>
+                        <td style={{ whiteSpace: 'nowrap' }}>
                           <a href={item.link || undefined} target="_blank">
                             {item.message?.toLowerCase() ===
                             'correct answer' ? (
                               <FontAwesomeIcon
                                 icon={{ prefix: 'fas', iconName: 'check' }}
-                                className="text-green-500 w-3.5 h-3.5 mr-2"
+                                className="text-green-500 w-3.5 h-3.5 mr-1"
                               />
                             ) : (
                               <FontAwesomeIcon
                                 icon={{ prefix: 'fas', iconName: 'xmark' }}
-                                className="w-3.5 h-3.5 text-red-500 mr-2"
+                                className="w-3.5 h-3.5 text-red-500 mr-1"
                               />
                             )}
                             {item.message}
@@ -143,10 +143,11 @@ export const Output = ({
                             )}
                           </a>
                         </td>
-                        <td>{item.time ?? '-'}</td>
-                        <td>
+                        <td style={{ whiteSpace: 'nowrap' }}>
+                          {item.time ?? '-'}
+                        </td>
+                        <td style={{ whiteSpace: 'nowrap' }}>
                           {item.memory ?? '-'}
-                          {item.memory && <p>KB</p>}
                         </td>
                         <td>
                           {item.testCases &&
@@ -155,7 +156,8 @@ export const Output = ({
                                 <FontAwesomeIcon
                                   title={tc.title}
                                   icon={{ prefix: 'fas', iconName: 'check' }}
-                                  className="text-green-500 w-3.5 h-3.5 mr-2"
+                                  className="text-green-500 w-3.5 h-3.5"
+                                  style={{ marginRight: '0.7px' }}
                                 />
                               ) : (
                                 <FontAwesomeIcon
@@ -175,7 +177,8 @@ export const Output = ({
                                       return 'xmark';
                                     })(),
                                   }}
-                                  className="w-3.5 h-3.5 text-red-500 mr-2"
+                                  className="w-3.5 h-3.5 text-red-500"
+                                  style={{ marginRight: '0.7px' }}
                                 />
                               )
                             )}
