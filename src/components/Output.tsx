@@ -98,7 +98,7 @@ export const Output = ({
         {option === 'history' && (
           <div className="px-4 h-full overflow-y-auto">
             <table
-              className={'text-gray-200 table-tasks space-x-2 mr-5'}
+              className={'text-gray-200 table-tasks space-x-2'}
               style={{
                 border: '1px solid #141414',
                 marginBottom: '20px',
