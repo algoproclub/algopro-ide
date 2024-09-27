@@ -5,6 +5,7 @@ export type PlatformProblem = {
 
 export type URLProblem = {
   id: string | null;
+  title: string | null;
   url: string;
   platform: Platform | null;
 };
