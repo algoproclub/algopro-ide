@@ -181,6 +181,14 @@ const updateStatusData = async (
 
   if (['error', 'resolved'].includes(statusData.statusCode!)) {
     updates[`submissions/pending/${id}`] = null;
+    const ref = db.ref(`submissions/${id}/statusDataHistory`);
+    const snapshot = await ref.get();
+
+    if (!snapshot.exists()) {
+      await ref.set([statusData]);
+    } else {
+      await ref.set([...snapshot.val(), statusData]);
+    }
   }
   if (statusData.message === 'correct answer') {
     updates[`files/${id}/solvedStatus/solved`] = true;
@@ -357,10 +365,8 @@ const registerSubmission = async (
     id: submissionID,
     username: username,
   });
-  await db.ref('submissions').update({
-    [fileID]: {
-      statusData: defaultStatusData,
-    },
+  await db.ref(`submissions/${fileID}`).update({
+    statusData: defaultStatusData,
   });
   await db.ref('submissions/pending').update({
     [fileID]: {

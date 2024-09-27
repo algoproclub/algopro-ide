@@ -8,25 +8,29 @@ import { StatusData } from '../types/problem';
 import { useUserContext } from '../context/UserContext';
 import { useEditorContext } from '../context/EditorContext';
 import { CodeEditor } from './editor/CodeEditor';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export interface OutputProps {
   result: JudgeResult | null;
   statusData: StatusData | null;
+  statusDataHistory: StatusData[];
   onMount: EditorProps['onMount'];
 }
 
-type OutputTab = 'stdout' | 'stderr' | 'compile_output' | 'results';
+type OutputTab = 'stdout' | 'stderr' | 'compile_output' | 'results' | 'history';
 
 const tabs = [
   { label: 'stdout', value: 'stdout' },
   { label: 'stderr', value: 'stderr' },
   { label: 'compile output', value: 'compile_output' },
   { label: 'results', value: 'results' },
+  { label: 'history', value: 'history' },
 ];
 
 export const Output = ({
   result,
   statusData,
+  statusDataHistory,
   onMount,
 }: OutputProps): JSX.Element => {
   const [option, setOption] = useState<OutputTab>('stdout');
@@ -48,7 +52,7 @@ export const Output = ({
   }, [statusData]);
 
   let outputText;
-  if (option !== 'results') {
+  if (option !== 'results' && option !== 'history') {
     if (result?.status === 'internal_error') {
       outputText =
         'Internal Error: ' +
@@ -73,18 +77,128 @@ export const Output = ({
   return (
     <>
       <TabBar
-        tabs={statusData ? tabs : tabs.slice(0, -1)}
+        tabs={
+          statusDataHistory
+            ? tabs
+            : statusData
+            ? tabs.slice(0, -1)
+            : tabs.slice(0, -2)
+        }
         activeTab={option}
         onTabSelect={tab => {
           setOption(tab.value as OutputTab);
         }}
       />
       <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden tw-forms-disable tw-forms-disable-all-descendants">
-        {option === 'results' ? (
+        {option === 'results' && (
           <div className="px-4 h-full overflow-y-auto">
             {statusData && <USACOResults data={statusData} />}
           </div>
-        ) : (
+        )}
+        {option === 'history' && (
+          <div className="px-4 h-full overflow-y-auto">
+            <table
+              className={'text-gray-200 table-tasks space-x-2'}
+              style={{
+                border: '1px solid #141414',
+                marginBottom: '20px',
+                marginTop: '20px',
+              }}
+            >
+              <thead style={{ backgroundColor: '#121212' }}>
+                <tr>
+                  <th></th>
+                  <th>Verdict</th>
+                  <th>Time</th>
+                  <th>Memory</th>
+                  <th>Testcases</th>
+                </tr>
+              </thead>
+              <tbody>
+                {statusDataHistory
+                  .slice()
+                  .reverse()
+                  .map((item, index) => (
+                    <tr
+                      style={{
+                        backgroundColor: index % 2 ? '#121212' : '#1e1e1e',
+                      }}
+                    >
+                      <td>{statusDataHistory.length - index}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        <a
+                          href={item.link || undefined}
+                          target="_blank"
+                          className={item.link ? 'hover:underline' : undefined}
+                        >
+                          {item.message?.toLowerCase() === 'correct answer' ? (
+                            <FontAwesomeIcon
+                              icon={{ prefix: 'fas', iconName: 'check' }}
+                              className="text-green-500 w-3.5 h-3.5 mr-1"
+                            />
+                          ) : (
+                            <FontAwesomeIcon
+                              icon={{ prefix: 'fas', iconName: 'xmark' }}
+                              className="w-3.5 h-3.5 text-red-500 mr-1"
+                            />
+                          )}
+                          {item.message}
+                          {item.link && (
+                            <FontAwesomeIcon
+                              icon={{
+                                prefix: 'fas',
+                                iconName: 'up-right-from-square',
+                              }}
+                              className="w-3.5 h-3.5 ml-1"
+                            />
+                          )}
+                        </a>
+                      </td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        {item.time ?? '-'}
+                      </td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        {item.memory ?? '-'}
+                      </td>
+                      <td>
+                        {item.testCases &&
+                          item.testCases.map(tc =>
+                            tc.title == 'correct answer' ? (
+                              <FontAwesomeIcon
+                                title={tc.title}
+                                icon={{ prefix: 'fas', iconName: 'check' }}
+                                className="text-green-500 w-3.5 h-3.5 mr-0.5"
+                              />
+                            ) : (
+                              <FontAwesomeIcon
+                                title={tc.title}
+                                icon={{
+                                  prefix: (() => {
+                                    if (tc.title === 'time limit exceeded')
+                                      return 'far';
+                                    return 'fas';
+                                  })(),
+
+                                  iconName: (() => {
+                                    if (tc.title === 'time limit exceeded')
+                                      return 'clock';
+                                    if (tc.title === 'runtime error')
+                                      return 'bug';
+                                    return 'xmark';
+                                  })(),
+                                }}
+                                className="mr-0.5 w-3.5 h-3.5 text-red-500"
+                              />
+                            )
+                          )}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {option !== 'results' && option != 'history' && (
           <CodeEditor
             theme={lightMode ? 'light' : 'dark'}
             language={'plaintext'}
@@ -101,7 +215,7 @@ export const Output = ({
           />
         )}
       </div>
-      {option !== 'results' && result && (
+      {option !== 'results' && option !== 'history' && result && (
         <div
           className="text-sm font-mono text-right px-4 py-1 text-gray-300"
           data-test-id="code-execution-output-status"
