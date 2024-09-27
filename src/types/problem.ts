@@ -21,6 +21,8 @@ export type Language = 'cpp' | 'py' | 'java';
 
 export type Hint = string | Partial<Record<Language, string>>;
 
+export type ProblemTag = string;
+
 export type ProblemData = {
   id: string;
   submittable: boolean;
