@@ -98,7 +98,7 @@ export const Output = ({
         {option === 'history' && (
           <div className="px-4 h-full overflow-y-auto">
             <table
-              className={'text-gray-200 table-tasks space-x-2 mr-5 w-full'}
+              className={'text-gray-200 table-tasks space-x-2 mr-5'}
               style={{
                 border: '1px solid #141414',
                 marginBottom: '20px',
@@ -129,7 +129,7 @@ export const Output = ({
                         <a
                           href={item.link || undefined}
                           target="_blank"
-                          className={'hover:underline'}
+                          className={item.link ? 'hover:underline' : undefined}
                         >
                           {item.message?.toLowerCase() === 'correct answer' ? (
                             <FontAwesomeIcon
