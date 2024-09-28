@@ -14,6 +14,7 @@ import {
   Platform,
   ProblemData,
   ProblemTag,
+  problemTags,
 } from '../../../src/types/problem';
 import Markdown from '../../../src/components/JudgeInterface/Markdown';
 import dynamic from 'next/dynamic';
@@ -283,7 +284,7 @@ const RemovableTag = ({
   };
 
   return (
-    <span className="rounded-md border border-gray-600 bg-gray-900 px-2 py-1 mr-1">
+    <div className="rounded-md border border-gray-600 bg-gray-900 px-2 py-1 m-1 whitespace-nowrap inline-block">
       {tag}
       <button
         className="px-2 py-1 rounded-md hover:bg-gray-700"
@@ -291,7 +292,7 @@ const RemovableTag = ({
       >
         <FontAwesomeIcon icon={{ prefix: 'fas', iconName: 'trash' }} />
       </button>
-    </span>
+    </div>
   );
 };
 
@@ -560,7 +561,7 @@ const PageContent = () => {
     }
   };
 
-  const filteredOptions = ['graphs', 'dfs', 'bfs'].filter(
+  const filteredOptions = problemTags.filter(
     option =>
       option.toLowerCase().includes(addedTag.toLowerCase()) &&
       !tags.includes(option.toLowerCase())
@@ -655,7 +656,7 @@ const PageContent = () => {
       </div>
 
       {language === '-' && (
-        <div className="max-h-[16rem] border border-gray-600 bg-gray-800 overflow-auto mt-2">
+        <div className="max-h-[16rem] border border-gray-600 bg-gray-800 mt-2">
           <table className="text-sm bg-gray-900 border-collapse w-full">
             <tbody className="divide-y divide-gray-700">
               <tr>
