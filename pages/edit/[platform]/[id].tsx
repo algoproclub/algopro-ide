@@ -550,6 +550,7 @@ const PageContent = () => {
         } else {
           setTags([...tags, filteredOptions[0].trim()]);
           setAddedTag('');
+          setUnsaved(true);
         }
       } else {
         alert(`Invalid problem tag \"${addedTag}\".`);
