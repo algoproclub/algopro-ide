@@ -270,13 +270,16 @@ const RemovableTag = ({
   tag,
   idx,
   setTags,
+  setUnsaved,
 }: {
   tag: ProblemTag;
   idx: number;
   setTags: React.Dispatch<React.SetStateAction<ProblemTag[]>>;
+  setUnsaved: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const removeTag = () => {
     setTags(prevTags => prevTags.filter((_, index) => index !== idx));
+    setUnsaved(true);
   };
 
   return (
@@ -647,42 +650,61 @@ const PageContent = () => {
           </table>
         </div>
       </div>
-      <div className="border border-gray-600 bg-gray-800 px-3 py-2 border-b text-sm space-x-2 mt-2">
-        {tags.map((item, index) => (
-          <RemovableTag tag={item} idx={index} setTags={setTags} />
-        ))}
-        <div className="inline-flex">
-          <input
-            type="text"
-            placeholder="New tag"
-            className="font-mono bg-gray-900 border-gray-700 inline-block h-8 resize-none m-1 p-2 rounded text-sm"
-            value={addedTag}
-            onChange={e => setAddedTag(e.target.value)}
-            onKeyDown={handleKeyDownTagInput}
-          />
-          {addedTag.trim() && (
-            <ul className="border border-gray-700 rounded-md bg-gray-900 absolute mt-10 ml-1 widt">
-              {filteredOptions.length > 0 &&
-                filteredOptions.map((option, index) => (
-                  <li
-                    className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700"
-                    key={index}
-                    onClick={() => {
-                      if (tags.includes(option.trim())) {
-                        alert(`Problem already has \"${option}\" tag.`);
-                      } else {
-                        setTags([...tags, option.trim()]);
-                        setAddedTag('');
-                      }
-                    }}
-                  >
-                    {option}
-                  </li>
+
+      <div className="max-h-[16rem] border border-gray-600 bg-gray-800 overflow-auto mt-2">
+        <table className="text-sm bg-gray-900 border-collapse w-full">
+          <tbody className="divide-y divide-gray-700">
+            <tr>
+              <td className="py-2 px-3 w-[3.0rem] border-x border-gray-700 bg-gray-800 font-bold">
+                Tags
+              </td>
+              <td className="py-2 px-3 border-x border-gray-700">
+                {tags.map((item, index) => (
+                  <RemovableTag
+                    tag={item}
+                    idx={index}
+                    setTags={setTags}
+                    setUnsaved={setUnsaved}
+                  />
                 ))}
-            </ul>
-          )}
-        </div>
+              </td>
+              <td className="space-x-1 px-3 py-2 w-[5.5rem] border-x border-gray-700 bg-gray-800">
+                <input
+                  type="text"
+                  placeholder="New tag"
+                  className="font-mono bg-gray-900 border-gray-700 h-8 resize-none p-2 rounded text-sm"
+                  value={addedTag}
+                  onChange={e => setAddedTag(e.target.value)}
+                  onKeyDown={handleKeyDownTagInput}
+                />
+                {addedTag.trim() && (
+                  <ul className="border border-gray-700 rounded-md bg-gray-900 absolute m-0.5 widt">
+                    {filteredOptions.length > 0 &&
+                      filteredOptions.map((option, index) => (
+                        <li
+                          className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700"
+                          key={index}
+                          onClick={() => {
+                            if (tags.includes(option.trim())) {
+                              alert(`Problem already has \"${option}\" tag.`);
+                            } else {
+                              setTags([...tags, option.trim()]);
+                              setUnsaved(true);
+                              setAddedTag('');
+                            }
+                          }}
+                        >
+                          {option}
+                        </li>
+                      ))}
+                  </ul>
+                )}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+
       <div className="p-4 border border-gray-600 bg-gray-800 mt-2 space-x-2 text-[0.95rem]">
         <button
           className="px-4 py-2 rounded-md border border-gray-600 hover:bg-gray-700 active:bg-gray-600"
