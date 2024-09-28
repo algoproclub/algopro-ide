@@ -283,7 +283,7 @@ const RemovableTag = ({
   };
 
   return (
-    <span className="rounded-md border border-gray-600 bg-gray-900 px-2 py-1 ml-2 mr-2">
+    <span className="rounded-md border border-gray-600 bg-gray-900 px-2 py-1 mr-1">
       {tag}
       <button
         className="px-2 py-1 rounded-md hover:bg-gray-700"
@@ -506,15 +506,17 @@ const PageContent = () => {
           )
         : doc(getFirestore(), 'problemsets', platform, 'problems', problemID);
 
-    const newData = {
-      statement: translated,
-      hints,
-      tags,
-    };
     if (language === '-') {
-      await updateDoc(problemDoc, newData);
+      await updateDoc(problemDoc, {
+        statement: translated,
+        hints,
+        tags,
+      });
     } else {
-      await setDoc(problemDoc, newData);
+      await setDoc(problemDoc, {
+        statement: translated,
+        hints,
+      });
     }
     setUnsaved(false);
   };
@@ -652,59 +654,61 @@ const PageContent = () => {
         </div>
       </div>
 
-      <div className="max-h-[16rem] border border-gray-600 bg-gray-800 overflow-auto mt-2">
-        <table className="text-sm bg-gray-900 border-collapse w-full">
-          <tbody className="divide-y divide-gray-700">
-            <tr>
-              <td className="py-2 px-3 w-[3.0rem] border-x border-gray-700 bg-gray-800 font-bold">
-                Tags
-              </td>
-              <td className="py-2 px-3 border-x border-gray-700">
-                {tags.map((item, index) => (
-                  <RemovableTag
-                    tag={item}
-                    idx={index}
-                    setTags={setTags}
-                    setUnsaved={setUnsaved}
+      {language === '-' && (
+        <div className="max-h-[16rem] border border-gray-600 bg-gray-800 overflow-auto mt-2">
+          <table className="text-sm bg-gray-900 border-collapse w-full">
+            <tbody className="divide-y divide-gray-700">
+              <tr>
+                <td className="py-2 px-3 w-[3.0rem] border-x border-gray-700 bg-gray-800 font-bold">
+                  Tags
+                </td>
+                <td className="py-1 px-3 border-x border-gray-700">
+                  {tags.map((item, index) => (
+                    <RemovableTag
+                      tag={item}
+                      idx={index}
+                      setTags={setTags}
+                      setUnsaved={setUnsaved}
+                    />
+                  ))}
+                </td>
+                <td className="space-x-1 px-3 py-1.5 w-[5.5rem] border-x border-gray-700 bg-gray-800">
+                  <input
+                    type="text"
+                    placeholder="New tag"
+                    className="font-mono bg-gray-900 border-gray-700 h-8 resize-none p-2 rounded text-sm"
+                    value={addedTag}
+                    onChange={e => setAddedTag(e.target.value)}
+                    onKeyDown={handleKeyDownTagInput}
                   />
-                ))}
-              </td>
-              <td className="space-x-1 px-3 py-2 w-[5.5rem] border-x border-gray-700 bg-gray-800">
-                <input
-                  type="text"
-                  placeholder="New tag"
-                  className="font-mono bg-gray-900 border-gray-700 h-8 resize-none p-2 rounded text-sm"
-                  value={addedTag}
-                  onChange={e => setAddedTag(e.target.value)}
-                  onKeyDown={handleKeyDownTagInput}
-                />
-                {addedTag.trim() && (
-                  <ul className="border border-gray-700 rounded-md bg-gray-900 absolute m-0.5 widt">
-                    {filteredOptions.length > 0 &&
-                      filteredOptions.map((option, index) => (
-                        <li
-                          className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700"
-                          key={index}
-                          onClick={() => {
-                            if (tags.includes(option.trim())) {
-                              alert(`Problem already has \"${option}\" tag.`);
-                            } else {
-                              setTags([...tags, option.trim()]);
-                              setUnsaved(true);
-                              setAddedTag('');
-                            }
-                          }}
-                        >
-                          {option}
-                        </li>
-                      ))}
-                  </ul>
-                )}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                  {addedTag.trim() && (
+                    <ul className="border border-gray-700 rounded-md bg-gray-900 absolute m-0.5 widt">
+                      {filteredOptions.length > 0 &&
+                        filteredOptions.map((option, index) => (
+                          <li
+                            className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700"
+                            key={index}
+                            onClick={() => {
+                              if (tags.includes(option.trim())) {
+                                alert(`Problem already has \"${option}\" tag.`);
+                              } else {
+                                setTags([...tags, option.trim()]);
+                                setUnsaved(true);
+                                setAddedTag('');
+                              }
+                            }}
+                          >
+                            {option}
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="p-4 border border-gray-600 bg-gray-800 mt-2 space-x-2 text-[0.95rem]">
         <button
