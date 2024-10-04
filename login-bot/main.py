@@ -4,6 +4,7 @@ from itertools import batched
 from aiohttp import web
 import logging
 from asyncio import timeout
+import curl_cffi.requests
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -71,39 +72,75 @@ async def health_check(request):
 
 @routes.post("/login")
 async def login(request):
-    data = await request.json()
-    if data.get("platform") == "codeforces":
-        func = codeforces
-    elif data.get("platform") == "spoj":
-        func = spoj
-    else:
-        return web.json_response({"error": "Invalid platform"}, status=400)
-    if not isinstance(data.get("username"), str) or not isinstance(
-        data.get("password"), str
-    ):
-        return web.json_response({"error": "Invalid request"}, status=400)
+    try:
+        data = await request.json()
+        if data.get("platform") == "codeforces":
+            func = codeforces
+        elif data.get("platform") == "spoj":
+            func = spoj
+        else:
+            return web.json_response({"error": "Invalid platform"}, status=400)
+        if not isinstance(data.get("username"), str) or not isinstance(
+            data.get("password"), str
+        ):
+            return web.json_response({"error": "Invalid request"}, status=400)
 
-    async with lock, timeout(30):
-        logger.info("Logging in as %s to %s", data["username"], data["platform"])
-        global browser
-        if not browser or browser.stopped:
-            logger.info("Starting browser")
-            browser = await uc.start(no_sandbox=True)
-        for tab in browser.tabs[1:]:
-            await tab.close()
-        await browser.get("about:blank")
-        await browser.cookies.clear()
-        try:
-            return web.json_response(
-                await func(
-                    data["username"],
-                    data["password"],
+        async with lock, timeout(30):
+            logger.info("Logging in as %s to %s", data["username"], data["platform"])
+            global browser
+            if not browser or browser.stopped:
+                logger.info("Starting browser")
+                browser = await uc.start(no_sandbox=True)
+            for tab in browser.tabs[1:]:
+                await tab.close()
+            await browser.get("about:blank")
+            await browser.cookies.clear()
+            try:
+                return web.json_response(
+                    await func(
+                        data["username"],
+                        data["password"],
+                    )
                 )
-            )
-        except Exception as e:
-            logger.error("Error logging in", exc_info=e)
-            return web.json_response({"error": str(e)}, status=500)
-        await browser.get("about:blank")
+            except Exception as e:
+                logger.error("Error logging in", exc_info=e)
+                return web.json_response({"error": str(e)}, status=500)
+            await browser.get("about:blank")
+    except asyncio.TimeoutError:
+        return web.json_response({"error": "timeout"}, status=500)
+    except Exception as e:
+        logger.error("Error", exc_info=e)
+        return web.json_response({"error": str(e)}, status=500)
+
+
+@routes.route("*", "/proxy")
+async def proxy(request):
+    url = request.query.get("url")
+    body = await request.content.read()
+    if not url or not url.startswith("https://"):
+        return web.json_response({"error": "Invalid URL"}, status=400)
+    async with curl_cffi.requests.AsyncSession() as session:
+        headers = dict(request.headers)
+        headers.pop("Host", None)
+        headers.pop("Content-Encoding", None)
+        headers.pop("Transfer-Encoding", None)
+        headers.pop("Content-Length", None)
+        response = await session.request(
+            request.method,
+            url,
+            headers=headers,
+            timeout=10,
+            data=body,
+        )
+        response.headers.pop("Content-Encoding", None)
+        response.headers.pop("Transfer-Encoding", None)
+        response.headers.pop("Content-Length", None)
+        response.headers["X-Proxy-Final-Url"] = response.redirect_url or response.url
+        return web.Response(
+            body=response.content,
+            status=response.status_code,
+            headers=response.headers,
+        )
 
 
 app = web.Application()

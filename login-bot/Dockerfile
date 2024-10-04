@@ -3,6 +3,7 @@ WORKDIR /app/login-bot
 
 RUN apk add --no-cache chromium xvfb
 COPY <<EOF /entry.sh
+rm -f /tmp/.X99-lock
 Xvfb :99 -ac -screen 0 1280x720x16 -nolisten tcp &
 export DISPLAY=:99
 python3 main.py
