@@ -7,6 +7,8 @@ import {
   getDoc,
   setDoc,
   updateDoc,
+  getDocs,
+  collection,
 } from 'firebase/firestore';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import { Language, Platform, ProblemData } from '../../../src/types/problem';
@@ -40,6 +42,8 @@ const translate = httpsCallable<
   },
   string
 >(getFunctions(undefined, 'europe-west1'), 'translate');
+
+const codeLangs: Language[] = ['cpp', 'py', 'java'];
 
 const HTMLEditor = ({
   text,
@@ -210,8 +214,7 @@ const EditHintModal = ({
   };
 
   const checked = typeof hint != 'string';
-  const langs: Language[] = ['cpp', 'py', 'java'];
-  const selectedLang = langs[selected];
+  const selectedLang = codeLangs[selected];
   const text = checked ? hint[selectedLang] ?? '' : hint;
 
   return (
@@ -224,7 +227,7 @@ const EditHintModal = ({
     >
       <div className="space-y-2">
         <Dropdown
-          items={['cpp', 'py', 'java']}
+          items={codeLangs}
           label="Language"
           selected={selected}
           setSelected={setSelected}
@@ -341,12 +344,14 @@ const PageContent = () => {
   const [problemID, setProblemID] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [hints, setHints] = useState<Hint[]>([]);
+  const [solution, setSolution] = useState<string>('');
   const [editedHint, setEditedHint] = useState<Hint>('');
   const [onSaveHint, setOnSaveHint] = useState<() => (h: Hint) => void>(
     () => _ => {}
   );
   const [unsaved, setUnsaved] = useState(false);
   const [language, setLanguage] = useState('-');
+  const [solutionLanguage, setSolutionLanguage] = useState(0);
   const router = useRouter();
 
   const getTranslated = async (platform: string, id: string) => {
@@ -389,6 +394,15 @@ const PageContent = () => {
         console.error(error);
       });
   };
+  const getSolution = async (platform: string, id: string): Promise<string> => {
+    const snapshot = await getDoc(
+      doc(
+        getFirestore(),
+        `problemsets/${platform}/problems/${id}/solutions/${codeLangs[solutionLanguage]}`
+      )
+    );
+    return snapshot.data()?.content ?? '';
+  };
 
   useEffect(() => {
     if (typeof router.query.platform === 'string') {
@@ -423,15 +437,25 @@ const PageContent = () => {
     if (!platform || !problemID) {
       return;
     }
-    getOriginal(platform, problemID)
-      .then(data => {
-        setOriginal(data.statement ?? '');
-      })
-      .catch(error => {
+    (async () => {
+      try {
+        setOriginal((await getOriginal(platform, problemID)).statement ?? '');
+        setSolution(await getSolution(platform, problemID));
+        updateTranslated();
+      } catch (error: any) {
         console.error(error);
-      });
-    updateTranslated();
+      }
+    })();
   }, [platform, problemID]);
+
+  useEffect(() => {
+    if (!platform || !problemID) {
+      return;
+    }
+    (async () => {
+      setSolution(await getSolution(platform, problemID));
+    })();
+  }, [solutionLanguage]);
 
   useEffect(() => {
     if (!platform || !problemID) {
@@ -440,9 +464,15 @@ const PageContent = () => {
     updateTranslated();
   }, [language, original]);
 
-  const handleChange = useCallback((val: string) => {
+  const handleTranslationChange = useCallback((val: string) => {
     if (translated !== val) {
       setTranslated(val);
+    }
+  }, []);
+
+  const handleSolutionChange = useCallback((val: string) => {
+    if (solution !== val) {
+      setSolution(val);
     }
   }, []);
 
@@ -478,6 +508,21 @@ const PageContent = () => {
     } else {
       await setDoc(problemDoc, newData);
     }
+    await setDoc(
+      doc(
+        getFirestore(),
+        'problemsets',
+        platform,
+        'problems',
+        problemID,
+        'solutions',
+        codeLangs[solutionLanguage]
+      ),
+      {
+        content: solution,
+        type: codeLangs[solutionLanguage],
+      }
+    );
     setUnsaved(false);
   };
 
@@ -533,7 +578,7 @@ const PageContent = () => {
           path="translated"
           readonly={false}
           text={translated}
-          onChange={handleChange}
+          onChange={handleTranslationChange}
           unsaved={unsaved}
         />
       </div>
@@ -587,6 +632,36 @@ const PageContent = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+      <div className="mt-2 p-4 bg-gray-800 border border-gray-600">
+        <span className="font-semibold text-sm inline-block mb-1">
+          Solutions
+        </span>
+        <Dropdown
+          items={codeLangs}
+          selected={solutionLanguage}
+          setSelected={num => {
+            if (
+              confirm(
+                'The unsaved changes will be lost. Do you want to proceed?'
+              )
+            ) {
+              setSolutionLanguage(num);
+            }
+          }}
+        />
+        <div className="mt-2 border border-gray-600 h-48">
+          <CodeEditor
+            value={solution}
+            theme="dark"
+            onChange={handleSolutionChange}
+            language={
+              { cpp: 'cpp', py: 'python', java: 'java' }[
+                codeLangs[solutionLanguage]
+              ]
+            }
+          />
         </div>
       </div>
       <div className="p-4 border border-gray-600 bg-gray-800 mt-2 space-x-2 text-[0.95rem]">
