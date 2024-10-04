@@ -656,9 +656,9 @@ const PageContent = () => {
       </div>
 
       {language === '-' && (
-        <div className="max-h-[16rem] border border-gray-600 bg-gray-800 mt-2">
+        <div className="max-h-[16rem] border border-gray-600 bg-gray-800 mt-2 overflow-y-auto">
           <table className="text-sm bg-gray-900 border-collapse w-full">
-            <tbody className="divide-y divide-gray-700">
+            <tbody className="divide-y divide-gray-700 h-[3.5rem]">
               <tr>
                 <td className="py-2 px-3 w-[3.0rem] border-x border-gray-700 bg-gray-800 font-bold">
                   Tags
@@ -683,7 +683,7 @@ const PageContent = () => {
                     onKeyDown={handleKeyDownTagInput}
                   />
                   {addedTag.trim() && (
-                    <ul className="border border-gray-700 rounded-md bg-gray-900 absolute m-0.5 widt">
+                    <ul className="border border-gray-700 rounded-md bg-gray-900 absolute m-0.5">
                       {filteredOptions.length > 0 &&
                         filteredOptions.map((option, index) => (
                           <li
