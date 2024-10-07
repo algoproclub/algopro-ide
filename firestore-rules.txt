@@ -12,6 +12,12 @@ service cloud.firestore {
         allow read: if true;
         allow write: if request.auth.token.teacher == true;
       }
+      
+      // TODO: this is not intended this way
+      match /solutions/{language} {
+        allow read: if true;
+        allow write: if false;
+      }
     }
 
     match /groups/{group}/classes/{class} {
