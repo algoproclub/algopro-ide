@@ -9,7 +9,13 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
-import { Language, Platform, ProblemData } from '../../../src/types/problem';
+import {
+  Language,
+  Platform,
+  ProblemData,
+  ProblemTag,
+  problemTags,
+} from '../../../src/types/problem';
 import Markdown from '../../../src/components/JudgeInterface/Markdown';
 import dynamic from 'next/dynamic';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
@@ -261,6 +267,35 @@ const EditHintModal = ({
   );
 };
 
+const RemovableTag = ({
+  tag,
+  idx,
+  setTags,
+  setUnsaved,
+}: {
+  tag: ProblemTag;
+  idx: number;
+  setTags: React.Dispatch<React.SetStateAction<ProblemTag[]>>;
+  setUnsaved: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
+  const removeTag = () => {
+    setTags(prevTags => prevTags.filter((_, index) => index !== idx));
+    setUnsaved(true);
+  };
+
+  return (
+    <div className="rounded-md border border-gray-600 bg-gray-900 px-2 py-1 m-1 whitespace-nowrap inline-block">
+      {tag}
+      <button
+        className="px-2 py-1 rounded-md hover:bg-gray-700"
+        onClick={removeTag}
+      >
+        <FontAwesomeIcon icon={{ prefix: 'fas', iconName: 'trash' }} />
+      </button>
+    </div>
+  );
+};
+
 const PageContent = () => {
   const Hint = ({
     hint,
@@ -342,6 +377,8 @@ const PageContent = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [hints, setHints] = useState<Hint[]>([]);
   const [editedHint, setEditedHint] = useState<Hint>('');
+  const [tags, setTags] = useState<ProblemTag[]>([]);
+  const [addedTag, setAddedTag] = useState<string>('');
   const [onSaveHint, setOnSaveHint] = useState<() => (h: Hint) => void>(
     () => _ => {}
   );
@@ -384,6 +421,7 @@ const PageContent = () => {
         setInitTranslated(data?.statement ?? '');
         setTranslated(data?.statement ?? '');
         setHints(data?.hints ?? []);
+        setTags(data?.tags ?? []);
       })
       .catch(error => {
         console.error(error);
@@ -469,14 +507,17 @@ const PageContent = () => {
           )
         : doc(getFirestore(), 'problemsets', platform, 'problems', problemID);
 
-    const newData = {
-      statement: translated,
-      hints,
-    };
     if (language === '-') {
-      await updateDoc(problemDoc, newData);
+      await updateDoc(problemDoc, {
+        statement: translated,
+        hints,
+        tags,
+      });
     } else {
-      await setDoc(problemDoc, newData);
+      await setDoc(problemDoc, {
+        statement: translated,
+        hints,
+      });
     }
     setUnsaved(false);
   };
@@ -501,6 +542,30 @@ const PageContent = () => {
       console.error('unsuccessful translation');
     }
   };
+
+  const handleKeyDownTagInput = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === 'Enter') {
+      if (addedTag.trim() !== '' && filteredOptions.length > 0) {
+        if (tags.includes(filteredOptions[0].trim())) {
+          alert(`Problem already has \"${filteredOptions[0].trim()}\" tag.`);
+        } else {
+          setTags([...tags, filteredOptions[0].trim()]);
+          setAddedTag('');
+          setUnsaved(true);
+        }
+      } else {
+        alert(`Invalid problem tag \"${addedTag}\".`);
+      }
+    }
+  };
+
+  const filteredOptions = problemTags.filter(
+    option =>
+      option.toLowerCase().includes(addedTag.toLowerCase()) &&
+      !tags.includes(option.toLowerCase())
+  );
 
   return (
     <div className="p-3 text-white max-w-[1440px] mx-auto">
@@ -589,6 +654,63 @@ const PageContent = () => {
           </table>
         </div>
       </div>
+
+      {language === '-' && (
+        <div className="max-h-[16rem] border border-gray-600 bg-gray-800 mt-2 overflow-y-auto">
+          <table className="text-sm bg-gray-900 border-collapse w-full">
+            <tbody className="divide-y divide-gray-700 h-[3.5rem]">
+              <tr>
+                <td className="py-2 px-3 w-[3.0rem] border-x border-gray-700 bg-gray-800 font-bold">
+                  Tags
+                </td>
+                <td className="py-1 px-3 border-x border-gray-700">
+                  {tags.map((item, index) => (
+                    <RemovableTag
+                      tag={item}
+                      idx={index}
+                      setTags={setTags}
+                      setUnsaved={setUnsaved}
+                    />
+                  ))}
+                </td>
+                <td className="space-x-1 px-3 py-1.5 w-[5.5rem] border-x border-gray-700 bg-gray-800">
+                  <input
+                    type="text"
+                    placeholder="New tag"
+                    className="font-mono bg-gray-900 border-gray-700 h-8 resize-none p-2 rounded text-sm"
+                    value={addedTag}
+                    onChange={e => setAddedTag(e.target.value)}
+                    onKeyDown={handleKeyDownTagInput}
+                  />
+                  {addedTag.trim() && (
+                    <ul className="border border-gray-700 rounded-md bg-gray-900 absolute m-0.5">
+                      {filteredOptions.length > 0 &&
+                        filteredOptions.map((option, index) => (
+                          <li
+                            className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700"
+                            key={index}
+                            onClick={() => {
+                              if (tags.includes(option.trim())) {
+                                alert(`Problem already has \"${option}\" tag.`);
+                              } else {
+                                setTags([...tags, option.trim()]);
+                                setUnsaved(true);
+                                setAddedTag('');
+                              }
+                            }}
+                          >
+                            {option}
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+
       <div className="p-4 border border-gray-600 bg-gray-800 mt-2 space-x-2 text-[0.95rem]">
         <button
           className="px-4 py-2 rounded-md border border-gray-600 hover:bg-gray-700 active:bg-gray-600"
