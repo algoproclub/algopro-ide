@@ -220,24 +220,22 @@ export class CFSubmitter extends Submitter {
             method: 'POST',
           }
         );
-        if (response.status !== 200) {
+        if (response.status === 200) {
+          const src: string = (await response.json())['source'];
+          console.log('latest submission source: ', src.split('\n')[0]);
+          if (src.includes(uuid))
+            return {
+              id,
+              username: this.username,
+              platform: 'codeforces',
+            } as const;
+        } else {
           console.log(
             'source response.status: ',
             response.status,
             response.statusText
           );
-          throw new Error(
-            'fetching submission source failed, status: ' + response.status
-          );
         }
-        const src: string = (await response.json())['source'];
-        console.log('latest submission source: ', src.split('\n')[0]);
-        if (src.includes(uuid))
-          return {
-            id,
-            username: this.username,
-            platform: 'codeforces',
-          } as const;
       }
       await new Promise(r => setTimeout(r, GETSUBMISSIONDATA_DELAY_MS));
     }
