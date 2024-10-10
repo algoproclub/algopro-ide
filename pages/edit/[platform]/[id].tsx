@@ -45,6 +45,25 @@ const translate = httpsCallable<
 
 const codeLangs: Language[] = ['cpp', 'py', 'java'];
 
+const SaveStatusIndicator = ({ saved }: { saved: boolean }) => {
+  return (
+    <div className="flex text-sm space-x-0.5">
+      {!saved && (
+        <>
+          <span className="text-gray-300">[Unsaved]</span>
+          <span className="text-[0.65rem] text-yellow-500 px-2">&#9679;</span>
+        </>
+      )}
+      {saved && (
+        <>
+          <span className="text-gray-300">[Saved]</span>
+          <span className="text-[0.65rem] text-green-500 px-2">&#9679;</span>
+        </>
+      )}
+    </div>
+  );
+};
+
 const HTMLEditor = ({
   text,
   onChange,
@@ -122,26 +141,7 @@ const HTMLEditor = ({
             }}
           />
         </div>
-        {!readonly && (
-          <div className="flex text-sm space-x-0.5">
-            {unsaved && (
-              <>
-                <span className="text-gray-300">[Unsaved]</span>
-                <span className="text-[0.65rem] text-yellow-500 px-2">
-                  &#9679;
-                </span>
-              </>
-            )}
-            {!unsaved && (
-              <>
-                <span className="text-gray-300">[Saved]</span>
-                <span className="text-[0.65rem] text-green-500 px-2">
-                  &#9679;
-                </span>
-              </>
-            )}
-          </div>
-        )}
+        {!readonly && <SaveStatusIndicator saved={!unsaved} />}
       </div>
       <div
         className={`${fullscreen ? `h-full` : 'h-48 md:h-96'} ${
@@ -344,12 +344,14 @@ const PageContent = () => {
   const [problemID, setProblemID] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [hints, setHints] = useState<Hint[]>([]);
+  const [initSolution, setInitSolution] = useState<string>('');
   const [solution, setSolution] = useState<string>('');
   const [editedHint, setEditedHint] = useState<Hint>('');
   const [onSaveHint, setOnSaveHint] = useState<() => (h: Hint) => void>(
     () => _ => {}
   );
   const [unsaved, setUnsaved] = useState(false);
+  const [unsavedSol, setUnsavedSol] = useState(false);
   const [language, setLanguage] = useState('-');
   const [solutionLanguage, setSolutionLanguage] = useState(0);
   const router = useRouter();
@@ -440,7 +442,7 @@ const PageContent = () => {
     (async () => {
       try {
         setOriginal((await getOriginal(platform, problemID)).statement ?? '');
-        setSolution(await getSolution(platform, problemID));
+        setInitSolution(await getSolution(platform, problemID));
         updateTranslated();
       } catch (error: any) {
         console.error(error);
@@ -453,7 +455,9 @@ const PageContent = () => {
       return;
     }
     (async () => {
-      setSolution(await getSolution(platform, problemID));
+      const res = await getSolution(platform, problemID);
+      setInitSolution(res);
+      setSolution(res);
     })();
   }, [solutionLanguage]);
 
@@ -475,6 +479,14 @@ const PageContent = () => {
       setSolution(val);
     }
   }, []);
+
+  useEffect(() => {
+    setUnsavedSol(solution !== initSolution);
+  }, [solution]);
+
+  useEffect(() => {
+    setSolution(initSolution);
+  }, [initSolution]);
 
   useEffect(() => {
     if (translated !== initTranslated) {
@@ -524,6 +536,7 @@ const PageContent = () => {
       }
     );
     setUnsaved(false);
+    setUnsavedSol(false);
   };
 
   const handleAddNewHint = () => {
@@ -635,19 +648,22 @@ const PageContent = () => {
         </div>
       </div>
       <div className="mt-2 p-4 bg-gray-800 border border-gray-600">
-        <span className="font-semibold text-sm inline-block mb-1">
-          Solutions
-        </span>
+        <div className="w-full flex justify-between mb-1.5">
+          <span className="font-semibold text-sm inline-block">Solutions</span>
+          <SaveStatusIndicator saved={!unsavedSol} />
+        </div>
         <Dropdown
           items={codeLangs}
           selected={solutionLanguage}
           setSelected={num => {
             if (
+              !unsavedSol ||
               confirm(
                 'The unsaved changes will be lost. Do you want to proceed?'
               )
             ) {
               setSolutionLanguage(num);
+              setUnsavedSol(false);
             }
           }}
         />
