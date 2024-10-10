@@ -11,6 +11,7 @@ import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
 import { EditorView } from '@uiw/react-codemirror';
+import { problemAtom } from '../../atoms/workspaceUI';
 
 export const CodeInterface = ({
   className,
@@ -18,6 +19,7 @@ export const CodeInterface = ({
   className?: string;
 }): JSX.Element => {
   const { fileData } = useEditorContext();
+  const [problem, setProblem] = useAtom(problemAtom);
   const lang = fileData.settings.language;
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
@@ -70,40 +72,42 @@ export const CodeInterface = ({
       )}
     >
       <div className="flex-1 overflow-hidden">
-        <LazyRealtimeEditor
-          theme={lightMode ? 'light' : 'dark'}
-          language={{ cpp: 'cpp', java: 'java', py: 'python' }[lang]}
-          path={`myfile.${lang}`}
-          options={
-            {
-              minimap: { enabled: false },
-              automaticLayout: false,
-              tabSize: tabSize,
-              insertSpaces: false,
-              readOnly,
-              'bracketPairColorization.enabled': true, // monaco doesn't expect an IBracketPairColorizationOptions
+        {problem !== undefined && (
+          <LazyRealtimeEditor
+            theme={lightMode ? 'light' : 'dark'}
+            language={{ cpp: 'cpp', java: 'java', py: 'python' }[lang]}
+            path={`myfile.${lang}`}
+            options={
+              {
+                minimap: { enabled: false },
+                automaticLayout: false,
+                tabSize: tabSize,
+                insertSpaces: false,
+                readOnly,
+                'bracketPairColorization.enabled': true, // monaco doesn't expect an IBracketPairColorizationOptions
 
-              // this next option is to prevent annoying autocompletes
-              // ex. type return space and it adds two spaces + semicolon
-              // ex. type vecto< and it autocompletes weirdly
-              acceptSuggestionOnCommitCharacter: false,
-              // suggestOnTriggerCharacters: false,
-            } as any
-          }
-          onMount={e => {
-            setEditor(e);
-            setTimeout(() => {
-              e.layout();
-              e.focus();
-            }, 0);
-          }}
-          onCodemirrorMount={(view, state) => setCodemirrorEditor(view)}
-          defaultValue={templateCode[lang]}
-          yjsDocumentId={`${fileData.id}.${lang}`}
-          useEditorWithVim={true}
-          lspEnabled={true} // at some point, maybe make this a user setting?
-          dataTestId="code-editor"
-        />
+                // this next option is to prevent annoying autocompletes
+                // ex. type return space and it adds two spaces + semicolon
+                // ex. type vecto< and it autocompletes weirdly
+                acceptSuggestionOnCommitCharacter: false,
+                // suggestOnTriggerCharacters: false,
+              } as any
+            }
+            onMount={e => {
+              setEditor(e);
+              setTimeout(() => {
+                e.layout();
+                e.focus();
+              }, 0);
+            }}
+            onCodemirrorMount={(view, state) => setCodemirrorEditor(view)}
+            defaultValue={problem?.templateCode?.[lang] ?? templateCode[lang]}
+            yjsDocumentId={`${fileData.id}.${lang}`}
+            useEditorWithVim={true}
+            lspEnabled={true} // at some point, maybe make this a user setting?
+            dataTestId="code-editor"
+          />
+        )}
       </div>
       <p className="text-sm font-mono text-gray-200 pl-4 status-node" />
     </div>

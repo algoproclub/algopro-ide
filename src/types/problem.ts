@@ -72,6 +72,7 @@ export type ProblemData = {
   statement: string | null;
   input: string;
   output: string;
+  templateCode: Partial<Record<Language, string>> | null;
   timeLimit?: string;
   memoryLimit?: string;
   samples: Sample[];
