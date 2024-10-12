@@ -12,6 +12,11 @@ service cloud.firestore {
         allow read: if true;
         allow write: if request.auth.token.teacher == true;
       }
+
+      match /tags {
+        allow read: if true;
+        allow write: if request.auth.token.teacher == true;
+      }
     }
 
     match /groups/{group}/classes/{class} {
