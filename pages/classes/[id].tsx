@@ -88,9 +88,9 @@ const ClassDropdown = ({
     const prefix = `${group[0].toUpperCase()}.${classID}`;
     const textContent = data.tasks
       .map((task, i) => {
-        return `${prefix}.${i + 1}. ${task.title ? task.title : '-'}\n${
-          task.url
-        }`;
+        return `${prefix}.${i + 1}. ${
+          task.title ? task.title : '-'
+        }\nhttps://ide.algopro.hu/solve/${task.platform}/${task.id}`;
       })
       .join('\n\n');
 
