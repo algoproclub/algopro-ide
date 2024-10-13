@@ -36,8 +36,6 @@ const PageContent = () => {
         });
       }
 
-      console.log(problems);
-
       setProblemset(problems);
     };
     loadData().then(() => {
@@ -52,7 +50,10 @@ const PageContent = () => {
           <tr>
             <td className="px-3 py-1.5 w-[20rem] border-x border-gray-700">
               {platforms.map(platform => (
-                <span className="inline-block mx-3 my-2">
+                <div
+                  className="inline-block mx-3 my-2"
+                  key={platform.toString()}
+                >
                   <Checkbox
                     checked={platformFilter[platform.toString()]}
                     label={platform.toString()}
@@ -60,7 +61,7 @@ const PageContent = () => {
                       togglePlatformFilter(platform.toString())
                     }
                   />
-                </span>
+                </div>
               ))}
             </td>
             <td className="px-3 py-1.5 border-x border-gray-700">
@@ -89,14 +90,17 @@ const PageContent = () => {
                 );
               })
               .map(({ platform, id, url, title, tags }, index) => (
-                <tr className="h-[3.5rem]">
+                <tr className="h-[3.5rem]" key={index}>
                   <td className="py-2 px-3 w-[10.0rem] border-x border-gray-700 bg-gray-800 font-bold">
                     {platform && getPlatformName(platform)} {title}
                   </td>
                   <td className="space-x-1 px-3 py-1.5 w-[30rem] border-x border-gray-700">
                     {tags &&
                       tags.map((tag, index) => (
-                        <div className="rounded-md border border-gray-600 bg-gray-900 px-2 py-1 m-1 whitespace-nowrap inline-block">
+                        <div
+                          className="rounded-md border border-gray-600 bg-gray-900 px-2 py-1 m-1 whitespace-nowrap inline-block"
+                          key={index}
+                        >
                           {tag}
                         </div>
                       ))}
