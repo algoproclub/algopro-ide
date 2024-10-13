@@ -10,6 +10,14 @@ export type URLProblem = {
   platform: Platform | null;
 };
 
+export type TagProblem = {
+  id: string | null;
+  title: string | null;
+  url: string;
+  platform: Platform | null;
+  tags: TagProblem[] | null;
+};
+
 export type Platform =
   | 'codeforces'
   | 'cses'
@@ -17,6 +25,15 @@ export type Platform =
   | 'spoj'
   | 'usaco'
   | 'planets';
+
+export const platforms: String[] = [
+  'codeforces',
+  'cses',
+  'atcoder',
+  'spoj',
+  'usaco',
+  'planets',
+];
 
 export type Language = 'cpp' | 'py' | 'java';
 
