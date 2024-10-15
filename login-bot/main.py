@@ -5,6 +5,7 @@ from aiohttp import web
 import logging
 from asyncio import timeout
 import curl_cffi.requests
+import traceback
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -17,6 +18,10 @@ def get_attribute(el, attr):
 
 async def codeforces(username, password):
     page = await browser.get("https://codeforces.com/enter")
+    try:
+        await page.verify_cf()
+    except Exception:
+        print("CF verification timed out")
     await (await page.select('input[name="handleOrEmail"]')).send_keys(username)
     await (await page.select('input[name="password"]')).send_keys(password)
     await (await page.select('input[name="remember"]')).click()
@@ -107,10 +112,10 @@ async def login(request):
                 return web.json_response({"error": str(e)}, status=500)
             await browser.get("about:blank")
     except asyncio.TimeoutError:
-        return web.json_response({"error": "timeout"}, status=500)
+        return web.json_response({"error": "timeout\n" + traceback.format_exc()}, status=500)
     except Exception as e:
         logger.error("Error", exc_info=e)
-        return web.json_response({"error": str(e)}, status=500)
+        return web.json_response({"error": traceback.format_exc()}, status=500)
 
 
 @routes.route("*", "/proxy")
