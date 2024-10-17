@@ -15,7 +15,7 @@ export type TagProblem = {
   title: string | null;
   url: string;
   platform: Platform | null;
-  tags: TagProblem[] | null;
+  tags: ProblemTag[] | null;
 };
 
 export type Platform =
