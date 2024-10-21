@@ -43,6 +43,7 @@ const PageContent = () => {
   const [problemNameFilter, setProblemNameFilter] = useState<string>('');
   const [tagFilters, setTagFilters] = useState<ProblemTag[]>([]);
   const [tagFilterInput, setTagFilterInput] = useState<string>('');
+  const [tagFilterFocus, setTagFilterFocus] = useState(false);
 
   const togglePlatformFilter = (label: string) => {
     setPlatformFilter(prev => ({
@@ -88,7 +89,7 @@ const PageContent = () => {
     event: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (event.key === 'Enter') {
-      if (tagFilterInput.trim() !== '' && tagFilterInputOptions.length > 0) {
+      if (tagFilterInputOptions.length > 0) {
         toggleTag(tagFilterInputOptions[0].trim());
         setTagFilterInput('');
       } else {
@@ -124,27 +125,33 @@ const PageContent = () => {
                   type="text"
                   placeholder="Search problem name"
                   className="font-mono bg-gray-900 border-gray-700 h-8 resize-none p-2 rounded text-sm"
+                  autoFocus={true}
                   value={problemNameFilter}
                   onChange={e => setProblemNameFilter(e.target.value)}
                 />
               </div>
-              <div className="m-2">
+              <div
+                className="m-2"
+                onFocus={() => setTagFilterFocus(true)}
+                onBlur={() => setTagFilterFocus(false)}
+                tabIndex={-1}
+              >
                 <input
                   type="text"
-                  placeholder="Filter new tag"
+                  placeholder="Filter tag"
                   className="font-mono bg-gray-900 border-gray-700 h-8 resize-none p-2 rounded text-sm"
                   value={tagFilterInput}
                   onChange={e => setTagFilterInput(e.target.value)}
                   onKeyDown={handleKeyDownTagInput}
                 />
-                {tagFilterInput.trim() && (
-                  <ul className="border border-gray-700 rounded-md bg-gray-900 absolute m-0.5">
+                {tagFilterFocus && (
+                  <ul className="border border-gray-700 rounded-md bg-gray-900 absolute m-0.5 max-h-[30rem] overflow-auto">
                     {tagFilterInputOptions.length > 0 &&
                       tagFilterInputOptions.map((option, index) => (
                         <li
                           className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700 flex justify-between items-center min-w-[10rem]"
                           key={index}
-                          onClick={() => {
+                          onMouseDown={() => {
                             toggleTag(option);
                             setTagFilterInput('');
                           }}
