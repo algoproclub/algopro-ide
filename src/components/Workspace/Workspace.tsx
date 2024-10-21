@@ -132,7 +132,7 @@ export default function Workspace({
 
       // FIXME: Do not store USACO problems directly in the Realtime DB.
       if (!fileData.problem) {
-        setProblem(undefined);
+        setProblem(null);
         return;
       }
 
