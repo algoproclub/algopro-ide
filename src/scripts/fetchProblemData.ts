@@ -124,6 +124,7 @@ async function fetchProblemDataCodeforces(
     source: `Codeforces ${problemID}`,
     timeLimit: getTextNode(document('.time-limit')),
     memoryLimit: getTextNode(document('.memory-limit')),
+    templateCode: null,
     samples,
   };
 }
@@ -181,6 +182,7 @@ async function fetchProblemDataAtCoder(
     source: `AtCoder ${problemID}`,
     samples,
     ...(limits && { timeLimit: limits[1], memoryLimit: limits[2] }),
+    templateCode: null,
   };
 }
 
@@ -252,6 +254,7 @@ async function fetchProblemDataCSES(
     ),
     source: `CSES ${problemID}`,
     samples,
+    templateCode: null,
   };
 }
 
@@ -367,5 +370,6 @@ async function fetchProblemDataSPOJ(
       document('#problem-meta td:contains("Time limit:") + td')
     ),
     samples,
+    templateCode: null,
   };
 }

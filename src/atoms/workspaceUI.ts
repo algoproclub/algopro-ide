@@ -5,7 +5,7 @@ import { getHints } from '../components/Workspace/Workspace';
 export const mobileActiveTabAtom = atom<'code' | 'io' | 'users'>('code');
 export const showSidebarAtom = atom<boolean>(false);
 export const inputTabAtom = atom<string>('input');
-export const problemAtom = atom<ProblemData | undefined>(undefined);
+export const problemAtom = atom<ProblemData | undefined | null>(undefined);
 export const statusDataAtom = atom<StatusData | null>(null);
 export const statusDataHistoryAtom = atom<StatusData[]>([]);
 export const solvedAtom = atom<boolean>(false);

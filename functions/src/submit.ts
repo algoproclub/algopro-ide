@@ -16,6 +16,16 @@ const ATCODER_PROBLEM_REGEX = /(\w+)_(\w+)/;
 class TimeOutError extends Error {}
 class IDNotFoundError extends Error {}
 
+async function fetchWithProxy(
+  url: string,
+  init?: fetch.RequestInit
+): Promise<fetch.Response> {
+  return await fetch(
+    loginBotUrl.value() + '/proxy?' + new URLSearchParams({ url }).toString(),
+    init
+  );
+}
+
 export abstract class Submitter {
   abstract submit(
     problemSolution: ProblemSolution,
@@ -80,11 +90,15 @@ export class CFSubmitter extends Submitter {
     csrf_token: string;
     useragent: string;
   }): Promise<boolean> {
-    const response = await fetch('https://codeforces.com/settings/general', {
-      headers: {
-        cookie: account.cookie,
-      },
-    });
+    const response = await fetchWithProxy(
+      'https://codeforces.com/settings/general',
+      {
+        headers: {
+          cookie: account.cookie,
+          'user-agent': account.useragent,
+        },
+      }
+    );
     if (response.status !== 200) return false;
     const text = await response.text();
     if (!text.includes(account.username)) return false;
@@ -120,7 +134,7 @@ export class CFSubmitter extends Submitter {
       `using CF account ${this.username}, cookie: ${this.cookie}, csrf_token: ${this.csrf_token}`
     );
 
-    const response = await fetch(
+    const response = await fetchWithProxy(
       'https://codeforces.com/problemset/submit?' +
         new URLSearchParams({ csrf_token: this.csrf_token }).toString(),
       {
@@ -151,13 +165,14 @@ export class CFSubmitter extends Submitter {
       }
     );
     const text = await response.text();
+    const response_url = response.headers.get('x-proxy-final-url');
     if (
       response.status !== 200 ||
-      response.url !== `https://codeforces.com/problemset/status?my=on`
+      response_url !== `https://codeforces.com/problemset/status?my=on`
     ) {
       console.log(
         'submission response.status:',
-        response.url,
+        response_url,
         response.status,
         response.statusText
       );
@@ -177,13 +192,19 @@ export class CFSubmitter extends Submitter {
 
     console.log('submission success, fetching submission ID for uuid', uuid);
     for (let i = 0; i < MAX_GETSUBMISSIONDATA_TRIES; ++i) {
-      const response = await fetch(
-        `https://codeforces.com/submissions/${this.username}`
+      const response = await fetchWithProxy(
+        `https://codeforces.com/submissions/${this.username}`,
+        {
+          headers: {
+            cookie: this.cookie,
+            'user-agent': this.useragent,
+          },
+        }
       );
       const document = cheerio.load(await response.text());
       const id = document('[data-submission-id]').attr('data-submission-id');
       if (id) {
-        const response = await fetch(
+        const response = await fetchWithProxy(
           'https://codeforces.com/data/submitSource',
           {
             headers: {
@@ -199,24 +220,22 @@ export class CFSubmitter extends Submitter {
             method: 'POST',
           }
         );
-        if (response.status !== 200) {
+        if (response.status === 200) {
+          const src: string = (await response.json())['source'];
+          console.log('latest submission source: ', src.split('\n')[0]);
+          if (src.includes(uuid))
+            return {
+              id,
+              username: this.username,
+              platform: 'codeforces',
+            } as const;
+        } else {
           console.log(
             'source response.status: ',
             response.status,
             response.statusText
           );
-          throw new Error(
-            'fetching submission source failed, status: ' + response.status
-          );
         }
-        const src: string = (await response.json())['source'];
-        console.log('latest submission source: ', src.split('\n')[0]);
-        if (src.includes(uuid))
-          return {
-            id,
-            username: this.username,
-            platform: 'codeforces',
-          } as const;
       }
       await new Promise(r => setTimeout(r, GETSUBMISSIONDATA_DELAY_MS));
     }

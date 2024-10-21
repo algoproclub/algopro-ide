@@ -5,6 +5,7 @@ export type PlatformProblem = {
 
 export type URLProblem = {
   id: string | null;
+  title: string | null;
   url: string;
   platform: Platform | null;
 };
@@ -21,6 +22,46 @@ export type Language = 'cpp' | 'py' | 'java';
 
 export type Hint = string | Partial<Record<Language, string>>;
 
+export type ProblemTag = string;
+export const problemTags: ProblemTag[] = [
+  '2-sat',
+  'binary search',
+  'bitmasks',
+  'brute force',
+  'chinese remainder theorem',
+  'combinatorics',
+  'constructive algorithms',
+  'data structures',
+  'dfs and similar',
+  'divide and conquer',
+  'dp',
+  'dsu',
+  'expression parsing',
+  'fft',
+  'flows',
+  'games',
+  'geometry',
+  'graph matchings',
+  'graphs',
+  'greedy',
+  'hashing',
+  'implementation',
+  'interactive',
+  'math',
+  'matrices',
+  'meet-in-the-middle',
+  'number theory',
+  'probabilities',
+  'schedules',
+  'shortest paths',
+  'sortings',
+  'string suffix structures',
+  'strings',
+  'ternary search',
+  'trees',
+  'two pointers',
+];
+
 export type ProblemData = {
   id: string;
   submittable: boolean;
@@ -31,6 +72,7 @@ export type ProblemData = {
   statement: string | null;
   input: string;
   output: string;
+  templateCode: Partial<Record<Language, string>> | null;
   timeLimit?: string;
   memoryLimit?: string;
   samples: Sample[];

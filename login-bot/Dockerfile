@@ -1,13 +1,16 @@
-FROM mcr.microsoft.com/playwright:v1.42.1-jammy
+FROM python:3.12-alpine
 WORKDIR /app/login-bot
 
-COPY package.json ./
-COPY yarn.lock ./
-RUN yarn install --frozen-lockfile
+RUN apk add --no-cache chromium xvfb
+COPY <<EOF /entry.sh
+rm -f /tmp/.X99-lock
+Xvfb :99 -ac -screen 0 1280x720x16 -nolisten tcp &
+export DISPLAY=:99
+python3 main.py
+EOF
 
-COPY tsconfig.json ./
-COPY src/ ./
-RUN yarn build
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY main.py ./
 
-EXPOSE 3100
-ENTRYPOINT ["yarn", "start"]
+ENTRYPOINT ["sh", "/entry.sh"]

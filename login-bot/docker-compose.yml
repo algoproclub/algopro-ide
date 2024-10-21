@@ -4,10 +4,18 @@ services:
     ports:
       - '3100:3100'
   caddy:
-    build:
-      context: .
-      dockerfile: caddy.Dockerfile
+    image: caddy:2-alpine
     ports:
       - '443:443'
     volumes:
-      - /caddy-data:/data
+      - caddy-data:/data
+    configs:
+      - source: Caddyfile
+        target: /etc/caddy/Caddyfile
+configs:
+  Caddyfile:
+    content: |
+      login-bot.algopro.hu
+      reverse_proxy login-bot:3100
+volumes:
+  caddy-data:

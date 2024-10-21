@@ -9,7 +9,7 @@ import {
   query,
   setDoc,
 } from 'firebase/firestore';
-import { URLProblem } from '../../src/types/problem';
+import { Platform, ProblemData, URLProblem } from '../../src/types/problem';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import { getPlatformName } from '../../src/scripts/getPlatformName';
@@ -17,6 +17,7 @@ import { EditInlineTextModal } from '../../src/components/EditTextModal';
 import { parseProblem } from '../../src/scripts/parseProblem';
 import { Disclosure } from '@headlessui/react';
 import WithTeacherLogin from '../../src/components/WithTeacherLogin';
+import fetchProblemData from '../api/fetchProblemData';
 
 const firestore = getFirestore();
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
@@ -63,6 +64,7 @@ const EditTaskModal = ({
 
 const ClassDropdown = ({
   classID,
+  group,
   data,
   unsaved,
   onDelete,
@@ -70,6 +72,7 @@ const ClassDropdown = ({
   onUpdate,
 }: {
   classID: string;
+  group: string;
   data: ClassData;
   unsaved: boolean;
   onDelete: () => void;
@@ -81,6 +84,71 @@ const ClassDropdown = ({
   const [onSaveTask, setOnSaveTask] = useState<(text: string) => void>(
     () => (_: string) => {}
   );
+  const copyContent = () => {
+    const prefix = `${group[0].toUpperCase()}.${classID}`;
+    const textContent = data.tasks
+      .map((task, i) => {
+        return `${prefix}.${i + 1}. ${
+          task.title ? task.title : '-'
+        }\nhttps://ide.algopro.hu/solve/${task.platform}/${task.id}`;
+      })
+      .join('\n\n');
+
+    navigator.clipboard.writeText(textContent).then(
+      () => {},
+      () => {
+        alert("Couldn't copy to clipboard");
+      }
+    );
+  };
+  const addNewTasks = () => {
+    setURL('');
+    setOnSaveTask((_: any) => async (input: string) => {
+      const newTasks = (
+        await Promise.all(
+          input
+            .split(/\s+/)
+            .filter(token => token.startsWith('https://'))
+            .map(parseProblem)
+            .map(async problem => {
+              if (problem.platform && problem.id) {
+                const resp = await fetch('/api/fetchProblemData', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    platform: problem.platform,
+                    id: problem.id,
+                  }),
+                });
+                try {
+                  const problemData: ProblemData | null = await resp.json();
+                  if (!problemData) {
+                    return null;
+                  }
+                  return { ...problem, title: problemData.title };
+                } catch {
+                  alert(`Could not parse ${url}`);
+                  return null;
+                }
+              } else {
+                return { ...problem, title: null };
+              }
+            })
+        )
+      )
+        .filter(problem => problem !== null)
+        .map(problem => problem as URLProblem);
+      if (newTasks.length > 0) {
+        onUpdate({
+          ...data,
+          tasks: data.tasks.concat(newTasks),
+        });
+      }
+    });
+    setIsOpen(true);
+  };
   return (
     <>
       <EditTaskModal
@@ -117,26 +185,28 @@ const ClassDropdown = ({
                     }`}
                   />
                 </div>
-                <button
-                  className="rounded-md border border-gray-600 px-2 py-1 hover:bg-gray-700 active:bg-gray-600"
-                  onClick={() => {
-                    setURL('');
-                    setOnSaveTask((_: any) => (url: string) => {
-                      const newTask = parseProblem(url);
-                      onUpdate({
-                        ...data,
-                        tasks: [...data.tasks, newTask],
-                      });
-                    });
-                    setIsOpen(true);
-                  }}
-                >
-                  New
-                  <FontAwesomeIcon
-                    icon={{ prefix: 'fas', iconName: 'plus' }}
-                    className="ml-2"
-                  />
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button
+                    className="rounded-md border border-gray-600 px-2 py-1 hover:bg-gray-700 active:bg-gray-600"
+                    onClick={copyContent}
+                  >
+                    Copy
+                    <FontAwesomeIcon
+                      icon={{ prefix: 'far', iconName: 'copy' }}
+                      className="ml-2"
+                    />
+                  </button>
+                  <button
+                    className="rounded-md border border-gray-600 px-2 py-1 hover:bg-gray-700 active:bg-gray-600"
+                    onClick={addNewTasks}
+                  >
+                    New
+                    <FontAwesomeIcon
+                      icon={{ prefix: 'fas', iconName: 'plus' }}
+                      className="ml-2"
+                    />
+                  </button>
+                </div>
               </div>
               <div className="divide-y divide-gray-700 text-sm border-b border-gray-600">
                 {data.tasks.map(({ platform, id, url }, index) => (
@@ -298,59 +368,62 @@ const PageContent = () => {
 
   return (
     <div className="px-2">
-      <div className="mx-auto max-w-7xl mt-4 space-y-3">
-        <div className="p-4 border border-gray-600 bg-gray-800 flex items-end space-x-3 text-sm">
-          <label className="w-full">
-            Class ID
-            <input
-              type="text"
-              className="mt-1 w-full bg-gray-900 border border-gray-600 text-sm"
-              onChange={e => setNewID(e.target.value)}
-            />
-          </label>
-          <button
-            className="flex-shrink-0 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-md"
-            onClick={() => {
-              if (classes.hasOwnProperty(newID)) {
-                alert('The entered ID already exists.');
-                return;
-              }
-              if (newID === '') {
-                alert('Please enter a non-empty ID.');
-                return;
-              }
-              handleUpdateClass(newID, {
-                tasks: [],
-                creationTime: Date.now(),
-              });
-            }}
-          >
-            New class
-            <FontAwesomeIcon
-              icon={{ prefix: 'fas', iconName: 'plus' }}
-              className="ml-2"
-            />
-          </button>
-        </div>
-        <div className="space-y-3">
-          {Object.entries(classes)
-            .sort(
-              ([id1, data1], [id2, data2]) =>
-                data2.creationTime - data1.creationTime
-            )
-            .map(([id, data]) => (
-              <ClassDropdown
-                key={id}
-                classID={id}
-                data={data}
-                unsaved={unsaved.has(id)}
-                onDelete={() => handleDeleteClass(id)}
-                onSave={() => handleSaveClass(id)}
-                onUpdate={(data: ClassData) => handleUpdateClass(id, data)}
+      {group && (
+        <div className="mx-auto max-w-7xl mt-4 space-y-3">
+          <div className="p-4 border border-gray-600 bg-gray-800 flex items-end space-x-3 text-sm">
+            <label className="w-full">
+              Class ID
+              <input
+                type="text"
+                className="mt-1 w-full bg-gray-900 border border-gray-600 text-sm"
+                onChange={e => setNewID(e.target.value)}
               />
-            ))}
+            </label>
+            <button
+              className="flex-shrink-0 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-md"
+              onClick={() => {
+                if (classes.hasOwnProperty(newID)) {
+                  alert('The entered ID already exists.');
+                  return;
+                }
+                if (newID === '') {
+                  alert('Please enter a non-empty ID.');
+                  return;
+                }
+                handleUpdateClass(newID, {
+                  tasks: [],
+                  creationTime: Date.now(),
+                });
+              }}
+            >
+              New class
+              <FontAwesomeIcon
+                icon={{ prefix: 'fas', iconName: 'plus' }}
+                className="ml-2"
+              />
+            </button>
+          </div>
+          <div className="space-y-3">
+            {Object.entries(classes)
+              .sort(
+                ([id1, data1], [id2, data2]) =>
+                  data2.creationTime - data1.creationTime
+              )
+              .map(([id, data]) => (
+                <ClassDropdown
+                  key={id}
+                  group={group}
+                  classID={id}
+                  data={data}
+                  unsaved={unsaved.has(id)}
+                  onDelete={() => handleDeleteClass(id)}
+                  onSave={() => handleSaveClass(id)}
+                  onUpdate={(data: ClassData) => handleUpdateClass(id, data)}
+                />
+              ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

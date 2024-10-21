@@ -47,8 +47,8 @@ export const parseProblem = (url: string): URLProblem => {
     };
   }
   if (!platformProblem) {
-    return { url, id: null, platform: null };
+    return { title: null, url, id: null, platform: null };
   } else {
-    return { url, ...platformProblem };
+    return { title: null, url, ...platformProblem };
   }
 };

@@ -1,8 +1,6 @@
 import { Platform, ProblemData } from '../../src/types/problem';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { fetchProblemData } from '../../src/scripts/fetchProblemData';
 import { getDatabase, ServerValue } from 'firebase-admin/database';
-import { getFirestore } from 'firebase-admin/firestore';
 import firebaseApp from '../../src/firebaseAdmin';
 import colorFromUserId from '../../src/scripts/colorFromUserId';
 import { Language } from '../../src/context/UserContext';
