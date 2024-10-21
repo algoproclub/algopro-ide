@@ -97,9 +97,6 @@ const Solutions = ({
           }
           options={{
             readOnly: true,
-            wordWrap: 'on',
-            automaticLayout: true,
-            minimap: { enabled: false },
           }}
         />
       </div>

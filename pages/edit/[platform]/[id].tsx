@@ -7,6 +7,8 @@ import {
   getDoc,
   setDoc,
   updateDoc,
+  getDocs,
+  collection,
 } from 'firebase/firestore';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import {
@@ -46,6 +48,27 @@ const translate = httpsCallable<
   },
   string
 >(getFunctions(undefined, 'europe-west1'), 'translate');
+
+const codeLangs: Language[] = ['cpp', 'py', 'java'];
+
+const SaveStatusIndicator = ({ saved }: { saved: boolean }) => {
+  return (
+    <div className="flex text-sm space-x-0.5">
+      {!saved && (
+        <>
+          <span className="text-gray-300">[Unsaved]</span>
+          <span className="text-[0.65rem] text-yellow-500 px-2">&#9679;</span>
+        </>
+      )}
+      {saved && (
+        <>
+          <span className="text-gray-300">[Saved]</span>
+          <span className="text-[0.65rem] text-green-500 px-2">&#9679;</span>
+        </>
+      )}
+    </div>
+  );
+};
 
 const HTMLEditor = ({
   text,
@@ -124,26 +147,7 @@ const HTMLEditor = ({
             }}
           />
         </div>
-        {!readonly && (
-          <div className="flex text-sm space-x-0.5">
-            {unsaved && (
-              <>
-                <span className="text-gray-300">[Unsaved]</span>
-                <span className="text-[0.65rem] text-yellow-500 px-2">
-                  &#9679;
-                </span>
-              </>
-            )}
-            {!unsaved && (
-              <>
-                <span className="text-gray-300">[Saved]</span>
-                <span className="text-[0.65rem] text-green-500 px-2">
-                  &#9679;
-                </span>
-              </>
-            )}
-          </div>
-        )}
+        {!readonly && <SaveStatusIndicator saved={!unsaved} />}
       </div>
       <div
         className={`${fullscreen ? `h-full` : 'h-48 md:h-96'} ${
@@ -216,8 +220,7 @@ const EditHintModal = ({
   };
 
   const checked = typeof hint != 'string';
-  const langs: Language[] = ['cpp', 'py', 'java'];
-  const selectedLang = langs[selected];
+  const selectedLang = codeLangs[selected];
   const text = checked ? hint[selectedLang] ?? '' : hint;
 
   return (
@@ -230,7 +233,7 @@ const EditHintModal = ({
     >
       <div className="space-y-2">
         <Dropdown
-          items={['cpp', 'py', 'java']}
+          items={codeLangs}
           label="Language"
           selected={selected}
           setSelected={setSelected}
@@ -376,6 +379,8 @@ const PageContent = () => {
   const [problemID, setProblemID] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [hints, setHints] = useState<Hint[]>([]);
+  const [initSolution, setInitSolution] = useState<string>('');
+  const [solution, setSolution] = useState<string>('');
   const [editedHint, setEditedHint] = useState<Hint>('');
   const [tags, setTags] = useState<ProblemTag[]>([]);
   const [addedTag, setAddedTag] = useState<string>('');
@@ -383,7 +388,9 @@ const PageContent = () => {
     () => _ => {}
   );
   const [unsaved, setUnsaved] = useState(false);
+  const [unsavedSol, setUnsavedSol] = useState(false);
   const [language, setLanguage] = useState('-');
+  const [solutionLanguage, setSolutionLanguage] = useState(0);
   const router = useRouter();
 
   const getTranslated = async (platform: string, id: string) => {
@@ -427,6 +434,15 @@ const PageContent = () => {
         console.error(error);
       });
   };
+  const getSolution = async (platform: string, id: string): Promise<string> => {
+    const snapshot = await getDoc(
+      doc(
+        getFirestore(),
+        `problemsets/${platform}/problems/${id}/solutions/${codeLangs[solutionLanguage]}`
+      )
+    );
+    return snapshot.data()?.content ?? '';
+  };
 
   useEffect(() => {
     if (typeof router.query.platform === 'string') {
@@ -461,15 +477,27 @@ const PageContent = () => {
     if (!platform || !problemID) {
       return;
     }
-    getOriginal(platform, problemID)
-      .then(data => {
-        setOriginal(data.statement ?? '');
-      })
-      .catch(error => {
+    (async () => {
+      try {
+        setOriginal((await getOriginal(platform, problemID)).statement ?? '');
+        setInitSolution(await getSolution(platform, problemID));
+        updateTranslated();
+      } catch (error: any) {
         console.error(error);
-      });
-    updateTranslated();
+      }
+    })();
   }, [platform, problemID]);
+
+  useEffect(() => {
+    if (!platform || !problemID) {
+      return;
+    }
+    (async () => {
+      const res = await getSolution(platform, problemID);
+      setInitSolution(res);
+      setSolution(res);
+    })();
+  }, [solutionLanguage]);
 
   useEffect(() => {
     if (!platform || !problemID) {
@@ -478,11 +506,25 @@ const PageContent = () => {
     updateTranslated();
   }, [language, original]);
 
-  const handleChange = useCallback((val: string) => {
+  const handleTranslationChange = useCallback((val: string) => {
     if (translated !== val) {
       setTranslated(val);
     }
   }, []);
+
+  const handleSolutionChange = useCallback((val: string) => {
+    if (solution !== val) {
+      setSolution(val);
+    }
+  }, []);
+
+  useEffect(() => {
+    setUnsavedSol(solution !== initSolution);
+  }, [solution]);
+
+  useEffect(() => {
+    setSolution(initSolution);
+  }, [initSolution]);
 
   useEffect(() => {
     if (translated !== initTranslated) {
@@ -519,7 +561,23 @@ const PageContent = () => {
         hints,
       });
     }
+    await setDoc(
+      doc(
+        getFirestore(),
+        'problemsets',
+        platform,
+        'problems',
+        problemID,
+        'solutions',
+        codeLangs[solutionLanguage]
+      ),
+      {
+        content: solution,
+        type: codeLangs[solutionLanguage],
+      }
+    );
     setUnsaved(false);
+    setUnsavedSol(false);
   };
 
   const handleAddNewHint = () => {
@@ -598,7 +656,7 @@ const PageContent = () => {
           path="translated"
           readonly={false}
           text={translated}
-          onChange={handleChange}
+          onChange={handleTranslationChange}
           unsaved={unsaved}
         />
       </div>
@@ -652,6 +710,39 @@ const PageContent = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+      <div className="mt-2 p-4 bg-gray-800 border border-gray-600">
+        <div className="w-full flex justify-between mb-1.5">
+          <span className="font-semibold text-sm inline-block">Solutions</span>
+          <SaveStatusIndicator saved={!unsavedSol} />
+        </div>
+        <Dropdown
+          items={codeLangs}
+          selected={solutionLanguage}
+          setSelected={num => {
+            if (
+              !unsavedSol ||
+              confirm(
+                'The unsaved changes will be lost. Do you want to proceed?'
+              )
+            ) {
+              setSolutionLanguage(num);
+              setUnsavedSol(false);
+            }
+          }}
+        />
+        <div className="mt-2 border border-gray-600 h-48">
+          <CodeEditor
+            value={solution}
+            theme="dark"
+            onChange={handleSolutionChange}
+            language={
+              { cpp: 'cpp', py: 'python', java: 'java' }[
+                codeLangs[solutionLanguage]
+              ]
+            }
+          />
         </div>
       </div>
 
