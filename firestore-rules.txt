@@ -6,13 +6,8 @@ service cloud.firestore {
     // TODO: update with proper rules
     match /problemsets/{problemset}/problems/{problem} {
       allow read: if true;
-      allow write: if false;
+      allow write: if request.auth.token.teacher == true;
 
-      match /translations/{translation} {
-        allow read: if true;
-        allow write: if request.auth.token.teacher == true;
-      }
-      
       // TODO: this is not intended this way
       match /solutions/{language} {
         allow read: if true;
