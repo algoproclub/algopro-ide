@@ -1,0 +1,148 @@
+import { useEffect, useState } from 'react';
+import { get, getDatabase, ref, onValue } from 'firebase/database';
+import WithTeacherLogin from '../../src/components/WithTeacherLogin';
+import LoadingIndicator from '../../src/components/LoadingIndicator';
+
+type Participation = {
+  timestamp: number | null;
+  statusCode: string;
+  message: string;
+  fileID: string;
+};
+
+const colorForStatus = (statusCode: string, message: string) => {
+  if (statusCode == 'resolved')
+    return message == 'accepted' ? 'bg-green-800' : 'bg-red-800';
+
+  return '';
+};
+
+const PageContent = () => {
+  const db = getDatabase();
+
+  const [tournamentID, setTournamentID] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<number | null>(null);
+
+  const [data, setData] = useState<
+    ({ id: string; name: string } & Participation)[]
+  >([]);
+  const [names, setNames] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    const fetchTournamentData = async () => {
+      const latestIDSnapshot = await get(ref(db, 'tournaments/latestID'));
+      const tournamentID = latestIDSnapshot.val();
+      setTournamentID(tournamentID);
+
+      const tournamentInfoSnapshot = await get(
+        ref(db, `tournaments/${tournamentID}/info`)
+      );
+      const startDate = new Date(tournamentInfoSnapshot.val().starts).getTime();
+      setStartDate(startDate);
+    };
+
+    fetchTournamentData();
+  }, []);
+
+  useEffect(() => {
+    if (tournamentID === null || startDate === null) return;
+
+    const participantsRef = ref(db, `tournaments/${tournamentID}/participants`);
+
+    const cancel = onValue(participantsRef, async snapshot => {
+      const participants: [string, Participation][] = Object.entries(
+        snapshot.val()
+      );
+
+      participants.sort((a, b) => {
+        return (a[1].timestamp ?? 0) - (b[1].timestamp ?? 0);
+      });
+
+      const newNames = await Promise.all(
+        participants
+          .filter(([userID, _]) => !names[userID])
+          .map(async ([userID, participation]) => {
+            const snapshot = await get(
+              ref(db, `files/${participation.fileID}/users/${userID}/name`)
+            );
+            return { [userID]: snapshot.val() as string };
+          })
+      );
+
+      const allNames = Object.assign(names, ...newNames);
+      setNames(allNames);
+
+      setData(
+        participants.map(([id, participation]) => ({
+          id,
+          name: allNames[id],
+          ...participation,
+        }))
+      );
+    });
+
+    return () => cancel();
+  }, [tournamentID, startDate]);
+
+  return (
+    <div className="mx-auto max-w-7xl mt-4 space-y-4 px-2">
+      <div className="border border-gray-600 overflow-auto max-h-[40rem]">
+        {startDate === null ? (
+          <LoadingIndicator className="h-4 w-4" />
+        ) : (
+          <table className="table-auto data-table text-sm w-full !border-separate !border-spacing-0 divide-y divide-gray-600">
+            <thead>
+              <tr className="divide-x divide-gray-700 bg-gray-800">
+                <th className="px-4 py-2">Name</th>
+                <th className="px-4 py-2">Status</th>
+                <th className="px-4 py-2">Time</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-600">
+              {data.map((row, index) => (
+                <tr className="divide-x divide-gray-600" key={index}>
+                  <td className="px-4 py-2">
+                    <a
+                      className="underline hover:text-indigo-200 mr-2"
+                      href={`/${row.fileID.slice(1)}`}
+                    >
+                      {row.name}
+                    </a>
+                  </td>
+                  <td
+                    className={`px-4 py-2 ${colorForStatus(
+                      row.statusCode,
+                      row.message
+                    )}`}
+                  >
+                    {row.message}
+                  </td>
+                  <td className="px-4 py-2">
+                    {row.timestamp ? (
+                      <span>
+                        {Math.floor((row.timestamp - startDate) / 60000)}:
+                        {Math.floor(((row.timestamp - startDate) / 1000) % 60)
+                          .toString()
+                          .padStart(2, '0')}
+                      </span>
+                    ) : (
+                      <span className="text-gray-300">no submission</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default function Scoreboard() {
+  return (
+    <WithTeacherLogin>
+      <PageContent />
+    </WithTeacherLogin>
+  );
+}

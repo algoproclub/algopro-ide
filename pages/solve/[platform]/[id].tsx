@@ -26,6 +26,7 @@ export default function CreatePlatformFile(): JSX.Element {
       return;
     const platform = router.query.platform;
     const problemID = router.query.id;
+    const tournamentID = router.query.tournamentID;
     createdRef.current = true;
 
     invariant(
@@ -44,6 +45,7 @@ export default function CreatePlatformFile(): JSX.Element {
         body: JSON.stringify({
           platform: platform,
           problemID: problemID,
+          tournamentID,
           userID: firebaseUser.uid,
           userName: firebaseUser.displayName,
           language: userData.defaultLanguage,

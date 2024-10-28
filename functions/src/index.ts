@@ -172,6 +172,18 @@ const accountData: { [key in Platform]: AccountData } = {
   },
 };
 
+const getFileOwner = async (fileID: string): Promise<string | undefined> => {
+  type UserList = { [key: string]: { permission: string } };
+
+  const fileData = (
+    await db.ref(`files/${fileID}/users`).get()
+  ).val() as UserList;
+
+  return Object.entries(fileData).find(
+    ([, data]) => data.permission === 'OWNER'
+  )?.[0];
+};
+
 const updateStatusData = async (
   id: string,
   statusData: Partial<StatusData>
@@ -194,6 +206,15 @@ const updateStatusData = async (
     updates[`files/${id}/solvedStatus/solved`] = true;
   }
   await db.ref().update(updates);
+
+  const tournamentID = (await db.ref(`files/${id}/tournamentID`).get()).val();
+  if (tournamentID !== undefined) {
+    const ownerID = await getFileOwner(id);
+    await db.ref(`tournaments/${tournamentID}/participants/${ownerID}`).update({
+      statusCode: statusData.statusCode,
+      message: statusData.message,
+    });
+  }
 };
 
 const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
@@ -373,6 +394,20 @@ const registerSubmission = async (
       creationTime: Date.now(),
     },
   });
+
+  const tournamentID = (
+    await db.ref(`files/${fileID}/tournamentID`).get()
+  ).val();
+  if (tournamentID !== undefined) {
+    const ownerID = await getFileOwner(fileID);
+    await db
+      .ref(`tournaments/${tournamentID}/participants/${ownerID}}`)
+      .update({
+        message: defaultStatusData.message,
+        statusCode: defaultStatusData.statusCode,
+        submissionTime: Date.now(),
+      });
+  }
 };
 
 exports.registersubmission = onCall(

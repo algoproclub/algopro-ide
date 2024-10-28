@@ -13,6 +13,7 @@ type RequestData = {
   userName: string;
   defaultPermission: string;
   language: Language;
+  tournamentID?: string;
 };
 
 type ResponseData =
@@ -45,12 +46,19 @@ export default async (
   }
 
   // XXX: Normalize (lowercase, etc.) problem ID?
-  const idToURLRef = getDatabase(firebaseApp)
-    .ref('users')
-    .child(data.userID)
-    .child('platform-' + data.platform)
-    .child('problem-id-to-file-id')
-    .child(data.problemID);
+  const idToURLRef = data.tournamentID
+    ? getDatabase(firebaseApp)
+        .ref('users')
+        .child(data.userID)
+        .child('tournaments')
+        .child('tournament-id-to-file-id')
+        .child(data.tournamentID.toString())
+    : getDatabase(firebaseApp)
+        .ref('users')
+        .child(data.userID)
+        .child('platform-' + data.platform)
+        .child('problem-id-to-file-id')
+        .child(data.problemID);
 
   const idToURLSnap = await idToURLRef.get();
 
@@ -81,6 +89,7 @@ export default async (
         },
       },
       problem: { platform: data.platform, id: data.problemID },
+      ...(data.tournamentID ? { tournamentID: data.tournamentID } : {}),
       settings: {
         workspaceName: problem.source + ': ' + problem.title,
         defaultPermission: data.defaultPermission,
@@ -95,6 +104,20 @@ export default async (
     });
   const fileID: string = resp.key!;
   await idToURLRef.set(fileID);
+
+  if (data.tournamentID) {
+    await getDatabase(firebaseApp)
+      .ref('tournaments')
+      .child(data.tournamentID)
+      .child('participants')
+      .child(data.userID)
+      .set({
+        message: 'unsubmitted',
+        statusCode: 'unsubmitted',
+        fileID,
+        submissionTime: null,
+      });
+  }
 
   res.status(200).json({ fileID: fileID });
 };
