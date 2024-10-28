@@ -1,6 +1,6 @@
 import { Platform, ProblemData } from '../../src/types/problem';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getDatabase, ServerValue } from 'firebase-admin/database';
+import { getDatabase, ServerValue, Reference } from 'firebase-admin/database';
 import firebaseApp from '../../src/firebaseAdmin';
 import colorFromUserId from '../../src/scripts/colorFromUserId';
 import { Language } from '../../src/context/UserContext';
@@ -13,6 +13,7 @@ type RequestData = {
   userName: string;
   defaultPermission: string;
   language: Language;
+  empty: boolean;
 };
 
 type ResponseData =
@@ -36,7 +37,8 @@ export default async (
     !data.userID ||
     !data.problemID ||
     !data.platform ||
-    !data.language
+    !data.language ||
+    data.empty === undefined
   ) {
     res.status(400).json({
       message: 'Bad data',
@@ -44,22 +46,27 @@ export default async (
     return;
   }
 
-  // XXX: Normalize (lowercase, etc.) problem ID?
-  const idToURLRef = getDatabase(firebaseApp)
-    .ref('users')
-    .child(data.userID)
-    .child('platform-' + data.platform)
-    .child('problem-id-to-file-id')
-    .child(data.problemID);
+  let idToURLRef: Reference | null = null;
 
-  const idToURLSnap = await idToURLRef.get();
+  if (!data.empty) {
+    // XXX: Normalize (lowercase, etc.) problem ID?
+    idToURLRef = getDatabase(firebaseApp)
+      .ref('users')
+      .child(data.userID)
+      .child('platform-' + data.platform)
+      .child('problem-id-to-file-id')
+      .child(data.problemID);
 
-  if (idToURLSnap.exists()) {
-    res.status(200).json({
-      fileID: idToURLSnap.val(),
-    });
-    return;
+    const idToURLSnap = await idToURLRef.get();
+
+    if (idToURLSnap.exists()) {
+      res.status(200).json({
+        fileID: idToURLSnap.val(),
+      });
+      return;
+    }
   }
+
   const problem: ProblemData | null = await fetchData({
     platform: data.platform,
     id: data.problemID,
@@ -94,7 +101,7 @@ export default async (
       },
     });
   const fileID: string = resp.key!;
-  await idToURLRef.set(fileID);
+  await idToURLRef?.set(fileID);
 
   res.status(200).json({ fileID: fileID });
 };

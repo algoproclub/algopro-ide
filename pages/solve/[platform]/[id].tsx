@@ -24,8 +24,11 @@ export default function CreatePlatformFile(): JSX.Element {
   useEffect(() => {
     if (!router.isReady || !firebaseUser || !userData || createdRef.current)
       return;
+
     const platform = router.query.platform;
     const problemID = router.query.id;
+    const empty = router.query.hasOwnProperty('empty');
+
     createdRef.current = true;
 
     invariant(
@@ -48,6 +51,7 @@ export default function CreatePlatformFile(): JSX.Element {
           userName: firebaseUser.displayName,
           language: userData.defaultLanguage,
           defaultPermission: userData.defaultPermission,
+          empty,
         }),
       });
       if (resp.status === 500) {
