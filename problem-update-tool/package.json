@@ -1,0 +1,12 @@
+{
+  "name": "problem-update-tool",
+  "main": "index.js",
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "firebase-admin": "^12.7.0"
+  },
+  "private": true
+}
