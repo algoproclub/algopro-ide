@@ -102,14 +102,14 @@ const SolutionViewContent = () => {
     )
   )[0];
   return (
-    <div className="flex-col w-full">
-      <div className="px-4 py-2 border-b border-gray-600 font-semibold text-gray-400 bg-gray-900">
+    <div className="flex flex-col min-h-0 overflow-hidden w-full">
+      <div className="px-4 py-2 border-b border-gray-600 font-semibold text-gray-400 bg-gray-900 min-h-0 overflow-hidden">
         {owner?.name}
       </div>
       <Split
         render={({ getGridProps, getGutterProps }) => (
           <div
-            className={`grid grid-rows-[2fr,3px,1fr] w-full h-full overflow-hidden`}
+            className={`grid grid-rows-[2fr,3px,1fr] w-full h-full min-h-0`}
             {...getGridProps()}
           >
             <CodeView />
@@ -165,27 +165,3 @@ const SpectatePage = () => {
 };
 
 export default SpectatePage;
-
-/*
-
-    <div
-            className={`grid grid-cols-[2fr,2fr,2fr] grid-rows-[2fr,1fr] h-full overflow-hidden divide-x divide-gray-700`}
-        >
-            {left && middle && right &&
-                <>
-                    <SolutionView fileID={left as string} className={classNames(
-                        'row-span-full min-w-0 overflow-hidden',
-                        !isDesktop && 'col-span-full',
-                    )} />
-                    <SolutionView fileID={middle as string} className={classNames(
-                        'row-span-full min-w-0 overflow-hidden',
-                        !isDesktop && 'col-span-full',
-                    )} />
-                    <SolutionView fileID={right as string} className={classNames(
-                        'row-span-full min-w-0 overflow-hidden',
-                        !isDesktop && 'col-span-full',
-                    )} />
-                </>
-            }
-        </div>
- */
