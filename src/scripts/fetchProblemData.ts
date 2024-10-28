@@ -107,6 +107,11 @@ async function fetchProblemDataCodeforces(
     });
   }
 
+  // Bypass Cloudflare Hotlink Protection on images
+  document('img').each((_, el) => {
+    document(el).attr('referrerpolicy', 'no-referrer');
+  });
+
   return {
     id: problemID,
     submittable: true,
