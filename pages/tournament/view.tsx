@@ -21,6 +21,7 @@ import USACOResults from '../../src/components/JudgeInterface/USACOResults';
 import * as monaco from 'monaco-editor';
 import Split from 'react-split-grid';
 import { EllipsisHorizontalIcon } from '@heroicons/react/20/solid';
+import WithTeacherLogin from '../../src/components/WithTeacherLogin';
 
 const db = getDatabase();
 
@@ -156,11 +157,13 @@ const SpectatePage = () => {
     return <></>;
   }
   return (
-    <div className="h-full w-full flex divide-x divide-gray-700">
-      <SolutionView fileID={left as string} />
-      <SolutionView fileID={middle as string} />
-      <SolutionView fileID={right as string} />
-    </div>
+    <WithTeacherLogin>
+      <div className="h-full w-full flex divide-x divide-gray-700">
+        <SolutionView fileID={left as string} />
+        <SolutionView fileID={middle as string} />
+        <SolutionView fileID={right as string} />
+      </div>
+    </WithTeacherLogin>
   );
 };
 
