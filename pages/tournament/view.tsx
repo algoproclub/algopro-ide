@@ -80,7 +80,7 @@ const ResultView = () => {
   }, []);
 
   return (
-    <div className="px-4 overflow-y-auto">
+    <div className="px-4 overflow-y-auto bg-gray-900">
       {statusData ? (
         <USACOResults data={statusData} />
       ) : (
