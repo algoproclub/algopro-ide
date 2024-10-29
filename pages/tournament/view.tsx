@@ -1,10 +1,9 @@
 import { useRouter } from 'next/router';
 import {
   EditorProvider,
-  FileData,
   useEditorContext,
 } from '../../src/context/EditorContext';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import classNames from 'classnames';
 import { LazyRealtimeEditor } from '../../src/components/RealtimeEditor/LazyRealtimeEditor';
 import {
@@ -20,8 +19,8 @@ import { StatusData } from '../../src/types/problem';
 import USACOResults from '../../src/components/JudgeInterface/USACOResults';
 import * as monaco from 'monaco-editor';
 import Split from 'react-split-grid';
-import { EllipsisHorizontalIcon } from '@heroicons/react/20/solid';
 import WithTeacherLogin from '../../src/components/WithTeacherLogin';
+import { XMarkIcon } from '@heroicons/react/20/solid';
 
 const db = getDatabase();
 
@@ -148,21 +147,79 @@ export const SolutionView = ({ fileID }: { fileID: string }): JSX.Element => {
   );
 };
 
+const WarningBanner = ({
+  children,
+}: {
+  children?: React.ReactNode;
+}): JSX.Element => {
+  const [show, setShow] = useState(true);
+  return (
+    (show && (
+      <div className="border border-yellow-500 bg-yellow-700 text-white px-4 py-3 m-2 rounded relative">
+        <strong className="font-bold">Warning </strong>
+        <span className="block sm:inline">{children}</span>
+        <XMarkIcon
+          className="h-6 w-6 absolute top-3 right-2 cursor-pointer"
+          onClick={() => setShow(false)}
+        />
+      </div>
+    )) || <></>
+  );
+};
+
 const SpectatePage = () => {
   const router = useRouter();
   const { userData } = useNullableUserContext();
   const { left, middle, right } = router.query;
 
+  const [files, setFiles] = useState<string[]>(
+    [left, middle, right].filter(x => x) as string[]
+  );
+
+  console.log(files);
+  useEffect(() => {
+    if (files.length > 0) return;
+
+    const fetchFiles = async () => {
+      const latestIDSnapshot = await get(ref(db, 'tournaments/latestID'));
+      const tournamentID = latestIDSnapshot.val();
+
+      const participantsSnapshot = await get(
+        ref(db, `tournaments/${tournamentID}/participants`)
+      );
+      const participants = participantsSnapshot.val() as {
+        [userName: string]: { fileID: string };
+      };
+
+      const fileIDs = Object.entries(participants).map(([_, p]) =>
+        p.fileID.slice(1)
+      );
+      setFiles(fileIDs);
+    };
+
+    fetchFiles();
+  }, []);
+
   if (!userData) {
     return <></>;
   }
+
   return (
     <WithTeacherLogin>
-      <div className="h-full w-full flex divide-x divide-gray-700">
-        <SolutionView fileID={left as string} />
-        <SolutionView fileID={middle as string} />
-        <SolutionView fileID={right as string} />
-      </div>
+      <>
+        {files.length > 3 && (
+          /* FIXME: Make user selection configurable when there are more than 3 participants. */
+          <WarningBanner>
+            There are more than 3 participants in this contest. Only the first 3
+            are shown.
+          </WarningBanner>
+        )}
+        <div className="h-full w-full flex divide-x divide-gray-700">
+          <SolutionView fileID={files?.[0]} />
+          <SolutionView fileID={files?.[1]} />
+          <SolutionView fileID={files?.[2]} />
+        </div>
+      </>
     </WithTeacherLogin>
   );
 };
