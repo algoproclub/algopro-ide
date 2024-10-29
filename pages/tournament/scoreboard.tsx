@@ -13,7 +13,7 @@ type Participation = {
 
 const colorForStatus = (statusCode: string, message: string) => {
   if (statusCode == 'resolved')
-    return message == 'accepted' ? 'bg-green-800' : 'bg-red-800';
+    return message == 'correct answer' ? 'bg-green-800' : 'bg-red-800';
 
   return '';
 };
@@ -81,7 +81,7 @@ const PageContent = () => {
       const ranks: { [key: string]: number } = {};
       let rank = 1;
       participants.forEach(([id, participation]) => {
-        if (participation.message === 'accepted') {
+        if (participation.message === 'correct answer') {
           ranks[id] = rank++;
         }
       });
