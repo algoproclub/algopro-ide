@@ -214,7 +214,7 @@ const updateStatusData = async (
   await db.ref().update(updates);
 
   const tournamentID = (await db.ref(`files/${id}/tournamentID`).get()).val();
-  if (tournamentID !== undefined) {
+  if (tournamentID) {
     const ownerID = await getFileOwner(id);
     await db.ref(`tournaments/${tournamentID}/participants/${ownerID}`).update({
       statusCode: statusData.statusCode,
@@ -405,7 +405,7 @@ const registerSubmission = async (
   const tournamentID = (
     await db.ref(`files/${fileID}/tournamentID`).get()
   ).val();
-  if (tournamentID !== undefined) {
+  if (tournamentID) {
     const ownerID = await getFileOwner(fileID);
     await db.ref(`tournaments/${tournamentID}/participants/${ownerID}`).update({
       message: defaultStatusData.message,
