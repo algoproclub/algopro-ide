@@ -65,6 +65,23 @@ async def spoj(username, password):
         "cookie": "; ".join(f"{c.name}={c.value}" for c in cookies),
     }
 
+async def atcoder(username, password):
+    page = await browser.get("https://atcoder.jp/login")
+    await (await page.select('#username')).send_keys(username)
+    await (await page.select('#password')).send_keys(password)
+    await (await page.select('#submit')).click()
+    await page.wait_for(text="Welcome, " + username)
+    cookies = await browser.cookies.get_all()
+    if not any(c.name == "REVEL_SESSION" for c in cookies):
+        raise Exception("Session cookie not found")
+    csrf_token = get_attribute(await page.select('input[name="csrf_token"]'), "value")
+    logger.info("Logged in as %s", username)
+    return {
+        "username": username,
+        "cookie": "; ".join(f"{c.name}={c.value}" for c in cookies),
+        "csrf_token": csrf_token,
+    }
+
 
 lock = asyncio.Lock()
 routes = web.RouteTableDef()
@@ -83,6 +100,8 @@ async def login(request):
             func = codeforces
         elif data.get("platform") == "spoj":
             func = spoj
+        elif data.get("platform") == "atcoder":
+            func = atcoder
         else:
             return web.json_response({"error": "Invalid platform"}, status=400)
         if not isinstance(data.get("username"), str) or not isinstance(

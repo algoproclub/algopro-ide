@@ -7,6 +7,9 @@
 - `POST /login`:
   - request: `{ platform: "spoj", username, password }`
   - response: `{ username, cookie }`
+- `POST /login`:
+  - request: `{ platform: "atcoder", username, password }`
+  - response: `{ username, cookie, csrf_token }`
 
 ## Deploy
 
