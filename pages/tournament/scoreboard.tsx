@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { get, getDatabase, ref, onValue } from 'firebase/database';
+import classNames from 'classnames';
 import WithTeacherLogin from '../../src/components/WithTeacherLogin';
 import LoadingIndicator from '../../src/components/LoadingIndicator';
 
 type Participation = {
-  timestamp: number | null;
+  submissionTime: number | null;
   statusCode: string;
   message: string;
   fileID: string;
@@ -27,6 +28,7 @@ const PageContent = () => {
     ({ id: string; name: string } & Participation)[]
   >([]);
   const [names, setNames] = useState<{ [key: string]: string }>({});
+  const [ranks, setRanks] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
     const fetchTournamentData = async () => {
@@ -51,11 +53,15 @@ const PageContent = () => {
 
     const cancel = onValue(participantsRef, async snapshot => {
       const participants: [string, Participation][] = Object.entries(
-        snapshot.val()
+        snapshot.val() ?? {}
       );
 
+      const untriedTime = new Date().getTime();
       participants.sort((a, b) => {
-        return (a[1].timestamp ?? 0) - (b[1].timestamp ?? 0);
+        return (
+          (a[1].submissionTime ?? untriedTime) -
+          (b[1].submissionTime ?? untriedTime)
+        );
       });
 
       const newNames = await Promise.all(
@@ -71,6 +77,15 @@ const PageContent = () => {
 
       const allNames = Object.assign(names, ...newNames);
       setNames(allNames);
+
+      const ranks: { [key: string]: number } = {};
+      let rank = 1;
+      participants.forEach(([id, participation]) => {
+        if (participation.message === 'accepted') {
+          ranks[id] = rank++;
+        }
+      });
+      setRanks(ranks);
 
       setData(
         participants.map(([id, participation]) => ({
@@ -93,6 +108,7 @@ const PageContent = () => {
           <table className="table-auto data-table text-sm w-full !border-separate !border-spacing-0 divide-y divide-gray-600">
             <thead>
               <tr className="divide-x divide-gray-700 bg-gray-800">
+                <th className="px-4 py-2 w-1/6">Rank</th>
                 <th className="px-4 py-2">Name</th>
                 <th className="px-4 py-2">Status</th>
                 <th className="px-4 py-2">Time</th>
@@ -100,7 +116,17 @@ const PageContent = () => {
             </thead>
             <tbody className="divide-y divide-gray-600">
               {data.map((row, index) => (
-                <tr className="divide-x divide-gray-600" key={index}>
+                <tr
+                  className={classNames(
+                    'divide-x',
+                    'divide-gray-600',
+                    colorForStatus(row.statusCode, row.message)
+                  )}
+                  key={index}
+                >
+                  <td className="px-4 py-2 text-center">
+                    {ranks[row.id] ?? '-'}
+                  </td>
                   <td className="px-4 py-2">
                     <a
                       className="underline hover:text-indigo-200 mr-2"
@@ -109,19 +135,14 @@ const PageContent = () => {
                       {row.name}
                     </a>
                   </td>
-                  <td
-                    className={`px-4 py-2 ${colorForStatus(
-                      row.statusCode,
-                      row.message
-                    )}`}
-                  >
-                    {row.message}
-                  </td>
+                  <td className="px-2 py-2">{row.message}</td>
                   <td className="px-4 py-2">
-                    {row.timestamp ? (
+                    {row.submissionTime ? (
                       <span>
-                        {Math.floor((row.timestamp - startDate) / 60000)}:
-                        {Math.floor(((row.timestamp - startDate) / 1000) % 60)
+                        {Math.floor((row.submissionTime - startDate) / 60000)}:
+                        {Math.floor(
+                          ((row.submissionTime - startDate) / 1000) % 60
+                        )
                           .toString()
                           .padStart(2, '0')}
                       </span>

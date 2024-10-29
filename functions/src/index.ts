@@ -407,13 +407,11 @@ const registerSubmission = async (
   ).val();
   if (tournamentID !== undefined) {
     const ownerID = await getFileOwner(fileID);
-    await db
-      .ref(`tournaments/${tournamentID}/participants/${ownerID}}`)
-      .update({
-        message: defaultStatusData.message,
-        statusCode: defaultStatusData.statusCode,
-        submissionTime: Date.now(),
-      });
+    await db.ref(`tournaments/${tournamentID}/participants/${ownerID}`).update({
+      message: defaultStatusData.message,
+      statusCode: defaultStatusData.statusCode,
+      submissionTime: Date.now(),
+    });
   }
 };
 
