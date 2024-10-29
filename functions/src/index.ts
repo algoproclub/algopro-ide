@@ -19,7 +19,12 @@ import {
   SPOJResultFetcher,
   PlanetsResultFetcher,
 } from './getResult';
-import { PendingSubmissions, AccountData, SubmissionData } from './types';
+import {
+  PendingSubmissions,
+  AccountData,
+  SubmissionData,
+  TournamentResult,
+} from './types';
 import {
   onValueCreated,
   onValueDeleted,
@@ -172,6 +177,25 @@ const accountData: { [key in Platform]: AccountData } = {
   },
 };
 
+const updateTournamentResult = async (
+  tournamentID: string,
+  fileID: string,
+  result: Partial<TournamentResult>
+) => {
+  const ownerID = await getFileOwner(fileID);
+  if (!ownerID) {
+    return;
+  }
+  const tournamentRef = db.ref(
+    `tournaments/${tournamentID}/participants/${ownerID}`
+  );
+  const prevResult = (await tournamentRef.get()).val();
+  if (prevResult.message === 'correct answer') {
+    return;
+  }
+  await tournamentRef.update(result);
+};
+
 const getFileOwner = async (fileID: string): Promise<string | undefined> => {
   type UserList = { [key: string]: { permission: string } };
 
@@ -215,8 +239,7 @@ const updateStatusData = async (
 
   const tournamentID = (await db.ref(`files/${id}/tournamentID`).get()).val();
   if (tournamentID) {
-    const ownerID = await getFileOwner(id);
-    await db.ref(`tournaments/${tournamentID}/participants/${ownerID}`).update({
+    await updateTournamentResult(tournamentID, id, {
       statusCode: statusData.statusCode,
       message: statusData.message,
     });
@@ -406,8 +429,7 @@ const registerSubmission = async (
     await db.ref(`files/${fileID}/tournamentID`).get()
   ).val();
   if (tournamentID) {
-    const ownerID = await getFileOwner(fileID);
-    await db.ref(`tournaments/${tournamentID}/participants/${ownerID}`).update({
+    await updateTournamentResult(tournamentID, fileID, {
       message: defaultStatusData.message,
       statusCode: defaultStatusData.statusCode,
       submissionTime: Date.now(),
