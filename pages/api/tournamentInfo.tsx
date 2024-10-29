@@ -7,11 +7,11 @@ import firebaseApp from '../../src/firebaseAdmin';
 type TournamentInfo = {
   platform: Platform;
   problemID: string;
-  starts: string;
+  start: string;
 };
 
 type ResponseData =
-  | { starts: string }
+  | { start: string }
   | (PlatformProblem & { tournamentID: string })
   | { error: string };
 
@@ -34,7 +34,7 @@ export default async (
 
   const tournament = tournamentRef.val() as TournamentInfo;
 
-  const available = new Date() >= new Date(tournament.starts);
+  const available = new Date() >= new Date(tournament.start);
 
   if (available) {
     res.status(200).json({
@@ -44,5 +44,5 @@ export default async (
     });
   }
 
-  res.status(200).json({ starts: tournament.starts });
+  res.status(200).json({ start: tournament.start });
 };

@@ -39,7 +39,7 @@ const PageContent = () => {
       const tournamentInfoSnapshot = await get(
         ref(db, `tournaments/${tournamentID}/info`)
       );
-      const startDate = new Date(tournamentInfoSnapshot.val().starts).getTime();
+      const startDate = new Date(tournamentInfoSnapshot.val().start).getTime();
       setStartDate(startDate);
     };
 

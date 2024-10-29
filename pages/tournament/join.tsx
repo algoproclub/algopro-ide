@@ -33,15 +33,15 @@ const CountdownTimer = ({ deadline }: { deadline: Date }) => {
 
 export default function JoinTournament() {
   const router = useRouter();
-  const [starts, setStarts] = useState<Date | null>(null);
+  const [start, setStart] = useState<Date | null>(null);
 
   const fetchTournamentInfo = async () => {
     const res = await fetch('/api/tournamentInfo');
     const data = await res.json();
 
-    if ('starts' in data) {
-      const startDate = new Date(data.starts);
-      setStarts(startDate);
+    if ('start' in data) {
+      const startDate = new Date(data.start);
+      setStart(startDate);
 
       const reloadID = setInterval(() => {
         clearInterval(reloadID);
@@ -68,11 +68,11 @@ export default function JoinTournament() {
   return (
     <div className="p-8 sm:p-16 text-center">
       <div className="text-3xl sm:text-4xl text-white font-bold">
-        {starts == null ? (
+        {start == null ? (
           <span>Loading...</span>
         ) : (
           <span>
-            Tournament starts in <CountdownTimer deadline={starts} />
+            Tournament starts in <CountdownTimer deadline={start} />
           </span>
         )}
       </div>
