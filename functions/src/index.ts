@@ -193,13 +193,19 @@ const updateStatusData = async (
 
   if (['error', 'resolved'].includes(statusData.statusCode!)) {
     updates[`submissions/pending/${id}`] = null;
+    const submissionTime = (
+      await db.ref(`submissions/${id}/submissionTime`).get()
+    ).val();
     const ref = db.ref(`submissions/${id}/statusDataHistory`);
     const snapshot = await ref.get();
 
     if (!snapshot.exists()) {
-      await ref.set([statusData]);
+      await ref.set([{ ...statusData, submissionTime: submissionTime }]);
     } else {
-      await ref.set([...snapshot.val(), statusData]);
+      await ref.set([
+        ...snapshot.val(),
+        { ...statusData, submissionTime: submissionTime },
+      ]);
     }
   }
   if (statusData.message === 'correct answer') {
@@ -388,6 +394,7 @@ const registerSubmission = async (
   });
   await db.ref(`submissions/${fileID}`).update({
     statusData: defaultStatusData,
+    submissionTime: Date.now(),
   });
   await db.ref('submissions/pending').update({
     [fileID]: {
