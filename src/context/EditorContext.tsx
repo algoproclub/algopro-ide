@@ -41,6 +41,7 @@ export type FileData = {
     };
   };
   problem: ProblemData | PlatformProblem | null;
+  tournamentID: string;
   settings: FileSettings;
   isCodeRunning: boolean;
   submission: FileSubmission;

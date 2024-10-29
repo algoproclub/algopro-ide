@@ -19,7 +19,12 @@ import {
   SPOJResultFetcher,
   PlanetsResultFetcher,
 } from './getResult';
-import { PendingSubmissions, AccountData, SubmissionData } from './types';
+import {
+  PendingSubmissions,
+  AccountData,
+  SubmissionData,
+  TournamentResult,
+} from './types';
 import {
   onValueCreated,
   onValueDeleted,
@@ -172,6 +177,37 @@ const accountData: { [key in Platform]: AccountData } = {
   },
 };
 
+const updateTournamentResult = async (
+  tournamentID: string,
+  fileID: string,
+  result: Partial<TournamentResult>
+) => {
+  const ownerID = await getFileOwner(fileID);
+  if (!ownerID) {
+    return;
+  }
+  const tournamentRef = db.ref(
+    `tournaments/${tournamentID}/participants/${ownerID}`
+  );
+  const prevResult = (await tournamentRef.get()).val();
+  if (prevResult.message === 'correct answer') {
+    return;
+  }
+  await tournamentRef.update(result);
+};
+
+const getFileOwner = async (fileID: string): Promise<string | undefined> => {
+  type UserList = { [key: string]: { permission: string } };
+
+  const fileData = (
+    await db.ref(`files/${fileID}/users`).get()
+  ).val() as UserList;
+
+  return Object.entries(fileData).find(
+    ([, data]) => data.permission === 'OWNER'
+  )?.[0];
+};
+
 const updateStatusData = async (
   id: string,
   statusData: Partial<StatusData>
@@ -181,19 +217,33 @@ const updateStatusData = async (
 
   if (['error', 'resolved'].includes(statusData.statusCode!)) {
     updates[`submissions/pending/${id}`] = null;
+    const submissionTime = (
+      await db.ref(`submissions/${id}/submissionTime`).get()
+    ).val();
     const ref = db.ref(`submissions/${id}/statusDataHistory`);
     const snapshot = await ref.get();
 
     if (!snapshot.exists()) {
-      await ref.set([statusData]);
+      await ref.set([{ ...statusData, submissionTime: submissionTime }]);
     } else {
-      await ref.set([...snapshot.val(), statusData]);
+      await ref.set([
+        ...snapshot.val(),
+        { ...statusData, submissionTime: submissionTime },
+      ]);
     }
   }
   if (statusData.message === 'correct answer') {
     updates[`files/${id}/solvedStatus/solved`] = true;
   }
   await db.ref().update(updates);
+
+  const tournamentID = (await db.ref(`files/${id}/tournamentID`).get()).val();
+  if (tournamentID) {
+    await updateTournamentResult(tournamentID, id, {
+      statusCode: statusData.statusCode,
+      message: statusData.message,
+    });
+  }
 };
 
 const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
@@ -367,12 +417,24 @@ const registerSubmission = async (
   });
   await db.ref(`submissions/${fileID}`).update({
     statusData: defaultStatusData,
+    submissionTime: Date.now(),
   });
   await db.ref('submissions/pending').update({
     [fileID]: {
       creationTime: Date.now(),
     },
   });
+
+  const tournamentID = (
+    await db.ref(`files/${fileID}/tournamentID`).get()
+  ).val();
+  if (tournamentID) {
+    await updateTournamentResult(tournamentID, fileID, {
+      message: defaultStatusData.message,
+      statusCode: defaultStatusData.statusCode,
+      submissionTime: Date.now(),
+    });
+  }
 };
 
 exports.registersubmission = onCall(
