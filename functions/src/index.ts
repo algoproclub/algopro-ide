@@ -415,9 +415,10 @@ const registerSubmission = async (
     id: submissionID,
     username: username,
   });
+  const submissionTime = Date.now();
   await db.ref(`submissions/${fileID}`).update({
     statusData: defaultStatusData,
-    submissionTime: Date.now(),
+    submissionTime: submissionTime,
   });
   await db.ref('submissions/pending').update({
     [fileID]: {
@@ -432,7 +433,7 @@ const registerSubmission = async (
     await updateTournamentResult(tournamentID, fileID, {
       message: defaultStatusData.message,
       statusCode: defaultStatusData.statusCode,
-      submissionTime: Date.now(),
+      submissionTime: submissionTime,
     });
   }
 };
