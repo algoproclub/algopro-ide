@@ -1,6 +1,7 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { StatusData, TestCase } from '../../types/problem';
+import TimeAgoLabel from '../TimeStamp';
 
 const capitalize = (text: string): string => {
   return text[0].toUpperCase() + text.substring(1);
@@ -53,7 +54,15 @@ const USACOTestCase = ({ data }: { data: TestCase }) => {
   );
 };
 
-export default function USACOResults({ data }: { data: StatusData }) {
+export default function USACOResults({
+  data,
+  submissionTime,
+  startTime,
+}: {
+  data: StatusData;
+  submissionTime?: number;
+  startTime?: number;
+}) {
   let equalUpToTrim = false;
   let output = data.output;
 
@@ -87,6 +96,7 @@ export default function USACOResults({ data }: { data: StatusData }) {
       output = lines.join('\n');
     }
   }
+
   return (
     <div className="mt-3">
       <div className="pb-3">
@@ -131,6 +141,26 @@ export default function USACOResults({ data }: { data: StatusData }) {
             {(data.time || data.memory) && ')'}
           </span>
         </div>
+        {submissionTime && (
+          <div className="text-sm text-gray-300">
+            {startTime ? (
+              <span>
+                Time:{' '}
+                <span
+                  className="underline underline-offset-2 decoration-dotted"
+                  title={new Date(submissionTime).toLocaleString('en')}
+                >
+                  {Math.floor((submissionTime - startTime) / 60000)}:
+                  {Math.floor(((submissionTime - startTime) / 1000) % 60)
+                    .toString()
+                    .padStart(2, '0')}
+                </span>
+              </span>
+            ) : (
+              <TimeAgoLabel date={new Date(submissionTime)} />
+            )}
+          </div>
+        )}
         {data.link && (
           <a
             href={data.link}

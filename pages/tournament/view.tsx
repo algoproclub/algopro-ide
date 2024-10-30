@@ -63,28 +63,33 @@ const CodeView = () => {
   );
 };
 
-const ResultView = () => {
+const ResultView = ({ startTime }: { startTime: number }) => {
   const { fileData } = useEditorContext();
   const [statusData, setStatusData] = useState<StatusData | null>(null);
+  const [submissionTime, setSubmissionTime] = useState<number>(0);
 
   useEffect(() => {
-    onValue(
-      ref(db, `submissions/${fileData.id}/statusData`),
-      (snapshot: DataSnapshot) => {
-        setStatusData(snapshot.val());
+    onValue(ref(db, `submissions/${fileData.id}`), (snapshot: DataSnapshot) => {
+      if (snapshot.exists()) {
+        setSubmissionTime(snapshot.val().submissionTime);
+        setStatusData(snapshot.val().statusData);
       }
-    );
+    });
     return () => {
-      off(ref(db, `submissions/${fileData.id}/statusData`));
+      off(ref(db, `submissions/${fileData.id}`));
     };
   }, []);
 
   return (
     <div className="px-4 overflow-y-auto bg-gray-900">
       {statusData ? (
-        <USACOResults data={statusData} />
+        <USACOResults
+          data={statusData}
+          submissionTime={submissionTime}
+          startTime={startTime}
+        />
       ) : (
-        <div className="font-semibold text-gray-400 p-4">
+        <div className="font-semibold text-gray-400 p-4 text-[0.92rem]">
           No submission yet.
         </div>
       )}
@@ -92,7 +97,7 @@ const ResultView = () => {
   );
 };
 
-const SolutionViewContent = () => {
+const SolutionViewContent = ({ startTime }: { startTime: number }) => {
   const { fileData } = useEditorContext();
   const owner = Object.values(
     Object.fromEntries(
@@ -103,7 +108,7 @@ const SolutionViewContent = () => {
   )[0];
   return (
     <div className="flex flex-col min-h-0 overflow-hidden w-full">
-      <div className="px-4 py-2 border-b border-gray-600 font-semibold text-gray-400 bg-gray-900 min-h-0 overflow-hidden">
+      <div className="px-4 py-2 border-b border-gray-600 font-semibold text-gray-400 bg-gray-900 min-h-0 truncate">
         {owner?.name}
       </div>
       <Split
@@ -126,7 +131,7 @@ const SolutionViewContent = () => {
                 )}
               ></div>
             </div>
-            <ResultView />
+            <ResultView startTime={startTime} />
           </div>
         )}
       />
@@ -134,7 +139,13 @@ const SolutionViewContent = () => {
   );
 };
 
-export const SolutionView = ({ fileID }: { fileID: string }): JSX.Element => {
+export const SolutionView = ({
+  fileID,
+  startTime,
+}: {
+  fileID: string;
+  startTime: number;
+}): JSX.Element => {
   return (
     <EditorProvider
       fileId={`-${fileID}`}
@@ -142,7 +153,7 @@ export const SolutionView = ({ fileID }: { fileID: string }): JSX.Element => {
       fileNotFoundUI={<></>}
       permissionDeniedUI={<></>}
     >
-      <SolutionViewContent />
+      <SolutionViewContent startTime={startTime} />
     </EditorProvider>
   );
 };
@@ -175,8 +186,8 @@ const SpectatePage = () => {
   const [files, setFiles] = useState<string[]>(
     [left, middle, right].filter(x => x) as string[]
   );
+  const [startTime, setStartTime] = useState(0);
 
-  console.log(files);
   useEffect(() => {
     if (files.length > 0) return;
 
@@ -190,6 +201,9 @@ const SpectatePage = () => {
       const participants = participantsSnapshot.val() as {
         [userName: string]: { fileID: string };
       };
+      setStartTime(
+        (await get(ref(db, `tournaments/${tournamentID}/info/start`))).val()
+      );
 
       const fileIDs = Object.entries(participants).map(([_, p]) =>
         p.fileID.slice(1)
@@ -200,7 +214,7 @@ const SpectatePage = () => {
     fetchFiles();
   }, []);
 
-  if (!userData) {
+  if (!userData || !startTime) {
     return <></>;
   }
 
@@ -215,9 +229,9 @@ const SpectatePage = () => {
           </WarningBanner>
         )}
         <div className="h-full w-full flex divide-x divide-gray-700">
-          <SolutionView fileID={files?.[0]} />
-          <SolutionView fileID={files?.[1]} />
-          <SolutionView fileID={files?.[2]} />
+          <SolutionView fileID={files?.[0]} startTime={startTime} />
+          <SolutionView fileID={files?.[1]} startTime={startTime} />
+          <SolutionView fileID={files?.[2]} startTime={startTime} />
         </div>
       </>
     </WithTeacherLogin>
