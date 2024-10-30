@@ -202,9 +202,10 @@ const SpectatePage = () => {
         [userName: string]: { fileID: string };
       };
       setStartTime(
-        (await get(ref(db, `tournaments/${tournamentID}/info/start`))).val()
+        Date.parse(
+          (await get(ref(db, `tournaments/${tournamentID}/info/start`))).val()
+        )
       );
-
       const fileIDs = Object.entries(participants).map(([_, p]) =>
         p.fileID.slice(1)
       );
