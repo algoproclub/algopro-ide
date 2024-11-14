@@ -1,8 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import jwt from 'jsonwebtoken';
-import type { JwtPayload } from 'jsonwebtoken';
 import { getDatabase } from 'firebase-admin/database';
 import firebaseApp from '../../src/firebaseAdmin';
+import { compactDecrypt } from 'jose';
 
 type RequestData = {
   token: string;
@@ -17,23 +16,21 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(400).send('Bad data');
     return;
   }
+
   const { token, userID } = data;
-  const secret = process.env.ONBOARDING_SECRET ?? 'secret';
-  try {
-    jwt.verify(token, secret);
-  } catch (e) {
-    res.status(400).send('JWT verification failed');
-    return;
-  }
-  const payload = jwt.verify(token, secret) as JwtPayload;
-  const discordID = payload.discord_id;
+  const secret =
+    process.env.ONBOARDING_SECRET ?? 'abcdabcdabcdabcdabcdabcdabcdabcd';
+  const secretKey = new TextEncoder().encode(secret);
 
   try {
-    const resp = await fetch(payload.callback_url, {
+    const { plaintext } = await compactDecrypt(token, secretKey);
+    const decodedPayload = JSON.parse(new TextDecoder().decode(plaintext));
+    const discordID = decodedPayload.discord_id;
+    const resp = await fetch(decodedPayload.callback_url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        [payload.client_auth_header]: payload.client_auth_secret,
+        [decodedPayload.client_auth_header]: decodedPayload.client_auth_secret,
       },
       body: JSON.stringify({
         discordID,
@@ -49,7 +46,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     });
     res.status(200).end();
   } catch (e) {
-    res.status(400).send('Request failed');
+    res.status(400).send('Decryption failed or request error');
     return;
   }
 };
