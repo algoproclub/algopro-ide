@@ -15,10 +15,7 @@ import {
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
 import { useUserContext } from '../../context/UserContext';
 import LoadResultsModal from './LoadResultsModal';
-import {
-  registerSubmission,
-  resetStatusData,
-} from '../../scripts/updateStatus';
+import { registerSubmission } from '../../scripts/updateStatus';
 import 'katex/dist/katex.min.css';
 import renderMathInElement from 'katex/contrib/auto-render';
 import katex from 'katex';
@@ -96,7 +93,16 @@ export const GenericSubmitButton = ({
         );
         console.log('submission success', submissionData);
       } catch (error) {
-        resetStatusData(fileData.id, setStatusData);
+        setStatusData({
+          statusCode: 'error',
+          message: 'Error submitting solution, please try again',
+          statusText: null,
+          link: null,
+          time: null,
+          memory: null,
+          output: null,
+          testCases: null,
+        });
         console.error(error);
       }
     }
