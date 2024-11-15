@@ -16,7 +16,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(400).send('Bad data');
     return;
   }
-
   const { token, userID } = data;
   const secret =
     process.env.ONBOARDING_SECRET ?? 'abcdabcdabcdabcdabcdabcdabcdabcd';
@@ -25,16 +24,25 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const { plaintext } = await compactDecrypt(token, secretKey);
     const decodedPayload = JSON.parse(new TextDecoder().decode(plaintext));
-    const discordID = decodedPayload.discord_id;
-    const resp = await fetch(decodedPayload.callback_url, {
+
+    const {
+      discord_id: discordID,
+      callback_url,
+      client_auth_header,
+      client_auth_secret,
+      ...additionalPayload
+    } = decodedPayload;
+
+    const resp = await fetch(callback_url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        [decodedPayload.client_auth_header]: decodedPayload.client_auth_secret,
+        [client_auth_header]: client_auth_secret,
       },
       body: JSON.stringify({
         discordID,
         userID,
+        ...additionalPayload,
       }),
     });
     if (!resp.ok) {
@@ -42,7 +50,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       return;
     }
     await db.ref(`users/${userID}/data`).update({
-      discordID: discordID,
+      discordID,
     });
     res.status(200).end();
   } catch (e) {
