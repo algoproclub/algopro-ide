@@ -8,21 +8,6 @@ const registerSubmissionHttps = httpsCallable<unknown, { success: boolean }>(
   'registersubmission'
 );
 
-export const resetStatusData = (
-  fileID: string,
-  setStatusData: React.Dispatch<React.SetStateAction<StatusData | null>>
-) => {
-  onValue(
-    ref(getDatabase(), `submissions/${fileID}/statusData`),
-    (snapshot: DataSnapshot) => {
-      setStatusData(snapshot.val());
-    },
-    {
-      onlyOnce: true,
-    }
-  );
-};
-
 export const registerSubmission = (
   fileID: string,
   submissionID: string,
@@ -45,7 +30,16 @@ export const registerSubmission = (
     username: username,
   }).then(response => {
     if (!response.data.success) {
-      resetStatusData(fileID, setStatusData);
+      setStatusData({
+        statusCode: 'error',
+        message: 'Failed to register submission, please try again',
+        statusText: null,
+        link: null,
+        time: null,
+        memory: null,
+        output: null,
+        testCases: null,
+      });
     }
   });
 };
