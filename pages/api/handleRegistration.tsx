@@ -1,8 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import jwt from 'jsonwebtoken';
-import type { JwtPayload } from 'jsonwebtoken';
 import { getDatabase } from 'firebase-admin/database';
 import firebaseApp from '../../src/firebaseAdmin';
+import { compactDecrypt } from 'jose';
 
 type RequestData = {
   token: string;
@@ -18,26 +17,32 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
   const { token, userID } = data;
-  const secret = process.env.ONBOARDING_SECRET ?? 'secret';
-  try {
-    jwt.verify(token, secret);
-  } catch (e) {
-    res.status(400).send('JWT verification failed');
-    return;
-  }
-  const payload = jwt.verify(token, secret) as JwtPayload;
-  const discordID = payload.discord_id;
+  const secret =
+    process.env.ONBOARDING_SECRET ?? 'abcdabcdabcdabcdabcdabcdabcdabcd';
+  const secretKey = new TextEncoder().encode(secret);
 
   try {
-    const resp = await fetch(payload.callback_url, {
+    const { plaintext } = await compactDecrypt(token, secretKey);
+    const decodedPayload = JSON.parse(new TextDecoder().decode(plaintext));
+
+    const {
+      discord_id: discordID,
+      callback_url,
+      client_auth_header,
+      client_auth_secret,
+      ...additionalPayload
+    } = decodedPayload;
+
+    const resp = await fetch(callback_url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        [payload.client_auth_header]: payload.client_auth_secret,
+        [client_auth_header]: client_auth_secret,
       },
       body: JSON.stringify({
         discordID,
         userID,
+        ...additionalPayload,
       }),
     });
     if (!resp.ok) {
@@ -45,11 +50,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       return;
     }
     await db.ref(`users/${userID}/data`).update({
-      discordID: discordID,
+      discordID,
     });
     res.status(200).end();
   } catch (e) {
-    res.status(400).send('Request failed');
+    res.status(400).send('Decryption failed or request error');
     return;
   }
 };

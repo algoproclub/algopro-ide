@@ -5,7 +5,6 @@ type RequestData = {
   userID: string;
 };
 
-// for testing purposes
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const data: RequestData = req.body;
   console.log(data);
