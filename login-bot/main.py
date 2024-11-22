@@ -132,7 +132,10 @@ async def login(request):
             global browser
             if not browser or browser.stopped:
                 logger.info("Starting browser")
-                browser = await uc.start(no_sandbox=True)
+                config = uc.Config()
+                config.host = "127.0.0.1"
+                config.port = 55555
+                browser = await uc.Browser.create(config)
             for tab in browser.tabs[1:]:
                 await tab.close()
             await browser.get("about:blank")
