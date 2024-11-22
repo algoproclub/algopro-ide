@@ -24,7 +24,8 @@ export type Platform =
   | 'atcoder'
   | 'spoj'
   | 'usaco'
-  | 'planets';
+  | 'planets'
+  | 'ojuz';
 
 export const platforms: String[] = [
   'codeforces',
