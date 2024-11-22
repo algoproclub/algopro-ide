@@ -83,6 +83,22 @@ async def atcoder(username, password):
     }
 
 
+async def ojuz(username, password):
+    page = await browser.get("https://oj.uz/login")
+    await (await page.select('#email')).send_keys(username)
+    await (await page.select('#password')).send_keys(password)
+    await (await page.select('#submit')).click()
+    await page.wait_for(text="Sign out")
+    cookies = await browser.cookies.get_all()
+    if not any(c.name == "session" for c in cookies):
+        raise Exception("Session cookie not found")
+    logger.info("Logged in as %s", username)
+    return {
+        "username": username,
+        "cookie": "; ".join(f"{c.name}={c.value}" for c in cookies),
+    }
+
+
 lock = asyncio.Lock()
 routes = web.RouteTableDef()
 
@@ -102,6 +118,8 @@ async def login(request):
             func = spoj
         elif data.get("platform") == "atcoder":
             func = atcoder
+        elif data.get("platform") == "ojuz":
+            func = ojuz
         else:
             return web.json_response({"error": "Invalid platform"}, status=400)
         if not isinstance(data.get("username"), str) or not isinstance(
