@@ -38,6 +38,7 @@ import {
   CSESSubmitter,
   PlanetsSubmitter,
   SPOJSubmitter,
+  OjuzSubmitter,
   Submitter,
 } from './submit';
 import { JSDOM } from 'jsdom';
@@ -89,6 +90,9 @@ export const submitproblemsolution = onCall<
         submitter = new PlanetsSubmitter(
           request.rawRequest.headers.authorization ?? ''
         );
+        break;
+      case 'ojuz':
+        submitter = new OjuzSubmitter();
         break;
       default:
         throw new HttpsError(
@@ -175,6 +179,7 @@ const accountData: { [key in Platform]: AccountData } = {
     sessionCookie: async () =>
       (await db.ref('credentials/spoj/0/cookie').get()).val(),
   },
+  ojuz: {},
 };
 
 const updateTournamentResult = async (
