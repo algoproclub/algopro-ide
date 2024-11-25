@@ -25,8 +25,7 @@ export async function fetchProblemTestcases({
 
   const basePath = `testcases/cses/${id}`;
 
-  // TODO: use production url when running in production
-  const bucket = getStorage(firebaseApp).bucket('algopro-app.appspot.com');
+  const bucket = getStorage(firebaseApp).bucket();
 
   // TODO: check if already cached
 
