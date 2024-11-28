@@ -18,6 +18,7 @@ import {
   CSESResultFetcher,
   SPOJResultFetcher,
   PlanetsResultFetcher,
+  OjuzResultFetcher,
 } from './getResult';
 import {
   PendingSubmissions,
@@ -285,6 +286,8 @@ const updateResultNonCF = async (submissionData: SubmissionData) => {
     fetcher = new SPOJResultFetcher(submissionData);
   } else if (submissionData.platform === 'planets') {
     fetcher = new PlanetsResultFetcher(submissionData);
+  } else if (submissionData.platform === 'ojuz') {
+    fetcher = new OjuzResultFetcher(submissionData);
   } else {
     throw new Error(`invalid platform name (${submissionData.platform})`);
   }

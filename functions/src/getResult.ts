@@ -66,6 +66,136 @@ export abstract class ResultFetcher {
   }
 }
 
+export class OjuzResultFetcher extends ResultFetcher {
+  private summary: Element | null = null;
+  private testCases?: NodeListOf<Element>;
+  private document?: Document;
+  private statusText?: string;
+
+  constructor(submissionData: SubmissionData) {
+    super(submissionData);
+  }
+  async initialize(): Promise<void> {
+    const { submissionID } = this.submissionData;
+
+    const url = `https://oj.uz/submission/${submissionID}`;
+    const resp = await fetch(url);
+    if (resp.status !== 200) {
+      const errorMessage = `Oj.uz: response status is not 200; url: ${url}; response status: ${resp.status}`;
+      throw resp.status === 404
+        ? new IncorrectDataError(errorMessage)
+        : new Error(errorMessage);
+    }
+    const respText = await resp.text();
+    this.document = new JSDOM(respText).window.document;
+    this.summary = this.document.querySelector(
+      'table.table-condensed > tbody > tr'
+    );
+    this.statusText = this.summary?.children[5]
+      .querySelector(`#progressbar_text_${this.submissionData.submissionID}`)
+      ?.textContent?.toLowerCase();
+    this.testCases = this.document.querySelectorAll('tr.success, tr.danger');
+  }
+
+  formatMemory(memory: string | null): string | null {
+    const num = memory ? parseInt(memory?.split(' ')[0]) : NaN;
+    return isNaN(num) ? null : Math.round(num / 100) / 10 + ' MB';
+  }
+
+  getLink(): string | null {
+    return `https://oj.uz/submission/${this.submissionData.submissionID}`;
+  }
+
+  getMemory(): string | null {
+    return this.formatMemory(this.summary?.children[7].textContent ?? null);
+  }
+
+  getMessage(): string {
+    const scoreRegex = new RegExp('[0-9]+ / [0-9]+');
+    if (this.statusText === 'compilation error') {
+      return this.statusText;
+    }
+    if (!this.statusText || !scoreRegex.test(this.statusText)) {
+      return 'running';
+    }
+    const tokens = this.statusText.split(' / ');
+    if (tokens[0] == tokens[1]) {
+      return 'correct answer';
+    }
+    if (tokens[0] !== '0') {
+      return `[${tokens[0] + ' / ' + tokens[1]}] Partially correct`;
+    }
+    for (let i = 0; i < this.testCases!.length; i++) {
+      if (this.getTestCaseTitle(i) !== 'correct answer') {
+        return this.getTestCaseTitle(i);
+      }
+    }
+    return '?';
+  }
+
+  getOutput(): string | null {
+    if (this.statusText === 'compilation error') {
+      return (
+        this.document?.querySelector('#compilation_message')?.textContent ??
+        null
+      );
+    }
+    return null;
+  }
+
+  getStatusCode(): StatusCode {
+    const scoreRegex = new RegExp('[0-9]+ / [0-9]+');
+    if (
+      !this.statusText ||
+      (!scoreRegex.test(this.statusText) &&
+        this.statusText !== 'compilation error')
+    ) {
+      return 'working';
+    }
+    return 'resolved';
+  }
+
+  getStatusText(): string | null {
+    const scoreRegex = new RegExp('[0-9]+ / [0-9]+');
+    if (
+      !this.statusText ||
+      (!scoreRegex.test(this.statusText) &&
+        this.statusText !== 'compilation error')
+    ) {
+      return 'working';
+    }
+    return 'status-done';
+  }
+
+  getTime(): string | null {
+    return this.summary?.children[6].textContent ?? null;
+  }
+
+  getTestCaseNum(): number {
+    return this.testCases!.length;
+  }
+
+  getTestCaseTitle(n: number): string {
+    const verdict = this.testCases![n].children[1].textContent?.toLowerCase();
+    if (verdict === 'correct') {
+      return 'correct answer';
+    }
+    return verdict ?? '?';
+  }
+  getTestCaseSymbol(n: number): string {
+    const verdict = this.getTestCaseTitle(n);
+    return verdict === 'correct answer' ? '✓' : 'x';
+  }
+  getTestCaseTime(n: number): string | null {
+    return this.testCases![n].children[2].textContent?.toLowerCase() ?? null;
+  }
+  getTestCaseMemory(n: number): string | null {
+    const memory =
+      this.testCases![n].children[3].textContent?.toLowerCase() ?? null;
+    return this.formatMemory(memory);
+  }
+}
+
 export class PlanetsResultFetcher extends ResultFetcher {
   private resultData?: StatusData;
 
