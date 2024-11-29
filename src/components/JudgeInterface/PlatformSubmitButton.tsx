@@ -68,42 +68,52 @@ export const GenericSubmitButton = ({
         alert(`This platform does not support manual submission.`);
       }
     } else {
-      try {
-        setStatusData({
-          statusCode: 'starting',
-          message: 'starting',
-          statusText: null,
-          link: null,
-          time: null,
-          memory: null,
-          output: null,
-          testCases: null,
-        });
-        const submissionData = await submitProblemSolution({
-          platform: problem.platform,
-          problemID: problem.id,
-          language: fileData.settings.language,
-          sourceCode: getMainEditorValue(),
-        });
-        registerSubmission(
-          fileData.id,
-          submissionData.data.id,
-          submissionData.data.username,
-          setStatusData
-        );
-        console.log('submission success', submissionData);
-      } catch (error) {
-        setStatusData({
-          statusCode: 'error',
-          message: 'Error submitting solution, please try again',
-          statusText: null,
-          link: null,
-          time: null,
-          memory: null,
-          output: null,
-          testCases: null,
-        });
-        console.error(error);
+      setStatusData({
+        statusCode: 'starting',
+        message: 'starting',
+        statusText: null,
+        link: null,
+        time: null,
+        memory: null,
+        output: null,
+        testCases: null,
+      });
+      const lastAllowedTime = performance.now() + 5000;
+      while (true) {
+        try {
+          const submissionData = await submitProblemSolution({
+            platform: problem.platform,
+            problemID: problem.id,
+            language: fileData.settings.language,
+            sourceCode: getMainEditorValue(),
+          });
+          registerSubmission(
+            fileData.id,
+            submissionData.data.id,
+            submissionData.data.username,
+            setStatusData
+          );
+          console.log('submission success', submissionData);
+          break;
+        } catch (error) {
+          console.error(error);
+          if (performance.now() > lastAllowedTime) {
+            setStatusData({
+              statusCode: 'error',
+              message: 'Error submitting solution, please try again',
+              statusText: null,
+              link: null,
+              time: null,
+              memory: null,
+              output: null,
+              testCases: null,
+            });
+            break;
+          } else {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+        }
       }
     }
   };
