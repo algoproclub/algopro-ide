@@ -20,7 +20,7 @@ const USACOTestCase = ({ data }: { data: TestCase }) => {
       : 'text-red-100';
   return (
     <div
-      className={`m-1 p-1 inline-block w-[5rem] bg-opacity-25 border-opacity-50 border ${containerClasses} relative rounded-[4px]`}
+      className={`m-1 p-1 inline-block w-[5.5rem] bg-opacity-25 border-opacity-50 border ${containerClasses} relative rounded-[4px]`}
       title={capitalize(data.title)}
     >
       <div className={`font-semibold text-center ${textColor} pt-1`}>
@@ -122,7 +122,16 @@ export default function USACOResults({
                 />
               )}
             {data.statusCode === 'resolved' &&
-              data.message?.toLowerCase() !== 'correct answer' && (
+              data.message?.toLowerCase() !== 'correct answer' &&
+              data.message?.toLowerCase()?.includes('partially') && (
+                <FontAwesomeIcon
+                  icon={{ prefix: 'fas', iconName: 'check' }}
+                  className="text-yellow-500 w-3.5 h-3.5"
+                />
+              )}
+            {data.statusCode === 'resolved' &&
+              data.message?.toLowerCase() !== 'correct answer' &&
+              !data.message?.toLowerCase()?.includes('partially') && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'xmark' }}
                   className="w-3.5 h-3.5 text-red-500"
