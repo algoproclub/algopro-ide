@@ -204,7 +204,10 @@ function EditorPage() {
           if (!sample.output) prefix = '';
           cleanJudgeResult(data, sample.output, prefix);
           results.push(data);
-          newJudgeResults[2 + index] = data;
+          let tabName = 'Sample';
+          if (samples.length > 1) tabName += ` ${index + 1}`;
+          let tabIndex = tabsList.findIndex(tab => tab.label === tabName); // Find the index in tablists
+          newJudgeResults[tabIndex] = data;
         }
         if (samples.length > 1) {
           let verdicts = '';
