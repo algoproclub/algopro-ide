@@ -19,26 +19,21 @@ jobs:
           git config user.name "AlgoPro"
           git config user.email "info@algopro.hu"
 
-      # Get all brances
-      - name: Fetch relevant branches
-        run: |
+          # Fetch relevant branches
           git fetch origin production:production
 
-      # Create production-update branch
-      - name: Create production-update branch
-        run: |
+          # Create production-update branch
+          # Create production-update branch
           git checkout production
           git checkout -b production-update
 
-      # Merge and squash changes from main authored by the Vercel account
-      - name: Merge and squash changes from main
-        run: |
+          # Merge and squash changes from main
+
           git merge --squash origin/master
           git commit -m "Deploy to production"
 
-      # Update the pullrequest base
-      - name: Push production-update branch
-        run: git push origin production-update --force
+          # Push production-update branch
+          git push origin production-update --force
 
       # Create pullrequest
       - name: Create Pull Request
