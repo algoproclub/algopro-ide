@@ -1,37 +1,49 @@
-name: Deploy to Vercel
+name: Deploy to Production
 
 on:
   workflow_dispatch:
 
 jobs:
-  createPullRequest:
+  deploy:
     runs-on: ubuntu-latest
-
     steps:
-      # Get the production branch
-      - uses: actions/checkout@v4
-        with:
-          ref: production
+      # CHeck out defult branhc
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      # Fetch master branch
-      - name: Fetch master branch
-        run: git fetch origin master:master
-
-      # Rebase master onto production with rewritten author
-      - name: Rebase commits with rewritten author
+      # Set up Vercel creds
+      - name: Set up Git
         run: |
-          git checkout -b production-promotion master
-          git rebase --onto production production master --exec 'git commit --amend --author="AlgoPro <info@algopro.hu>" --no-edit'
+          git config user.name "AlgoPro"
+          git config user.email "info@algopro.hu"
 
-      # Push rebased branch
-      - name: Push rebased branch
+      # Get all brances
+      - name: Fetch all branches
+        run: git fetch --all
+
+      # Create production-update branch
+      - name: Create production-update branch
         run: |
-          git push origin production-promotion --force
+          git checkout production
+          git checkout -b production-update
 
-      - name: create pull request to promote to production
-        uses: peter-evans/create-pull-request@v7
+      # Merge and squash changes from main authored by the Vercel account
+      - name: Merge and squash changes from main
+        run: |
+          git merge --squash origin/main
+          git commit -m "Deploy to production"
+
+      # Update the pullrequest base
+      - name: Push production-update branch
+        run: git push origin production-update --force
+
+      # Create pullrequest
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.VERCEL_IDE_DEPLOY_TOKEN }}
-          branch: "production-promotion"
-          title: 'Deploy to Production'
+          branch: production-update
           committer: 'AlgoPro <info@algopro.hu>'
+          title: 'Deploy to Production'
+          body: 'This PR contains the latest changes from main to be deployed to production.'
+          base: production
