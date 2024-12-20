@@ -9,7 +9,9 @@ jobs:
     steps:
       # CHeck out defult branhc
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          ref: master
 
       # Set up Vercel creds
       - name: Set up Git
@@ -20,7 +22,6 @@ jobs:
       # Get all brances
       - name: Fetch relevant branches
         run: |
-          git fetch origin master:master
           git fetch origin production:production
 
       # Create production-update branch
