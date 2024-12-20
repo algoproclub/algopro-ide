@@ -12,6 +12,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: master
+          fetch-depth: 0 # Fetch every bit of history
 
       # Set up Vercel creds
       - name: Set up Git
@@ -22,7 +23,6 @@ jobs:
           # Fetch relevant branches
           git fetch origin production:production
 
-          # Create production-update branch
           # Create production-update branch
           git checkout production
           git checkout -b production-update
