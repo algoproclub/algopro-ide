@@ -35,6 +35,11 @@ jobs:
           # Push production-update branch
           git push origin production-update --force
 
+      - name: Checkout production
+        uses: actions/checkout@v4
+        with:
+          ref: production
+
       # Create pullrequest
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
@@ -44,4 +49,3 @@ jobs:
           committer: 'AlgoPro <info@algopro.hu>'
           title: 'Deploy to Production'
           body: 'This PR contains the latest changes from main to be deployed to production.'
-          base: production
