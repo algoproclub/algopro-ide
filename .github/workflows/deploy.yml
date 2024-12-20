@@ -13,17 +13,20 @@ jobs:
         with:
           ref: production
 
-      # Update to use the  master branch
+      # Fetch master branch
+      - name: Fetch master branch
+        run: git fetch origin master:master
 
-      - name: Reset promotion branch
+      # Rebase master onto production with rewritten author
+      - name: Rebase commits with rewritten author
         run: |
-          git fetch origin master:master
-          git reset --hard master
+          git checkout -b production-promotion master
+          git rebase --onto production production master --exec 'git commit --amend --author="AlgoPro <info@algopro.hu>" --no-edit'
 
-      # If we want to do any pre-processing to the pullrequest in the future, it can be done here
-      # Example: https://github.com/peter-evans/create-pull-request/blob/main/docs/examples.md#use-case-create-a-pull-request-to-update-x-on-push
-      #
-
+      # Push rebased branch
+      - name: Push rebased branch
+        run: |
+          git push origin production-promotion --force
 
       - name: create pull request to promote to production
         uses: peter-evans/create-pull-request@v7
