@@ -8,17 +8,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checks out the default branch
+      # Get the production branch
       - uses: actions/checkout@v4
+        with:
+          ref: production
+
+      # Update to use the  master branch
+
+      - name: Reset promotion branch
+        run: |
+          git fetch origin main:main
+          git reset --hard main
 
       # If we want to do any pre-processing to the pullrequest in the future, it can be done here
       # Example: https://github.com/peter-evans/create-pull-request/blob/main/docs/examples.md#use-case-create-a-pull-request-to-update-x-on-push
+      #
 
-      - name: Create Pull Request
+
+      - name: create pull request to promote to production
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.VERCEL_IDE_DEPLOY_TOKEN }}
-          base: "master" 
-          branch: "production"
+          branch: "production-promotion"
           title: 'Deploy to Production'
           committer: 'AlgoPro <info@algopro.hu>'
