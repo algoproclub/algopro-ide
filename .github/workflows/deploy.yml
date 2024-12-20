@@ -17,8 +17,8 @@ jobs:
 
       - name: Reset promotion branch
         run: |
-          git fetch origin main:main
-          git reset --hard main
+          git fetch origin master:master
+          git reset --hard master
 
       # If we want to do any pre-processing to the pullrequest in the future, it can be done here
       # Example: https://github.com/peter-evans/create-pull-request/blob/main/docs/examples.md#use-case-create-a-pull-request-to-update-x-on-push
