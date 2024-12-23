@@ -1,24 +1,104 @@
-name: Deploy to Vercel
+name: Deploy to Production
 
 on:
   workflow_dispatch:
 
 jobs:
-  createPullRequest:
+  pullrequest:
     runs-on: ubuntu-latest
-
     steps:
-      # Checks out the default branch
-      - uses: actions/checkout@v4
+      # CHeck out defult branhc
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0 # Fetch every bit of history
 
-      # If we want to do any pre-processing to the pullrequest in the future, it can be done here
-      # Example: https://github.com/peter-evans/create-pull-request/blob/main/docs/examples.md#use-case-create-a-pull-request-to-update-x-on-push
+      # Set up Vercel creds
+      - name: Create Diff
+        id: diff
+        run: |
+          git config user.name "AlgoPro"
+          git config user.email "info@algopro.hu"
 
+          # Fetch relevant branches
+          git fetch origin production:production
+
+          # Create production-update branch
+          git checkout production
+
+          # Merge and squash changes from main
+          git merge origin/master
+
+          COMMIT_MSG_COLLECTION="$(git log origin/master --not HEAD --format="* %s" --reverse)"
+
+          # Set delimitter
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "commit_msgs<<EOF"$'\n'"$COMMIT_MSG_COLLECTION"$'\n'EOF >> $GITHUB_OUTPUT
+
+      - name: Get Current Time
+        id: current_time
+        run: echo "time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
+
+      # Create pullrequest
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.VERCEL_IDE_DEPLOY_TOKEN }}
-          base: "master" 
-          branch: "production"
-          title: 'Deploy to Production'
+          branch: production-update
           committer: 'AlgoPro <info@algopro.hu>'
+          author: 'AlgoPro <info@algopro.hu>'
+          title: 'Deploy to Production'
+          body: |
+            This PR contains the latest changes from main to be deployed to production.
+
+            # Changelog:
+            ${{ steps.diff.outputs.commit_msgs }} 
+
+
+            Generated on: ${{ steps.current_time.outputs.time }}
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for Deployment Pull Request
+        id: pr_check
+        run: |
+          PR_NUMBER=$(gh pr list --repo algoproclub/algopro-ide --state open --base production --json number --jq '.[0].number')
+
+          if [[ -z "$PR_NUMBER" ]]; then
+            echo "No open pull request found for deployment."
+            echo "pr_exists=false" >> $GITHUB_OUTPUT
+          else
+            echo "Pull request #$PR_NUMBER found."
+            echo "pr_exists=true" >> $GITHUB_OUTPUT
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Exit if No Pull Request
+        if: steps.pr_check.outputs.pr_exists == 'false'
+        run: exit 0
+
+      - name: Check if PR is Mergeable
+        id: pr_merge_check
+        run: |
+          MERGEABLE=$(gh pr --repo algoproclub/algopro-ide view ${{ steps.pr_check.outputs.pr_number }} --json mergeable --jq '.mergeable')
+
+          if [[ "$MERGEABLE" != "MERGEABLE" ]]; then
+            echo "Pull request is not mergeable."
+            echo "mergeable=false" >> $GITHUB_OUTPUT
+          else
+            echo "Pull request is mergeable."
+            echo "mergeable=true" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Exit if PR is Not Mergeable
+        if: steps.pr_merge_check.outputs.mergeable == 'false'
+        run: exit 0
+
+      - name: Merge Pull Request
+        run: |
+          gh pr merge ${{ steps.pr_check.outputs.pr_number }} --merge --author-email "info@algopro.hu"
+        env:
+          GITHUB_TOKEN: ${{ secrets.VERCEL_IDE_DEPLOY_TOKEN }}
