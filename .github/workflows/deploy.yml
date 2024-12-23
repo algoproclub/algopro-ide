@@ -1,24 +1,59 @@
-name: Deploy to Vercel
+name: Deploy to Production
 
 on:
   workflow_dispatch:
 
 jobs:
-  createPullRequest:
+  deploy:
     runs-on: ubuntu-latest
-
     steps:
-      # Checks out the default branch
-      - uses: actions/checkout@v4
+      # CHeck out defult branhc
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0 # Fetch every bit of history
 
-      # If we want to do any pre-processing to the pullrequest in the future, it can be done here
-      # Example: https://github.com/peter-evans/create-pull-request/blob/main/docs/examples.md#use-case-create-a-pull-request-to-update-x-on-push
+      # Set up Vercel creds
+      - name: Create Diff
+        id: diff
+        run: |
+          git config user.name "AlgoPro"
+          git config user.email "info@algopro.hu"
 
+          # Fetch relevant branches
+          git fetch origin production:production
+
+          # Create production-update branch
+          git checkout production
+          # Merge and squash changes from main
+
+          git merge --squash origin/master
+
+          COMMIT_MSG_COLLECTION="$(git log origin/master --not HEAD --format="* %s" --reverse)"
+
+          # Set delimitter
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "commit_msgs<<EOF"$'\n'"$COMMIT_MSG_COLLECTION"$'\n'EOF >> $GITHUB_OUTPUT
+
+      - name: Get Current Time
+        id: current_time
+        run: echo "time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
+
+
+      # Create pullrequest
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.VERCEL_IDE_DEPLOY_TOKEN }}
-          base: "master" 
-          branch: "production"
-          title: 'Deploy to Production'
+          branch: production-update
           committer: 'AlgoPro <info@algopro.hu>'
+          title: 'Deploy to Production'
+          body: |
+            This PR contains the latest changes from main to be deployed to production.
+
+            # Changelog:
+            ${{ steps.diff.outputs.commit_msgs }} 
+
+
+            Generated on: ${{ steps.current_time.outputs.time }}
