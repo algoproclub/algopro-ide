@@ -1,0 +1,49 @@
+name: Create Pullrequest for Production
+
+on:
+  workflow_dispatch:
+
+jobs:
+  pullrequest:
+    runs-on: ubuntu-latest
+    steps:
+      # CHeck out defult branhc
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0 # Fetch every bit of history
+
+      # Set up Vercel creds
+      - name: Create Diff
+        id: diff
+        run: |
+          git config user.name "AlgoPro"
+          git config user.email "info@algopro.hu"
+
+          # Fetch relevant branches
+          git fetch origin production:production
+
+          # Create production-update branch
+          git checkout production
+
+          # Merge and squash changes from main
+          git merge origin/master
+
+      - name: Get Current Time
+        id: current_time
+        run: echo "time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_OUTPUT
+
+      # Create pullrequest
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.VERCEL_IDE_DEPLOY_TOKEN }}
+          branch: production-update
+          committer: 'AlgoPro <info@algopro.hu>'
+          author: 'AlgoPro <info@algopro.hu>'
+          title: 'Deploy to Production'
+          body: |
+            This PR contains the latest changes from main to be deployed to production.
+
+            Generated on: ${{ steps.current_time.outputs.time }}
