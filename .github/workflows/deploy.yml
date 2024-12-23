@@ -32,14 +32,6 @@ jobs:
           git merge --squash origin/master
           git commit -m "Deploy to production"
 
-          # Push production-update branch
-          git push origin production-update --force
-
-      - name: Checkout production
-        uses: actions/checkout@v4
-        with:
-          ref: production
-
       # Create pullrequest
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
