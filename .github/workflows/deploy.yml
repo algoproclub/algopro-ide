@@ -48,6 +48,6 @@ jobs:
 
       - name: Merge Pull Request
         run: |
-          gh pr merge ${{ steps.pr_check.outputs.pr_number }} --merge --author-email "info@algopro.hu"
+          gh pr merge ${{ steps.pr_check.outputs.pr_number }} --repo algoproclub/algopro-ide --merge --author-email "info@algopro.hu"
         env:
           GH_TOKEN: ${{ secrets.VERCEL_IDE_DEPLOY_TOKEN }}
