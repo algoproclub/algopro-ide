@@ -26,8 +26,11 @@ jobs:
 
           # Create production-update branch
           git checkout production
-          # Merge and squash changes from main
 
+          # Ensure that the commit has no other contributurs
+          git checkout -b production-update
+
+          # Merge and squash changes from main
           git merge --squash origin/master
 
           COMMIT_MSG_COLLECTION="$(git log origin/master --not HEAD --format="* %s" --reverse)"
@@ -48,7 +51,6 @@ jobs:
           token: ${{ secrets.VERCEL_IDE_DEPLOY_TOKEN }}
           branch: production-update
           committer: 'AlgoPro <info@algopro.hu>'
-          branch-suffix: timestamp
           title: 'Deploy to Production'
           body: |
             This PR contains the latest changes from main to be deployed to production.
