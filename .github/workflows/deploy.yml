@@ -25,8 +25,6 @@ jobs:
 
           # Create production-update branch
           git checkout production
-          git checkout -b production-update
-
           # Merge and squash changes from main
 
           git merge --squash origin/master
