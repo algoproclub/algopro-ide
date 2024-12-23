@@ -50,4 +50,4 @@ jobs:
         run: |
           gh pr merge ${{ steps.pr_check.outputs.pr_number }} --merge --author-email "info@algopro.hu"
         env:
-          GITHUB_TOKEN: ${{ secrets.VERCEL_IDE_DEPLOY_TOKEN }}
+          GH_TOKEN: ${{ secrets.VERCEL_IDE_DEPLOY_TOKEN }}
