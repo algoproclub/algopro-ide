@@ -49,7 +49,6 @@ jobs:
           branch: production-update
           committer: 'AlgoPro <info@algopro.hu>'
           title: 'Deploy to Production'
-          branch-suffix: timestamp
           body: |
             This PR contains the latest changes from main to be deployed to production.
 
