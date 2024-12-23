@@ -48,6 +48,7 @@ jobs:
           token: ${{ secrets.VERCEL_IDE_DEPLOY_TOKEN }}
           branch: production-update
           committer: 'AlgoPro <info@algopro.hu>'
+          branch-suffix: timestamp
           title: 'Deploy to Production'
           body: |
             This PR contains the latest changes from main to be deployed to production.
