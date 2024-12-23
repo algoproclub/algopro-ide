@@ -28,7 +28,7 @@ jobs:
           git checkout production
 
           # Merge and squash changes from main
-          git merge --squash origin/master
+          git merge origin/master
 
           COMMIT_MSG_COLLECTION="$(git log origin/master --not HEAD --format="* %s" --reverse)"
 
@@ -57,4 +57,48 @@ jobs:
 
 
             Generated on: ${{ steps.current_time.outputs.time }}
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for Deployment Pull Request
+        id: pr_check
+        run: |
+          PR_NUMBER=$(gh pr list --repo algoproclub/algopro-ide --state open --base production --json number --jq '.[0].number')
 
+          if [[ -z "$PR_NUMBER" ]]; then
+            echo "No open pull request found for deployment."
+            echo "pr_exists=false" >> $GITHUB_OUTPUT
+          else
+            echo "Pull request #$PR_NUMBER found."
+            echo "pr_exists=true" >> $GITHUB_OUTPUT
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Exit if No Pull Request
+        if: steps.pr_check.outputs.pr_exists == 'false'
+        run: exit 0
+
+      - name: Check if PR is Mergeable
+        id: pr_merge_check
+        run: |
+          MERGEABLE=$(gh pr --repo algoproclub/algopro-ide view ${{ steps.pr_check.outputs.pr_number }} --json mergeable --jq '.mergeable')
+
+          if [[ "$MERGEABLE" != "MERGEABLE" ]]; then
+            echo "Pull request is not mergeable."
+            echo "mergeable=false" >> $GITHUB_OUTPUT
+          else
+            echo "Pull request is mergeable."
+            echo "mergeable=true" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Exit if PR is Not Mergeable
+        if: steps.pr_merge_check.outputs.mergeable == 'false'
+        run: exit 0
+
+      - name: Merge Pull Request
+        run: |
+          gh pr merge ${{ steps.pr_check.outputs.pr_number }} --merge --author-email "info@algopro.hu"
+        env:
+          GITHUB_TOKEN: ${{ secrets.VERCEL_IDE_DEPLOY_TOKEN }}
