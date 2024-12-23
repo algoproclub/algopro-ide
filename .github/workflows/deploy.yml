@@ -28,7 +28,7 @@ jobs:
           git checkout production
 
           # Ensure that the commit has no other contributurs
-          git checkout -b production-update
+          git checkout -b production-update-temp
 
           # Merge and squash changes from main
           git merge --squash origin/master
