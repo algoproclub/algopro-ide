@@ -19,6 +19,7 @@ jobs:
             echo "Pull request #$PR_NUMBER found."
             echo "pr_exists=true" >> $GITHUB_OUTPUT
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -37,6 +38,7 @@ jobs:
           else
             echo "Pull request is mergeable."
             echo "mergeable=true" >> $GITHUB_OUTPUT
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
