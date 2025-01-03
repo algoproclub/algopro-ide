@@ -146,12 +146,14 @@ export default function Workspace({
         const translations = await fetchTranslationsFromDb(
           fileData.problem as PlatformProblem
         );
-        if (problemData?.statement) {
-          translations['en'] ??= {
-            statement: problemData.statement,
-            hints: problemData.hints ?? [],
-          };
-        }
+
+        translations['en'] ??= {
+          hints: problemData.hints ?? [],
+          ...(problemData.statementURL
+            ? { statementURL: problemData.statementURL! }
+            : { statement: problemData.statement! }),
+        };
+
         setTranslations(translations);
         setSolutions(
           await fetchSolutionsFromDb(fileData.problem as PlatformProblem)

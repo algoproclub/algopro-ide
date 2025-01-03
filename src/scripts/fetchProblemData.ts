@@ -51,6 +51,8 @@ export async function fetchProblemData({
       return fetchProblemDataSPOJ(id);
     case 'planets':
       return fetchProblemDataPlanets(id);
+    case 'ojuz':
+      return fetchProblemDataOjuz(id);
     default:
       throw new Error(`platform '${platform}' is unimplemented`);
   }
@@ -376,5 +378,41 @@ async function fetchProblemDataSPOJ(
     ),
     samples,
     templateCode: null,
+  };
+}
+
+async function fetchProblemDataOjuz(
+  problemID: string
+): Promise<ProblemData | null> {
+  const url = `https://oj.uz/problem/view/${problemID}`;
+  const problemPage = await fetch(url);
+  if (problemPage.status !== 200) {
+    return null;
+  }
+
+  const document = cheerio.load(await problemPage.text());
+
+  const title = getTextNode(document('.problem-title h1'));
+
+  const statementURL = document('#problem-statement-pdf > a').attr('href');
+
+  if (statementURL === undefined) {
+    console.error(`No PDF statement found for Oj.uz ${problemID}`);
+    return null;
+  }
+
+  return {
+    id: problemID,
+    submittable: true,
+    platform: 'ojuz',
+    url,
+    title,
+    statement: null,
+    statementURL,
+    templateCode: null,
+    samples: [],
+    input: 'stdin',
+    output: 'stdout',
+    source: `Oj.uz ${problemID}`,
   };
 }
