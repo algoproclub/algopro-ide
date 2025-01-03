@@ -88,6 +88,7 @@ export type ProblemData = {
   source: string;
   title: string;
   statement: string | null;
+  statementURL?: string;
   input: string;
   output: string;
   templateCode: Partial<Record<Language, string>> | null;
@@ -143,6 +144,5 @@ export interface TestCase {
 }
 
 export type Translation = {
-  statement: string;
   hints: Hint[];
-};
+} & ({ statement: string } | { statementURL: string });
