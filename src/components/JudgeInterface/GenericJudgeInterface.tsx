@@ -120,6 +120,8 @@ export default function GenericJudgeInterface({
 }): JSX.Element {
   const languages = Object.keys(translations);
 
+  const translation = translations[language];
+
   return (
     <div className="relative h-full flex flex-col text-[0.92rem]">
       <div className="flex-1 overflow-y-auto pb-4">
@@ -149,11 +151,11 @@ export default function GenericJudgeInterface({
               />
             </a>
           </h3>
-          {translations[language] &&
-            ('statement' in translations[language] ? (
-              <HTMLStatement htmlContent={translations[language].statement} />
+          {translation &&
+            ('statement' in translation ? (
+              <HTMLStatement htmlContent={translation.statement} />
             ) : (
-              <PDFDisplay url={translations[language].statementURL} />
+              <PDFDisplay url={translation.statementURL} />
             ))}
           {(problem.timeLimit || problem.memoryLimit) && (
             <div>
