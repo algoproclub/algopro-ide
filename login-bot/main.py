@@ -85,12 +85,13 @@ async def atcoder(username, password):
 
 async def ojuz(username, password):
     page = await browser.get("https://oj.uz/login")
-    await (await page.select('#email')).send_keys(username)
-    await (await page.select('#password')).send_keys(password)
-    await (await page.select('#submit')).click()
+    await (await page.select("#username")).send_keys(username)
+    await (await page.select("#password")).send_keys(password)
+    await (await page.select('button.ulp-button-icon')).click()
+    await (await page.select('button[type="submit"]')).click()
     await page.wait_for(text="Sign out")
     cookies = await browser.cookies.get_all()
-    if not any(c.name == "session" for c in cookies):
+    if not any(c.name == "oidc-auth" for c in cookies):
         raise Exception("Session cookie not found")
     logger.info("Logged in as %s", username)
     return {

@@ -27,6 +27,16 @@ const LANGUAGE_INFO: Record<string, { name: string; flag: string }> = {
   },
 };
 
+export const PDFDisplay = ({ url }: { url: string }) => {
+  return (
+    <object data={url} type="application/pdf" className="w-full block h-full">
+      <a href={url} target="_blank" rel="noreferrer" className="underline">
+        Open problem statement
+      </a>
+    </object>
+  );
+};
+
 export const LanguageSelectorDropdown = ({
   languages,
   language,
@@ -124,7 +134,7 @@ export default function GenericJudgeInterface({
             </div>
           )}
         </header>
-        <section className="px-4 pt-2">
+        <section className="px-4 pt-2 h-full">
           <h3 className="flex-1">
             <a
               href={problem.url}
@@ -139,7 +149,12 @@ export default function GenericJudgeInterface({
               />
             </a>
           </h3>
-          <HTMLStatement htmlContent={translations[language].statement} />
+          {translations[language] &&
+            ('statement' in translations[language] ? (
+              <HTMLStatement htmlContent={translations[language].statement} />
+            ) : (
+              <PDFDisplay url={translations[language].statementURL} />
+            ))}
           {(problem.timeLimit || problem.memoryLimit) && (
             <div>
               <h4 className="text-base font-semibold mt-[0.6rem] mb-[0.25rem]">

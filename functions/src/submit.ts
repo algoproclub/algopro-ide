@@ -527,45 +527,31 @@ export class OjuzSubmitter extends Submitter {
   }
 
   async submit({ problemID, sourceCode, language }: ProblemSolution) {
-    const response_csrf = await fetch(
-      'https://oj.uz/problem/submit/' + problemID,
+    const formData = new FormData();
+    formData.append(
+      'programmingLanguageId',
+      {
+        cpp: 'cpp20gpp', // C++20 [g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0]
+        py: 'python3pypy', // Pypy 3 [PyPy 7.3.10]
+        java: 'javajdk', // Java [openjdk 17.0.5 2022-10-18]
+      }[language]
+    );
+    formData.append('sourceCodeText-0', sourceCode);
+
+    const response = await fetch(
+      'https://oj.uz/problem/submit/' + problemID + '?mode=text',
       {
         headers: {
           cookie: this.cookie,
+          referer: 'https://oj.uz/problem/submit/' + problemID,
+          origin: 'https://oj.uz',
         },
+        body: formData,
+        method: 'POST',
       }
     );
-    const csrf_token = (await response_csrf.text()).match(
-      /name="csrf_token".*?value="([^"]+)"/
-    )?.[1];
-    if (!csrf_token) {
-      throw new Error('csrf_token not found');
-    }
 
-    const formData = new FormData();
-    formData.append('codes', '');
-    formData.append('csrf_token', csrf_token);
-    formData.append(
-      'language',
-      {
-        cpp: '9', // C++17 [g++ (Ubuntu 10.2.0-5ubuntu1~20.04) 10.2.0]
-        py: '7', // Python 3 [Python 3.9.5]
-        java: '50', // Java 11 [OpenJDK Runtime Environment (build 11.0.11+9-Ubuntu-0ubuntu2.20.04)]
-      }[language]
-    );
-    formData.append('code_1', sourceCode);
-    formData.append('codes', '');
-
-    const response = await fetch('https://oj.uz/problem/submit/' + problemID, {
-      headers: {
-        cookie: this.cookie,
-        referer: 'https://oj.uz/problem/submit/' + problemID,
-      },
-      body: formData,
-      method: 'POST',
-    });
-
-    const id = response.url.match(/\/submission\/(\d+)/)?.[1];
+    const id = (await response.json()).submissionId;
     if (!id) {
       throw new Error('submission failed, id not found');
     }
