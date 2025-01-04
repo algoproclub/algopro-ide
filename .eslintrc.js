@@ -12,6 +12,12 @@ module.exports = {
     '!.prettierrc.js',
     'functions/node_modules/*',
     'functions/lib/*',
+
+    // Legacy USACO code
+    'src/components/JudgeInterface/USACOJudgeInterface.tsx',
+    'src/components/settings/ProblemSearchInterface.tsx',
+    'src/hooks/useJudgeResults.ts',
+    'src/types/judge.d.ts',
   ], // We don't want to lint generated files nor node_modules, but we want to lint .prettierrc.js (ignored by default by eslint)
   extends: [
     'eslint:recommended',
@@ -53,12 +59,17 @@ module.exports = {
         // Why would you want unused vars?
         '@typescript-eslint/no-unused-vars': [
           'error',
-          { argsIgnorePattern: '^_' },
+          { argsIgnorePattern: '^_', caughtErrors: 'none' },
         ],
 
         '@typescript-eslint/no-empty-function': 'off',
 
         '@typescript-eslint/no-non-null-assertion': 'off',
+
+        '@typescript-eslint/ban-ts-comment': [
+          'error',
+          { 'ts-expect-error': 'allow-with-description' },
+        ],
 
         // Includes .prettierrc.js rules
         'prettier/prettier': ['error', {}, { usePrettierrc: true }],
