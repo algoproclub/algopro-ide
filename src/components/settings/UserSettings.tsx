@@ -1,9 +1,6 @@
-import { RadioGroup } from '@headlessui/react';
-import classNames from 'classnames';
 import React, { useState } from 'react';
 import { EditorMode, Language, LANGUAGES } from '../../context/UserContext';
 import { RadioGroupContents } from './RadioGroupContents';
-import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import TemplateCodeSettings from './TemplateCodeSettings';
 

@@ -46,7 +46,8 @@ export type FileData = {
   isCodeRunning: boolean;
   submission: FileSubmission;
   state: {
-    judge_resuts: any; // ???
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    judge_resuts: any;
   };
   chat: {
     [key: string]: Omit<ChatMessage, 'key'>;
@@ -59,7 +60,7 @@ export type FileData = {
 
 export type EditorContextType = {
   fileData: FileData;
-  updateFileData: (firebaseUpdateData: Partial<FileData>) => Promise<any>;
+  updateFileData: (firebaseUpdateData: Partial<FileData>) => Promise<void>;
   /**
    * Maps YJS File ID ==> true / false
    * If file ID is not in the map, assume it's false
@@ -127,7 +128,7 @@ export function EditorProvider({
   }, [fileId]);
 
   const updateFileData = useCallback(
-    (firebaseUpdateData: Object) => {
+    (firebaseUpdateData: object) => {
       return update(ref(getDatabase(), 'files/' + fileId), firebaseUpdateData);
     },
     [fileId]

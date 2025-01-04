@@ -16,7 +16,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { yCollab } from 'y-codemirror.next';
 
 const CodemirrorEditor = (props: EditorProps): JSX.Element => {
-  const [yCollabExtension, setYCollabExtension] = useState<any | null>(null);
+  const [yCollabExtension, setYCollabExtension] = useState<Extension | null>(
+    null
+  );
   useEffect(() => {
     if (!props.yjsInfo) return;
 
@@ -39,6 +41,7 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
       // but I think react in development mode may run effects more than once
       // and this effect isn't "pure" unless these plugins are destroyed.
       yCollabPlugins.forEach(plugin => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((plugin as any).destroy) (plugin as any).destroy();
       });
     };
@@ -72,7 +75,7 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
   return (
     <ReactCodeMirror
       // force entire component to re-mount (and re-initialize codemirror) when yjs document ID changes
-      key={props.yjsInfo?.yjsText.doc.guid}
+      key={props.yjsInfo?.yjsText.doc?.guid}
       // we need to pass in props.yjsInfo.yjsText as a possible value here, since
       // the yCollab() extension expects the value to be initialized to yText.toString()
       // I don't think this needs to be re-computed every time though (only when extensions changes), but whatever

@@ -8,19 +8,10 @@ import React, {
 import { Dialog, Transition } from '@headlessui/react';
 import classNames from 'classnames';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import {
-  ComputerDesktopIcon,
-  ServerIcon,
-  UserIcon,
-  CodeBracketIcon,
-} from '@heroicons/react/20/solid';
+import { ComputerDesktopIcon, UserIcon } from '@heroicons/react/20/solid';
 import UserSettings from './UserSettings';
 import WorkspaceSettingsUI from './WorkspaceSettingsUI';
 import SignInSettings from './SignInSettings';
-import TemplateCodeSettings from './TemplateCodeSettings';
-import JudgeResult from '../../types/judge';
-import { ProblemData } from '../../types/problem';
-import useJudgeResults from '../../hooks/useJudgeResults';
 import {
   EditorMode,
   Language,
@@ -28,7 +19,6 @@ import {
 } from '../../context/UserContext';
 import { FileSettings, useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
-import { update, ref, getDatabase, runTransaction } from 'firebase/database';
 import { updateUserSettings } from '../../scripts/updateSettings';
 
 export interface SettingsDialogProps {
@@ -93,8 +83,6 @@ export const SettingsModal = ({
   const dirtyRef = useRef<boolean>(false);
 
   const [tab, setTab] = useState<(typeof tabs)[number]['id']>('workspace');
-
-  const [judgeResults, setJudgeResults] = useJudgeResults();
 
   useEffect(() => {
     if (isOpen) {

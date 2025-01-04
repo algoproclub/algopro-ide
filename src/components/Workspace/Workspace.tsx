@@ -2,7 +2,7 @@ import { EllipsisHorizontalIcon } from '@heroicons/react/20/solid';
 import { useSetAtom, useAtomValue } from 'jotai';
 import classNames from 'classnames';
 import { useAtom } from 'jotai';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import Split from 'react-split-grid';
 import {
   inputCodemirrorEditorAtom,
@@ -44,25 +44,14 @@ import {
   onValue,
   off,
   ref,
-  update,
   get,
 } from 'firebase/database';
-import LoadResultsModal from '../JudgeInterface/LoadResultsModal';
-import {
-  Platform,
-  PlatformProblem,
-  ProblemData,
-  StatusData,
-  Translation,
-} from '../../types/problem';
+import { PlatformProblem, Translation } from '../../types/problem';
 import {
   fetchProblemFromDb,
   fetchSolutionsFromDb,
   fetchTranslationsFromDb,
 } from '../../scripts/fetchProblemFromDb';
-import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
-import Dropdown from '../Dropdown';
-import { CodeEditor } from '../editor/CodeEditor';
 import Solutions from '../JudgeInterface/Solutions';
 
 export function getHints(
@@ -108,7 +97,7 @@ export default function Workspace({
 
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
-  const [judgeResults, setJudgeResults] = useJudgeResults();
+  const [judgeResults] = useJudgeResults();
   const db = getDatabase();
 
   useEffect(() => {
@@ -150,7 +139,7 @@ export default function Workspace({
         translations['en'] ??= {
           hints: problemData.hints ?? [],
           ...(problemData.statementURL
-            ? { statementURL: problemData.statementURL! }
+            ? { statementURL: problemData.statementURL }
             : { statement: problemData.statement! }),
         };
 
@@ -274,9 +263,8 @@ export default function Workspace({
                       e.layout();
                     }, 0);
                   }}
-                  onCodemirrorMount={(view, state) => {
-                    // this is used by e2e/helpers.ts to set the value of the input codemirror editor
-                    // @ts-ignore
+                  onCodemirrorMount={view => {
+                    // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the input codemirror editor
                     window['TEST_inputCodemirrorEditor'] = view;
                     setCodemirrorInputEditor(view);
                   }}

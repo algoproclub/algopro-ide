@@ -376,6 +376,7 @@ export default function USACOResults({
             href={data.link}
             className="text-indigo-300 hover:underline break-all"
             target="_blank"
+            rel="noreferrer"
           >
             {data.link}
           </a>

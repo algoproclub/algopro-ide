@@ -6,7 +6,6 @@ import { EditorProps } from './editor/MonacoEditor/monaco-editor-types';
 import USACOResults from './JudgeInterface/USACOResults';
 import { StatusData } from '../types/problem';
 import { useUserContext } from '../context/UserContext';
-import { useEditorContext } from '../context/EditorContext';
 import { CodeEditor } from './editor/CodeEditor';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CompilerOutput } from './CompilerOutput';
@@ -72,7 +71,6 @@ export const Output = ({
       }
     }
   }
-  const { fileData } = useEditorContext();
   const { userData } = useUserContext();
   const lightMode = userData.lightMode;
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
@@ -133,6 +131,7 @@ export const Output = ({
                           href={item.link || undefined}
                           target="_blank"
                           className={item.link ? 'hover:underline' : undefined}
+                          rel="noreferrer"
                         >
                           {item.message?.toLowerCase() === 'correct answer' ? (
                             <FontAwesomeIcon

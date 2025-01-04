@@ -1,4 +1,3 @@
-import { DataSnapshot, getDatabase, onValue, ref } from 'firebase/database';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import React from 'react';
 import { StatusData } from '../types/problem';

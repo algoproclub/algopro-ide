@@ -6,13 +6,7 @@ import {
   orderByChild,
   query,
   onValue,
-  set,
-  child,
   off,
-  update,
-  push,
-  serverTimestamp,
-  DataSnapshot,
   get,
 } from 'firebase/database';
 import {
@@ -20,7 +14,6 @@ import {
   signOutAtom,
 } from '../../atoms/firebaseUserAtoms';
 import { useConnectionContext } from '../../context/ConnectionContext';
-import { isFirebaseId } from '../../editorUtils';
 import FilesList, { File } from './FilesList';
 import {
   EditorMode,
@@ -46,10 +39,6 @@ import { Dialog, Transition } from '@headlessui/react';
 import SignInSettings from '../settings/SignInSettings';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { updateUserSettings } from '../../scripts/updateSettings';
-import { DEFAULT_COMPILER_OPTIONS } from '../../../pages/new';
-import va from '@vercel/analytics';
-import colorFromUserId from '../../scripts/colorFromUserId';
-import { ServerValue } from 'firebase-admin/database';
 
 const firestore = getFirestore();
 const db = getDatabase();
@@ -192,7 +181,7 @@ const RecentTab = ({
 };
 
 const ClassesTab = () => {
-  const { firebaseUser, userData } = useUserContext();
+  const { firebaseUser } = useUserContext();
   const [groups, setGroups] = useState<string[]>([]);
   const [group, setGroup] = useState(0);
   const [classID, setClassID] = useState(0);
@@ -310,6 +299,7 @@ const ClassesTab = () => {
                       href={problems[Math.min(index, problems.length - 1)].url}
                       target="_blank"
                       className="underline text-white hover:text-indigo-200"
+                      rel="noreferrer"
                     >
                       {problems[Math.min(index, problems.length - 1)].source}
                     </a>
@@ -319,6 +309,7 @@ const ClassesTab = () => {
                       className="underline text-white hover:text-indigo-200 mr-2"
                       href={`/${row.fileID.slice(1)}`}
                       target="_blank"
+                      rel="noreferrer"
                     >
                       {row.fileID.split('-')[1]}
                     </a>
@@ -586,7 +577,7 @@ const UserSettingsModal = ({
 };
 
 export default function Dashboard() {
-  const { firebaseUser, userData } = useUserContext();
+  const { firebaseUser } = useUserContext();
 
   const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
   const signOut = useSetAtom(signOutAtom);

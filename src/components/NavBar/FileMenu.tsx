@@ -24,7 +24,9 @@ import { extractJavaFilename } from '../../scripts/judge';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
 
-export const FileMenu = (props: { onOpenSettings: Function }): JSX.Element => {
+export const FileMenu = (props: {
+  onOpenSettings: () => void;
+}): JSX.Element => {
   const { fileData } = useEditorContext();
   const getMainEditorValue = useAtomValue(mainEditorValueAtom);
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import 'monaco-editor/esm/vs/editor/editor.all.js';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
@@ -32,7 +32,7 @@ addEnhancedThemes();
 
 const viewStates = new Map();
 
-// @ts-ignore todo find a better way to do this
+// @ts-expect-error todo find a better way to do this
 window.monaco = monaco;
 
 // HACK: This uses a private API, as addKeybindingRules requires Monaco 0.34.1.
@@ -42,7 +42,7 @@ const rebindAction = (
   id: string,
   newBinding?: number
 ) => {
-  // @ts-ignore
+  // @ts-expect-error: this is a private API until Monaco 0.34.1
   editor._standaloneKeybindingService.addDynamicKeybinding(
     `-${id}`,
     undefined,
@@ -50,7 +50,7 @@ const rebindAction = (
   );
   if (newBinding) {
     const action = editor.getAction(id);
-    // @ts-ignore
+    // @ts-expect-error: this is a private API until Monaco 0.34.1
     editor._standaloneKeybindingService.addDynamicKeybinding(
       id,
       newBinding,
@@ -207,14 +207,8 @@ export default function MonacoEditor({
 
   useEffect(() => {
     if (vim) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let editorMode: any;
-
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       const statusNode = document.querySelector('.status-node');
-      editorMode = initVimMode(editorRef.current, statusNode);
-
+      const editorMode = initVimMode(editorRef.current, statusNode);
       return () => editorMode.dispose();
     }
   }, [vim]);
@@ -226,11 +220,11 @@ export default function MonacoEditor({
     const model = getOrCreateModel(monaco, value, language, path ?? 'default');
 
     if (model !== editorRef.current!.getModel()) {
-      saveViewState &&
+      if (saveViewState)
         viewStates.set(previousPath, editorRef.current!.saveViewState());
       editorRef.current!.setModel(model);
 
-      saveViewState &&
+      if (saveViewState)
         editorRef.current!.restoreViewState(viewStates.get(path));
     }
   }, [path]);
@@ -271,7 +265,7 @@ export default function MonacoEditor({
   }, [options]);
 
   useEffect(() => {
-    editorRef.current!.onDidChangeModelContent(e =>
+    editorRef.current!.onDidChangeModelContent(() =>
       onChange?.(editorRef.current!.getValue())
     );
   }, [onChange]);
@@ -309,7 +303,7 @@ function addEnhancedThemes() {
 
   for (const [theme, colors] of Object.entries(COLORS)) {
     monaco.editor.defineTheme(theme + '-sema', {
-      // @ts-ignore
+      // @ts-expect-error: extending built-in themes by name is a private API
       base: theme,
       inherit: true,
       rules: [

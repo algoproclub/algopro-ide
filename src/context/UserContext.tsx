@@ -70,7 +70,7 @@ export type UserContextType = {
    * @param username The new value of firebaseUser.displayName
    * @returns promise that resolves when firebaseUser is updated
    */
-  updateUsername: (username: string) => Promise<any>;
+  updateUsername: (username: string) => Promise<void>;
   templateCode: Record<Language, string> | null;
 };
 
@@ -81,7 +81,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [logged, setLogged] = useState<boolean | null>(null);
-  const [_, triggerRerender] = useState<number>(0);
+  const [, triggerRerender] = useState<number>(0);
   const [templateCode, setTemplateCode] = useState<Record<
     Language,
     string

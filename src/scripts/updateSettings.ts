@@ -24,25 +24,22 @@ export const updateUserSettings = async ({
   defaultLanguage: Language;
   templateCode: Partial<Record<Language, string>>;
 }) => {
-  await runTransaction(
-    ref(getDatabase(), `users/${userID}/data`),
-    (data: any) => {
-      const newData = {
-        editorMode,
-        tabSize,
-        lightMode,
-        manualSubmission,
-        defaultLanguage,
-        discordID,
-      };
-      data = data ? { ...data, ...newData } : newData;
-      if (!data.usernames) {
-        data.usernames = {};
-      }
-      data.usernames.codeforces = cfUsername;
-      data.usernames.atcoder = atcoderUsername;
-      data.templateCode = templateCode;
-      return data;
+  await runTransaction(ref(getDatabase(), `users/${userID}/data`), data => {
+    const newData = {
+      editorMode,
+      tabSize,
+      lightMode,
+      manualSubmission,
+      defaultLanguage,
+      discordID,
+    };
+    data = data ? { ...data, ...newData } : newData;
+    if (!data.usernames) {
+      data.usernames = {};
     }
-  );
+    data.usernames.codeforces = cfUsername;
+    data.usernames.atcoder = atcoderUsername;
+    data.templateCode = templateCode;
+    return data;
+  });
 };
