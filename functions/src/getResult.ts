@@ -508,29 +508,64 @@ export class SPOJResultFetcher extends ResultFetcher {
   }
 }
 
+type CFVerdict =
+  | 'FAILED'
+  | 'OK'
+  | 'PARTIAL'
+  | 'COMPILATION_ERROR'
+  | 'RUNTIME_ERROR'
+  | 'WRONG_ANSWER'
+  | 'PRESENTATION_ERROR'
+  | 'TIME_LIMIT_EXCEEDED'
+  | 'MEMORY_LIMIT_EXCEEDED'
+  | 'IDLENESS_LIMIT_EXCEEDED'
+  | 'SECURITY_VIOLATED'
+  | 'CRASHED'
+  | 'INPUT_PREPARATION_CRASHED'
+  | 'CHALLENGED'
+  | 'SKIPPED'
+  | 'TESTING'
+  | 'REJECTED';
+
+// https://codeforces.com/apiHelp/objects#Problem
+type CFProblem = {
+  contestId?: number;
+  index: string;
+};
+
+// https://codeforces.com/apiHelp/objects#Submission
+type CFSubmission = {
+  id: number;
+  contestId?: number;
+  problem: CFProblem;
+  verdict?: CFVerdict;
+  passedTestCount: number;
+  timeConsumedMillis: number;
+  memoryConsumedBytes: number;
+};
+
 export class CFResultFetcher extends ResultFetcher {
-  private submission: any;
+  private submission?: CFSubmission;
 
   constructor(
     readonly submissionData: SubmissionData,
-    private resultJSON: { [key: string]: any }
+    private resultJSON: CFSubmission[]
   ) {
     super(submissionData);
   }
 
   getStatusText(): string {
-    return this.submission.verdict === 'TESTING'
+    return this.submission!.verdict === 'TESTING'
       ? 'status-working'
       : 'status-done';
   }
 
   getStatusCode(): StatusCode {
-    return this.submission.verdict === 'TESTING' ? 'working' : 'resolved';
+    return this.submission!.verdict === 'TESTING' ? 'working' : 'resolved';
   }
 
   getMessage(): string {
-    let formatted = (this.submission.verdict as string)
-      .split('_')
+    let formatted = this.submission!.verdict!.split('_')
       .join(' ')
       .toLowerCase();
     if (formatted === 'testing') {
@@ -549,24 +584,24 @@ export class CFResultFetcher extends ResultFetcher {
         'idleness limit exceeded',
       ].includes(formatted)
     ) {
-      formatted += ` on test ${this.submission.passedTestCount + 1}`;
+      formatted += ` on test ${this.submission!.passedTestCount + 1}`;
     }
     return formatted;
   }
 
   getLink(): string {
     const { submissionID } = this.submissionData;
-    return `https://codeforces.com/contest/${this.submission.contestId}/submission/${submissionID}`;
+    return `https://codeforces.com/contest/${this.submission!.contestId}/submission/${submissionID}`;
   }
 
   getMemory(): string | null {
     return (
-      Math.round(this.submission.memoryConsumedBytes / 100000) / 10 + ' MB'
+      Math.round(this.submission!.memoryConsumedBytes / 100000) / 10 + ' MB'
     );
   }
 
   getTime(): string | null {
-    return this.submission.timeConsumedMillis + ' ms';
+    return this.submission!.timeConsumedMillis + ' ms';
   }
 
   getOutput(): string | null {
@@ -580,7 +615,7 @@ export class CFResultFetcher extends ResultFetcher {
       throw new IncorrectDataError('CF: username is missing');
     }
     this.submission = this.resultJSON.find(
-      (entry: any) => '' + entry.id === submissionID
+      entry => '' + entry.id === submissionID
     );
     if (!this.submission) {
       throw new IncorrectDataError(
@@ -589,7 +624,7 @@ export class CFResultFetcher extends ResultFetcher {
     }
     const respProblemID: string =
       '' +
-      this.submission.problem.contestId.toString() +
+      this.submission.problem!.contestId!.toString() +
       this.submission.problem.index;
 
     if (problemID !== respProblemID) {
@@ -962,7 +997,7 @@ export class CSESResultFetcher extends ResultFetcher {
 
 export const getCFRequestURL = (
   methodName: string,
-  params: { [key: string]: any }
+  params: { [key: string]: unknown }
 ) => {
   const genRandStr = (len: number) => {
     let result = '';
@@ -974,7 +1009,7 @@ export const getCFRequestURL = (
     return result;
   };
 
-  const getQueryStr = (params: { [key: string]: any }) => {
+  const getQueryStr = (params: { [key: string]: unknown }) => {
     const arr = Object.entries(params).sort((param1, param2) => {
       const keyComparison = param1[0].localeCompare(param2[0]);
       return keyComparison !== 0

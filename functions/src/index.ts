@@ -400,7 +400,7 @@ const updateResultsCF = async (
       );
     });
   } else {
-    const resultJSON = ((await resp.json()) as any)['result'];
+    const resultJSON = (await resp.json())['result'];
     submissionDataList.forEach(submissionData => {
       promises.push(
         getAndUpdate(
