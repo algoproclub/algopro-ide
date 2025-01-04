@@ -216,6 +216,24 @@ export class OjuzResultFetcher extends ResultFetcher {
   }
 }
 
+type PlanetsSubmission = {
+  compiler_output: string;
+  language: string;
+  problem_id: string;
+  solution: string;
+  test_results: {
+    checker_output: string;
+    index: number;
+    memory: string;
+    output: string;
+    time: number;
+    verdict: string;
+  }[];
+  timestamp: Date;
+  user_id: string;
+  verdict: string;
+};
+
 export class PlanetsResultFetcher extends ResultFetcher {
   private resultData?: StatusData;
 
@@ -251,14 +269,12 @@ export class PlanetsResultFetcher extends ResultFetcher {
       throw new IncorrectDataError('Planets: submission ID not found');
     }
     const parseMemory = (x: string) => parseInt(x.slice(0, x.length - 1));
-    const result = snapshot.data()!;
+    const result = snapshot.data()! as PlanetsSubmission;
     const statusCode = this.mapVerdictToStatusCode(result.verdict);
     const memory = Math.max(
-      ...(result.test_results ?? []).map((t: any) => parseMemory(t.memory))
+      ...(result.test_results ?? []).map(t => parseMemory(t.memory))
     );
-    const time = Math.max(
-      ...(result.test_results ?? []).map((t: any) => t.time)
-    );
+    const time = Math.max(...(result.test_results ?? []).map(t => t.time));
     const output = result.compiler_output;
 
     this.resultData = {
@@ -274,7 +290,7 @@ export class PlanetsResultFetcher extends ResultFetcher {
       testCases:
         result.test_results == undefined
           ? []
-          : result.test_results.map((t: any) => ({
+          : result.test_results.map(t => ({
               title: this.mapVerdictToTitle(t.verdict),
               trialNum: t.index,
               symbol: this.mapVerdictToSymbol(t.verdict),
