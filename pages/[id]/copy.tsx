@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useAtomValue } from 'jotai/utils';
 import { MessagePage } from '../../src/components/MessagePage';
 import { useRouter } from 'next/router';
 import invariant from 'tiny-invariant';

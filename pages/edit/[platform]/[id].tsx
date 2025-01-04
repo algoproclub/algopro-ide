@@ -7,8 +7,6 @@ import {
   getDoc,
   setDoc,
   updateDoc,
-  getDocs,
-  collection,
 } from 'firebase/firestore';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import {
@@ -18,13 +16,11 @@ import {
   ProblemTag,
   problemTags,
 } from '../../../src/types/problem';
-import Markdown from '../../../src/components/JudgeInterface/Markdown';
 import dynamic from 'next/dynamic';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { LanguageSelectorDropdown } from '../../../src/components/JudgeInterface/GenericJudgeInterface';
 import {
-  EditTextAreaModal,
   EditTextModal,
   handleKeyDown,
 } from '../../../src/components/EditTextModal';
@@ -228,7 +224,7 @@ const EditHintModal = ({
 
   const checked = typeof hint != 'string';
   const selectedLang = codeLangs[selected];
-  const text = checked ? hint[selectedLang] ?? '' : hint;
+  const text = checked ? (hint[selectedLang] ?? '') : hint;
 
   return (
     <EditTextModal
@@ -318,15 +314,19 @@ const PageContent = () => {
     onDelete: () => void;
     onEdit: () => void;
   }) => {
-    const isEmpty = (obj: Object): boolean => {
+    const isEmpty = (obj: object | string): boolean => {
+      if (typeof obj === 'string') {
+        return obj.length === 0;
+      }
       return Object.keys(obj).length === 0;
     };
+
     const hintObj =
       typeof hint == 'string'
         ? { '': hint }
         : isEmpty(hint)
-        ? { '': 'No hint specified' }
-        : hint;
+          ? { '': 'No hint specified' }
+          : hint;
     const rowCount = Object.keys(hintObj).length;
     return (
       <>
@@ -489,7 +489,7 @@ const PageContent = () => {
         setOriginal((await getOriginal(platform, problemID)).statement ?? '');
         setInitSolution(await getSolution(platform, problemID));
         updateTranslated();
-      } catch (error: any) {
+      } catch (error) {
         console.error(error);
       }
     })();
@@ -636,14 +636,14 @@ const PageContent = () => {
     if (event.key === 'Enter') {
       if (addedTag.trim() !== '' && filteredOptions.length > 0) {
         if (tags.includes(filteredOptions[0].trim())) {
-          alert(`Problem already has \"${filteredOptions[0].trim()}\" tag.`);
+          alert(`Problem already has "${filteredOptions[0].trim()}" tag.`);
         } else {
           setTags([...tags, filteredOptions[0].trim()]);
           setAddedTag('');
           setUnsaved(true);
         }
       } else {
-        alert(`Invalid problem tag \"${addedTag}\".`);
+        alert(`Invalid problem tag "${addedTag}".`);
       }
     }
   };
@@ -810,6 +810,7 @@ const PageContent = () => {
                       idx={index}
                       setTags={setTags}
                       setUnsaved={setUnsaved}
+                      key={item}
                     />
                   ))}
                 </td>
@@ -831,7 +832,7 @@ const PageContent = () => {
                             key={index}
                             onClick={() => {
                               if (tags.includes(option.trim())) {
-                                alert(`Problem already has \"${option}\" tag.`);
+                                alert(`Problem already has "${option}" tag.`);
                               } else {
                                 setTags([...tags, option.trim()]);
                                 setUnsaved(true);

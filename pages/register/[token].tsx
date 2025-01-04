@@ -40,7 +40,7 @@ export default function Register() {
     };
     if (
       firebaseUser &&
-      !firebaseUser!.isAnonymous &&
+      !firebaseUser.isAnonymous &&
       router.isReady &&
       typeof router.query.token === 'string'
     ) {

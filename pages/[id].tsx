@@ -9,11 +9,9 @@ import { useAtom, useAtomValue } from 'jotai';
 import { useSetAtom } from 'jotai';
 import {
   inputEditorValueAtom,
-  inputMonacoEditorAtom,
   layoutEditorsAtom,
   loadingAtom,
   mainEditorValueAtom,
-  mainMonacoEditorAtom,
 } from '../src/atoms/workspace';
 import {
   inputTabAtom,
@@ -26,32 +24,22 @@ import { useEffect, useState } from 'react';
 import { useMediaQuery } from '../src/hooks/useMediaQuery';
 import Workspace from '../src/components/Workspace/Workspace';
 import { MobileBottomNav } from '../src/components/NavBar/MobileBottomNav';
-import {
-  useNullableUserContext,
-  useUserContext,
-} from '../src/context/UserContext';
+import { useNullableUserContext } from '../src/context/UserContext';
 import useUserPermission from '../src/hooks/useUserPermission';
 import { SettingsModal } from '../src/components/settings/SettingsModal';
 import { getSampleIndex } from '../src/components/JudgeInterface/Samples';
-import { signInWithGoogleAtom } from '../src/atoms/firebaseUserAtoms';
 import useJudgeResults from '../src/hooks/useJudgeResults';
 import { cleanJudgeResult } from '../src/editorUtils';
 import JudgeResult from '../src/types/judge';
 import useUserFileConnection from '../src/hooks/useUserFileConnection';
 import useUpdateUserDashboard from '../src/hooks/useUpdateUserDashboard';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
-import { useConnectionContext } from '../src/context/ConnectionContext';
-import { PlatformProblem, ProblemData } from '../src/types/problem';
+import { ProblemData } from '../src/types/problem';
 import { fetchProblemFromDb } from '../src/scripts/fetchProblemFromDb';
 import Link from 'next/link';
-import { Simulate } from 'react-dom/test-utils';
-import load = Simulate.load;
 
 function EditorPage() {
   const { fileData, updateFileData } = useEditorContext();
-  const { firebaseUser } = useNullableUserContext();
-  const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
-  const connectionContext = useConnectionContext();
   const permission = useUserPermission();
   const loading = useAtomValue(loadingAtom);
   const [showSidebar, setShowSidebar] = useAtom(showSidebarAtom);
@@ -99,7 +87,7 @@ function EditorPage() {
       problem =
         fileData.problem?.platform === 'usaco'
           ? (fileData.problem as ProblemData)
-          : await fetchProblemFromDb(fileData.problem as PlatformProblem);
+          : await fetchProblemFromDb(fileData.problem);
     }
     const setIsRunning = (isRunning: boolean) => {
       updateFileData({

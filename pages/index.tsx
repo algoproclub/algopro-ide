@@ -5,7 +5,6 @@ import { signInWithGoogleAtom } from '../src/atoms/firebaseUserAtoms';
 import Dashboard from '../src/components/Dashboard/Dashboard';
 import { useConnectionContext } from '../src/context/ConnectionContext';
 import { useNullableUserContext } from '../src/context/UserContext';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function DashboardPage(): JSX.Element {
   const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
