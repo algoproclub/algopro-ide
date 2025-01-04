@@ -71,8 +71,15 @@ module.exports = {
           { 'ts-expect-error': 'allow-with-description' },
         ],
 
+        '@typescript-eslint/no-require-imports': [
+          'error',
+          { allow: ['dotenv'] },
+        ],
+
         // Includes .prettierrc.js rules
         'prettier/prettier': ['error', {}, { usePrettierrc: true }],
+
+        'no-prototype-builtins': 'warn',
       },
     },
   ],

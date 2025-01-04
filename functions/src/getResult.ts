@@ -22,16 +22,16 @@ export abstract class ResultFetcher {
   getTestCaseNum(): number {
     return 0;
   }
-  getTestCaseTitle(n: number): string {
+  getTestCaseTitle(_: number): string {
     return '?';
   }
-  getTestCaseSymbol(n: number): string {
+  getTestCaseSymbol(_: number): string {
     return '?';
   }
-  getTestCaseTime(n: number): string | null {
+  getTestCaseTime(_: number): string | null {
     return null;
   }
-  getTestCaseMemory(n: number): string | null {
+  getTestCaseMemory(_: number): string | null {
     return null;
   }
   getNthTestCase(n: number): TestCase {

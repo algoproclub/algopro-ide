@@ -461,7 +461,7 @@ export class PlanetsSubmitter extends Submitter {
     this.authorization = authorization;
   }
 
-  async loginWith(_: {}): Promise<boolean> {
+  async loginWith(_: object): Promise<boolean> {
     return true;
   }
 
