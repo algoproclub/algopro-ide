@@ -84,8 +84,8 @@ export const Output = ({
           statusDataHistory
             ? tabs
             : statusData
-            ? tabs.slice(0, -1)
-            : tabs.slice(0, -2)
+              ? tabs.slice(0, -1)
+              : tabs.slice(0, -2)
         }
         activeTab={option}
         onTabSelect={tab => {

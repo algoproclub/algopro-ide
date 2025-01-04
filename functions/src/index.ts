@@ -151,37 +151,37 @@ export const translate = onCall<
 });
 
 export const translateOpenAI = onCall<
-    {
+  {
     text: string;
     lang: string;
-    },
-    Promise<string | null>
+  },
+  Promise<string | null>
 >({ region: 'europe-west1' }, async request => {
-    if (!request.auth?.token?.teacher) {
+  if (!request.auth?.token?.teacher) {
     return null;
-    }
-    let { text, lang } = request.data;
+  }
+  let { text, lang } = request.data;
 
-    const document = new JSDOM(text).window.document;
-    for (const el of document.getElementsByTagName('pre'))
+  const document = new JSDOM(text).window.document;
+  for (const el of document.getElementsByTagName('pre'))
     el.setAttribute('translate', 'no');
-    text = document.body.innerHTML;
+  text = document.body.innerHTML;
 
-    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
-        Authorization: `Bearer ${openaiAPIKey.value()}`,
-        'Content-Type': 'application/json',
+      Authorization: `Bearer ${openaiAPIKey.value()}`,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-        model: "gpt-4o",
-        temperature: 0.95,
-        top_p: 0.95,
-        presence_penalty: 0.05,
-        messages: [
-            {
-                role: "system",
-                content: `You are a professional translator specializing in competitive programming problems.
+      model: 'gpt-4o',
+      temperature: 0.95,
+      top_p: 0.95,
+      presence_penalty: 0.05,
+      messages: [
+        {
+          role: 'system',
+          content: `You are a professional translator specializing in competitive programming problems.
                 You will receive an HTML code snippet containing a problem statement, which may include LaTeX formulas.
                 Your task:
                     Translate the problem precisely and naturally while preserving its meaning, structure, and formatting.
@@ -197,22 +197,22 @@ export const translateOpenAI = onCall<
                     Preserve list formatting and structure: Ensure that input/output constraints and explanations stay intact.
                     Clarify conditions explicitly when needed: If something is unclear in the original, use natural wording that makes it precise.
                 Translate the problem into the following language: [${lang}]`,
-            },
-            {
-                role: "user",
-                content: text,
-            },
-        ]
+        },
+        {
+          role: 'user',
+          content: text,
+        },
+      ],
     }),
-    });
-    let translation: string | null = null;
-    try {
-        const json = await resp.json();
-        translation = json['choices'][0].message.content ?? null;
-    } catch (error) {
+  });
+  let translation: string | null = null;
+  try {
+    const json = await resp.json();
+    translation = json['choices'][0].message.content ?? null;
+  } catch (error) {
     logger.log(error);
-    }
-    return translation;
+  }
+  return translation;
 });
 
 export const enum Errors {

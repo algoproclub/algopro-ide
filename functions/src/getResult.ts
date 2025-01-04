@@ -270,7 +270,7 @@ export class PlanetsResultFetcher extends ResultFetcher {
       statusText: statusCode === 'working' ? 'status-working' : 'status-done',
       message: this.mapVerdictToTitle(result.verdict),
       statusCode: statusCode,
-      output: statusCode === 'resolved' ? output ?? '' : '',
+      output: statusCode === 'resolved' ? (output ?? '') : '',
       testCases:
         result.test_results == undefined
           ? []

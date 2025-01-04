@@ -613,12 +613,12 @@ const PageContent = () => {
     const myFunction = httpsCallable(functions, 'translateOpenAI');
     console.log(functions);
     myFunction({ some: 'data' })
-        .then((result) => {
+      .then(result => {
         console.log(result.data);
-        })
-        .catch((error) => {
-            console.error('Error calling function:', error);
-        });
+      })
+      .catch(error => {
+        console.error('Error calling function:', error);
+      });
     const response = await translateOpenAI({
       text: original,
       lang: language,

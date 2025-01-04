@@ -203,8 +203,8 @@ const USACOTestCase = ({
     data.title?.toLowerCase() === 'correct answer'
       ? 'bg-green-700 border-green-700'
       : data.title === 'Did not run'
-      ? 'bg-gray-700 border-gray-700'
-      : 'bg-red-700 border-red-700';
+        ? 'bg-gray-700 border-gray-700'
+        : 'bg-red-700 border-red-700';
   const textColor =
     data.title?.toLowerCase() === 'correct answer'
       ? 'text-green-100'
