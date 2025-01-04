@@ -1,8 +1,6 @@
 import { ProblemSolution } from '../../src/types/problem';
 import { SubmissionData as ClientSubmissionData } from '../../src/types/problem';
 import { HttpsError } from 'firebase-functions/v2/https';
-import FormData = require('form-data');
-import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
 import { loginBotUrl } from './index';
 import { Database } from 'firebase-admin/database';
@@ -18,8 +16,8 @@ class IDNotFoundError extends Error {}
 
 async function fetchWithProxy(
   url: string,
-  init?: fetch.RequestInit
-): Promise<fetch.Response> {
+  init?: RequestInit
+): Promise<Response> {
   return await fetch(
     loginBotUrl.value() + '/proxy?' + new URLSearchParams({ url }).toString(),
     init
@@ -344,7 +342,7 @@ export class CSESSubmitter extends Submitter {
     const formData = new FormData();
     formData.append('csrf_token', this.csrf_token);
     formData.append('task', problemID);
-    formData.append('file', sourceCode, { filename: 'f' });
+    formData.append('file', sourceCode, 'f');
     formData.append(
       'lang',
       { cpp: 'C++', py: 'Python3', java: 'Java' }[language]
@@ -410,10 +408,11 @@ export class SPOJSubmitter extends Submitter {
 
   async submit({ problemID, sourceCode, language }: ProblemSolution) {
     const formData = new FormData();
-    formData.append('subm_file', sourceCode, {
-      filename: '',
-      contentType: 'application/octet-stream',
+
+    const file = new Blob([sourceCode], {
+      type: 'application/octet-stream',
     });
+    formData.append('subm_file', file, '');
     formData.append('file', sourceCode);
     formData.append(
       'lang',
