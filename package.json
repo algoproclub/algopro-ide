@@ -79,7 +79,8 @@
     "yjs": "^13.5.45"
   },
   "lint-staged": {
-    "**/*": "prettier --write --ignore-unknown"
+    "**/*": "prettier --write --ignore-unknown",
+    "**/*.{ts,tsx}": "eslint --fix"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.1",
