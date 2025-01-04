@@ -11,10 +11,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CompilerOutput } from './CompilerOutput';
 import { mainMonacoEditorAtom } from '../atoms/workspace';
 
+type StatusHistoryEntry = StatusData & { submissionTime?: number };
+
 export interface OutputProps {
   result: JudgeResult | null;
   statusData: StatusData | null;
-  statusDataHistory: StatusData[];
+  statusDataHistory: StatusHistoryEntry[];
   onMount: EditorProps['onMount'];
 }
 
@@ -124,6 +126,9 @@ export const Output = ({
                       style={{
                         backgroundColor: index % 2 ? '#121212' : '#1e1e1e',
                       }}
+                      key={
+                        item.submissionTime ?? statusDataHistory.length - index
+                      }
                     >
                       <td>{statusDataHistory.length - index}</td>
                       <td style={{ whiteSpace: 'nowrap' }}>
@@ -164,12 +169,13 @@ export const Output = ({
                       </td>
                       <td>
                         {item.testCases &&
-                          item.testCases.map(tc =>
+                          item.testCases.map((tc, index) =>
                             tc.title == 'correct answer' ? (
                               <FontAwesomeIcon
                                 title={tc.title}
                                 icon={{ prefix: 'fas', iconName: 'check' }}
                                 className="text-green-500 w-3.5 h-3.5 mr-0.5"
+                                key={index}
                               />
                             ) : (
                               <FontAwesomeIcon
@@ -190,6 +196,7 @@ export const Output = ({
                                   })(),
                                 }}
                                 className="mr-0.5 w-3.5 h-3.5 text-red-500"
+                                key={index}
                               />
                             )
                           )}
