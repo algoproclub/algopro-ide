@@ -242,7 +242,7 @@ function EditorPage() {
               failedResult.statusDescription;
           newJudgeResults[1] = failedResult;
         } else {
-          newJudgeResults[1] = newJudgeResults[2];
+          newJudgeResults[1] = newJudgeResults[newJudgeResults.length - 1];
         }
         setJudgeResults(newJudgeResults);
       } catch (e) {
