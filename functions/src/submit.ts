@@ -621,7 +621,7 @@ export class NjudgeSubmitter extends Submitter {
       method: 'POST',
     });
 
-    const id = new URL(response.url).hash.slice(1);
+    const id = response.url.match(/#submission([0-9]+)$/)?.[1];
     if (!id) {
       throw new Error('submission failed, id not found');
     }
