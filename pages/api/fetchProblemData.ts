@@ -4,11 +4,14 @@ import {
   ProblemData,
 } from '../../src/types/problem';
 import { fetchProblemData } from '../../src/scripts/fetchProblemData';
+import { fetchProblemTestcases } from '../../src/scripts/fetchProblemTestcases';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getFirestore } from 'firebase-admin/firestore';
 import firebaseApp from '../../src/firebaseAdmin';
 
 export const fetchData = async (data: PlatformProblem) => {
+  await fetchProblemTestcases(data);
+
   const problemRef = getFirestore(firebaseApp)
     .collection('problemsets')
     .doc(data.platform)

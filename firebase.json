@@ -2,6 +2,9 @@
   "database": {
     "rules": "database.rules.json"
   },
+  "storage": {
+    "rules": "storage.rules"
+  },
   "emulators": {
     "auth": {
       "port": 9099,
@@ -30,6 +33,10 @@
     "firestore": {
       "host": "0.0.0.0",
       "port": 8080
+    },
+    "storage": {
+      "host": "0.0.0.0",
+      "port": 9199
     },
     "singleProjectMode": true
   },
