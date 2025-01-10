@@ -563,3 +563,73 @@ export class OjuzSubmitter extends Submitter {
     } as const;
   }
 }
+
+export class NjudgeSubmitter extends Submitter {
+  platformName = 'njudge';
+  username: string = '';
+  cookie: string = '';
+
+  async loginWith(account: {
+    username: string;
+    cookie: string;
+  }): Promise<boolean> {
+    const response = await fetch('https://njudge.hu/', {
+      headers: {
+        cookie: account.cookie,
+      },
+    });
+    const text = await response.text();
+    if (!text.includes(account.username)) return false;
+    this.username = account.username;
+    this.cookie = account.cookie;
+    return true;
+  }
+
+  async submit({ problemID, sourceCode, language }: ProblemSolution) {
+    const csrf_response = await fetch(
+      `https://njudge.hu/problemset/main/${problemID}/submit`,
+      {
+        headers: {
+          cookie: this.cookie,
+        },
+      }
+    );
+    const csrf_token = (await csrf_response.text()).match(
+      /name="_csrf" value="([a-zA-Z0-9]+)"/
+    )?.[1];
+    if (!csrf_token) {
+      throw new Error('csrf token not found');
+    }
+    const formData = new FormData();
+    formData.append('problem', problemID);
+    formData.append('submissionCode', sourceCode);
+    formData.append(
+      'language',
+      {
+        cpp: 'cpp17',
+        py: 'pypy3',
+        java: 'java',
+      }[language]
+    );
+    formData.append('_csrf', csrf_token);
+
+    const response = await fetch('https://njudge.hu/problemset/main/submit', {
+      headers: {
+        cookie: this.cookie,
+      },
+      body: formData,
+      method: 'POST',
+    });
+
+    const id = new URL(response.url).hash.slice(1);
+    if (!id) {
+      throw new Error('submission failed, id not found');
+    }
+
+    return {
+      id,
+      username: this.username,
+      platform: 'njudge',
+    } as const;
+  }
+}
