@@ -262,6 +262,7 @@ We use the [Playwright Test test runner](https://playwright.dev/docs/intro), not
 
 If `firebase emulators:exec` fails for unknown reason, try running `firebase emulators:exec "yarn playwright test" || cat firebase-debug.log`.
 
+
 ### Tests that should be written
 
 - Compile error, stdout, stderr
