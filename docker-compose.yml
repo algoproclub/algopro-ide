@@ -18,6 +18,7 @@ services:
       - '4000:4000'
       - '8080:8080'
       - '5001:5001'
+      - '9199:9199'
     volumes:
       - type: bind
         source: functions/
@@ -46,6 +47,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
+      - FIREBASE_STORAGE_EMULATOR_HOST=firebase:9199
       - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
       - FIRESTORE_EMULATOR_HOST=firebase:8080
     ports:

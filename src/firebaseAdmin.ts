@@ -30,11 +30,13 @@ if (getApps().length === 0) {
       }),
       databaseURL:
         'https://algopro-app-default-rtdb.europe-west1.firebasedatabase.app',
+      storageBucket: 'algopro-app.firebasestorage.app',
     });
   } else {
     initializeApp({
       projectId: 'algopro-app',
       databaseURL: 'http://firebase:9000?ns=algopro-app-default-rtdb',
+      storageBucket: 'algopro-app.appspot.com',
     });
   }
 }
