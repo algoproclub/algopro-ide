@@ -68,7 +68,7 @@ export abstract class ResultFetcher {
 
 export class OjuzResultFetcher extends ResultFetcher {
   private summary: Element | null = null;
-  private testCases?: NodeListOf<Element>;
+  private testCases?: string[][];
   private document?: Document;
   private statusText?: string;
 
@@ -92,9 +92,30 @@ export class OjuzResultFetcher extends ResultFetcher {
       'table.table-condensed > tbody > tr'
     );
     this.statusText = this.summary?.children[5]
-      .querySelector(`#progressbar_text_${this.submissionData.submissionID}`)
+      .querySelector('.progressbar > .text')
       ?.textContent?.toLowerCase();
-    this.testCases = this.document.querySelectorAll('tr.success, tr.danger');
+
+    const subtaskCount = this.document.querySelectorAll(
+      '#submission-panels .subtask-result-panel'
+    ).length;
+
+    this.testCases = [];
+    for (let subtask = 0; subtask < subtaskCount; subtask++) {
+      this.testCases.push(...(await this.fetchSubtaskInfo(subtask)));
+    }
+  }
+
+  async fetchSubtaskInfo(subtask: number): Promise<string[][]> {
+    const url = `https://oj.uz/submission/${this.submissionData.submissionID}/subtask-result/${subtask}`;
+
+    const resp = await fetch(url);
+    if (resp.status !== 200) {
+      const errorMessage = `Oj.uz: subtask result response status is not 200; url: ${url}; response status: ${resp.status}`;
+      throw resp.status === 404
+        ? new IncorrectDataError(errorMessage)
+        : new Error(errorMessage);
+    }
+    return await resp.json();
   }
 
   formatMemory(memory: string | null): string | null {
@@ -176,7 +197,7 @@ export class OjuzResultFetcher extends ResultFetcher {
   }
 
   getTestCaseTitle(n: number): string {
-    const verdict = this.testCases![n].children[1].textContent?.toLowerCase();
+    const verdict = this.testCases![n][2].toLowerCase();
     if (verdict === 'correct') {
       return 'correct answer';
     }
@@ -187,11 +208,10 @@ export class OjuzResultFetcher extends ResultFetcher {
     return verdict === 'correct answer' ? '✓' : 'x';
   }
   getTestCaseTime(n: number): string | null {
-    return this.testCases![n].children[2].textContent?.toLowerCase() ?? null;
+    return this.testCases![n][3].toLowerCase();
   }
   getTestCaseMemory(n: number): string | null {
-    const memory =
-      this.testCases![n].children[3].textContent?.toLowerCase() ?? null;
+    const memory = this.testCases![n][4].toLowerCase();
     return this.formatMemory(memory);
   }
 }

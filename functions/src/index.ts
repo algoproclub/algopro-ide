@@ -395,7 +395,7 @@ const updateResults = async (pending: PendingSubmissions | null) => {
   );
 
   const promises: Promise<void>[] = [];
-  for (const platform of ['cses', 'atcoder', 'spoj', 'planets']) {
+  for (const platform of ['cses', 'atcoder', 'spoj', 'planets', 'ojuz']) {
     pendingByPlatform[platform]?.forEach(obj => {
       promises.push(updateResultNonCF(obj));
     });
