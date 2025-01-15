@@ -1,13 +1,99 @@
-import React from 'react';
+import React, { Fragment, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { StatusData, TestCase } from '../../types/problem';
 import TimeAgoLabel from '../TimeStamp';
+import { Dialog, Transition } from '@headlessui/react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 const capitalize = (text: string): string => {
   return text[0].toUpperCase() + text.substring(1);
 };
 
-const USACOTestCase = ({ data }: { data: TestCase }) => {
+// copied from UserSettingsModal
+const TestCaseInfoModal = ({
+  isOpen,
+  onClose,
+  testCase,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  testCase: TestCase;
+}) => {
+  const closeWithoutSaving = () => {
+    onClose();
+  };
+
+  return (
+    <Transition.Root show={isOpen} as={Fragment}>
+      <Dialog
+        as="div"
+        static
+        className="fixed z-10 inset-0 overflow-y-auto"
+        open={isOpen}
+        onClose={closeWithoutSaving}
+      >
+        <div className="flex items-end justify-center min-h-full pt-4 pb-20 text-center sm:block sm:p-0">
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-75 transition-opacity" />
+          </Transition.Child>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            enterTo="opacity-100 translate-y-0 sm:scale-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+            leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+          >
+            <div className="inline-block bg-gray-800 md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
+              <div className="px-4 sm:px-6 pt-4 pb-2">
+                <Dialog.Title
+                  as="h3"
+                  className="text-lg leading-6 font-medium text-center"
+                >
+                  Testcase Info
+                </Dialog.Title>
+              </div>
+              <div className="p-4 sm:p-6 space-y-3">
+                /testcases/cses/1095/input/{testCase.trialNum - 1}
+                <br />
+                TODO: somehow get access to problem info
+                <br />
+                <USACOTestCase data={testCase} onClick={() => {}} />
+              </div>
+              <div className="absolute top-0 right-0 pt-4 pr-4">
+                <button
+                  type="button"
+                  className="rounded-md text-gray-200 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  onClick={closeWithoutSaving}
+                >
+                  <span className="sr-only">Close</span>
+                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+          </Transition.Child>
+        </div>
+      </Dialog>
+    </Transition.Root>
+  );
+};
+
+const USACOTestCase = ({
+  data,
+  onClick,
+}: {
+  data: TestCase;
+  onClick: () => void;
+}) => {
   const containerClasses =
     data.title?.toLowerCase() === 'correct answer'
       ? 'bg-green-700 border-green-700'
@@ -20,8 +106,9 @@ const USACOTestCase = ({ data }: { data: TestCase }) => {
       : 'text-red-100';
   return (
     <div
-      className={`m-1 p-1 inline-block w-[5.5rem] bg-opacity-25 border-opacity-50 border ${containerClasses} relative rounded-[4px]`}
+      className={`m-1 p-1 inline-block w-[5.5rem] bg-opacity-25 border-opacity-50 border ${containerClasses} relative rounded-[4px] hover:cursor-pointer`}
       title={capitalize(data.title)}
+      onClick={onClick}
     >
       <div className={`font-semibold text-center ${textColor} pt-1`}>
         {data.symbol === '✓' && (
@@ -96,6 +183,11 @@ export default function USACOResults({
       output = lines.join('\n');
     }
   }
+
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedTestCase, setSelectedTestCase] = useState<TestCase | null>(
+    null
+  );
 
   return (
     <div className="mt-3">
@@ -180,6 +272,15 @@ export default function USACOResults({
           </a>
         )}
       </div>
+
+      {selectedTestCase && (
+        <TestCaseInfoModal
+          testCase={selectedTestCase}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
+
       {(output || data.testCases) && (
         <div className="border-t -mx-4 border-gray-700 " />
       )}
@@ -206,7 +307,14 @@ export default function USACOResults({
         <>
           <div className="my-3 -mx-1">
             {data.testCases.map(tc => (
-              <USACOTestCase data={tc} key={tc.trialNum} />
+              <USACOTestCase
+                key={tc.trialNum}
+                data={tc}
+                onClick={() => {
+                  setSelectedTestCase(tc);
+                  setIsModalOpen(true);
+                }}
+              />
             ))}
           </div>
         </>
