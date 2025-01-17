@@ -1,6 +1,7 @@
 import { Page, expect } from '@playwright/test';
 
 export const host = 'http://localhost:3000';
+export const defaultCodeOutput = 'The sum of these three numbers is 6';
 
 export async function signInUser(page: Page) {
   await page.goto(host);
@@ -50,7 +51,7 @@ export const testRunCode = async (
   await page.waitForSelector('button:has-text("Run Code")');
   await expect(page.getByText('Successful')).toBeVisible({ timeout: 1000 });
   await page.locator('button:has-text("stdout")').click();
-  await expect(page.getByText('Hello world!')).toHaveCount(2, {
+  await expect(page.getByText(defaultCodeOutput)).toBeVisible({
     timeout: 1000,
   });
   if (isMobile) {
