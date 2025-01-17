@@ -169,6 +169,7 @@ test.describe('Respects Permissions', () => {
 
     // test input: everything should still work right now
     await page2.click('[data-test-id="input-editor"]');
+    await page2.keyboard.press('Backspace'); // remove newline
     await page2.keyboard.type(' 4');
     await page2.waitForSelector('text="1 2 3 4"');
 
