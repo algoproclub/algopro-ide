@@ -1,168 +1,72 @@
-import { RadioGroup } from '@headlessui/react';
-import classNames from 'classnames';
-import React, { useState } from 'react';
-import { EditorMode, Language, LANGUAGES } from '../../context/UserContext';
-import { RadioGroupContents } from './RadioGroupContents';
-import Link from 'next/link';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import TemplateCodeSettings from './TemplateCodeSettings';
-import { CircularProgressbar } from 'react-circular-progressbar';
-import 'react-circular-progressbar/dist/styles.css';
+import React from 'react';
 
+interface SettingItem {
+  filled: boolean;
+  suggestion: string;
+}
 
-const EDITOR_MODES = ['Normal', 'Vim' /*'Emacs'*/];
+interface ProfileStatusProps {
+  settings: Record<string, SettingItem>;
+}
 
-export const SUBMENUS = [
-  'main',
-  'userdata',
-  'codesettings',
-  'visualsettings',
-  'filetemplates',
-];
+export default function ProfileStatus({ settings }: ProfileStatusProps): JSX.Element {
+  const totalSettings = Object.keys(settings).length;
+  const filledSettings = Object.values(settings).filter((val) => val.filled).length;
+  const unfilledSettings = Object.values(settings).filter((val) => !val.filled);
 
-export type Submenu = (typeof SUBMENUS)[number];
+  const percentage = Math.round((filledSettings / totalSettings) * 100);
 
-const UserDataSettings = ({
-  name,
-  onNameChange,
-  cfUsername,
-  onCfUsernameChange,
-  atcoderUsername,
-  onAtcoderUsernameChange,
-  discordID,
-  onDiscordIDChange,
-}: {
-  name: string;
-  onNameChange: (name: string) => void;
-  cfUsername: string;
-  onCfUsernameChange: (cfUsername: string) => void;
-  atcoderUsername: string;
-  onAtcoderUsernameChange: (atcoderUsername: string) => void;
-  discordID: string;
-  onDiscordIDChange: (discordID: string) => void;
-}) => {
   return (
-    <div className="space-y-4">
-      <div>
-        <label htmlFor={`name`} className="block text-[0.92rem] text-gray-300">
-          Username
-        </label>
-        <div>
-          <input
-            type="text"
-            name={`name`}
-            id={`name`}
-            className="text-input"
-            value={name}
-            onChange={e => {
-              onNameChange(e.target.value);
-            }}
-          />
-        </div>
-      </div>
-      <div>
-        <label
-          htmlFor={`cf-username`}
-          className="block text-[0.92rem] text-gray-300"
-        >
-          Codeforces username
-        </label>
-        <div>
-          <input
-            type="text"
-            name={`cf-username`}
-            id={`cf-username`}
-            className="text-input"
-            value={cfUsername}
-            onChange={e => {
-              onCfUsernameChange(e.target.value);
-            }}
-          />
-        </div>
-      </div>
-      <div>
-        <label
-          htmlFor={`atcoder-username`}
-          className="block text-[0.92rem] text-gray-300"
-        >
-          AtCoder username
-        </label>
-        <div>
-          <input
-            type="text"
-            name={`atcoder-username`}
-            id={`atcoder-username`}
-            className="text-input"
-            value={atcoderUsername}
-            onChange={e => {
-              onAtcoderUsernameChange(e.target.value);
-            }}
-          />
-        </div>
-      </div>
-      <div>
-        <label
-          htmlFor={`discord-username`}
-          className="block text-[0.92rem] text-gray-300"
-        >
-          Discord user ID
-        </label>
-        <div>
-          <input
-            type="text"
-            name={`discord-username`}
-            id={`discord-username`}
-            className="text-input"
-            value={discordID}
-            onChange={e => {
-              onDiscordIDChange(e.target.value);
-            }}
-          />
+    <div className="w-full max-w-2xl mx-auto">
+      {/* Profile card with a more compact and subtle style */}
+      <div className="bg-[#1e1e1e] rounded-md shadow-md p-4 text-gray-300 border border-gray-700">
+        <div className="flex items-start gap-4">
+          {/* Progress Circle */}
+          <div className="relative flex-shrink-0">
+            <div className="w-16 h-16">
+              <svg className="w-full h-full" viewBox="0 0 100 100">
+                {/* Background circle */}
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#2a2a2a" strokeWidth="8" />
+                {/* Progress circle */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
+                  stroke="#3b82f6"
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={`${percentage * 2.51} ${251 - percentage * 2.51}`}
+                  transform="rotate(-90 50 50)"
+                />
+              </svg>
+              {/* Percentage Text */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-sm font-medium text-gray-200">{percentage}%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Settings List */}
+          <div className="flex-grow">
+            <h3 className="text-md font-medium mb-3 text-gray-200">Tippek a profilod tökéletesítéséhez</h3>
+            <ul className="">
+              {Object.values(settings).map((setting, index) => {
+                const item = (
+                    <li
+                        key={index}
+                        className={`flex items-center rounded-md bg-gray-900 hover:bg-gray-800 border gap-2 border-gray-700 transition-all duration-300 ${setting.filled ? 'opacity-0 max-h-0 overflow-hidden pt-0 pb-0 ' : 'opacity-100 max-h-10 mb-2'} p-2`}
+                    >
+                        <div className="h-2 w-2 rounded-full bg-indigo-500 flex-shrink-0" />
+                        <span className="text-gray-400 text-sm">{setting.suggestion}</span>
+                    </li>
+                );
+                return item;
+              })}
+            </ul>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default function ProfileStatus({
-    settings
-}: {
-  settings: {}
-}): JSX.Element {
-    const totalSettings = Object.keys(settings).length;
-    const filledSettings = Object.values(settings).filter(value => {
-        // Define what constitutes an "unclicked" setting
-        if (value === '' || value === null || value === undefined || value===-1) {
-            return false;
-        }
-        // Add any other conditions for default values if necessary
-        return true;
-    }).length;
-
-    const unfilledSettings = Object.keys(settings).filter(key => {
-        if (settings[key] === '' || settings[key] === null || settings[key] === undefined || settings[key] === -1) {
-            return true;
-        }
-        return false;
-    })
-
-
-    const percentage = Math.round((filledSettings / totalSettings) * 100);
-    console.log(settings);
-
-    /*if (percentage === 100) {
-        return (
-            <div>
-            </div>
-        );
-    }*/
-
-    return (
-        <div>
-            <div style={{ width: 75, height: 75 }}>
-                <CircularProgressbar value={percentage} text={`${percentage}%`} />
-            </div>
-            <p>{unfilledSettings.join(', ')}</p>
-        </div>
-    );
 }
