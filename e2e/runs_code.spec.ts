@@ -1,6 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 import {
   createNew,
+  defaultCodeOutput,
   forEachLang,
   goToPage,
   host,
@@ -47,6 +48,7 @@ test.describe('Basic Functionality', () => {
     }
 
     await page.click('[data-test-id="input-editor"]');
+    await page.keyboard.press('Backspace'); // remove newline
     await page.keyboard.type(' 4 5 6');
 
     await page2.waitForSelector('text="1 2 3 4 5 6"', { timeout: 2000 });
@@ -86,8 +88,8 @@ test.describe('Basic Functionality', () => {
     expect(await page2.$('text=Successful')).toBeTruthy();
     await page.locator('button:has-text("stdout")').click();
     await page2.locator('button:has-text("stdout")').click();
-    expect(await page.$('text="Hello world!"')).toBeTruthy();
-    expect(await page2.$('text="Hello world!"')).toBeTruthy();
+    await expect(page.getByText(defaultCodeOutput)).toBeVisible();
+    await expect(page2.getByText(defaultCodeOutput)).toBeVisible();
 
     await page2.close();
     await context2.close();

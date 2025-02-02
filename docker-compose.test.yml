@@ -8,3 +8,4 @@ services:
         target: /app/playwright-report
     network_mode: 'host'
     depends_on: [web]
+  login-bot: !reset null

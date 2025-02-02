@@ -23,7 +23,7 @@ import { getPlatformName } from '../src/scripts/getPlatformName';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import { URLProblem } from '../src/types/problem';
 
-export const groups = ['piton', 'capa', 'kajman', 'sas', 'tigris'];
+export const groups = ['anakonda', 'bagoly', 'capa', 'kajman', 'piton', 'sas', 'tigris'];
 const times = ['1 hour', '3 hours', '1 day', '7 days', 'All'];
 const timeInMs = [
   1000 * 60 * 60,
