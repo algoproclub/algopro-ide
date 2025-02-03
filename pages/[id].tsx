@@ -207,6 +207,7 @@ function EditorPage() {
           let tabName = 'Sample';
           if (samples.length > 1) tabName += ` ${index + 1}`;
           let tabIndex = tabsList.findIndex(tab => tab.label === tabName); // Find the index in tablists
+          if (tabIndex === -1) tabIndex = tabsList.length + index;
           newJudgeResults[tabIndex] = data;
         }
         if (samples.length > 1) {
