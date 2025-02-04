@@ -54,9 +54,8 @@ export async function fetchSolutionsFromDb(
   );
 
   return Object.fromEntries(
-    (await getDocs(collectionRef)).docs.map(doc => [
-      doc.id,
-      doc.data().content as string,
-    ])
+    (await getDocs(collectionRef)).docs
+      .filter(doc => doc.data().content !== '')
+      .map(doc => [doc.id, doc.data().content as string])
   );
 }
