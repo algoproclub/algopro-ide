@@ -643,6 +643,20 @@ const PageContent = () => {
           }}
         />
       </div>
+      <div className="mb-4 space-x-2 text-[0.95rem]">
+        <button
+          className="px-4 py-2 rounded-md border border-gray-600 hover:bg-gray-700 active:bg-gray-600"
+          onClick={handleAutoTranslate}
+        >
+          Auto translate
+        </button>
+        <button
+          className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800"
+          onClick={handleSave}
+        >
+          Save
+        </button>
+      </div>
       <EditHintModal
         isOpen={isOpen}
         hint={editedHint}
@@ -801,21 +815,6 @@ const PageContent = () => {
           </table>
         </div>
       )}
-
-      <div className="p-4 border border-gray-600 bg-gray-800 mt-2 space-x-2 text-[0.95rem]">
-        <button
-          className="px-4 py-2 rounded-md border border-gray-600 hover:bg-gray-700 active:bg-gray-600"
-          onClick={handleAutoTranslate}
-        >
-          Auto translate
-        </button>
-        <button
-          className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800"
-          onClick={handleSave}
-        >
-          Save
-        </button>
-      </div>
     </div>
   );
 };
