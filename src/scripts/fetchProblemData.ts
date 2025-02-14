@@ -5,6 +5,20 @@ import * as domhandler from 'domhandler';
 import * as cheerio from 'cheerio';
 import { getFirestore } from 'firebase-admin/firestore';
 
+async function fetchWithProxy(
+  url: string,
+  init?: RequestInit
+): Promise<Response> {
+  const loginBotUrl =
+    process.env.NODE_ENV !== 'production'
+      ? 'http://login-bot:3100'
+      : 'https://login-bot.algopro.hu';
+  return await fetch(
+    loginBotUrl + '/proxy?' + new URLSearchParams({ url }).toString(),
+    init
+  );
+}
+
 // FIXME: We might need to escape HTML entities (?)
 function htmlToPlaintext(node: domhandler.ChildNode): string {
   if (node instanceof domhandler.Text) {
@@ -91,7 +105,7 @@ async function fetchProblemDataCodeforces(
   }
 
   const url = `https://codeforces.com/contest/${matches[1]}/problem/${matches[2]}`;
-  const problemPage = await fetch(url, {
+  const problemPage = await fetchWithProxy(url, {
     headers: {
       'User-Agent':
         // same as login-bot
