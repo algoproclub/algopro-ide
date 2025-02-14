@@ -23,7 +23,15 @@ import { getPlatformName } from '../src/scripts/getPlatformName';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import { URLProblem } from '../src/types/problem';
 
-export const groups = ['anakonda', 'bagoly', 'capa', 'kajman', 'piton', 'sas', 'tigris'];
+export const groups = [
+  'anakonda',
+  'bagoly',
+  'capa',
+  'kajman',
+  'piton',
+  'sas',
+  'tigris',
+];
 const times = ['1 hour', '3 hours', '1 day', '7 days', 'All'];
 const timeInMs = [
   1000 * 60 * 60,
@@ -173,7 +181,7 @@ const fetchStudents = async (group: Group): Promise<Student[]> => {
   );
   const users: Student[] = [];
   results.forEach(doc => {
-    users.push({ id: doc.id, name: doc.data().user_full_name });
+    users.push({ id: doc.id, name: doc.data().user_discord_name });
   });
   return users;
 };
