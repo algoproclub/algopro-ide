@@ -4,6 +4,12 @@ import { StatusData, TestCase } from '../../types/problem';
 import TimeAgoLabel from '../TimeStamp';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { useEditorContext } from '../../context/EditorContext';
+import {
+  getStorage,
+  ref as storageRef,
+  getDownloadURL,
+} from 'firebase/storage';
 
 const capitalize = (text: string): string => {
   return text[0].toUpperCase() + text.substring(1);
@@ -19,9 +25,20 @@ const TestCaseInfoModal = ({
   onClose: () => void;
   testCase: TestCase;
 }) => {
+  const { fileData } = useEditorContext();
+
   const closeWithoutSaving = () => {
     onClose();
   };
+
+  function getTestcaseDownloadURL(kind: 'input' | 'output') {
+    const path = `/testcases/${fileData.problem!.platform}/${
+      fileData.problem!.id
+    }/${kind}${testCase.trialNum - 1}.txt`;
+    const storage = getStorage();
+    const ref = storageRef(storage, path);
+    return getDownloadURL(ref);
+  }
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -63,11 +80,35 @@ const TestCaseInfoModal = ({
                 </Dialog.Title>
               </div>
               <div className="p-4 sm:p-6 space-y-3">
-                /testcases/cses/1095/input/{testCase.trialNum - 1}
-                <br />
-                TODO: somehow get access to problem info
-                <br />
-                <USACOTestCase data={testCase} onClick={() => {}} />
+                {fileData.problem && (
+                  <div className="flex flex-col items-start gap-4">
+                    <USACOTestCase data={testCase} onClick={() => {}} />
+                    <button
+                      className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      onClick={async () => {
+                        window.open(
+                          await getTestcaseDownloadURL('input'),
+                          '_blank',
+                          'noopener,noreferrer'
+                        );
+                      }}
+                    >
+                      Download input
+                    </button>
+                    <button
+                      className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      onClick={async () => {
+                        window.open(
+                          await getTestcaseDownloadURL('output'),
+                          '_blank',
+                          'noopener,noreferrer'
+                        );
+                      }}
+                    >
+                      Download output
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
