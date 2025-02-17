@@ -48,6 +48,13 @@ const translate = httpsCallable<
   },
   string
 >(getFunctions(undefined, 'europe-west1'), 'translate');
+const translateOpenAI = httpsCallable<
+  {
+    text: string;
+    lang: string;
+  },
+  string
+>(getFunctions(undefined, 'europe-west1'), 'translateOpenAI');
 
 const codeLangs: Language[] = ['cpp', 'py', 'java'];
 
@@ -589,8 +596,30 @@ const PageContent = () => {
     setIsOpen(true);
   };
 
-  const handleAutoTranslate = async () => {
+  const handleAutoTranslateDeepl = async () => {
     const response = await translate({
+      text: original,
+      lang: language,
+    });
+    if (response.data !== null) {
+      setTranslated(response.data);
+    } else {
+      console.error('unsuccessful translation');
+    }
+  };
+
+  const handleAutoTranslateOpenAI = async () => {
+    const functions = await getFunctions();
+    const myFunction = httpsCallable(functions, 'translateOpenAI');
+    console.log(functions);
+    myFunction({ some: 'data' })
+        .then((result) => {
+        console.log(result.data);
+        })
+        .catch((error) => {
+            console.error('Error calling function:', error);
+        });
+    const response = await translateOpenAI({
       text: original,
       lang: language,
     });
@@ -646,9 +675,15 @@ const PageContent = () => {
       <div className="mb-4 space-x-2 text-[0.95rem]">
         <button
           className="px-4 py-2 rounded-md border border-gray-600 hover:bg-gray-700 active:bg-gray-600"
-          onClick={handleAutoTranslate}
+          onClick={handleAutoTranslateDeepl}
         >
-          Auto translate
+          Auto translate (Deepl)
+        </button>
+        <button
+          className="px-4 py-2 rounded-md border border-gray-600 hover:bg-gray-700 active:bg-gray-600"
+          onClick={handleAutoTranslateOpenAI}
+        >
+          Auto translate (OpenAI)
         </button>
         <button
           className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800"
