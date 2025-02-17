@@ -3,21 +3,35 @@ import Head from 'next/head';
 import 'tailwindcss/tailwind.css';
 import '../src/styles/globals.css';
 import * as firebase from 'firebase/app';
-import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
+import {
+  getDatabase,
+  connectDatabaseEmulator,
+  update,
+  ref,
+  get,
+} from 'firebase/database';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { getAnalytics, isSupported } from 'firebase/analytics';
-import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
+import {
+  connectFirestoreEmulator,
+  getDocs,
+  getFirestore,
+} from 'firebase/firestore';
 import { ConnectionProvider } from '../src/context/ConnectionContext';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
-import { UserProvider } from '../src/context/UserContext';
+import {
+  useNullableUserContext,
+  UserProvider,
+} from '../src/context/UserContext';
 import { SHOULD_USE_FIREBASE_EMULATOR } from '../src/dev_constants';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { far } from '@fortawesome/free-regular-svg-icons';
 import en from 'javascript-time-ago/locale/en';
 import TimeAgo from 'javascript-time-ago';
+import { useEffect } from 'react';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -60,6 +74,24 @@ if (!firebase.getApps()?.length) {
   }
 }
 
+const UserDataSetter = ({ children }: { children: JSX.Element }) => {
+  const { logged, firebaseUser } = useNullableUserContext();
+
+  useEffect(() => {
+    if (logged && firebaseUser) {
+      const dataRef = ref(getDatabase(), `users/${firebaseUser.uid}/data`);
+      get(dataRef).then(snapshot => {
+        const name = snapshot.val()?.full_name;
+        if (name !== firebaseUser.displayName) {
+          update(dataRef, { full_name: firebaseUser.displayName });
+        }
+      });
+    }
+  }, [logged]);
+
+  return <>{children}</>;
+};
+
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
@@ -69,7 +101,9 @@ function MyApp({ Component, pageProps }: AppProps) {
       <Toaster position="bottom-right" />
       <UserProvider>
         <ConnectionProvider>
-          <Component {...pageProps} />
+          <UserDataSetter>
+            <Component {...pageProps} />
+          </UserDataSetter>
         </ConnectionProvider>
       </UserProvider>
       <Analytics />

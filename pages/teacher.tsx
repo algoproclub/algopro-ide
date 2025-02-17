@@ -179,10 +179,17 @@ const fetchStudents = async (group: Group): Promise<Student[]> => {
       where('groups', 'array-contains', group)
     )
   );
-  const users: Student[] = [];
-  results.forEach(doc => {
-    users.push({ id: doc.id, name: doc.data().user_full_name });
-  });
+  const getName = async (id: string, def: string) => {
+    const db = getDatabase();
+    return (await get(ref(db, `users/${id}/data/full_name`))).val() ?? def;
+  };
+  const users = await Promise.all(
+    results.docs.map(async doc => ({
+      id: doc.id,
+      name: await getName(doc.id, doc.data().user_full_name),
+    }))
+  );
+  console.log(users);
   return users;
 };
 
