@@ -181,7 +181,7 @@ const fetchStudents = async (group: Group): Promise<Student[]> => {
   );
   const users: Student[] = [];
   results.forEach(doc => {
-    users.push({ id: doc.id, name: doc.data().user_discord_name });
+    users.push({ id: doc.id, name: doc.data().user_full_name });
   });
   return users;
 };
