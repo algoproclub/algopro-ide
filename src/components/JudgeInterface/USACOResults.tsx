@@ -1,6 +1,11 @@
 import React, { Fragment, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { StatusData, TestCase } from '../../types/problem';
+import {
+  PlatformProblem,
+  ProblemData,
+  StatusData,
+  TestCase,
+} from '../../types/problem';
 import TimeAgoLabel from '../TimeStamp';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
@@ -10,10 +15,46 @@ import {
   ref as storageRef,
   getDownloadURL,
 } from 'firebase/storage';
+import { toast } from 'react-hot-toast';
 
 const capitalize = (text: string): string => {
   return text[0].toUpperCase() + text.substring(1);
 };
+
+async function openTestcaseDownloadURL(
+  problem: ProblemData | PlatformProblem,
+  kind: 'input' | 'output',
+  trialNum: number
+) {
+  const { platform, id } = problem;
+  const path = `testcases/${platform}/${id}/${kind}${trialNum - 1}.txt`;
+  const storage = getStorage();
+  const ref = storageRef(storage, path);
+  try {
+    const url = await getDownloadURL(ref);
+    const res = await fetch(url);
+    const blob = await res.blob();
+
+    // firebase doesn't allow specifying a custom filename if we use the download URL directly
+    // so we create a blob-based URL instead
+    const blobUrl = window.URL.createObjectURL(blob);
+
+    const anchor = document.createElement('a');
+    anchor.href = blobUrl;
+    anchor.download = `${platform}_${id}_${kind}${trialNum}.txt`;
+    anchor.click();
+
+    window.URL.revokeObjectURL(blobUrl);
+  } catch {
+    toast('Testcase unavailable!', {
+      style: {
+        borderRadius: '10px',
+        background: '#333',
+        color: '#fff',
+      },
+    });
+  }
+}
 
 // copied from UserSettingsModal
 const TestCaseInfoModal = ({
@@ -30,15 +71,6 @@ const TestCaseInfoModal = ({
   const closeWithoutSaving = () => {
     onClose();
   };
-
-  function getTestcaseDownloadURL(kind: 'input' | 'output') {
-    const path = `/testcases/${fileData.problem!.platform}/${
-      fileData.problem!.id
-    }/${kind}${testCase.trialNum - 1}.txt`;
-    const storage = getStorage();
-    const ref = storageRef(storage, path);
-    return getDownloadURL(ref);
-  }
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -85,25 +117,25 @@ const TestCaseInfoModal = ({
                     <USACOTestCase data={testCase} onClick={() => {}} />
                     <button
                       className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      onClick={async () => {
-                        window.open(
-                          await getTestcaseDownloadURL('input'),
-                          '_blank',
-                          'noopener,noreferrer'
-                        );
-                      }}
+                      onClick={() =>
+                        openTestcaseDownloadURL(
+                          fileData.problem!,
+                          'input',
+                          testCase.trialNum
+                        )
+                      }
                     >
                       Download input
                     </button>
                     <button
                       className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      onClick={async () => {
-                        window.open(
-                          await getTestcaseDownloadURL('output'),
-                          '_blank',
-                          'noopener,noreferrer'
-                        );
-                      }}
+                      onClick={() =>
+                        openTestcaseDownloadURL(
+                          fileData.problem!,
+                          'output',
+                          testCase.trialNum
+                        )
+                      }
                     >
                       Download output
                     </button>
