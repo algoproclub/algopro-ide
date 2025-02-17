@@ -48,6 +48,7 @@ require('dotenv').config({ path: '.env.local' });
 
 export const cfAPIKey = defineString('CF_API_KEY');
 export const deeplAPIKey = defineString('DEEPL_API_KEY');
+export const openaiAPIKey = defineString('OPENAI_API_KEY');
 export const cfAPISecret = defineString('CF_API_SECRET');
 
 export const loginBotUrl = defineString('LOGIN_BOT_URL');
@@ -143,6 +144,71 @@ export const translate = onCall<
     logger.log(error);
   }
   return translation;
+});
+
+export const translateOpenAI = onCall<
+    {
+    text: string;
+    lang: string;
+    },
+    Promise<string | null>
+>({ region: 'europe-west1' }, async request => {
+    if (!request.auth?.token?.teacher) {
+    return null;
+    }
+    let { text, lang } = request.data;
+
+    const document = new JSDOM(text).window.document;
+    for (const el of document.getElementsByTagName('pre'))
+    el.setAttribute('translate', 'no');
+    text = document.body.innerHTML;
+
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+        Authorization: `Bearer ${openaiAPIKey.value()}`,
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+        model: "gpt-4o",
+        temperature: 0.95,
+        top_p: 0.95,
+        presence_penalty: 0.05,
+        messages: [
+            {
+                role: "system",
+                content: `You are a professional translator specializing in competitive programming problems.
+                You will receive an HTML code snippet containing a problem statement, which may include LaTeX formulas.
+                Your task:
+                    Translate the problem precisely and naturally while preserving its meaning, structure, and formatting.
+                    Ensure that the translation follows proper mathematical terminology and competitive programming conventions.
+                    Do not rephrase unnecessarily. Maintain the original sentence structure where possible unless required for fluency.
+                    Use clear, formal, and concise language suitable for competitive programming statements.
+                    Keep all mathematical notation and LaTeX syntax unchanged.
+                    Follow the standard way problems are written in the target language (e.g., Hungarian).
+                Specific Translation Rules:
+                    Use precise terminology: Keep technical terms correct and natural in the target language.
+                    Ensure smooth, natural phrasing: Avoid direct, awkward word-for-word translations.
+                    Use a neutral, formal style: Avoid conversational tone and overly direct instructions.
+                    Preserve list formatting and structure: Ensure that input/output constraints and explanations stay intact.
+                    Clarify conditions explicitly when needed: If something is unclear in the original, use natural wording that makes it precise.
+                Translate the problem into the following language: [${lang}]`,
+            },
+            {
+                role: "user",
+                content: text,
+            },
+        ]
+    }),
+    });
+    let translation: string | null = null;
+    try {
+        const json = await resp.json();
+        translation = json['choices'][0].message.content ?? null;
+    } catch (error) {
+    logger.log(error);
+    }
+    return translation;
 });
 
 export const enum Errors {
