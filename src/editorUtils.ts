@@ -11,15 +11,11 @@ export function isFirebaseId(queryId: string): boolean {
   );
 }
 
-function cleanAndReplaceOutput(output: string): {
-  replaced: string;
-  cleaned: string;
-} {
-  const replaced = output.replace(/ /g, '\u2423'); // spaces made visible
-  const lines = output.split('\n');
-  for (let i = 0; i < lines.length; ++i) lines[i] = lines[i].trim();
-  const cleaned = lines.join('\n').trim(); // remove leading / trailing whitespace on each line, trim
-  return { replaced, cleaned };
+function trimLines(output: string): string {
+  return output
+    .split('\n')
+    .map(line => line.trim())
+    .join('\n');
 }
 
 export function cleanJudgeResult(
@@ -40,18 +36,15 @@ export function cleanJudgeResult(
     data.stdout = data.fileOutput;
   }
   if (expectedOutput && data.status === 'success') {
-    data.statusDescription = 'Successful';
-    let stdout = data.stdout ?? '';
-    if (!stdout.endsWith('\n')) stdout += '\n';
-    if (data.status === 'success' && stdout !== expectedOutput) {
+    if (data.stdout && !data.stdout.endsWith('\n')) {
+      data.stdout += '\n';
+    }
+
+    if (trimLines(data.stdout ?? '') === trimLines(expectedOutput)) {
+      data.statusDescription = 'Successful';
+    } else {
       data.status = 'wrong_answer';
-      const { cleaned, replaced } = cleanAndReplaceOutput(stdout);
-      if (cleaned === expectedOutput.trim()) {
-        data.statusDescription = 'Successful (Extra Whitespace)';
-        data.stdout = replaced; // show the extra whitespace
-      } else {
-        data.statusDescription = 'Wrong Answer';
-      }
+      data.statusDescription = 'Wrong Answer';
     }
   }
   if (prefix && data.status !== 'compile_error')
