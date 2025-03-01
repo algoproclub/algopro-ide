@@ -143,3 +143,22 @@ body {
 .linked-line-highlight {
   background-color: rgba(255, 255, 0, 0.1);
 }
+
+body {
+  --terminal-black: #4f5666;
+  --terminal-red: #f85757;
+  --terminal-green: #50d750;
+  --terminal-yellow: #f9e131;
+  --terminal-blue: #3396ff;
+  --terminal-magenta: #de73ff;
+  --terminal-cyan: #4cdee0;
+  --terminal-white: #d4d4d4;
+}
+
+.terminal-linked-line {
+  cursor: default;
+
+  & > span {
+    color: var(--terminal-blue);
+  }
+}
