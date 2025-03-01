@@ -1,6 +1,6 @@
 import { TabBar } from './TabBar';
 import React, { useState, useEffect } from 'react';
-import { useAtomValue } from 'jotai/utils';
+import { useAtomValue } from 'jotai';
 import JudgeResult from '../types/judge';
 import { EditorProps } from './editor/MonacoEditor/monaco-editor-types';
 import USACOResults from './JudgeInterface/USACOResults';

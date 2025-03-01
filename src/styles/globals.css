@@ -139,3 +139,7 @@ body {
     @apply text-red-500;
   }
 }
+
+.linked-line-highlight {
+  background-color: rgba(255, 255, 0, 0.1);
+}
