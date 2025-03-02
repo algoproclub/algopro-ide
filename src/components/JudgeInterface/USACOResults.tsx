@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   PlatformProblem,
@@ -15,13 +15,13 @@ import {
   ref as storageRef,
   getDownloadURL,
 } from 'firebase/storage';
-import { toast } from 'react-hot-toast';
+import classNames from 'classnames';
 
 const capitalize = (text: string): string => {
   return text[0].toUpperCase() + text.substring(1);
 };
 
-async function openTestcaseDownloadURL(
+async function getTestcaseDownloadURL(
   problem: ProblemData | PlatformProblem,
   kind: 'input' | 'output',
   trialNum: number
@@ -30,30 +30,23 @@ async function openTestcaseDownloadURL(
   const path = `testcases/${platform}/${id}/${kind}${trialNum - 1}.txt`;
   const storage = getStorage();
   const ref = storageRef(storage, path);
-  try {
-    const url = await getDownloadURL(ref);
-    const res = await fetch(url);
-    const blob = await res.blob();
+  return await getDownloadURL(ref);
+}
 
-    // firebase doesn't allow specifying a custom filename if we use the download URL directly
-    // so we create a blob-based URL instead
-    const blobUrl = window.URL.createObjectURL(blob);
+async function downloadFileFromURLWithName(url: string, fileName: string) {
+  const res = await fetch(url);
+  const blob = await res.blob();
 
-    const anchor = document.createElement('a');
-    anchor.href = blobUrl;
-    anchor.download = `${platform}_${id}_${kind}${trialNum}.txt`;
-    anchor.click();
+  // firebase doesn't allow specifying a custom filename if we use the download URL directly
+  // so we create a blob-based URL instead
+  const blobUrl = window.URL.createObjectURL(blob);
 
-    window.URL.revokeObjectURL(blobUrl);
-  } catch {
-    toast('Testcase unavailable!', {
-      style: {
-        borderRadius: '10px',
-        background: '#333',
-        color: '#fff',
-      },
-    });
-  }
+  const anchor = document.createElement('a');
+  anchor.href = blobUrl;
+  anchor.download = fileName;
+  anchor.click();
+
+  window.URL.revokeObjectURL(blobUrl);
 }
 
 // copied from UserSettingsModal
@@ -67,10 +60,35 @@ const TestCaseInfoModal = ({
   testCase: TestCase;
 }) => {
   const { fileData } = useEditorContext();
+  const problem = fileData.problem;
+
+  const [inputDownloadURL, setInputDownloadURL] = useState<string | null>(null);
+  const [outputDownloadURL, setOutputDownloadURL] = useState<string | null>(
+    null
+  );
+
+  useEffect(() => {
+    setInputDownloadURL(null);
+    setOutputDownloadURL(null);
+
+    if (problem === null) return;
+
+    getTestcaseDownloadURL(problem, 'input', testCase.trialNum)
+      .catch(() => null)
+      .then(url => setInputDownloadURL(url));
+
+    getTestcaseDownloadURL(problem, 'output', testCase.trialNum)
+      .catch(() => null)
+      .then(url => setOutputDownloadURL(url));
+  }, [testCase, problem]);
 
   const closeWithoutSaving = () => {
     onClose();
   };
+
+  if (problem === null) {
+    return <></>;
+  }
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -112,35 +130,49 @@ const TestCaseInfoModal = ({
                 </Dialog.Title>
               </div>
               <div className="p-4 sm:p-6 space-y-3">
-                {fileData.problem && (
-                  <div className="flex flex-col items-start gap-4">
-                    <USACOTestCase data={testCase} onClick={() => {}} />
-                    <button
-                      className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      onClick={() =>
-                        openTestcaseDownloadURL(
-                          fileData.problem!,
-                          'input',
-                          testCase.trialNum
-                        )
-                      }
-                    >
-                      Download input
-                    </button>
-                    <button
-                      className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      onClick={() =>
-                        openTestcaseDownloadURL(
-                          fileData.problem!,
-                          'output',
-                          testCase.trialNum
-                        )
-                      }
-                    >
-                      Download output
-                    </button>
-                  </div>
-                )}
+                <div className="flex flex-col items-start gap-4">
+                  <USACOTestCase data={testCase} />
+                  <button
+                    className={classNames(
+                      'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
+                      inputDownloadURL === null
+                        ? 'bg-gray-700'
+                        : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
+                    )}
+                    disabled={inputDownloadURL === null}
+                    onClick={() => {
+                      if (inputDownloadURL === null) return;
+                      downloadFileFromURLWithName(
+                        inputDownloadURL,
+                        `${problem.platform}_${problem.id}_input${testCase.trialNum}.txt`
+                      );
+                    }}
+                  >
+                    {inputDownloadURL === null
+                      ? 'Input unavailable'
+                      : 'Download input'}
+                  </button>
+                  <button
+                    className={classNames(
+                      'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
+                      outputDownloadURL === null
+                        ? 'bg-gray-700'
+                        : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
+                    )}
+                    disabled={outputDownloadURL === null}
+                    onClick={() => {
+                      if (outputDownloadURL === null) return;
+                      downloadFileFromURLWithName(
+                        outputDownloadURL,
+                        `${problem.platform}_${problem.id}_output${testCase.trialNum}.txt`
+                      );
+                    }}
+                  >
+                    {outputDownloadURL === null
+                      ? 'Output unavailable'
+                      : 'Download output'}
+                  </button>
+                </div>
               </div>
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
@@ -165,7 +197,7 @@ const USACOTestCase = ({
   onClick,
 }: {
   data: TestCase;
-  onClick: () => void;
+  onClick?: () => void;
 }) => {
   const containerClasses =
     data.title?.toLowerCase() === 'correct answer'
@@ -179,9 +211,13 @@ const USACOTestCase = ({
       : 'text-red-100';
   return (
     <div
-      className={`m-1 p-1 inline-block w-[5.5rem] bg-opacity-25 border-opacity-50 border ${containerClasses} relative rounded-[4px] hover:cursor-pointer`}
+      className={classNames(
+        `m-1 p-1 inline-block w-[5.5rem] bg-opacity-25 border-opacity-50 border relative rounded-[4px]`,
+        containerClasses,
+        onClick ? 'hover:cursor-pointer' : ''
+      )}
       title={capitalize(data.title)}
-      onClick={onClick}
+      onClick={onClick ?? (() => {})}
     >
       <div className={`font-semibold text-center ${textColor} pt-1`}>
         {data.symbol === '✓' && (
