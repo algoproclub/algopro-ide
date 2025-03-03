@@ -67,6 +67,8 @@ export async function fetchProblemData({
       return fetchProblemDataPlanets(id);
     case 'ojuz':
       return fetchProblemDataOjuz(id);
+    case 'njudge':
+      return fetchProblemDataNjudge(id);
     default:
       throw new Error(`platform '${platform}' is unimplemented`);
   }
@@ -434,5 +436,54 @@ async function fetchProblemDataOjuz(
     input: 'stdin',
     output: 'stdout',
     source: `Oj.uz ${problemID}`,
+  };
+}
+
+async function fetchProblemDataNjudge(
+  problemID: string
+): Promise<ProblemData | null> {
+  const url = `https://njudge.hu/problemset/main/${problemID}/`;
+  const problemPage = await fetch(url, {
+    headers: { 'Accept-Language': 'hu' },
+  });
+  if (problemPage.status !== 200) {
+    return null;
+  }
+
+  const document = cheerio.load(await problemPage.text());
+
+  const titleHeading = document('div:Contains("Cím:")');
+  const title = titleHeading.next().text().trim();
+
+  let statementURL = null;
+  for (const language of ['hungarian', 'english']) {
+    const pdfURL = `https://njudge.hu/problemset/main/${problemID}/pdf/${language}/`;
+
+    // method: 'HEAD' returns 404
+    const exists = (await fetch(pdfURL)).ok;
+    if (exists) {
+      statementURL = pdfURL;
+      break;
+    }
+  }
+
+  if (!statementURL) {
+    console.error(`No PDF statement found for njudge ${problemID}`);
+    return null;
+  }
+
+  return {
+    id: problemID,
+    submittable: true,
+    platform: 'njudge',
+    url,
+    title,
+    statement: null,
+    statementURL,
+    templateCode: null,
+    samples: [],
+    input: 'stdin',
+    output: 'stdout',
+    source: `njudge ${problemID}`,
   };
 }

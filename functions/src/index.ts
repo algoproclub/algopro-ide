@@ -40,6 +40,7 @@ import {
   PlanetsSubmitter,
   SPOJSubmitter,
   OjuzSubmitter,
+  NjudgeSubmitter,
   Submitter,
 } from './submit';
 import { JSDOM } from 'jsdom';
@@ -95,6 +96,9 @@ export const submitproblemsolution = onCall<
         break;
       case 'ojuz':
         submitter = new OjuzSubmitter();
+        break;
+      case 'njudge':
+        submitter = new NjudgeSubmitter();
         break;
       default:
         throw new HttpsError(
