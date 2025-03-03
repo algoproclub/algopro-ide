@@ -15,7 +15,8 @@ function trimLines(output: string): string {
   return output
     .split('\n')
     .map(line => line.trim())
-    .join('\n');
+    .join('\n')
+    .trimEnd();
 }
 
 export function cleanJudgeResult(
