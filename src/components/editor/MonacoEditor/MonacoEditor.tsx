@@ -103,6 +103,7 @@ export default function MonacoEditor({
     ) as AlgoProMonacoEditor;
 
     // TODO: Refactor to inherit from the monaco editor instead of injecting properties
+    // https://github.com/algoproclub/algopro-ide/issues/287
     editorRef.current._lineHighlight = null;
     editorRef.current._lineHighlightTimeout = null;
     editorRef.current.setLineHighlight = function (line: number) {
