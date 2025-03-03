@@ -4,7 +4,7 @@ import React from 'react';
 const ERASE_LINE = '\x1b[K';
 const SET_COLOR_REGEX = /\x1b\[([0-9;]*?)m/;
 const HYPERLINK_REGEX = /\x1b\]8;;(?<url>.*?)\x07(?<text>.*?)\x1b\]8;;\x07/;
-const LOCATION_REGEX = /\w.cpp:(?<line>\d+):(?<column>\d*)/;
+const LOCATION_REGEX = /^[^\s]+\.cpp:(?<line>\d+)(:(?<column>\d+))?/;
 
 // prettier-ignore
 const STYLES: Record<number, React.CSSProperties> = {
@@ -32,25 +32,28 @@ const OutputLine = ({
   line = line.replaceAll(ERASE_LINE, '');
   const chunks = line.split(SET_COLOR_REGEX);
 
-  const locationMatch = line.match(LOCATION_REGEX);
-  const linkedLine = locationMatch ? Number(locationMatch.groups?.line) : null;
+  let plaintext = '';
 
   const spans: JSX.Element[] = [];
   if (chunks[0] !== '') {
     spans.push(<span key={0}>{chunks[0]}</span>);
+    plaintext += chunks[0];
   }
   for (let i = 1; i < chunks.length; i += 2) {
     const idx = Math.ceil(i / 2);
 
-    const styles = chunks[i].split(';').map(n => STYLES[Number(n)]);
+    const styles = chunks[i].split(';').map(n => STYLES[Number(n)] ?? {});
     const hyperlinkMatch = chunks[i + 1].match(HYPERLINK_REGEX);
+
+    const text = hyperlinkMatch?.groups?.text ?? chunks[i + 1];
+    plaintext += text;
 
     const content = hyperlinkMatch ? (
       <a href={hyperlinkMatch.groups?.url} target="_blank">
-        {hyperlinkMatch.groups?.text}
+        {text}
       </a>
     ) : (
-      chunks[i + 1]
+      text
     );
 
     if (hyperlinkMatch) {
@@ -64,7 +67,12 @@ const OutputLine = ({
     );
   }
 
-  if (linkedLine !== null && highlightLine) {
+  const locationMatch = plaintext.match(LOCATION_REGEX);
+  const linkedLine = locationMatch
+    ? Number(locationMatch.groups?.line)
+    : undefined;
+
+  if (linkedLine !== undefined && highlightLine) {
     return (
       <div
         className="terminal-linked-line"
