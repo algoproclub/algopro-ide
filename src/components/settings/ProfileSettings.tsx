@@ -50,6 +50,7 @@ const ProfileSettings = ({
       setLightMode(userData?.lightMode ?? false);
       setManualSubmission(userData?.manualSubmission ?? false);
       setTemplateCode(savedTemplateCode ?? {});
+      setTemplateLanguage(userData?.defaultLanguage ?? 'cpp');
       dirtyRef.current = false;
     }
   }, [isOpen, firebaseUser, userData, savedTemplateCode]);
