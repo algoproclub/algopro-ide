@@ -31,7 +31,7 @@ import {
   useUserContext,
 } from '../src/context/UserContext';
 import useUserPermission from '../src/hooks/useUserPermission';
-import { SettingsModal } from '../src/components/settings/SettingsModal';
+import { WorkspaceSettingsModal } from '../src/components/settings/WorkspaceSettingsModal';
 import { getSampleIndex } from '../src/components/JudgeInterface/Samples';
 import { signInWithGoogleAtom } from '../src/atoms/firebaseUserAtoms';
 import useJudgeResults from '../src/hooks/useJudgeResults';
@@ -45,6 +45,7 @@ import { PlatformProblem, ProblemData } from '../src/types/problem';
 import { fetchProblemFromDb } from '../src/scripts/fetchProblemFromDb';
 import Link from 'next/link';
 import { Simulate } from 'react-dom/test-utils';
+import ProfileSettings from '../src/components/settings/ProfileSettings';
 import load = Simulate.load;
 
 function EditorPage() {
@@ -56,7 +57,10 @@ function EditorPage() {
   const loading = useAtomValue(loadingAtom);
   const [showSidebar, setShowSidebar] = useAtom(showSidebarAtom);
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isWorkspaceSettingsModalOpen, setIsWorkspaceSettingsModalOpen] =
+    useState(false);
+  const [isProfileSettingsModalOpen, setIsProfileSettingsModalOpen] =
+    useState(false);
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
   const layoutEditors = useSetAtom(layoutEditorsAtom);
   const [mobileActiveTab, setMobileActiveTab] = useAtom(mobileActiveTabAtom);
@@ -280,22 +284,27 @@ function EditorPage() {
     <div className="h-full">
       <div className="h-full flex flex-col">
         <div className="flex-shrink-0 bg-[#1E1E1E]">
-          <NavBar
-            fileMenu={
-              <FileMenu onOpenSettings={() => setIsSettingsModalOpen(true)} />
-            }
-            runButton={
-              <RunButton
-                onClick={handleRunCode}
-                showLoading={fileData.isCodeRunning || loading}
-                disabledForViewOnly={readOnly}
-              />
-            }
-            showViewOnly={!loading && readOnly}
-            isSidebarOpen={showSidebar}
-            onToggleSidebar={handleToggleSidebar}
-            showSidebarButton={isDesktop}
-          />
+          {
+            <NavBar
+              fileMenu={
+                <FileMenu
+                  onOpenSettings={() => setIsWorkspaceSettingsModalOpen(true)}
+                />
+              }
+              runButton={
+                <RunButton
+                  onClick={handleRunCode}
+                  showLoading={fileData.isCodeRunning || loading}
+                  disabledForViewOnly={readOnly}
+                />
+              }
+              showViewOnly={!loading && readOnly}
+              isSidebarOpen={showSidebar}
+              onToggleSidebar={handleToggleSidebar}
+              showSidebarButton={isDesktop}
+              setIsProfileSettingsOpen={setIsProfileSettingsModalOpen}
+            />
+          }
         </div>
         <div className="flex-1 min-h-0">
           <Workspace handleRunCode={handleRunCode} tabsList={tabsList} />
@@ -308,9 +317,13 @@ function EditorPage() {
         )}
       </div>
 
-      <SettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
+      <WorkspaceSettingsModal
+        isOpen={isWorkspaceSettingsModalOpen}
+        onClose={() => setIsWorkspaceSettingsModalOpen(false)}
+      />
+      <ProfileSettings
+        isOpen={isProfileSettingsModalOpen}
+        onClose={() => setIsProfileSettingsModalOpen(false)}
       />
     </div>
   );

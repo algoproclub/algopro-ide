@@ -168,7 +168,7 @@ export default function UserSettings({
   language: Language;
   onLanguageChange: (language: Language) => void;
 }): JSX.Element {
-  const [submenu, setSubmenu] = useState<Submenu>('');
+  const [submenu, setSubmenu] = useState<Submenu>('userdata');
   return (
     <div>
       <div className="flex flex-col text-sm text-gray-300 bg-[#222222]">
