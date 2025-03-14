@@ -65,6 +65,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     <>
       <Head>
         <meta name="color-scheme" content="dark" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </Head>
       <Toaster position="bottom-right" />
       <UserProvider>
