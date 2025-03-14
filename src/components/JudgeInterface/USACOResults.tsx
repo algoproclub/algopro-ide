@@ -1,13 +1,204 @@
-import React from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { StatusData, TestCase } from '../../types/problem';
+import {
+  PlatformProblem,
+  ProblemData,
+  StatusData,
+  TestCase,
+} from '../../types/problem';
 import TimeAgoLabel from '../TimeStamp';
+import { Dialog, Transition } from '@headlessui/react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import { useEditorContext } from '../../context/EditorContext';
+import {
+  getStorage,
+  ref as storageRef,
+  getDownloadURL,
+} from 'firebase/storage';
+import classNames from 'classnames';
 
 const capitalize = (text: string): string => {
   return text[0].toUpperCase() + text.substring(1);
 };
 
-const USACOTestCase = ({ data }: { data: TestCase }) => {
+async function getTestcaseDownloadURL(
+  problem: ProblemData | PlatformProblem,
+  kind: 'input' | 'output',
+  trialNum: number
+) {
+  const { platform, id } = problem;
+  const path = `testcases/${platform}/${id}/${kind}${trialNum - 1}.txt`;
+  const storage = getStorage();
+  const ref = storageRef(storage, path);
+  return await getDownloadURL(ref);
+}
+
+async function downloadFileFromURLWithName(url: string, fileName: string) {
+  const res = await fetch(url);
+  const blob = await res.blob();
+
+  // firebase doesn't allow specifying a custom filename if we use the download URL directly
+  // so we create a blob-based URL instead
+  const blobUrl = window.URL.createObjectURL(blob);
+
+  const anchor = document.createElement('a');
+  anchor.href = blobUrl;
+  anchor.download = fileName;
+  anchor.click();
+
+  window.URL.revokeObjectURL(blobUrl);
+}
+
+// copied from UserSettingsModal
+const TestCaseInfoModal = ({
+  isOpen,
+  onClose,
+  testCase,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  testCase: TestCase;
+}) => {
+  const { fileData } = useEditorContext();
+  const problem = fileData.problem;
+
+  const [inputDownloadURL, setInputDownloadURL] = useState<string | null>(null);
+  const [outputDownloadURL, setOutputDownloadURL] = useState<string | null>(
+    null
+  );
+
+  useEffect(() => {
+    setInputDownloadURL(null);
+    setOutputDownloadURL(null);
+
+    if (problem === null) return;
+
+    getTestcaseDownloadURL(problem, 'input', testCase.trialNum)
+      .catch(() => null)
+      .then(url => setInputDownloadURL(url));
+
+    getTestcaseDownloadURL(problem, 'output', testCase.trialNum)
+      .catch(() => null)
+      .then(url => setOutputDownloadURL(url));
+  }, [testCase, problem]);
+
+  const closeWithoutSaving = () => {
+    onClose();
+  };
+
+  if (problem === null) {
+    return <></>;
+  }
+
+  return (
+    <Transition.Root show={isOpen} as={Fragment}>
+      <Dialog
+        as="div"
+        static
+        className="fixed z-10 inset-0 overflow-y-auto"
+        open={isOpen}
+        onClose={closeWithoutSaving}
+      >
+        <div className="flex items-end justify-center min-h-full pt-4 pb-20 text-center sm:block sm:p-0">
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-75 transition-opacity" />
+          </Transition.Child>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            enterTo="opacity-100 translate-y-0 sm:scale-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+            leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+          >
+            <div className="inline-block bg-gray-800 md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
+              <div className="px-4 sm:px-6 pt-4 pb-2">
+                <Dialog.Title
+                  as="h3"
+                  className="text-lg leading-6 font-medium text-center"
+                >
+                  Testcase Info
+                </Dialog.Title>
+              </div>
+              <div className="p-4 sm:p-6 space-y-3">
+                <div className="flex flex-col items-start gap-4">
+                  <USACOTestCase data={testCase} />
+                  <button
+                    className={classNames(
+                      'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
+                      inputDownloadURL === null
+                        ? 'bg-gray-700'
+                        : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
+                    )}
+                    disabled={inputDownloadURL === null}
+                    onClick={() => {
+                      if (inputDownloadURL === null) return;
+                      downloadFileFromURLWithName(
+                        inputDownloadURL,
+                        `${problem.platform}_${problem.id}_input${testCase.trialNum}.txt`
+                      );
+                    }}
+                  >
+                    {inputDownloadURL === null
+                      ? 'Input unavailable'
+                      : 'Download input'}
+                  </button>
+                  <button
+                    className={classNames(
+                      'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
+                      outputDownloadURL === null
+                        ? 'bg-gray-700'
+                        : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
+                    )}
+                    disabled={outputDownloadURL === null}
+                    onClick={() => {
+                      if (outputDownloadURL === null) return;
+                      downloadFileFromURLWithName(
+                        outputDownloadURL,
+                        `${problem.platform}_${problem.id}_output${testCase.trialNum}.txt`
+                      );
+                    }}
+                  >
+                    {outputDownloadURL === null
+                      ? 'Output unavailable'
+                      : 'Download output'}
+                  </button>
+                </div>
+              </div>
+              <div className="absolute top-0 right-0 pt-4 pr-4">
+                <button
+                  type="button"
+                  className="rounded-md text-gray-200 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  onClick={closeWithoutSaving}
+                >
+                  <span className="sr-only">Close</span>
+                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+          </Transition.Child>
+        </div>
+      </Dialog>
+    </Transition.Root>
+  );
+};
+
+const USACOTestCase = ({
+  data,
+  onClick,
+}: {
+  data: TestCase;
+  onClick?: () => void;
+}) => {
   const containerClasses =
     data.title?.toLowerCase() === 'correct answer'
       ? 'bg-green-700 border-green-700'
@@ -20,8 +211,13 @@ const USACOTestCase = ({ data }: { data: TestCase }) => {
       : 'text-red-100';
   return (
     <div
-      className={`m-1 p-1 inline-block w-[5.5rem] bg-opacity-25 border-opacity-50 border ${containerClasses} relative rounded-[4px]`}
+      className={classNames(
+        `m-1 p-1 inline-block w-[5.5rem] bg-opacity-25 border-opacity-50 border relative rounded-[4px]`,
+        containerClasses,
+        onClick ? 'hover:cursor-pointer' : ''
+      )}
       title={capitalize(data.title)}
+      onClick={onClick ?? (() => {})}
     >
       <div className={`font-semibold text-center ${textColor} pt-1`}>
         {data.symbol === '✓' && (
@@ -96,6 +292,11 @@ export default function USACOResults({
       output = lines.join('\n');
     }
   }
+
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedTestCase, setSelectedTestCase] = useState<TestCase | null>(
+    null
+  );
 
   return (
     <div className="mt-3">
@@ -180,6 +381,15 @@ export default function USACOResults({
           </a>
         )}
       </div>
+
+      {selectedTestCase && (
+        <TestCaseInfoModal
+          testCase={selectedTestCase}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
+
       {(output || data.testCases) && (
         <div className="border-t -mx-4 border-gray-700 " />
       )}
@@ -206,7 +416,14 @@ export default function USACOResults({
         <>
           <div className="my-3 -mx-1">
             {data.testCases.map(tc => (
-              <USACOTestCase data={tc} key={tc.trialNum} />
+              <USACOTestCase
+                key={tc.trialNum}
+                data={tc}
+                onClick={() => {
+                  setSelectedTestCase(tc);
+                  setIsModalOpen(true);
+                }}
+              />
             ))}
           </div>
         </>
