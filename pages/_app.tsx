@@ -8,6 +8,7 @@ import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 import { getAnalytics, isSupported } from 'firebase/analytics';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import { ConnectionProvider } from '../src/context/ConnectionContext';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
@@ -50,6 +51,7 @@ if (!firebase.getApps()?.length) {
       5001
     );
     connectFirestoreEmulator(getFirestore(), '127.0.0.1', 8080);
+    connectStorageEmulator(getStorage(), '127.0.0.1', 9199);
   } else {
     firebase.initializeApp(firebaseConfig);
     if (typeof window !== 'undefined') {
@@ -65,6 +67,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     <>
       <Head>
         <meta name="color-scheme" content="dark" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </Head>
       <Toaster position="bottom-right" />
       <UserProvider>

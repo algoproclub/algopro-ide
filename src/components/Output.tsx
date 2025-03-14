@@ -1,6 +1,6 @@
 import { TabBar } from './TabBar';
 import React, { useState, useEffect } from 'react';
-import { useAtomValue } from 'jotai/utils';
+import { useAtomValue } from 'jotai';
 import JudgeResult from '../types/judge';
 import { EditorProps } from './editor/MonacoEditor/monaco-editor-types';
 import USACOResults from './JudgeInterface/USACOResults';
@@ -9,6 +9,8 @@ import { useUserContext } from '../context/UserContext';
 import { useEditorContext } from '../context/EditorContext';
 import { CodeEditor } from './editor/CodeEditor';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { CompilerOutput } from './CompilerOutput';
+import { mainMonacoEditorAtom } from '../atoms/workspace';
 
 export interface OutputProps {
   result: JudgeResult | null;
@@ -73,6 +75,7 @@ export const Output = ({
   const { fileData } = useEditorContext();
   const { userData } = useUserContext();
   const lightMode = userData.lightMode;
+  const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
 
   return (
     <>
@@ -198,7 +201,7 @@ export const Output = ({
             </table>
           </div>
         )}
-        {option !== 'results' && option != 'history' && (
+        {(option === 'stdout' || option === 'stderr') && (
           <CodeEditor
             theme={lightMode ? 'light' : 'dark'}
             language={'plaintext'}
@@ -212,6 +215,13 @@ export const Output = ({
               insertSpaces: true,
             }}
             onMount={onMount}
+          />
+        )}
+        {option === 'compile_output' && (
+          <CompilerOutput
+            output={outputText ?? ''}
+            highlightLine={l => mainMonacoEditor?.setLineHighlight(l)}
+            clearLineHighlight={() => mainMonacoEditor?.clearLineHighlight()}
           />
         )}
       </div>
