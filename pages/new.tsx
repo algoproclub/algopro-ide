@@ -19,7 +19,7 @@ function classNames(...classes: any[]) {
 }
 
 export const DEFAULT_COMPILER_OPTIONS = {
-  cpp: '-std=c++17 -O2 -Wall -Wextra -Wshadow -Wconversion -Wfloat-equal -Wduplicated-cond -Wlogical-op',
+  cpp: '-std=c++20 -O2 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -Wlogical-op -Wno-sign-compare -Wno-vla-cxx-extension',
   java: '',
   py: '',
 };
