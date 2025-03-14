@@ -68,24 +68,21 @@ export default function ProfileStatus({
               Profile Recommendations
             </h3>
             <ul className="">
-              {Object.values(settings).map((setting, index) => {
-                const item = (
-                  <li
-                    key={index}
-                    className={`flex items-center rounded-md bg-gray-900 hover:bg-gray-800 border gap-2 border-gray-700 transition-all duration-300 ${
-                      setting.filled
-                        ? 'opacity-0 max-h-0 overflow-hidden pt-0 pb-0 '
-                        : 'opacity-100 max-h-10 mb-2'
-                    } p-2`}
-                  >
-                    <div className="h-2 w-2 rounded-full bg-indigo-500 flex-shrink-0" />
-                    <span className="text-gray-400 text-sm">
-                      {setting.suggestion}
-                    </span>
-                  </li>
-                );
-                return item;
-              })}
+              {Object.values(settings).map((setting, index) => (
+                <li
+                  key={index}
+                  className={`flex items-center rounded-md bg-gray-900 hover:bg-gray-800 border gap-2 border-gray-700 transition-all duration-300 ${
+                    setting.filled
+                      ? 'opacity-0 max-h-0 overflow-hidden pt-0 pb-0 '
+                      : 'opacity-100 max-h-10 mb-2'
+                  } p-2`}
+                >
+                  <div className="h-2 w-2 rounded-full bg-indigo-500 flex-shrink-0" />
+                  <span className="text-gray-400 text-sm">
+                    {setting.suggestion}
+                  </span>
+                </li>
+              ))}
             </ul>
           </div>
         </div>

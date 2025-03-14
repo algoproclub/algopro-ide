@@ -284,27 +284,25 @@ function EditorPage() {
     <div className="h-full">
       <div className="h-full flex flex-col">
         <div className="flex-shrink-0 bg-[#1E1E1E]">
-          {
-            <NavBar
-              fileMenu={
-                <FileMenu
-                  onOpenSettings={() => setIsWorkspaceSettingsModalOpen(true)}
-                />
-              }
-              runButton={
-                <RunButton
-                  onClick={handleRunCode}
-                  showLoading={fileData.isCodeRunning || loading}
-                  disabledForViewOnly={readOnly}
-                />
-              }
-              showViewOnly={!loading && readOnly}
-              isSidebarOpen={showSidebar}
-              onToggleSidebar={handleToggleSidebar}
-              showSidebarButton={isDesktop}
-              setIsProfileSettingsOpen={setIsProfileSettingsModalOpen}
-            />
-          }
+          <NavBar
+            fileMenu={
+              <FileMenu
+                onOpenSettings={() => setIsWorkspaceSettingsModalOpen(true)}
+              />
+            }
+            runButton={
+              <RunButton
+                onClick={handleRunCode}
+                showLoading={fileData.isCodeRunning || loading}
+                disabledForViewOnly={readOnly}
+              />
+            }
+            showViewOnly={!loading && readOnly}
+            isSidebarOpen={showSidebar}
+            onToggleSidebar={handleToggleSidebar}
+            showSidebarButton={isDesktop}
+            setIsProfileSettingsOpen={setIsProfileSettingsModalOpen}
+          />
         </div>
         <div className="flex-1 min-h-0">
           <Workspace handleRunCode={handleRunCode} tabsList={tabsList} />
