@@ -3,9 +3,17 @@ import type { ReactCodeMirrorProps } from '@uiw/react-codemirror';
 type Theme = 'dark' | 'light';
 
 export type OnMount = (
-  editor: Monaco.editor.IStandaloneCodeEditor,
+  editor: AlgoProMonacoEditor,
   monaco: typeof Monaco
 ) => void;
+
+export interface AlgoProMonacoEditor
+  extends Monaco.editor.IStandaloneCodeEditor {
+  _lineHighlight: string | null;
+  _lineHighlightTimeout: ReturnType<typeof setTimeout> | null;
+  setLineHighlight: (line: number) => void;
+  clearLineHighlight: () => void;
+}
 
 export interface EditorProps {
   /**
