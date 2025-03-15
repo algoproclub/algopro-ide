@@ -17,15 +17,17 @@ import {
   mainEditorValueAtom,
   mainMonacoEditorAtom,
 } from '../../atoms/workspace';
-import { useAtomValue } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { useEditorContext } from '../../context/EditorContext';
 import download from '../../scripts/download';
 import { extractJavaFilename } from '../../scripts/judge';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
+import { problemAtom } from '../../atoms/workspaceUI';
 
 export const FileMenu = (props: { onOpenSettings: Function }): JSX.Element => {
   const { fileData } = useEditorContext();
+  const [problem, setProblem] = useAtom(problemAtom);
   const getMainEditorValue = useAtomValue(mainEditorValueAtom);
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
   const mainCodemirrorEditor = useAtomValue(mainCodemirrorEditorAtom);
@@ -70,14 +72,15 @@ export const FileMenu = (props: { onOpenSettings: Function }): JSX.Element => {
       return;
     }
     if (confirm('Reset current file? Any changes you made will be lost.')) {
-      if (mainMonacoEditor)
-        mainMonacoEditor.setValue(templateCode[fileData.settings.language]);
+      const lang = fileData.settings.language;
+      const text = problem?.templateCode?.[lang] ?? templateCode[lang];
+      if (mainMonacoEditor) mainMonacoEditor.setValue(text);
       else if (mainCodemirrorEditor) {
         mainCodemirrorEditor.dispatch({
           changes: {
             from: 0,
             to: mainCodemirrorEditor.state.doc.length,
-            insert: templateCode[fileData.settings.language],
+            insert: text,
           },
         });
       } else {
