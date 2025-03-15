@@ -18,6 +18,7 @@ import {
   mainCodemirrorEditorAtom,
 } from '../../atoms/workspace';
 import { yUndoManagerKeymap } from 'y-codemirror.next';
+import { SettingsMenu } from './SettingsMenu';
 
 export interface DesktopNavBarProps {
   fileMenu: JSX.Element;
@@ -26,6 +27,7 @@ export interface DesktopNavBarProps {
   isSidebarOpen: boolean;
   onToggleSidebar: () => void;
   showSidebarButton: boolean;
+  setIsProfileSettingsOpen: (isOpen: boolean) => void;
 }
 
 const SimpleButton = ({
@@ -160,6 +162,11 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
           </button>
         </div>
       )}
+      <div className="relative">
+        <SettingsMenu
+          setIsProfileSettingsOpen={props.setIsProfileSettingsOpen}
+        />
+      </div>
     </div>
   );
 };
