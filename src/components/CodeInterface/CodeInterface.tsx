@@ -12,6 +12,7 @@ import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
 import { EditorView } from '@uiw/react-codemirror';
 import { problemAtom } from '../../atoms/workspaceUI';
+import { AlgoProMonacoEditor } from '../editor/MonacoEditor/monaco-editor-types';
 
 export const CodeInterface = ({
   className,
@@ -23,8 +24,7 @@ export const CodeInterface = ({
   const lang = fileData.settings.language;
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
-  const [editor, setEditor] =
-    useState<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const [editor, setEditor] = useState<AlgoProMonacoEditor | null>(null);
   const [codemirrorEditor, setCodemirrorEditor] = useState<EditorView | null>(
     null
   );
@@ -104,7 +104,9 @@ export const CodeInterface = ({
             defaultValue={problem?.templateCode?.[lang] ?? templateCode[lang]}
             yjsDocumentId={`${fileData.id}.${lang}`}
             useEditorWithVim={true}
-            lspEnabled={true} // at some point, maybe make this a user setting?
+            lspOptions={{
+              compilerOptions: fileData.settings.compilerOptions[lang],
+            }}
             dataTestId="code-editor"
           />
         )}

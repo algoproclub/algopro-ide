@@ -1,16 +1,13 @@
 import { EditorView } from '@uiw/react-codemirror';
 import { atom } from 'jotai';
-import type * as monaco from 'monaco-editor';
+import { AlgoProMonacoEditor } from '../components/editor/MonacoEditor/monaco-editor-types';
 
 // Loading
 export const loadingAtom = atom(true);
 
-export const mainMonacoEditorAtom =
-  atom<monaco.editor.IStandaloneCodeEditor | null>(null);
-export const inputMonacoEditorAtom =
-  atom<monaco.editor.IStandaloneCodeEditor | null>(null);
-export const outputMonacoEditorAtom =
-  atom<monaco.editor.IStandaloneCodeEditor | null>(null);
+export const mainMonacoEditorAtom = atom<AlgoProMonacoEditor | null>(null);
+export const inputMonacoEditorAtom = atom<AlgoProMonacoEditor | null>(null);
+export const outputMonacoEditorAtom = atom<AlgoProMonacoEditor | null>(null);
 
 export const mainCodemirrorEditorAtom = atom<EditorView | null>(null);
 export const inputCodemirrorEditorAtom = atom<EditorView | null>(null);

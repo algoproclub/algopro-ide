@@ -3,9 +3,17 @@ import type { ReactCodeMirrorProps } from '@uiw/react-codemirror';
 type Theme = 'dark' | 'light';
 
 export type OnMount = (
-  editor: Monaco.editor.IStandaloneCodeEditor,
+  editor: AlgoProMonacoEditor,
   monaco: typeof Monaco
 ) => void;
+
+export interface AlgoProMonacoEditor
+  extends Monaco.editor.IStandaloneCodeEditor {
+  _lineHighlight: string | null;
+  _lineHighlightTimeout: ReturnType<typeof setTimeout> | null;
+  setLineHighlight: (line: number) => void;
+  clearLineHighlight: () => void;
+}
 
 export interface EditorProps {
   /**
@@ -125,7 +133,12 @@ export interface EditorProps {
 
   vim?: boolean;
 
-  lspEnabled?: boolean;
+  /**
+   * Set to undefined / null to disable LSP.
+   */
+  lspOptions?: {
+    compilerOptions: string | null;
+  } | null;
 
   /**
    * If provided, the code editor should create a yjs binding with the given information

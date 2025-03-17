@@ -1,4 +1,4 @@
-import { useAtomValue } from 'jotai/utils';
+import { useAtomValue } from 'jotai';
 import React, { useState, useEffect, useRef } from 'react';
 import { mainEditorValueAtom } from '../../atoms/workspace';
 import { Platform, StatusData } from '../../types/problem';

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
 import { useSetAtom } from 'jotai';
 import { signInWithGoogleAtom } from '../src/atoms/firebaseUserAtoms';
@@ -6,11 +6,14 @@ import Dashboard from '../src/components/Dashboard/Dashboard';
 import { useConnectionContext } from '../src/context/ConnectionContext';
 import { useNullableUserContext } from '../src/context/UserContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import ProfileSettings from '../src/components/settings/ProfileSettings';
+import { SettingsMenu } from '../src/components/NavBar/SettingsMenu';
 
 export default function DashboardPage(): JSX.Element {
   const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
   const connectionContext = useConnectionContext();
   const { userData, logged } = useNullableUserContext();
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     document.title = 'AlgoPro IDE';
@@ -19,7 +22,11 @@ export default function DashboardPage(): JSX.Element {
   return (
     <div className="p-4 sm:p-6 md:p-8 lg:p-12 min-h-full flex flex-col max-w-6xl mx-auto">
       <ConfirmOverrideModal />
-      <div className="flex-1">
+      <div className="flex-1 relative">
+        <ProfileSettings isOpen={isOpen} onClose={() => setIsOpen(false)} />
+        <div className="absolute top-4 right-4">
+          {logged && <SettingsMenu setIsProfileSettingsOpen={setIsOpen} />}
+        </div>
         <h1 className="text-gray-100 text-2xl md:text-4xl font-black">
           AlgoPro IDE
         </h1>
