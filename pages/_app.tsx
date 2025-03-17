@@ -30,7 +30,7 @@ const firebaseConfig = {
   databaseURL:
     'https://algopro-app-default-rtdb.europe-west1.firebasedatabase.app',
   projectId: 'algopro-app',
-  storageBucket: 'algopro-app.appspot.com',
+  storageBucket: 'algopro-app.firebasestorage.app',
   messagingSenderId: '814731555768',
   appId: '1:814731555768:web:89691aa18c84f81472154d',
   measurementId: 'G-DW2XN13WS9',
