@@ -53,7 +53,6 @@ const CodeView = () => {
             }}
             yjsDocumentId={`${fileData.id}.${lang}`}
             useEditorWithVim={true}
-            lspEnabled={false}
             dataTestId="code-editor"
           />
         )}

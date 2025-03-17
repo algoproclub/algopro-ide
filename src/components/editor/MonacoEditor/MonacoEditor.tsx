@@ -11,7 +11,7 @@ import { initVimMode } from 'monaco-vim';
 import { MonacoServices } from 'monaco-languageclient';
 import { getOrCreateModel, usePrevious, useUpdate } from './utils';
 import { AlgoProMonacoEditor, EditorProps } from './monaco-editor-types';
-import createLSPConnection from './lsp';
+import useLSP from './lsp';
 import { MonacoBinding } from 'y-monaco';
 
 buildWorkerDefinition(
@@ -71,7 +71,7 @@ export default function MonacoEditor({
   value = '',
   onBeforeDispose,
   vim = false,
-  lspEnabled = false,
+  lspOptions,
   yjsInfo,
 }: EditorProps) {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -178,12 +178,6 @@ export default function MonacoEditor({
     };
   }, []);
 
-  /*   useEffect(() => {
-    if (lspEnabled) {
-      return createLSPConnection();
-    }
-  }, [lspEnabled]); */
-
   useEffect(() => {
     if (!yjsInfo || !editor) return;
     const monacoBinding = new MonacoBinding(
@@ -198,12 +192,7 @@ export default function MonacoEditor({
     };
   }, [editor, yjsInfo]);
 
-  useEffect(() => {
-    if (lspEnabled && (language === 'cpp' || language === 'python')) {
-      // yikes, ugly how there's both python and py
-      return createLSPConnection(language);
-    }
-  }, [lspEnabled, language]);
+  useLSP(language ?? null, lspOptions ?? null);
 
   useEffect(() => {
     if (vim) {
