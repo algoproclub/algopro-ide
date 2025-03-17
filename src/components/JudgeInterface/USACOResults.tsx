@@ -10,11 +10,8 @@ import TimeAgoLabel from '../TimeStamp';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useEditorContext } from '../../context/EditorContext';
-import {
-  getStorage,
-  ref as storageRef,
-  getDownloadURL,
-} from 'firebase/storage';
+import { getStorage, getDownloadURL } from 'firebase-admin/storage';
+import firebaseApp from '../../../src/firebaseAdmin';
 import classNames from 'classnames';
 
 const capitalize = (text: string): string => {
@@ -28,8 +25,9 @@ async function getTestcaseDownloadURL(
 ) {
   const { platform, id } = problem;
   const path = `testcases/${platform}/${id}/${kind}${trialNum - 1}.txt`;
-  const storage = getStorage();
-  const ref = storageRef(storage, path);
+
+  const storage = getStorage(firebaseApp);
+  const ref = storage.bucket(firebaseApp.options.storageBucket).file(path);
   return await getDownloadURL(ref);
 }
 
