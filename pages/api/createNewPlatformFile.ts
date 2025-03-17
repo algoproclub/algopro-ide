@@ -5,6 +5,7 @@ import firebaseApp from '../../src/firebaseAdmin';
 import colorFromUserId from '../../src/scripts/colorFromUserId';
 import { Language } from '../../src/context/UserContext';
 import { fetchData } from './fetchProblemData';
+import { DEFAULT_COMPILER_OPTIONS } from '../new';
 
 type RequestData = {
   platform: Platform;
@@ -95,11 +96,7 @@ export default async (
         defaultPermission: data.defaultPermission,
         creationTime: ServerValue.TIMESTAMP,
         language: data.language, //TODO think about how do we support other languages with this method?
-        compilerOptions: {
-          cpp: '-std=c++17 -O2 -Wall -Wextra -Wshadow -Wconversion -Wfloat-equal -Wduplicated-cond -Wlogical-op',
-          java: '',
-          py: '',
-        },
+        compilerOptions: DEFAULT_COMPILER_OPTIONS,
       },
     });
   const fileID: string = resp.key!;

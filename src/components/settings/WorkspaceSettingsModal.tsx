@@ -8,19 +8,11 @@ import React, {
 import { Dialog, Transition } from '@headlessui/react';
 import classNames from 'classnames';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import {
-  ComputerDesktopIcon,
-  ServerIcon,
-  UserIcon,
-  CodeBracketIcon,
-} from '@heroicons/react/20/solid';
+import { ComputerDesktopIcon } from '@heroicons/react/20/solid';
 import UserSettings from './UserSettings';
 import WorkspaceSettingsUI from './WorkspaceSettingsUI';
 import SignInSettings from './SignInSettings';
 import TemplateCodeSettings from './TemplateCodeSettings';
-import JudgeResult from '../../types/judge';
-import { ProblemData } from '../../types/problem';
-import useJudgeResults from '../../hooks/useJudgeResults';
 import {
   EditorMode,
   Language,
@@ -28,7 +20,6 @@ import {
 } from '../../context/UserContext';
 import { FileSettings, useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
-import { update, ref, getDatabase, runTransaction } from 'firebase/database';
 import { updateUserSettings } from '../../scripts/updateSettings';
 
 export interface SettingsDialogProps {
@@ -42,14 +33,9 @@ const tabs = [
     label: 'Workspace',
     icon: ComputerDesktopIcon,
   },
-  {
-    id: 'user',
-    label: 'User',
-    icon: UserIcon,
-  },
 ] as const;
 
-export const SettingsModal = ({
+export const WorkspaceSettingsModal = ({
   isOpen,
   onClose,
 }: SettingsDialogProps): JSX.Element => {
@@ -93,8 +79,6 @@ export const SettingsModal = ({
   const dirtyRef = useRef<boolean>(false);
 
   const [tab, setTab] = useState<(typeof tabs)[number]['id']>('workspace');
-
-  const [judgeResults, setJudgeResults] = useJudgeResults();
 
   useEffect(() => {
     if (isOpen) {
@@ -221,96 +205,10 @@ export const SettingsModal = ({
                   as="h3"
                   className="text-lg leading-6 font-medium text-center"
                 >
-                  Settings
+                  Workspace Settings
                 </Dialog.Title>
               </div>
-
-              <div>
-                <div className="border-b border-gray-200">
-                  <nav className="-mb-px flex">
-                    {tabs.map(settingTab => (
-                      <button
-                        className={classNames(
-                          tab === settingTab.id
-                            ? 'border-indigo-600 text-indigo-400'
-                            : 'border-gray-700 text-gray-400 hover:text-gray-300 hover:border-gray-600',
-                          'w-1/2 group flex items-center justify-center py-3 px-1 border-b-2 font-medium text-sm focus:outline-none'
-                        )}
-                        onClick={() => setTab(settingTab.id)}
-                        key={settingTab.id}
-                      >
-                        <settingTab.icon
-                          className={classNames(
-                            tab === settingTab.id
-                              ? 'text-indigo-400'
-                              : 'text-gray-400 group-hover:text-gray-300',
-                            '-ml-0.5 mr-2 h-5 w-5'
-                          )}
-                        />
-                        {settingTab.label}
-                      </button>
-                    ))}
-                  </nav>
-                </div>
-              </div>
-
               <div className="p-4 sm:p-6 space-y-3">
-                {tab === 'user' && (
-                  <UserSettings
-                    name={name}
-                    onNameChange={name => {
-                      setName(name);
-                      dirtyRef.current = true;
-                    }}
-                    cfUsername={cfUsername}
-                    onCfUsernameChange={cfUsername => {
-                      setCfUsername(cfUsername);
-                      dirtyRef.current = true;
-                    }}
-                    atcoderUsername={atcoderUsername}
-                    onAtcoderUsernameChange={atcoderUsername => {
-                      setAtcoderUsername(atcoderUsername);
-                      dirtyRef.current = true;
-                    }}
-                    discordID={discordID}
-                    onDiscordIDChange={discordID => {
-                      setDiscordID(discordID);
-                      dirtyRef.current = true;
-                    }}
-                    defaultLanguage={defaultLanguage}
-                    onDefaultLanguageChange={language => {
-                      setDefaultLanguage(language);
-                      dirtyRef.current = true;
-                    }}
-                    editorMode={editorMode}
-                    onEditorModeChange={mode => {
-                      setEditorMode(mode);
-                      dirtyRef.current = true;
-                    }}
-                    tabSize={tabSize}
-                    onTabSizeChange={size => {
-                      setTabSize(size);
-                      dirtyRef.current = true;
-                    }}
-                    lightMode={lightMode}
-                    onLightModeChange={lightMode => {
-                      setLightMode(lightMode);
-                      dirtyRef.current = true;
-                    }}
-                    manualSubmission={manualSubmission}
-                    onManualSubmissionChange={manualSubmission => {
-                      setManualSubmission(manualSubmission);
-                      dirtyRef.current = true;
-                    }}
-                    templateCode={templateCode}
-                    onTemplateCodeChange={code => {
-                      setTemplateCode(code);
-                      dirtyRef.current = true;
-                    }}
-                    language={templateLanguage}
-                    onLanguageChange={setTemplateLanguage}
-                  />
-                )}
                 {tab === 'workspace' && (
                   <WorkspaceSettingsUI
                     workspaceSettings={fileSettings}
@@ -334,12 +232,6 @@ export const SettingsModal = ({
                     Save
                   </button>
                 </div>
-                {tab === 'user' && (
-                  <>
-                    <hr className="border-gray-700" />
-                    <SignInSettings />
-                  </>
-                )}
               </div>
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button

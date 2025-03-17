@@ -4,8 +4,17 @@ import React, { useState } from 'react';
 import { EditorMode, Language, LANGUAGES } from '../../context/UserContext';
 import { RadioGroupContents } from './RadioGroupContents';
 import Link from 'next/link';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import dynamic from 'next/dynamic';
+import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import TemplateCodeSettings from './TemplateCodeSettings';
+
+const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
+  () =>
+    import('@fortawesome/react-fontawesome').then(mod => mod.FontAwesomeIcon),
+  {
+    ssr: false,
+  }
+);
 
 const EDITOR_MODES = ['Normal', 'Vim' /*'Emacs'*/];
 
@@ -168,7 +177,7 @@ export default function UserSettings({
   language: Language;
   onLanguageChange: (language: Language) => void;
 }): JSX.Element {
-  const [submenu, setSubmenu] = useState<Submenu>('');
+  const [submenu, setSubmenu] = useState<Submenu>('userdata');
   return (
     <div>
       <div className="flex flex-col text-sm text-gray-300 bg-[#222222]">

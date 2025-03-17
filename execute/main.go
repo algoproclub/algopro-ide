@@ -32,7 +32,7 @@ var (
 	StdoutLimit = 5000 * memory.Byte
 	StderrLimit = 5000 * memory.Byte
 
-	CppArgs = strings.Fields("-std=c++17 -O2 -Wall -fsanitize=undefined -fsanitize=address -fno-sanitize-recover=all -g -DONLINE_JUDGE")
+	CppArgs = strings.Fields("-std=c++20 -O2 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -Wlogical-op -Wno-sign-compare -fsanitize=undefined -fsanitize=address -fno-sanitize-recover=all -g -DONLINE_JUDGE -fdiagnostics-color=always -fdiagnostics-urls=always")
 )
 
 func mustLanguage(l language.Language, err error) language.Language {

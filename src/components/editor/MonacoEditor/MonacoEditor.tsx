@@ -10,8 +10,8 @@ import { buildWorkerDefinition } from 'monaco-editor-workers';
 import { initVimMode } from 'monaco-vim';
 import { MonacoServices } from 'monaco-languageclient';
 import { getOrCreateModel, usePrevious, useUpdate } from './utils';
-import { EditorProps } from './monaco-editor-types';
-import createLSPConnection from './lsp';
+import { AlgoProMonacoEditor, EditorProps } from './monaco-editor-types';
+import useLSP from './lsp';
 import { MonacoBinding } from 'y-monaco';
 
 buildWorkerDefinition(
@@ -71,13 +71,12 @@ export default function MonacoEditor({
   value = '',
   onBeforeDispose,
   vim = false,
-  lspEnabled = false,
+  lspOptions,
   yjsInfo,
 }: EditorProps) {
   const ref = useRef<HTMLDivElement | null>(null);
-  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
-  const [editor, setEditor] =
-    useState<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const editorRef = useRef<AlgoProMonacoEditor | null>(null);
+  const [editor, setEditor] = useState<AlgoProMonacoEditor | null>(null);
 
   theme = { dark: 'vs-dark-sema', light: 'vs-sema' }[theme ?? 'dark'];
 
@@ -101,7 +100,51 @@ export default function MonacoEditor({
         ...options,
       },
       {}
-    );
+    ) as AlgoProMonacoEditor;
+
+    // TODO: Refactor to inherit from the monaco editor instead of injecting properties
+    // https://github.com/algoproclub/algopro-ide/issues/287
+    editorRef.current._lineHighlight = null;
+    editorRef.current._lineHighlightTimeout = null;
+    editorRef.current.setLineHighlight = function (line: number) {
+      if (this._lineHighlightTimeout) {
+        clearTimeout(this._lineHighlightTimeout);
+      }
+
+      this._lineHighlight = this.deltaDecorations(
+        this._lineHighlight ? [this._lineHighlight] : [],
+        [
+          {
+            range: new monaco.Range(line, 1, line, 1),
+            options: {
+              isWholeLine: true,
+              className: 'linked-line-highlight',
+            },
+          },
+        ]
+      )[0];
+    };
+    editorRef.current.clearLineHighlight = function () {
+      if (this._lineHighlight === null) return;
+
+      this._lineHighlightTimeout = setTimeout(() => {
+        if (!editorRef.current) return;
+        editorRef.current.deltaDecorations(
+          [editorRef.current._lineHighlight!],
+          []
+        );
+        editorRef.current._lineHighlight = null;
+      }, 2000);
+    };
+    editorRef.current.onDidFocusEditorWidget(() => {
+      if (editorRef.current?._lineHighlight) {
+        editorRef.current?.deltaDecorations(
+          [editorRef.current._lineHighlight],
+          []
+        );
+        editorRef.current._lineHighlight = null;
+      }
+    });
 
     // Ctrl+Enter for "Insert Line Below" conflicts with our shortcut for running code.
     rebindAction(
@@ -135,12 +178,6 @@ export default function MonacoEditor({
     };
   }, []);
 
-  /*   useEffect(() => {
-    if (lspEnabled) {
-      return createLSPConnection();
-    }
-  }, [lspEnabled]); */
-
   useEffect(() => {
     if (!yjsInfo || !editor) return;
     const monacoBinding = new MonacoBinding(
@@ -155,12 +192,7 @@ export default function MonacoEditor({
     };
   }, [editor, yjsInfo]);
 
-  useEffect(() => {
-    if (lspEnabled && (language === 'cpp' || language === 'python')) {
-      // yikes, ugly how there's both python and py
-      return createLSPConnection(language);
-    }
-  }, [lspEnabled, language]);
+  useLSP(language ?? null, lspOptions ?? null);
 
   useEffect(() => {
     if (vim) {

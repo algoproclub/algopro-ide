@@ -1,5 +1,7 @@
 FROM golang:1.22-bookworm
 
+RUN apt-get update && apt-get install -y pypy3
+
 WORKDIR /app
 
 COPY go.mod ./
