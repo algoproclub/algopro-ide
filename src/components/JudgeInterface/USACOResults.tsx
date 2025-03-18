@@ -14,14 +14,17 @@ import {
   getStorage,
   ref as storageRef,
   getDownloadURL,
+  getMetadata,
+  StorageReference,
 } from 'firebase/storage';
 import classNames from 'classnames';
+import { PreBox } from './Samples';
 
 const capitalize = (text: string): string => {
   return text[0].toUpperCase() + text.substring(1);
 };
 
-async function getTestcaseDownloadURL(
+function makeTestcaseStorageRef(
   problem: ProblemData | PlatformProblem,
   kind: 'input' | 'output',
   trialNum: number
@@ -30,7 +33,7 @@ async function getTestcaseDownloadURL(
   const path = `testcases/${platform}/${id}/${kind}${trialNum - 1}.txt`;
   const storage = getStorage();
   const ref = storageRef(storage, path);
-  return await getDownloadURL(ref);
+  return ref;
 }
 
 async function downloadFileFromURLWithName(url: string, fileName: string) {
@@ -66,20 +69,48 @@ const TestCaseInfoModal = ({
   const [outputDownloadURL, setOutputDownloadURL] = useState<string | null>(
     null
   );
+  const [inputPreviewText, setInputPreviewText] = useState<string>('');
+  const [outputPreviewText, setOutputPreviewText] = useState<string>('');
 
   useEffect(() => {
     setInputDownloadURL(null);
     setOutputDownloadURL(null);
+    setInputPreviewText('');
+    setOutputPreviewText('');
 
     if (problem === null) return;
 
-    getTestcaseDownloadURL(problem, 'input', testCase.trialNum)
-      .catch(() => null)
-      .then(url => setInputDownloadURL(url));
+    let inputRef = makeTestcaseStorageRef(problem, 'input', testCase.trialNum);
+    let outputRef = makeTestcaseStorageRef(
+      problem,
+      'output',
+      testCase.trialNum
+    );
 
-    getTestcaseDownloadURL(problem, 'output', testCase.trialNum)
-      .catch(() => null)
-      .then(url => setOutputDownloadURL(url));
+    function doTheThing(
+      ref: StorageReference,
+      setDownloadURL: (url: string) => void,
+      setPreviewText: (text: string) => void
+    ) {
+      getMetadata(ref).then(async meta => {
+        let url = await getDownloadURL(ref);
+        setDownloadURL(url);
+        let sizeInBytes = meta.size;
+        let sizeInMiBs = sizeInBytes / 1024 / 1024;
+        if (sizeInMiBs > 1) {
+          setPreviewText(
+            'Testcase file is over 1MiB!\nPlease download manually.'
+          );
+          return;
+        }
+        let res = await fetch(url);
+        let text = await res.text();
+        setPreviewText(text);
+      });
+    }
+
+    doTheThing(inputRef, setInputDownloadURL, setInputPreviewText);
+    doTheThing(outputRef, setOutputDownloadURL, setOutputPreviewText);
   }, [testCase, problem]);
 
   const closeWithoutSaving = () => {
@@ -130,48 +161,58 @@ const TestCaseInfoModal = ({
                 </Dialog.Title>
               </div>
               <div className="p-4 sm:p-6 space-y-3">
-                <div className="flex flex-col items-start gap-4">
-                  <USACOTestCase data={testCase} />
-                  <button
-                    className={classNames(
-                      'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
-                      inputDownloadURL === null
-                        ? 'bg-gray-700'
-                        : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
-                    )}
-                    disabled={inputDownloadURL === null}
-                    onClick={() => {
-                      if (inputDownloadURL === null) return;
-                      downloadFileFromURLWithName(
-                        inputDownloadURL,
-                        `${problem.platform}_${problem.id}_input${testCase.trialNum}.txt`
-                      );
-                    }}
-                  >
-                    {inputDownloadURL === null
-                      ? 'Input unavailable'
-                      : 'Download input'}
-                  </button>
-                  <button
-                    className={classNames(
-                      'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
-                      outputDownloadURL === null
-                        ? 'bg-gray-700'
-                        : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
-                    )}
-                    disabled={outputDownloadURL === null}
-                    onClick={() => {
-                      if (outputDownloadURL === null) return;
-                      downloadFileFromURLWithName(
-                        outputDownloadURL,
-                        `${problem.platform}_${problem.id}_output${testCase.trialNum}.txt`
-                      );
-                    }}
-                  >
-                    {outputDownloadURL === null
-                      ? 'Output unavailable'
-                      : 'Download output'}
-                  </button>
+                <div className="flex flex-row gap-8 max-h-96">
+                  <div className="flex flex-col items-start gap-4">
+                    <USACOTestCase data={testCase} />
+                    <button
+                      className={classNames(
+                        'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
+                        inputDownloadURL === null
+                          ? 'bg-gray-700'
+                          : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
+                      )}
+                      disabled={inputDownloadURL === null}
+                      onClick={() => {
+                        if (inputDownloadURL === null) return;
+                        downloadFileFromURLWithName(
+                          inputDownloadURL,
+                          `${problem.platform}_${problem.id}_input${testCase.trialNum}.txt`
+                        );
+                      }}
+                    >
+                      {inputDownloadURL === null
+                        ? 'Input unavailable'
+                        : 'Download input'}
+                    </button>
+                    <button
+                      className={classNames(
+                        'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
+                        outputDownloadURL === null
+                          ? 'bg-gray-700'
+                          : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
+                      )}
+                      disabled={outputDownloadURL === null}
+                      onClick={() => {
+                        if (outputDownloadURL === null) return;
+                        downloadFileFromURLWithName(
+                          outputDownloadURL,
+                          `${problem.platform}_${problem.id}_output${testCase.trialNum}.txt`
+                        );
+                      }}
+                    >
+                      {outputDownloadURL === null
+                        ? 'Output unavailable'
+                        : 'Download output'}
+                    </button>
+                  </div>
+                  <div className="grow flex flex-col gap-4">
+                    <div className="grow overflow-scroll">
+                      <PreBox title="Input Preview" text={inputPreviewText} />
+                    </div>
+                    <div className="grow overflow-scroll">
+                      <PreBox title="Output Preview" text={outputPreviewText} />
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="absolute top-0 right-0 pt-4 pr-4">
