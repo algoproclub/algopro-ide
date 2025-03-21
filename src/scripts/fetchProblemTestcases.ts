@@ -24,7 +24,7 @@ export async function fetchProblemTestcases({
   }
 
   if (platform === 'cses') {
-    fetchTestcasesCSES(bucket, basePath, id);
+    await fetchTestcasesCSES(bucket, basePath, id);
   } else {
     console.warn(
       `Trying to fetch testcases from ${platform}, but it doesn't currently have a testcase fetcher`
