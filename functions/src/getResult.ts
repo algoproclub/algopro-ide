@@ -66,6 +66,159 @@ export abstract class ResultFetcher {
   }
 }
 
+export class NJudgeResultFetcher extends ResultFetcher {
+  private document?: Document;
+  private summary: Element | null = null;
+  private testcases?: Element[];
+
+  translateMessage(msg?: string | null): string | undefined {
+    if (!msg) return undefined;
+    const prefix = msg.split(/\d/)[0].trim().toLowerCase();
+    //const rest = msg.substring(prefix.length);
+
+    const translatePrefix = (prefix: string): string => {
+      switch (prefix) {
+        case 'elfogadva':
+          return 'correct answer';
+        case 'hibás válasz':
+          return 'incorrect answer';
+        case 'időlimit túllépés':
+          return 'time limit exceeded';
+        case 'memórialimit túllépés':
+          return 'memory limit exceeded';
+        case 'részben helyes':
+          return 'partially correct';
+        case 'futási hiba':
+          return 'runtime error';
+        case 'forditási hiba':
+          return 'compilation error';
+        case 'belső hiba':
+          return 'unknown error';
+        case 'feltöltve':
+          return 'starting';
+        case 'fut':
+          return 'running';
+      }
+      return '?';
+    };
+    return translatePrefix(prefix) /* + " " + rest*/;
+  }
+
+  formatTime(time?: string | null): string | undefined {
+    return time?.replace(/(\d)([a-zA-Z])/g, '$1 $2');
+  }
+
+  formatMemory(memory?: string | null): string | undefined {
+    return memory?.replace(
+      /(\d+)\s*KiB/i,
+      (_, num) => `${((+num * 1024) / 1000000).toFixed(2)} MB`
+    );
+  }
+
+  getLink(): string | null {
+    return `https://njudge.hu/submission/${this.submissionData.submissionID}`;
+  }
+
+  getMemory(): string | null {
+    return this.formatMemory(this.summary?.childNodes[7].textContent) ?? null;
+  }
+
+  getMessage(): string {
+    return (
+      this.translateMessage(this.summary?.childNodes[5].textContent) ??
+      'running'
+    );
+  }
+
+  getOutput(): string | null {
+    return (
+      this.document?.querySelector(
+        `#submissionFeedback${this.submissionData.submissionID} .card .card-body pre code`
+      )?.textContent ?? null
+    );
+  }
+
+  getStatusCode(): StatusCode {
+    const verdict = this.summary?.childNodes[5].textContent ?? null;
+    if (verdict == null || verdict.startsWith('Feltöltve')) {
+      return 'starting';
+    }
+    return verdict.startsWith('Fut ') ? 'working' : 'resolved';
+  }
+
+  getTestCaseNum(): number {
+    return this.testcases?.length ?? 0;
+  }
+
+  getTestCaseTitle(n: number): string {
+    if (!this.testcases) return '';
+    return (
+      this.translateMessage(this.testcases[n].childNodes[1].textContent) ?? ''
+    );
+  }
+
+  getTestCaseTime(n: number): string {
+    if (!this.testcases) return '';
+    const li = this.testcases[n].childNodes;
+    return this.formatTime(li[li.length - 2].textContent) ?? '';
+  }
+
+  getTestCaseMemory(n: number): string {
+    if (!this.testcases) return '';
+    const li = this.testcases[n].childNodes;
+    return this.formatMemory(li[li.length - 1].textContent) ?? '';
+  }
+
+  getTestCaseSymbol(n: number): string {
+    return this.getTestCaseTitle(n) === 'correct answer' ? '✓' : 'x';
+  }
+
+  getStatusText(): string | null {
+    switch (this.getStatusCode()) {
+      case 'starting':
+        return 'status-starting';
+      case 'working':
+        return 'status-working';
+      case 'resolved':
+        return 'status-done';
+    }
+    return 'status-starting';
+  }
+
+  getTime(): string | null {
+    return this.formatTime(this.summary?.childNodes[6].textContent) ?? null;
+  }
+
+  async initialize(): Promise<void> {
+    const { submissionID } = this.submissionData;
+
+    const url = `https://njudge.hu/submission/${submissionID}`;
+    const resp = await fetch(url);
+    if (resp.status !== 200) {
+      const errorMessage = `NJudge: response status is not 200; url: ${url}; response status: ${resp.status}`;
+      throw resp.status === 404
+        ? new IncorrectDataError(errorMessage)
+        : new Error(errorMessage);
+    }
+    const respText = await resp.text();
+    this.document = new JSDOM(respText).window.document;
+    this.summary = this.document?.getElementById(
+      `submissionRow${submissionID}`
+    );
+    const isNumeric = (str: string): boolean => {
+      return str.trim() !== '' && !isNaN(Number(str.trim()));
+    };
+    this.testcases = Array.from(
+      this.document?.querySelectorAll(
+        `#submissionFeedback${this.submissionData.submissionID} tbody tr`
+      )
+    ).filter(
+      tr =>
+        tr.childNodes[0].textContent && isNumeric(tr.childNodes[0].textContent)
+    );
+  }
+}
+
 export class OjuzResultFetcher extends ResultFetcher {
   private summary: Element | null = null;
   private testCases?: string[][];
@@ -183,7 +336,7 @@ export class OjuzResultFetcher extends ResultFetcher {
       (!scoreRegex.test(this.statusText) &&
         this.statusText !== 'compilation error')
     ) {
-      return 'working';
+      return 'status-working';
     }
     return 'status-done';
   }

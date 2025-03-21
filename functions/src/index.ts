@@ -19,6 +19,7 @@ import {
   SPOJResultFetcher,
   PlanetsResultFetcher,
   OjuzResultFetcher,
+  NJudgeResultFetcher,
 } from './getResult';
 import {
   PendingSubmissions,
@@ -250,6 +251,7 @@ const accountData: { [key in Platform]: AccountData } = {
       (await db.ref('credentials/spoj/0/cookie').get()).val(),
   },
   ojuz: {},
+  njudge: {},
 };
 
 const updateTournamentResult = async (
@@ -357,6 +359,8 @@ const updateResultNonCF = async (submissionData: SubmissionData) => {
     fetcher = new PlanetsResultFetcher(submissionData);
   } else if (submissionData.platform === 'ojuz') {
     fetcher = new OjuzResultFetcher(submissionData);
+  } else if (submissionData.platform === 'njudge') {
+    fetcher = new NJudgeResultFetcher(submissionData);
   } else {
     throw new Error(`invalid platform name (${submissionData.platform})`);
   }
@@ -462,9 +466,15 @@ const updateResults = async (pending: PendingSubmissions | null) => {
     },
     {}
   );
-
   const promises: Promise<void>[] = [];
-  for (const platform of ['cses', 'atcoder', 'spoj', 'planets', 'ojuz']) {
+  for (const platform of [
+    'cses',
+    'atcoder',
+    'spoj',
+    'planets',
+    'ojuz',
+    'njudge',
+  ]) {
     pendingByPlatform[platform]?.forEach(obj => {
       promises.push(updateResultNonCF(obj));
     });

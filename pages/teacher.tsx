@@ -413,8 +413,15 @@ const GroupData = ({
         <tbody className="divide-y divide-gray-600">
           {students.map((student, i) => (
             <tr key={i} className="divide-x divide-gray-600">
-              <td className="bg-gray-800 sticky left-0 !z-20 px-4 py-3 border-r border-b border-gray-600">
-                {student.name}
+              <td className="bg-gray-800 sticky left-0 !z-20 border-r border-b border-gray-600">
+                <div className="relative flex flex-col divide-y divide-[#2d2d2d]">
+                  <div className="truncate w-full px-4 py-1.5 h-[4rem] flex items-center">
+                    {student.name}
+                  </div>
+                  <div className="truncate w-full bg-gray-900  px-4 py-1.5">
+                    <TimeAgoLabel date={new Date(mostRecent[i])} />
+                  </div>
+                </div>
               </td>
               <>
                 {data[i].map((_, j) => (

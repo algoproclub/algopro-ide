@@ -80,6 +80,8 @@ module.exports = {
         'prettier/prettier': ['error', {}, { usePrettierrc: true }],
 
         'no-prototype-builtins': 'warn',
+
+        'prefer-const': ['error', { destructuring: 'all' }],
       },
     },
   ],

@@ -9,9 +9,8 @@ import {
   WebSocketMessageReader,
   WebSocketMessageWriter,
 } from 'vscode-ws-jsonrpc';
-import normalizeUrl from 'normalize-url';
-
 import toast from 'react-hot-toast';
+import { useEffect } from 'react';
 
 // note: all the toast notifications should probably be moved up to MonacoEditor.tsx
 const notify = (message: string) => {
@@ -24,17 +23,23 @@ const notify = (message: string) => {
   });
 };
 
-export default function createLSPConnection(language: 'cpp' | 'python') {
+function createLSPConnection(
+  language: 'cpp' | 'python',
+  compilerOptions: string | null
+) {
   if (language !== 'cpp' && language !== 'python') {
     throw new Error('Unsupported LSP language: ' + language);
   }
 
   notify('Connecting to server...');
-  const url = createUrl(
-    'thecodingwizard--lsp-server-main.modal.run',
-    443,
-    language === 'cpp' ? '/clangd' : '/pyright'
+  const url = new URL(
+    `wss://thecodingwizard--lsp-server-main.modal.run:443/${
+      language === 'cpp' ? 'clangd' : 'pyright'
+    }`
   );
+  if (language === 'cpp' && compilerOptions) {
+    url.searchParams.set('compiler_options', compilerOptions);
+  }
 
   let webSocket: WebSocket | null = new WebSocket(url);
   let languageClient: MonacoLanguageClient | null;
@@ -120,10 +125,6 @@ export default function createLSPConnection(language: 'cpp' | 'python') {
     });
   }
 
-  function createUrl(hostname: string, port: number, path: string): string {
-    const protocol = location.protocol === 'https:' ? 'wss' : 'wss';
-    return normalizeUrl(`${protocol}://${hostname}:${port}${path}`);
-  }
   function dispose() {
     if (!languageClient) {
       // possibly didn't connect to websocket before exiting
@@ -139,4 +140,15 @@ export default function createLSPConnection(language: 'cpp' | 'python') {
     }
   }
   return dispose;
+}
+
+export default function useLSP(
+  language: string | null,
+  lspOptions: { compilerOptions: string | null } | null
+) {
+  useEffect(() => {
+    if ((language === 'cpp' || language === 'python') && lspOptions) {
+      return createLSPConnection(language, lspOptions.compilerOptions);
+    }
+  }, [language, lspOptions?.compilerOptions]);
 }
