@@ -5,7 +5,7 @@ import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
 } from '@heroicons/react/20/solid';
-import React, { useState } from 'react';
+import React from 'react';
 import { isUserOnline, useOnlineUsers } from '../../hooks/useOnlineUsers';
 import Link from 'next/link';
 import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
@@ -62,23 +62,6 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
   const { fileData } = useEditorContext();
   const [problem] = useAtom(problemAtom);
   const [statusData, setStatusData] = useAtom(statusDataAtom);
-
-  const [showCopied, setShowCopied] = useState(false);
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href).then(
-      () => {
-        setShowCopied(true);
-        setTimeout(() => {
-          setShowCopied(false);
-        }, 3000);
-      },
-      () => {
-        alert(
-          "Couldn't copy link to clipboard. Share the current URL manually."
-        );
-      }
-    );
-  };
 
   const [mainMonacoEditor] = useAtom(mainMonacoEditorAtom);
   const [mainCodemirrorEditor] = useAtom(mainCodemirrorEditorAtom);

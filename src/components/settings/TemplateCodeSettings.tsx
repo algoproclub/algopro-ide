@@ -1,7 +1,6 @@
 import React from 'react';
 import { Language, LANGUAGES } from '../../context/UserContext';
-import { Listbox, Transition } from '@headlessui/react';
-import { ChevronUpIcon } from '@heroicons/react/20/solid';
+import { Listbox } from '@headlessui/react';
 import LazyCodeMirrorEditor from '../editor/CodemirrorEditor/LazyCodemirrorEditor';
 import defaultCode from '../../scripts/defaultCode';
 import Dropdown from '../Dropdown';
@@ -21,7 +20,7 @@ export default function TemplateCodeSettings({
   return (
     <div>
       <Listbox value={language} onChange={onLanguageChange}>
-        {({ open }) => (
+        {
           <div className="flex flex-row items-center mb-3">
             {/*<Listbox.Label className="text-[0.92rem] block mb-1 text-gray-700 w-auto pr-4">
               Language:
@@ -96,7 +95,7 @@ export default function TemplateCodeSettings({
                 ? 'ring-2 ring-indigo-       </div>
             </div>*/}
           </div>
-        )}
+        }
       </Listbox>
       {/* FIXME: This here is a huge hack:
        *

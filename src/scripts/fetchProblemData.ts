@@ -92,7 +92,7 @@ async function fetchProblemDataPlanets(
 function delimitedMathToVar(
   element: cheerio.Cheerio<domhandler.Element>
 ): string {
-  let html = element.html() ?? '';
+  const html = element.html() ?? '';
   return html
     .replaceAll(/\${6}(.*?)\${6}/g, '<var class="display">$1</var>')
     .replaceAll(/\${3}(.*?)\${3}/g, '<var>$1</var>');

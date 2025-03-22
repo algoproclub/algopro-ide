@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic';
 import React from 'react';
 import { RealtimeEditorProps } from './RealtimeEditor';
-import LoadingIndicator from '../LoadingIndicator';
+/* import LoadingIndicator from '../LoadingIndicator'; */
 
 const Editor = dynamic(() => import('./RealtimeEditor'), {
   loading: () => (

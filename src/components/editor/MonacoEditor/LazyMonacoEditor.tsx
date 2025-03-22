@@ -1,6 +1,5 @@
 import dynamic from 'next/dynamic';
 import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import LoadingIndicator from '../../LoadingIndicator';
 
 const LazyMonacoEditor = dynamic(() => import('./MonacoEditor'), {

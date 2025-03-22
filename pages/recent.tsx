@@ -6,7 +6,6 @@ import { StatusData } from '../src/types/problem';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import LoadingIndicator from '../src/components/LoadingIndicator';
-import withTeacherLogin from '../src/components/WithTeacherLogin';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
@@ -262,7 +261,7 @@ const SubmissionStatusDropdown = ({
                     {SUBMISSION_STATUS.map(val => (
                       <Listbox.Option
                         className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700 select-none"
-                        onClick={(e: any) => {
+                        onClick={e => {
                           e.preventDefault();
                           setShowVerdict(prev => ({
                             ...prev,
@@ -460,8 +459,8 @@ const PageContent = () => {
             submissionStatus,
             hasProblem: !!fileData.problem,
             lastVerdict: verdictMessage,
-            lastEdit: fileData.teacher!.editTime!,
-            codeSize: fileData.teacher!.codeSize!,
+            lastEdit: fileData.teacher!.editTime,
+            codeSize: fileData.teacher!.codeSize,
           };
         })
     );
@@ -636,6 +635,7 @@ const PageContent = () => {
                         href={`/${data.fileID.slice(1)}`}
                         className="text-indigo-300 hover:underline"
                         target="_blank"
+                        rel="noreferrer"
                       >
                         {data.workspaceName}
                       </a>

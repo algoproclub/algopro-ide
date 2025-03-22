@@ -2,7 +2,7 @@ import Dropdown from '../src/components/Dropdown';
 import dynamic from 'next/dynamic';
 import React, { useEffect, useState } from 'react';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
-import { Platform, PlatformProblem, StatusCode } from '../src/types/problem';
+import { Platform, StatusCode } from '../src/types/problem';
 import {
   collection,
   doc,
@@ -13,7 +13,7 @@ import {
   query,
   where,
 } from 'firebase/firestore';
-import { DataSnapshot, get, getDatabase, ref } from 'firebase/database';
+import { get, getDatabase, ref } from 'firebase/database';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
 import { Disclosure } from '@headlessui/react';
 import TimeAgoLabel from '../src/components/TimeStamp';
@@ -377,10 +377,7 @@ const GroupData = ({
     return <></>;
   }
   const mostRecent = students.map((_, i) => {
-    return Math.max.apply(
-      Math,
-      data[i].map(item => item?.lastEdit ?? 0)
-    );
+    return Math.max(...data[i].map(item => item?.lastEdit ?? 0));
   });
   return (
     <div className="border border-gray-600 overflow-auto max-h-[40rem]">
@@ -400,6 +397,7 @@ const GroupData = ({
                     href={problem.url}
                     className="hover:text-indigo-200 underline underline-offset-2 truncate"
                     target="_blank"
+                    rel="noreferrer"
                   >
                     <span>{problem.source}</span>
                     <ArrowTopRightOnSquareIcon
@@ -444,8 +442,8 @@ const GroupData = ({
                             data[i][j]?.lastEdit === mostRecent[i] && highlight
                               ? 'border border-indigo-900 -m-[1px] opacity-90'
                               : (data[i][j]?.lastEdit ?? 0) >= fromTime
-                              ? ''
-                              : 'opacity-50'
+                                ? ''
+                                : 'opacity-50'
                           }`}
                         >
                           <div className="truncate w-full px-4 py-1.5">
@@ -453,6 +451,7 @@ const GroupData = ({
                               className="underline hover:text-indigo-200 mr-2"
                               href={`/${data[i][j]!.fileID.slice(1)}`}
                               target="_blank"
+                              rel="noreferrer"
                             >
                               {data[i][j]!.verdict[0].toUpperCase() +
                                 data[i][j]!.verdict.slice(1)}
@@ -576,7 +575,7 @@ const PageContent = () => {
       : [];
   };
   const currentTime = Date.now();
-  const problemWithID = problems.map((problem, i) => {
+  const problemWithID = problems.map(problem => {
     return !!problem.id;
   });
   const filteredProblems = problems.filter((_, i) => problemWithID[i]);

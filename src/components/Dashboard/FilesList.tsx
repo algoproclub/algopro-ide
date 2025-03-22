@@ -5,7 +5,6 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 
 dayjs.extend(relativeTime);
 import { permissionLabels } from '../UserList/UserListItem';
-import { useAtomValue } from 'jotai/utils';
 import invariant from 'tiny-invariant';
 import { useUserContext } from '../../context/UserContext';
 import { update, ref, getDatabase } from 'firebase/database';

@@ -22,16 +22,16 @@ export abstract class ResultFetcher {
   getTestCaseNum(): number {
     return 0;
   }
-  getTestCaseTitle(n: number): string {
+  getTestCaseTitle(_: number): string {
     return '?';
   }
-  getTestCaseSymbol(n: number): string {
+  getTestCaseSymbol(_: number): string {
     return '?';
   }
-  getTestCaseTime(n: number): string | null {
+  getTestCaseTime(_: number): string | null {
     return null;
   }
-  getTestCaseMemory(n: number): string | null {
+  getTestCaseMemory(_: number): string | null {
     return null;
   }
   getNthTestCase(n: number): TestCase {
@@ -369,6 +369,24 @@ export class OjuzResultFetcher extends ResultFetcher {
   }
 }
 
+type PlanetsSubmission = {
+  compiler_output: string;
+  language: string;
+  problem_id: string;
+  solution: string;
+  test_results: {
+    checker_output: string;
+    index: number;
+    memory: string;
+    output: string;
+    time: number;
+    verdict: string;
+  }[];
+  timestamp: Date;
+  user_id: string;
+  verdict: string;
+};
+
 export class PlanetsResultFetcher extends ResultFetcher {
   private resultData?: StatusData;
 
@@ -404,14 +422,12 @@ export class PlanetsResultFetcher extends ResultFetcher {
       throw new IncorrectDataError('Planets: submission ID not found');
     }
     const parseMemory = (x: string) => parseInt(x.slice(0, x.length - 1));
-    const result = snapshot.data()!;
+    const result = snapshot.data()! as PlanetsSubmission;
     const statusCode = this.mapVerdictToStatusCode(result.verdict);
     const memory = Math.max(
-      ...(result.test_results ?? []).map((t: any) => parseMemory(t.memory))
+      ...(result.test_results ?? []).map(t => parseMemory(t.memory))
     );
-    const time = Math.max(
-      ...(result.test_results ?? []).map((t: any) => t.time)
-    );
+    const time = Math.max(...(result.test_results ?? []).map(t => t.time));
     const output = result.compiler_output;
 
     this.resultData = {
@@ -423,11 +439,11 @@ export class PlanetsResultFetcher extends ResultFetcher {
       statusText: statusCode === 'working' ? 'status-working' : 'status-done',
       message: this.mapVerdictToTitle(result.verdict),
       statusCode: statusCode,
-      output: statusCode === 'resolved' ? output ?? '' : '',
+      output: statusCode === 'resolved' ? (output ?? '') : '',
       testCases:
         result.test_results == undefined
           ? []
-          : result.test_results.map((t: any) => ({
+          : result.test_results.map(t => ({
               title: this.mapVerdictToTitle(t.verdict),
               trialNum: t.index,
               symbol: this.mapVerdictToSymbol(t.verdict),
@@ -645,29 +661,64 @@ export class SPOJResultFetcher extends ResultFetcher {
   }
 }
 
+type CFVerdict =
+  | 'FAILED'
+  | 'OK'
+  | 'PARTIAL'
+  | 'COMPILATION_ERROR'
+  | 'RUNTIME_ERROR'
+  | 'WRONG_ANSWER'
+  | 'PRESENTATION_ERROR'
+  | 'TIME_LIMIT_EXCEEDED'
+  | 'MEMORY_LIMIT_EXCEEDED'
+  | 'IDLENESS_LIMIT_EXCEEDED'
+  | 'SECURITY_VIOLATED'
+  | 'CRASHED'
+  | 'INPUT_PREPARATION_CRASHED'
+  | 'CHALLENGED'
+  | 'SKIPPED'
+  | 'TESTING'
+  | 'REJECTED';
+
+// https://codeforces.com/apiHelp/objects#Problem
+type CFProblem = {
+  contestId?: number;
+  index: string;
+};
+
+// https://codeforces.com/apiHelp/objects#Submission
+type CFSubmission = {
+  id: number;
+  contestId?: number;
+  problem: CFProblem;
+  verdict?: CFVerdict;
+  passedTestCount: number;
+  timeConsumedMillis: number;
+  memoryConsumedBytes: number;
+};
+
 export class CFResultFetcher extends ResultFetcher {
-  private submission: any;
+  private submission?: CFSubmission;
 
   constructor(
     readonly submissionData: SubmissionData,
-    private resultJSON: { [key: string]: any }
+    private resultJSON: CFSubmission[]
   ) {
     super(submissionData);
   }
 
   getStatusText(): string {
-    return this.submission.verdict === 'TESTING'
+    return this.submission!.verdict === 'TESTING'
       ? 'status-working'
       : 'status-done';
   }
 
   getStatusCode(): StatusCode {
-    return this.submission.verdict === 'TESTING' ? 'working' : 'resolved';
+    return this.submission!.verdict === 'TESTING' ? 'working' : 'resolved';
   }
 
   getMessage(): string {
-    let formatted = (this.submission.verdict as string)
-      .split('_')
+    let formatted = this.submission!.verdict!.split('_')
       .join(' ')
       .toLowerCase();
     if (formatted === 'testing') {
@@ -686,24 +737,24 @@ export class CFResultFetcher extends ResultFetcher {
         'idleness limit exceeded',
       ].includes(formatted)
     ) {
-      formatted += ` on test ${this.submission.passedTestCount + 1}`;
+      formatted += ` on test ${this.submission!.passedTestCount + 1}`;
     }
     return formatted;
   }
 
   getLink(): string {
     const { submissionID } = this.submissionData;
-    return `https://codeforces.com/contest/${this.submission.contestId}/submission/${submissionID}`;
+    return `https://codeforces.com/contest/${this.submission!.contestId}/submission/${submissionID}`;
   }
 
   getMemory(): string | null {
     return (
-      Math.round(this.submission.memoryConsumedBytes / 100000) / 10 + ' MB'
+      Math.round(this.submission!.memoryConsumedBytes / 100000) / 10 + ' MB'
     );
   }
 
   getTime(): string | null {
-    return this.submission.timeConsumedMillis + ' ms';
+    return this.submission!.timeConsumedMillis + ' ms';
   }
 
   getOutput(): string | null {
@@ -717,7 +768,7 @@ export class CFResultFetcher extends ResultFetcher {
       throw new IncorrectDataError('CF: username is missing');
     }
     this.submission = this.resultJSON.find(
-      (entry: any) => '' + entry.id === submissionID
+      entry => '' + entry.id === submissionID
     );
     if (!this.submission) {
       throw new IncorrectDataError(
@@ -726,7 +777,7 @@ export class CFResultFetcher extends ResultFetcher {
     }
     const respProblemID: string =
       '' +
-      this.submission.problem.contestId.toString() +
+      this.submission.problem!.contestId!.toString() +
       this.submission.problem.index;
 
     if (problemID !== respProblemID) {
@@ -1099,7 +1150,7 @@ export class CSESResultFetcher extends ResultFetcher {
 
 export const getCFRequestURL = (
   methodName: string,
-  params: { [key: string]: any }
+  params: { [key: string]: unknown }
 ) => {
   const genRandStr = (len: number) => {
     let result = '';
@@ -1111,7 +1162,7 @@ export const getCFRequestURL = (
     return result;
   };
 
-  const getQueryStr = (params: { [key: string]: any }) => {
+  const getQueryStr = (params: { [key: string]: unknown }) => {
     const arr = Object.entries(params).sort((param1, param2) => {
       const keyComparison = param1[0].localeCompare(param2[0]);
       return keyComparison !== 0

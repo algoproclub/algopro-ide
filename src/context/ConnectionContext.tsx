@@ -1,6 +1,5 @@
 import {
   createContext,
-  MutableRefObject,
   ReactNode,
   useContext,
   useEffect,
@@ -34,7 +33,7 @@ const ConnectionContext = createContext<ConnectionContextType | undefined>(
 export const ConnectionProvider = ({ children }: { children: ReactNode }) => {
   const isConnectedRef = useRef<boolean>(false);
   const connectionRefs = useRef<DatabaseReference[]>([]);
-  const setFirebaseError = (e: any) =>
+  const setFirebaseError = (e: Error) =>
     alert('Error in ConnectionContext.tsx: ' + e?.message);
 
   const setRef = (ref: DatabaseReference) => {

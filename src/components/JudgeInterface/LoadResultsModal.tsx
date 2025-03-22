@@ -18,7 +18,7 @@ const TextInput = ({
   text: string;
   id: string;
   label: string;
-  onChange: (e: any) => void;
+  onChange: React.ChangeEventHandler<HTMLInputElement>;
 }) => {
   return (
     <div>
