@@ -6,13 +6,8 @@ import React, {
   useState,
 } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import classNames from 'classnames';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { ComputerDesktopIcon } from '@heroicons/react/20/solid';
-import UserSettings from './UserSettings';
 import WorkspaceSettingsUI from './WorkspaceSettingsUI';
-import SignInSettings from './SignInSettings';
-import TemplateCodeSettings from './TemplateCodeSettings';
 import {
   EditorMode,
   Language,
@@ -26,14 +21,6 @@ export interface SettingsDialogProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const tabs = [
-  {
-    id: 'workspace',
-    label: 'Workspace',
-    icon: ComputerDesktopIcon,
-  },
-] as const;
 
 export const WorkspaceSettingsModal = ({
   isOpen,
@@ -75,10 +62,7 @@ export const WorkspaceSettingsModal = ({
   const [templateCode, setTemplateCode] = useState<
     Partial<Record<Language, string>>
   >({});
-  const [templateLanguage, setTemplateLanguage] = useState<Language>('cpp');
   const dirtyRef = useRef<boolean>(false);
-
-  const [tab, setTab] = useState<(typeof tabs)[number]['id']>('workspace');
 
   useEffect(() => {
     if (isOpen) {
@@ -93,7 +77,6 @@ export const WorkspaceSettingsModal = ({
       setLightMode(userData.lightMode);
       setManualSubmission(userData.manualSubmission);
       setTemplateCode(savedTemplateCode);
-      setTab('workspace');
       dirtyRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -209,13 +192,11 @@ export const WorkspaceSettingsModal = ({
                 </Dialog.Title>
               </div>
               <div className="p-4 sm:p-6 space-y-3">
-                {tab === 'workspace' && (
-                  <WorkspaceSettingsUI
-                    workspaceSettings={fileSettings}
-                    onWorkspaceSettingsChange={onChange}
-                    userPermission={userPermission || 'READ'}
-                  />
-                )}
+                <WorkspaceSettingsUI
+                  workspaceSettings={fileSettings}
+                  onWorkspaceSettingsChange={onChange}
+                  userPermission={userPermission || 'READ'}
+                />
                 <div className="flex items-center space-x-2.5">
                   <button
                     type="button"

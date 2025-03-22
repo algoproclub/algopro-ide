@@ -20,7 +20,7 @@ export const CodeInterface = ({
   className?: string;
 }): JSX.Element => {
   const { fileData } = useEditorContext();
-  const [problem, setProblem] = useAtom(problemAtom);
+  const [problem] = useAtom(problemAtom);
   const lang = fileData.settings.language;
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
@@ -47,17 +47,16 @@ export const CodeInterface = ({
     if (codemirrorEditor) {
       setMainCodemirrorEditor(codemirrorEditor);
 
-      // this is used by e2e/helpers.ts to set the value of the main codemirror editor
-      // @ts-ignore
+      // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the main codemirror editor
       window['TEST_mainCodemirrorEditor'] = codemirrorEditor;
 
       return () => {
         setMainCodemirrorEditor(null);
-        // @ts-ignore
+        // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the main codemirror editor
         window['TEST_mainCodemirrorEditor'] = null;
       };
     }
-  }, [codemirrorEditor, setCodemirrorEditor]);
+  }, [codemirrorEditor, setMainCodemirrorEditor]);
 
   const {
     userData: { tabSize, lightMode },
@@ -91,7 +90,7 @@ export const CodeInterface = ({
                 // ex. type vecto< and it autocompletes weirdly
                 acceptSuggestionOnCommitCharacter: false,
                 // suggestOnTriggerCharacters: false,
-              } as any
+              } as monaco.editor.IEditorOptions
             }
             onMount={e => {
               setEditor(e);
@@ -100,7 +99,7 @@ export const CodeInterface = ({
                 e.focus();
               }, 0);
             }}
-            onCodemirrorMount={(view, state) => setCodemirrorEditor(view)}
+            onCodemirrorMount={(view, _) => setCodemirrorEditor(view)}
             defaultValue={problem?.templateCode?.[lang] ?? templateCode[lang]}
             yjsDocumentId={`${fileData.id}.${lang}`}
             useEditorWithVim={true}

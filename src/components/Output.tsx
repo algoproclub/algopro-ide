@@ -6,16 +6,17 @@ import { EditorProps } from './editor/MonacoEditor/monaco-editor-types';
 import USACOResults from './JudgeInterface/USACOResults';
 import { StatusData } from '../types/problem';
 import { useUserContext } from '../context/UserContext';
-import { useEditorContext } from '../context/EditorContext';
 import { CodeEditor } from './editor/CodeEditor';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CompilerOutput } from './CompilerOutput';
 import { mainMonacoEditorAtom } from '../atoms/workspace';
 
+type StatusHistoryEntry = StatusData & { submissionTime?: number };
+
 export interface OutputProps {
   result: JudgeResult | null;
   statusData: StatusData | null;
-  statusDataHistory: StatusData[];
+  statusDataHistory: StatusHistoryEntry[];
   onMount: EditorProps['onMount'];
 }
 
@@ -72,7 +73,6 @@ export const Output = ({
       }
     }
   }
-  const { fileData } = useEditorContext();
   const { userData } = useUserContext();
   const lightMode = userData.lightMode;
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
@@ -84,8 +84,8 @@ export const Output = ({
           statusDataHistory
             ? tabs
             : statusData
-            ? tabs.slice(0, -1)
-            : tabs.slice(0, -2)
+              ? tabs.slice(0, -1)
+              : tabs.slice(0, -2)
         }
         activeTab={option}
         onTabSelect={tab => {
@@ -126,6 +126,9 @@ export const Output = ({
                       style={{
                         backgroundColor: index % 2 ? '#121212' : '#1e1e1e',
                       }}
+                      key={
+                        item.submissionTime ?? statusDataHistory.length - index
+                      }
                     >
                       <td>{statusDataHistory.length - index}</td>
                       <td style={{ whiteSpace: 'nowrap' }}>
@@ -133,6 +136,7 @@ export const Output = ({
                           href={item.link || undefined}
                           target="_blank"
                           className={item.link ? 'hover:underline' : undefined}
+                          rel="noreferrer"
                         >
                           {item.message?.toLowerCase() === 'correct answer' ? (
                             <FontAwesomeIcon
@@ -165,12 +169,13 @@ export const Output = ({
                       </td>
                       <td>
                         {item.testCases &&
-                          item.testCases.map(tc =>
+                          item.testCases.map((tc, index) =>
                             tc.title == 'correct answer' ? (
                               <FontAwesomeIcon
                                 title={tc.title}
                                 icon={{ prefix: 'fas', iconName: 'check' }}
                                 className="text-green-500 w-3.5 h-3.5 mr-0.5"
+                                key={index}
                               />
                             ) : (
                               <FontAwesomeIcon
@@ -191,6 +196,7 @@ export const Output = ({
                                   })(),
                                 }}
                                 className="mr-0.5 w-3.5 h-3.5 text-red-500"
+                                key={index}
                               />
                             )
                           )}

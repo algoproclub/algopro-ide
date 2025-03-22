@@ -1,24 +1,15 @@
 import { useAtomValue } from 'jotai';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { mainEditorValueAtom } from '../../atoms/workspace';
 import { Platform, StatusData } from '../../types/problem';
 import SubmitButton from './SubmitButton';
-import { PlayCircleIcon } from '@heroicons/react/20/solid';
-import { getFirestore, getDoc, doc, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useEditorContext } from '../../context/EditorContext';
-import {
-  ProblemData,
-  ProblemSolution,
-  SubmissionData,
-} from '../../types/problem';
-import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
+import { ProblemSolution, SubmissionData } from '../../types/problem';
 import { useUserContext } from '../../context/UserContext';
 import LoadResultsModal from './LoadResultsModal';
 import { registerSubmission } from '../../scripts/updateStatus';
 import 'katex/dist/katex.min.css';
-import renderMathInElement from 'katex/contrib/auto-render';
-import katex from 'katex';
 import { problemAtom } from '../../atoms/workspaceUI';
 
 const submitProblemSolution = httpsCallable<ProblemSolution, SubmissionData>(
@@ -27,11 +18,9 @@ const submitProblemSolution = httpsCallable<ProblemSolution, SubmissionData>(
 );
 
 export const GenericSubmitButton = ({
-  platform,
   statusData,
   setStatusData,
 }: {
-  platform: Platform;
   statusData: StatusData | null;
   setStatusData: React.Dispatch<React.SetStateAction<StatusData | null>>;
 }): JSX.Element => {
@@ -85,6 +74,7 @@ export const GenericSubmitButton = ({
         testCases: null,
       });
       const lastAllowedTime = performance.now() + 5000;
+      // eslint-disable-next-line no-constant-condition
       while (true) {
         try {
           const submissionData = await submitProblemSolution({
@@ -161,7 +151,6 @@ export const PlatformSubmitButton = ({
     <></>
   ) : (
     <GenericSubmitButton
-      platform={platform}
       statusData={statusData}
       setStatusData={setStatusData}
     />

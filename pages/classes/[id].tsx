@@ -9,7 +9,7 @@ import {
   query,
   setDoc,
 } from 'firebase/firestore';
-import { Platform, ProblemData, URLProblem } from '../../src/types/problem';
+import { ProblemData, URLProblem } from '../../src/types/problem';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import { getPlatformName } from '../../src/scripts/getPlatformName';
@@ -17,7 +17,6 @@ import { EditInlineTextModal } from '../../src/components/EditTextModal';
 import { parseProblem } from '../../src/scripts/parseProblem';
 import { Disclosure } from '@headlessui/react';
 import WithTeacherLogin from '../../src/components/WithTeacherLogin';
-import fetchProblemData from '../api/fetchProblemData';
 
 const firestore = getFirestore();
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
@@ -103,7 +102,7 @@ const ClassDropdown = ({
   };
   const addNewTasks = () => {
     setURL('');
-    setOnSaveTask((_: any) => async (input: string) => {
+    setOnSaveTask(() => async (input: string) => {
       const newTasks = (
         await Promise.all(
           input
@@ -218,6 +217,7 @@ const ClassDropdown = ({
                       href={url}
                       className="px-3 py-2 underline hover:text-indigo-200"
                       target="_blank"
+                      rel="noreferrer"
                     >
                       {platform && (
                         <>
@@ -233,6 +233,7 @@ const ClassDropdown = ({
                           className="px-2 py-1 rounded-md hover:bg-gray-700"
                           href={`/edit/${platform}/${id}`}
                           target="_blank"
+                          rel="noreferrer"
                         >
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'arrow-right' }}
@@ -248,7 +249,7 @@ const ClassDropdown = ({
                         className="px-2 py-1 rounded-md hover:bg-gray-700"
                         onClick={() => {
                           setURL(url);
-                          setOnSaveTask((_: any) => (url: string) => {
+                          setOnSaveTask(() => (url: string) => {
                             const newTask = parseProblem(url);
                             const newTasks = data.tasks;
                             newTasks[index] = newTask;
@@ -382,7 +383,7 @@ const PageContent = () => {
             <button
               className="flex-shrink-0 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-md"
               onClick={() => {
-                if (classes.hasOwnProperty(newID)) {
+                if (newID in classes) {
                   alert('The entered ID already exists.');
                   return;
                 }
@@ -406,7 +407,7 @@ const PageContent = () => {
           <div className="space-y-3">
             {Object.entries(classes)
               .sort(
-                ([id1, data1], [id2, data2]) =>
+                ([, data1], [, data2]) =>
                   data2.creationTime - data1.creationTime
               )
               .map(([id, data]) => (

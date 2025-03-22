@@ -17,10 +17,10 @@ import {
 import { useNullableUserContext } from '../../src/context/UserContext';
 import { StatusData } from '../../src/types/problem';
 import USACOResults from '../../src/components/JudgeInterface/USACOResults';
-import * as monaco from 'monaco-editor';
 import Split from 'react-split-grid';
 import WithTeacherLogin from '../../src/components/WithTeacherLogin';
 import { XMarkIcon } from '@heroicons/react/20/solid';
+import type * as monaco from 'monaco-editor';
 
 const db = getDatabase();
 
@@ -43,7 +43,7 @@ const CodeView = () => {
                 readOnly: true,
                 'bracketPairColorization.enabled': true,
                 acceptSuggestionOnCommitCharacter: false,
-              } as any
+              } as monaco.editor.IEditorOptions
             }
             onMount={e => {
               setTimeout(() => {
@@ -100,9 +100,7 @@ const SolutionViewContent = ({ startTime }: { startTime: number }) => {
   const { fileData } = useEditorContext();
   const owner = Object.values(
     Object.fromEntries(
-      Object.entries(fileData.users).filter(
-        ([k, v]) => v.permission === 'OWNER'
-      )
+      Object.entries(fileData.users).filter(([, v]) => v.permission === 'OWNER')
     )
   )[0];
   return (

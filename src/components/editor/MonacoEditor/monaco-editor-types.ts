@@ -1,5 +1,8 @@
 import type * as Monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import type { ReactCodeMirrorProps } from '@uiw/react-codemirror';
+import type * as Y from 'yjs';
+import type * as awarenessProtocol from 'y-protocols/awareness';
+
 type Theme = 'dark' | 'light';
 
 export type OnMount = (
@@ -123,7 +126,7 @@ export interface EditorProps {
    */
   onMount?: OnMount;
 
-  onBeforeDispose?: Function;
+  onBeforeDispose?: () => void;
 
   /**
    * Only called for Codemirror editor.
@@ -144,7 +147,7 @@ export interface EditorProps {
    * If provided, the code editor should create a yjs binding with the given information
    */
   yjsInfo?: {
-    yjsText: any;
-    yjsAwareness: any;
+    yjsText: Y.Text;
+    yjsAwareness: awarenessProtocol.Awareness;
   } | null;
 }

@@ -122,12 +122,11 @@ export const translate = onCall<
   if (!request.auth?.token?.teacher) {
     return null;
   }
-  let { text, lang } = request.data;
+  const { text, lang } = request.data;
 
   const document = new JSDOM(text).window.document;
   for (const el of document.getElementsByTagName('pre'))
     el.setAttribute('translate', 'no');
-  text = document.body.innerHTML;
 
   const resp = await fetch('https://api-free.deepl.com/v2/translate', {
     method: 'POST',
@@ -136,7 +135,7 @@ export const translate = onCall<
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      text: [text],
+      text: [document.body.innerHTML],
       tag_handling: 'html',
       target_lang: lang,
     }),
@@ -404,7 +403,7 @@ const updateResultsCF = async (
       );
     });
   } else {
-    const resultJSON = ((await resp.json()) as any)['result'];
+    const resultJSON = (await resp.json())['result'];
     submissionDataList.forEach(submissionData => {
       promises.push(
         getAndUpdate(
@@ -579,7 +578,7 @@ const updateStatus = async () => {
     const filtered: PendingSubmissions = {};
     const promises: Promise<void>[] = [];
 
-    Object.entries(pending).forEach((entry, index) => {
+    Object.entries(pending).forEach(entry => {
       const fileID = entry[0];
       const creationTime = entry[1].creationTime;
 

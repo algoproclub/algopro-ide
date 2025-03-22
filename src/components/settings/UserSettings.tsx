@@ -1,20 +1,8 @@
-import { RadioGroup } from '@headlessui/react';
-import classNames from 'classnames';
 import React, { useState } from 'react';
 import { EditorMode, Language, LANGUAGES } from '../../context/UserContext';
 import { RadioGroupContents } from './RadioGroupContents';
-import Link from 'next/link';
-import dynamic from 'next/dynamic';
-import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import TemplateCodeSettings from './TemplateCodeSettings';
-
-const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
-  () =>
-    import('@fortawesome/react-fontawesome').then(mod => mod.FontAwesomeIcon),
-  {
-    ssr: false,
-  }
-);
 
 const EDITOR_MODES = ['Normal', 'Vim' /*'Emacs'*/];
 

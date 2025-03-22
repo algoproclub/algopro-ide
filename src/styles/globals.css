@@ -104,7 +104,10 @@ body {
     line-height: 1.4em;
   }
   & .tex-span {
-    font-family: KaTeX_Main, Times New Roman, serif;
+    font-family:
+      KaTeX_Main,
+      Times New Roman,
+      serif;
     font-size: 1.15em;
   }
   & .tex-font-style-tt {

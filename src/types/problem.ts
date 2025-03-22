@@ -28,7 +28,7 @@ export type Platform =
   | 'ojuz'
   | 'njudge';
 
-export const platforms: String[] = [
+export const platforms: string[] = [
   'codeforces',
   'cses',
   'atcoder',

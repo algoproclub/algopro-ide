@@ -12,8 +12,7 @@ const MobileBottomNavButton = ({
   onClick,
   dataTestId,
 }: {
-  // oops idk what type this is
-  IconComponent: any;
+  IconComponent: (props: React.ComponentProps<'svg'>) => JSX.Element | null;
   label: string;
   isActive: boolean;
   onClick: () => void;

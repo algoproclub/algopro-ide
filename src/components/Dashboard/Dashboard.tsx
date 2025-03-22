@@ -1,32 +1,15 @@
-import { useSetAtom } from 'jotai';
-import React, { useState, useEffect, Fragment, useRef } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import {
   getDatabase,
   ref,
   orderByChild,
   query,
   onValue,
-  set,
-  child,
   off,
-  update,
-  push,
-  serverTimestamp,
-  DataSnapshot,
   get,
 } from 'firebase/database';
-import {
-  signInWithGoogleAtom,
-  signOutAtom,
-} from '../../atoms/firebaseUserAtoms';
-import { useConnectionContext } from '../../context/ConnectionContext';
-import { isFirebaseId } from '../../editorUtils';
 import FilesList, { File } from './FilesList';
-import {
-  EditorMode,
-  Language,
-  useUserContext,
-} from '../../context/UserContext';
+import { useUserContext } from '../../context/UserContext';
 import Link from 'next/link';
 import { TabBar } from '../TabBar';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -41,14 +24,6 @@ import {
   SolutionData,
 } from '../../../pages/teacher';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
-import { Dialog, Transition } from '@headlessui/react';
-import SignInSettings from '../settings/SignInSettings';
-import { XMarkIcon } from '@heroicons/react/24/outline';
-import { updateUserSettings } from '../../scripts/updateSettings';
-import { DEFAULT_COMPILER_OPTIONS } from '../../../pages/new';
-import va from '@vercel/analytics';
-import colorFromUserId from '../../scripts/colorFromUserId';
-import { ServerValue } from 'firebase-admin/database';
 
 const firestore = getFirestore();
 const db = getDatabase();
@@ -191,7 +166,7 @@ const RecentTab = ({
 };
 
 const ClassesTab = () => {
-  const { firebaseUser, userData } = useUserContext();
+  const { firebaseUser } = useUserContext();
   const [groups, setGroups] = useState<string[]>([]);
   const [group, setGroup] = useState(0);
   const [classID, setClassID] = useState(0);
@@ -309,6 +284,7 @@ const ClassesTab = () => {
                       href={problems[Math.min(index, problems.length - 1)].url}
                       target="_blank"
                       className="underline text-white hover:text-indigo-200"
+                      rel="noreferrer"
                     >
                       {problems[Math.min(index, problems.length - 1)].source}
                     </a>
@@ -318,6 +294,7 @@ const ClassesTab = () => {
                       className="underline text-white hover:text-indigo-200 mr-2"
                       href={`/${row.fileID.slice(1)}`}
                       target="_blank"
+                      rel="noreferrer"
                     >
                       {row.fileID.split('-')[1]}
                     </a>
@@ -374,14 +351,7 @@ const ClassesTab = () => {
 };
 
 export default function Dashboard() {
-  const { firebaseUser, userData } = useUserContext();
-
-  const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
-  const signOut = useSetAtom(signOutAtom);
-
-  const connectionContext = useConnectionContext();
   const [showHidden, setShowHidden] = useState<boolean>(false);
-  const [isOpen, setIsOpen] = useState(false);
   const [tab, setTab] = useState('recent');
 
   return (

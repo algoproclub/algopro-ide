@@ -17,7 +17,7 @@ import {
   mainEditorValueAtom,
   mainMonacoEditorAtom,
 } from '../../atoms/workspace';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtomValue } from 'jotai';
 import { useEditorContext } from '../../context/EditorContext';
 import download from '../../scripts/download';
 import { extractJavaFilename } from '../../scripts/judge';
@@ -25,9 +25,11 @@ import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
 import { problemAtom } from '../../atoms/workspaceUI';
 
-export const FileMenu = (props: { onOpenSettings: Function }): JSX.Element => {
+export const FileMenu = (props: {
+  onOpenSettings: () => void;
+}): JSX.Element => {
   const { fileData } = useEditorContext();
-  const [problem, setProblem] = useAtom(problemAtom);
+  const problem = useAtomValue(problemAtom);
   const getMainEditorValue = useAtomValue(mainEditorValueAtom);
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
   const mainCodemirrorEditor = useAtomValue(mainCodemirrorEditorAtom);

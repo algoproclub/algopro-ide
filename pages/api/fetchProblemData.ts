@@ -1,8 +1,4 @@
-import {
-  Platform,
-  PlatformProblem,
-  ProblemData,
-} from '../../src/types/problem';
+import { PlatformProblem, ProblemData } from '../../src/types/problem';
 import { fetchProblemData } from '../../src/scripts/fetchProblemData';
 import { fetchProblemTestcases } from '../../src/scripts/fetchProblemTestcases';
 import { NextApiRequest, NextApiResponse } from 'next';

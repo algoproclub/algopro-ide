@@ -36,7 +36,7 @@ const Dropdown = ({
                     : 'enabled:hover:bg-gray-800 enabled:active:bg-gray-700 border-gray-600 enabled:hover:border-gray-500'
                 }`}
               >
-                {!disabled ? items[selected] ?? '-' : '-'}
+                {!disabled ? (items[selected] ?? '-') : '-'}
               </Listbox.Button>
               <div className="w-full text-sm relative z-50">
                 <Transition

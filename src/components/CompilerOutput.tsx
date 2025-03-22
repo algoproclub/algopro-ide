@@ -49,7 +49,7 @@ const OutputLine = ({
     plaintext += text;
 
     const content = hyperlinkMatch ? (
-      <a href={hyperlinkMatch.groups?.url} target="_blank">
+      <a href={hyperlinkMatch.groups?.url} target="_blank" rel="noreferrer">
         {text}
       </a>
     ) : (
