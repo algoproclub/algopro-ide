@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Markdown from './Markdown';
-import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/20/solid';
+import { ChevronUpIcon } from '@heroicons/react/20/solid';
 import { Hint } from '../../types/problem';
 import { useEditorContext } from '../../context/EditorContext';
 

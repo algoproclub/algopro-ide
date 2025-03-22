@@ -5,6 +5,7 @@ import {
   signInWithPopup,
   linkWithPopup,
   updateProfile,
+  UserCredential,
   signInWithCredential,
   signOut,
 } from 'firebase/auth';
@@ -21,7 +22,7 @@ import { SHOULD_USE_FIREBASE_EMULATOR } from '../dev_constants';
  * Otherwise, it is reset to null.
  */
 export const confirmOverrideDataCallbackAtom = atom<
-  (() => Promise<any>) | null
+  (() => Promise<UserCredential>) | null
 >(null);
 
 export const signInWithGoogleAtom = atom(

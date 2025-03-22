@@ -16,7 +16,6 @@ export default function ProfileStatus({
   const filledSettings = Object.values(settings).filter(
     val => val.filled
   ).length;
-  const unfilledSettings = Object.values(settings).filter(val => !val.filled);
 
   const percentage = Math.round((filledSettings / totalSettings) * 100);
 

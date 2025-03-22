@@ -48,7 +48,7 @@ export function RadioGroupContents<T>({
             value={setting.value}
             className="relative flex items-center cursor-pointer focus:outline-none"
           >
-            {({ active, checked }) => (
+            {({ checked }) => (
               <>
                 <span
                   className="h-4 w-4 mt-0.5 cursor-pointer rounded-full flex items-center justify-center bg-gray-500"
@@ -71,8 +71,8 @@ export function RadioGroupContents<T>({
                           ? 'text-gray-200'
                           : 'text-gray-800'
                         : !lightMode
-                        ? 'text-gray-400'
-                        : 'text-gray-600',
+                          ? 'text-gray-400'
+                          : 'text-gray-600',
                       'block text-sm'
                     )}
                   >

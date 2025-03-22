@@ -93,7 +93,7 @@ const PageContent = () => {
         toggleTag(tagFilterInputOptions[0].trim());
         setTagFilterInput('');
       } else {
-        alert(`Invalid problem tag \"${tagFilterInput}\".`);
+        alert(`Invalid problem tag "${tagFilterInput}".`);
       }
     }
   };
@@ -183,7 +183,7 @@ const PageContent = () => {
         <table className="text-sm bg-gray-900 border-collapse w-full">
           <tbody className="divide-y divide-gray-700">
             {problemset
-              .filter(({ platform, id, url, title, tags }) => {
+              .filter(({ platform, title, tags }) => {
                 return (
                   (!platform || platformFilter[platform.toString()]) &&
                   (!title ||
@@ -215,6 +215,7 @@ const PageContent = () => {
                         className="px-2 py-1 rounded-md hover:bg-gray-700"
                         href={`/edit/${platform}/${id}`}
                         target="_blank"
+                        rel="noreferrer"
                       >
                         <FontAwesomeIcon
                           icon={{ prefix: 'fas', iconName: 'edit' }}
@@ -227,6 +228,7 @@ const PageContent = () => {
                       className="px-2 py-1 rounded-md hover:bg-gray-700"
                       href={url}
                       target="_blank"
+                      rel="noreferrer"
                     >
                       <FontAwesomeIcon
                         icon={{ prefix: 'fas', iconName: 'arrow-right' }}

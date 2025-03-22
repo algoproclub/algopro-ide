@@ -1,5 +1,4 @@
 import { update, ref, getDatabase, push } from 'firebase/database';
-import { useAtomValue } from 'jotai/utils';
 import { useEffect } from 'react';
 import { useConnectionContext } from '../context/ConnectionContext';
 import { useEditorContext } from '../context/EditorContext';

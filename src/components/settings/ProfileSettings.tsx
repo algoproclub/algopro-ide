@@ -29,7 +29,7 @@ const ProfileSettings = ({
   >({});
   const [templateLanguage, setTemplateLanguage] = useState<Language>('cpp');
   const dirtyRef = useRef<boolean>(false);
-  const [settings, setSettings] = useState<{}>({});
+  const [settings, setSettings] = useState({});
 
   const {
     firebaseUser,

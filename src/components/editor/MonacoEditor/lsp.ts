@@ -59,7 +59,7 @@ function createLSPConnection(
     let message;
     try {
       message = JSON.parse(event.data);
-    } catch (err) {
+    } catch (error) {
       console.error('Malformed message from LSP server:', event.data);
       return;
     }

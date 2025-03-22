@@ -19,6 +19,6 @@ export function useOnlineUsers(): User[] | null {
       ({
         id: userID,
         ...userData,
-      } as User) // note: this cast is needed because the type definition from useEditorContext isn't perfect. we should fix it
+      }) as User // note: this cast is needed because the type definition from useEditorContext isn't perfect. we should fix it
   );
 }

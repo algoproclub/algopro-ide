@@ -2,10 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAtom } from 'jotai';
 import { loadingAtom } from '../../atoms/workspace';
 import { EditorProps } from '../editor/MonacoEditor/monaco-editor-types';
-import type * as monaco from 'monaco-editor';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { MonacoBinding } from 'y-monaco';
 import '../../styles/yjs.css';
 import EditorConnectionStatusIndicator from '../editor/EditorConnectionStatusIndicator';
 import colorFromUserId, {
@@ -15,6 +13,7 @@ import { useUserContext } from '../../context/UserContext';
 import { useEditorContext } from '../../context/EditorContext';
 import { SHOULD_USE_DEV_YJS_SERVER } from '../../dev_constants';
 import { CodeEditor } from '../editor/CodeEditor';
+import type * as awarenessProtocol from 'y-protocols/awareness';
 
 export interface RealtimeEditorProps extends EditorProps {
   yjsDocumentId: string;
@@ -38,8 +37,8 @@ const RealtimeEditor = ({
   const [, setLoading] = useAtom(loadingAtom);
   const { editorMode: mode } = userData;
   const [yjsInfo, setYjsInfo] = useState<{
-    yjsText: any;
-    yjsAwareness: any;
+    yjsText: Y.Text;
+    yjsAwareness: awarenessProtocol.Awareness;
   } | null>(null);
 
   const [connectionStatus, setConnectionStatus] = useState<
@@ -76,44 +75,32 @@ const RealtimeEditor = ({
     });
 
     // add custom color for every selector
-    provider.awareness.on(
-      'change',
-      ({
-        added,
-        updated,
-        removed,
-      }: {
-        added: Array<number>;
-        updated: Array<number>;
-        removed: Array<number>;
-      }) => {
-        // We should be responsible and remove styles when someone leaves (ie. removed.length > 0)
-        // but I'm lazy...
-        if (added.length === 0) return;
-        type UserAwarenessData = Map<
-          number,
-          {
-            firebaseUserID: string;
-            selection: any;
-          }
-        >;
-        const awarenessState =
-          provider.awareness.getStates() as UserAwarenessData;
-        for (const addedUserID of added) {
-          const firebaseUserID =
-            awarenessState.get(addedUserID)?.firebaseUserID ??
-            '-NPeGgrWL0zpVHHZ2aECh';
-          const styleToAdd = `.yRemoteSelection-${addedUserID}, .yRemoteSelectionHead-${addedUserID} {
+    provider.awareness.on('change', ({ added }: { added: Array<number> }) => {
+      // We should be responsible and remove styles when someone leaves (ie. removed.length > 0)
+      // but I'm lazy...
+      if (added.length === 0) return;
+      type UserAwarenessData = Map<
+        number,
+        {
+          firebaseUserID: string;
+        }
+      >;
+      const awarenessState =
+        provider.awareness.getStates() as UserAwarenessData;
+      for (const addedUserID of added) {
+        const firebaseUserID =
+          awarenessState.get(addedUserID)?.firebaseUserID ??
+          '-NPeGgrWL0zpVHHZ2aECh';
+        const styleToAdd = `.yRemoteSelection-${addedUserID}, .yRemoteSelectionHead-${addedUserID} {
               --yjs-selection-color-bg: ${bgColorFromUserId(firebaseUserID)};
               --yjs-selection-color: ${colorFromUserId(firebaseUserID)};
             }`;
-          document.body.insertAdjacentHTML(
-            'beforeend',
-            `<style>${styleToAdd}</style>`
-          );
-        }
+        document.body.insertAdjacentHTML(
+          'beforeend',
+          `<style>${styleToAdd}</style>`
+        );
       }
-    );
+    });
 
     provider.on(
       'status',
