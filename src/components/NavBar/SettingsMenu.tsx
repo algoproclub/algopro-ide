@@ -84,7 +84,7 @@ export const SettingsMenu = (props: {
                             {firebaseUser ? (
                               <>
                                 <div className="px-4 py-2 text-sm text-gray-200">
-                                  Logged in as{' '}
+                                  Signed in as{' '}
                                   <strong>{firebaseUser.displayName}</strong>
                                 </div>
                                 <Menu.Item>
