@@ -65,7 +65,7 @@ export const switchLang = async (
   lang: 'Java' | 'Python 3.8.1' | 'C++'
 ) => {
   await page.getByRole('button', { name: 'File' }).click();
-  await page.getByRole('menuitem', { name: 'Settings' }).click();
+  await page.getByRole('menuitem', { name: 'Workspace Settings' }).click();
   await page.getByRole('radio', { name: lang }).click();
   await page.getByRole('button', { name: 'Save' }).click();
   await page.waitForSelector('button:has-text("Run Code")');
