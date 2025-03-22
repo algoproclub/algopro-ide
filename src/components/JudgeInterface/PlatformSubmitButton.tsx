@@ -49,6 +49,12 @@ export const GenericSubmitButton = ({
       if (platform === 'codeforces') {
         submitLink = `https://codeforces.com/problemset/submit?submittedProblemCode=${problemID}`;
       }
+      if (platform === 'njudge') {
+        submitLink = `https://njudge.hu/problemset/main/${problemID}/`;
+      }
+      if (platform === 'spoj') {
+        submitLink = `https://www.spoj.com/problems/${problemID}/`;
+      }
       if (platform === 'atcoder') {
         submitLink = `https://atcoder.jp/contests/${
           problemID.split('_')[0]
