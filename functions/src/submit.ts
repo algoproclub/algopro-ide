@@ -342,7 +342,11 @@ export class CSESSubmitter extends Submitter {
     const formData = new FormData();
     formData.append('csrf_token', this.csrf_token);
     formData.append('task', problemID);
-    formData.append('file', sourceCode, 'f');
+    formData.append(
+      'file',
+      new Blob([sourceCode], { type: 'application/octet-stream' }),
+      'f'
+    );
     formData.append(
       'lang',
       { cpp: 'C++', py: 'Python3', java: 'Java' }[language]
