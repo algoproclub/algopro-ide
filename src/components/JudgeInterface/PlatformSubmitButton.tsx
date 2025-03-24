@@ -54,7 +54,9 @@ export const GenericSubmitButton = ({
       }
       return submitLink;
     };
-    if (userData.manualSubmission) {
+    // Use only manual submission for codeforces. This is temporary, should be reverted
+    // when we manage to fix automatic submission.
+    if (userData.manualSubmission || problem.platform === 'codeforces') {
       if (!['cses', 'planets'].includes(problem.platform)) {
         const link = getSubmitLink();
         window.open(link, '_blank');
