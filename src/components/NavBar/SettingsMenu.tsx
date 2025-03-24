@@ -49,10 +49,18 @@ export const SettingsMenu = (props: {
               }`}
               ref={setReferenceElement}
             >
-              <UserCircleIcon
-                className="h-6 w-6 text-gray-400"
-                aria-hidden="true"
-              />
+              {firebaseUser?.photoURL ? (
+                <img
+                  className="h-6 w-6 rounded-full object-cover"
+                  src={firebaseUser.photoURL}
+                  alt=""
+                />
+              ) : (
+                <UserCircleIcon
+                  className="h-6 w-6 text-gray-400"
+                  aria-hidden="true"
+                />
+              )}
               <ChevronDownIcon
                 className="h-5 w-5 text-gray-400 ml-2"
                 aria-hidden="true"
