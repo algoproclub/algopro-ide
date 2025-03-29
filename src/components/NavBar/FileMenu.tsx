@@ -76,7 +76,10 @@ export const FileMenu = (props: {
     }
 
     const code = getMainEditorValue();
-    navigator.clipboard.writeText(code);
+    navigator.clipboard.writeText(code).catch((err) => {
+      console.error('Failed to copy text to clipboard:', err);
+      alert('Failed to copy text to clipboard. Please try again.');
+    });
   };
 
   const handleInsertFileTemplate = () => {
