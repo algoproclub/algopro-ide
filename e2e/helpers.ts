@@ -11,13 +11,14 @@ export async function signInUser(page: Page) {
   await page.getByText('Override Data').click();
 
   const popup = await popupPromise;
-  const newAccount = popup.getByText('Add new account');
+  await popup.getByText('Add new account');
   while (!(await popup.getByText('Auto-generate').isVisible())) {
     await popup.getByText('Add new account').click();
   }
   await popup.getByText('Auto-generate').scrollIntoViewIfNeeded();
   await popup.getByText('Auto-generate').click();
   await popup.getByText('Sign in').click();
+  await page.getByTestId('settings-menu-button').click();
   await expect(page.getByText('Signed in as')).toBeVisible();
 }
 
@@ -64,7 +65,7 @@ export const switchLang = async (
   lang: 'Java' | 'Python 3.8.1' | 'C++'
 ) => {
   await page.getByRole('button', { name: 'File' }).click();
-  await page.getByRole('menuitem', { name: 'Settings' }).click();
+  await page.getByRole('menuitem', { name: 'Workspace Settings' }).click();
   await page.getByRole('radio', { name: lang }).click();
   await page.getByRole('button', { name: 'Save' }).click();
   await page.waitForSelector('button:has-text("Run Code")');
