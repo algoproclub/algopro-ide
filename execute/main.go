@@ -43,7 +43,7 @@ func mustLanguage(l language.Language, err error) language.Language {
 }
 
 var Languages = map[string]language.Language{
-	"cpp":  cpp.New("cpp17", "C++ 17", cpp.WithCompileArgs(CppArgs)),
+	"cpp":  cpp.New("cpp17", "C++ 17", cpp.WithCompileArgs(CppArgs), cpp.WithPCHCache("/tmp/pch", int64(256*memory.MiB))),
 	"java": mustLanguage(language.DefaultStore.Get("java")),
 	"py":   mustLanguage(language.DefaultStore.Get("pypy3")),
 }
