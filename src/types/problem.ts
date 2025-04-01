@@ -35,6 +35,8 @@ export const platforms: string[] = [
   'spoj',
   'usaco',
   'planets',
+  'ojuz',
+  'njudge',
 ];
 
 export type Language = 'cpp' | 'py' | 'java';
