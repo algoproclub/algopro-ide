@@ -622,9 +622,12 @@ export class NjudgeSubmitter extends Submitter {
       },
       body: formData,
       method: 'POST',
+      redirect: 'manual',
     });
 
-    const id = response.url.match(/#submission([0-9]+)$/)?.[1];
+    const id = response.headers
+      .get('location')
+      ?.match(/#submission([0-9]+)$/)?.[1];
     if (!id) {
       throw new Error('submission failed, id not found');
     }
