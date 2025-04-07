@@ -42,7 +42,7 @@ export const SettingsMenu = (props: {
     <Menu as="div" className="relative inline-block text-left">
       {({ open }) => (
         <>
-          <div>
+          <div data-testid="settings-menu-button">
             <Menu.Button
               className={`relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 focus:outline-none ${
                 open ? 'bg-gray-800' : 'hover:bg-gray-800 active:bg-gray-700'
@@ -92,7 +92,7 @@ export const SettingsMenu = (props: {
                             {firebaseUser ? (
                               <>
                                 <div className="px-4 py-2 text-sm text-gray-200">
-                                  Logged in as{' '}
+                                  Signed in as{' '}
                                   <strong>{firebaseUser.displayName}</strong>
                                 </div>
                                 <Menu.Item>

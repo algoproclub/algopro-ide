@@ -181,7 +181,7 @@ const ProfileSettings = ({
               <div className="p-4 sm:p-6 space-y-3">
                 <div className="flex flex-col lg:flex-row gap-10">
                   {/* User Settings Section */}
-                  <div className="flex-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-700 shadow-md">
+                  <div className="flex-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-700 shadow-md overflow-auto">
                     <UserSettings
                       name={name}
                       onNameChange={name => setName(name)}

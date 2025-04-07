@@ -1,11 +1,10 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import {
   testRunCode,
   goToPage,
   createNew,
   switchLang,
   isMonaco,
-  setInputEditorValue,
   waitForEditorToLoad,
   signInUser,
 } from './helpers';
@@ -27,7 +26,7 @@ test.describe('Respects Permissions', () => {
     await createNew(page);
     await page.waitForSelector('text="Run Code"');
     await page.click('text=File');
-    await page.click('text=Settings');
+    await page.click('text=Workspace Settings');
     await page.click('div[role="radio"]:has-text("View Only")');
     await page.click('text=Save');
 
@@ -175,7 +174,7 @@ test.describe('Respects Permissions', () => {
 
     // try view only
     await page.click('text=File');
-    await page.click('text=Settings');
+    await page.click('text=Workspace Settings');
     await page.click('div[role="radio"]:has-text("View Only")');
     await page.click('text=Save');
     await page2.waitForSelector('text="View Only"', {
@@ -189,14 +188,14 @@ test.describe('Respects Permissions', () => {
 
     // try private
     await page.click('text=File');
-    await page.click('text=Settings');
+    await page.click('text=Workspace Settings');
     await page.click('div[role="radio"]:has-text("Private")');
     await page.click('text=Save');
     await page2.waitForSelector('text="This file is private."');
 
     // back to read/write
     await page.click('text=File');
-    await page.click('text=Settings');
+    await page.click('text=Workspace Settings');
     await page.click('div[role="radio"]:has-text("Public Read & Write")');
     await page.click('text=Save');
     await page2.waitForSelector('button:has-text("Run Code")');

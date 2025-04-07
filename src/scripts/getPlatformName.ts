@@ -12,6 +12,10 @@ export const getPlatformName = (platform: Platform) => {
       return 'SPOJ';
     case 'planets':
       return 'Planets';
+    case 'ojuz':
+      return 'OJUZ';
+    case 'njudge':
+      return 'NJudge';
   }
   return 'Unknown';
 };
