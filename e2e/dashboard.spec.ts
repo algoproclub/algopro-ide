@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { host, signInUser } from './helpers';
 
 test.beforeEach(async ({ page }) => {
@@ -34,11 +34,9 @@ test.describe('Dashboard Page', () => {
   }) => {
     await page.goto(`${host}/n`);
     await page.waitForSelector('button:has-text("Run Code")');
-    await page.locator('text=File').click();
-    await page.locator('text=Settings').click();
     // Click user button tab
-    await page.locator('text="User"').click();
-    await page.locator('text="User data"').click();
+    await page.getByTestId('settings-menu-button').click();
+    await page.locator('text=Profile Settings').click();
     await page.locator('input[name="name"]').click();
     await page.locator('input[name="name"]').press('Control+a');
     await page.locator('input[name="name"]').fill('My Name');
