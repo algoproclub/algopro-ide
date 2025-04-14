@@ -152,7 +152,7 @@ const TestCaseInfoModal = ({
         open={isOpen}
         onClose={closeWithoutSaving}
       >
-        <div className="flex items-end justify-center min-h-full pt-4 pb-20 text-center sm:block sm:p-0">
+        <div className="min-h-full p-4 text-left">
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -173,7 +173,7 @@ const TestCaseInfoModal = ({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div className="inline-block bg-gray-800 md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
+            <div className="bg-gray-800 rounded-lg shadow-xl transform transition-all w-full max-w-7xl mx-auto">
               <div className="px-4 sm:px-6 pt-4 pb-2">
                 <Dialog.Title
                   as="h3"
@@ -183,7 +183,7 @@ const TestCaseInfoModal = ({
                 </Dialog.Title>
               </div>
               <div className="p-4 sm:p-6 space-y-3">
-                <div className="flex flex-row gap-8 max-h-96">
+                <div className="flex flex-row gap-8 min-h-[20rem] max-h-[40rem]">
                   <div className="flex flex-col items-start gap-4 whitespace-nowrap">
                     <USACOTestCase data={testCase} />
                     <div className="flex flex-col gap-2">
