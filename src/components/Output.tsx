@@ -30,6 +30,22 @@ const tabs = [
   { label: 'history', value: 'history' },
 ];
 
+function parseAsanError(stderr: string) {
+  const asanRegex =
+    /AddressSanitizer: (\S+) on address .*?\n.*?\n.*?main\.cpp:(\d+)/;
+  const match = stderr.match(asanRegex);
+
+  if (match) {
+    const [, errorType, lineNumber] = match;
+    return {
+      errorType,
+      lineNumber: parseInt(lineNumber, 10),
+    };
+  }
+
+  return null;
+}
+
 export const Output = ({
   result,
   statusData,
@@ -73,9 +89,19 @@ export const Output = ({
       }
     }
   }
+
   const { userData } = useUserContext();
   const lightMode = userData.lightMode;
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
+
+  if (option === 'stderr' && outputText) {
+    const asanError = parseAsanError(outputText);
+    if (asanError) {
+      const { errorType, lineNumber } = asanError;
+      outputText = `${errorType} error on line ${lineNumber}`;
+      mainMonacoEditor?.setLineHighlight(lineNumber);
+    }
+  }
 
   return (
     <>
