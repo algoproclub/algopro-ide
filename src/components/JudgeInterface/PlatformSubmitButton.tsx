@@ -36,7 +36,11 @@ export const GenericSubmitButton = ({
       const problemID = problem.id;
       let submitLink = '';
       if (platform === 'codeforces') {
-        submitLink = `https://codeforces.com/problemset/submit?submittedProblemCode=${problemID}`;
+        let cfProblemID = problemID;
+        if (cfProblemID.startsWith('gym')) {
+          cfProblemID = problemID.replace('gym', '');
+        }
+        submitLink = `https://codeforces.com/problemset/submit?submittedProblemCode=${cfProblemID}`;
       }
       if (platform === 'njudge') {
         submitLink = `https://njudge.hu/problemset/main/${problemID}/`;
@@ -80,7 +84,7 @@ export const GenericSubmitButton = ({
         testCases: null,
       });
       const lastAllowedTime = performance.now() + 5000;
-      // eslint-disable-next-line no-constant-condition
+       
       while (true) {
         try {
           const submissionData = await submitProblemSolution({

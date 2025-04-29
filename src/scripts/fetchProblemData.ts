@@ -101,12 +101,21 @@ function delimitedMathToVar(
 async function fetchProblemDataCodeforces(
   problemID: string
 ): Promise<ProblemData | null> {
+  let isGym: boolean = false;
+  if (problemID.startsWith('gym')) {
+    isGym = true;
+    problemID = problemID.slice(3);
+  }
   const matches = problemID.match(CODEFORCES_PROBLEM_REGEX);
   if (!matches) {
     return null;
   }
-
-  const url = `https://codeforces.com/contest/${matches[1]}/problem/${matches[2]}`;
+  let url: string;
+  if (isGym) {
+    url = `https://codeforces.com/gym/${matches[1]}/problem/${matches[2]}`;
+  } else {
+    url = `https://codeforces.com/contest/${matches[1]}/problem/${matches[2]}`;
+  }
   const problemPage = await fetchWithProxy(url, {
     headers: {
       'User-Agent':
@@ -135,7 +144,9 @@ async function fetchProblemDataCodeforces(
   document('img').each((_, el) => {
     document(el).attr('referrerpolicy', 'no-referrer');
   });
-
+  if (isGym) {
+    problemID = 'gym' + problemID;
+  }
   return {
     id: problemID,
     submittable: true,
