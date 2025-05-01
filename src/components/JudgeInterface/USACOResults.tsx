@@ -439,11 +439,15 @@ export default function USACOResults({
               {data.message ? capitalize(data.message) : null}
               {!['error', 'resolved'].includes(data.statusCode) && '...'}
             </span>
-            {(data.time || data.memory) && ' ('}
-            {data.time && '' + data.time}
-            {data.time && data.memory && ', '}
-            {data.memory && '' + data.memory}
-            {(data.time || data.memory) && ')'}
+            {!output && (
+              <>
+                {(data.time || data.memory) && ' ('}
+                {data.time && '' + data.time}
+                {data.time && data.memory && ', '}
+                {data.memory && '' + data.memory}
+                {(data.time || data.memory) && ')'}
+              </>
+            )}
           </span>
         </div>
         {submissionTime && (
@@ -508,7 +512,7 @@ export default function USACOResults({
           )}
         </div>
       )}
-      {data.testCases && (
+      {!output && data.testCases && (
         <>
           <div className="my-3 -mx-1">
             {data.testCases.map(tc => (

@@ -4,6 +4,12 @@ import { cfAPIKey, cfAPISecret, IncorrectDataError } from './index';
 import { SubmissionData } from './types';
 import { StatusCode, StatusData, TestCase } from '../../src/types/problem';
 import { getFirestore } from 'firebase-admin/firestore';
+import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport';
+import { LibraryCheckerServiceClient } from './yosupo/library_checker.client';
+import {
+  SubmissionInfoRequest,
+  SubmissionInfoResponse,
+} from './yosupo/library_checker';
 
 const { JSDOM } = jsdom;
 
@@ -63,6 +69,123 @@ export abstract class ResultFetcher {
       link: this.getLink(),
       testCases: this.getTestCases(),
     };
+  }
+}
+
+export class YosupoResultFetcher extends ResultFetcher {
+  private static codeToVerdict = {
+    CE: 'compile error',
+    AC: 'correct answer',
+    WA: 'wrong answer',
+    RE: 'runtime error',
+    TLE: 'time limit exceeded',
+    IE: 'internal error',
+    ICE: 'internal compile error',
+    Fail: 'Wrong author solution',
+    PE: 'presentation error',
+    WJ: 'running',
+  };
+
+  private submissionInfo: SubmissionInfoResponse | null = null;
+
+  constructor(readonly submissionData: SubmissionData) {
+    super(submissionData);
+  }
+
+  async initialize(): Promise<void> {
+    const transport = new GrpcWebFetchTransport({
+      baseUrl: 'https://v2.api.judge.yosupo.jp',
+    });
+    const { submissionID } = this.submissionData;
+    const client = new LibraryCheckerServiceClient(transport);
+    const request: SubmissionInfoRequest = { id: parseInt(submissionID) };
+
+    try {
+      const { response } = await client.submissionInfo(request);
+      this.submissionInfo = response;
+    } catch (error) {
+      throw new Error('Yosupo: submission info could not be retrieved.');
+    }
+  }
+
+  private static isValidVerdict(
+    key: string
+  ): key is keyof typeof YosupoResultFetcher.codeToVerdict {
+    return Object.prototype.hasOwnProperty.call(
+      YosupoResultFetcher.codeToVerdict,
+      key
+    );
+  }
+
+  formatMemory(mem: bigint): string {
+    return `${(Number(mem) / 1048576).toFixed(2)} MB`;
+  }
+
+  getLink(): string | null {
+    return `https://judge.yosupo.jp/submission/${this.submissionData.submissionID}`;
+  }
+
+  getMemory(): string | null {
+    const mem = this.submissionInfo?.overview?.memory;
+    return mem != undefined ? this.formatMemory(mem) : null;
+  }
+
+  getMessage(): string {
+    const code = this.submissionInfo?.overview?.status;
+    if (!code || !YosupoResultFetcher.isValidVerdict(code)) {
+      return 'running';
+    }
+    return YosupoResultFetcher.codeToVerdict[code];
+  }
+
+  getOutput(): string | null {
+    const error = this.submissionInfo?.compileError;
+    if (!error) {
+      return null;
+    }
+    return new TextDecoder().decode(error);
+  }
+
+  getStatusCode(): StatusCode {
+    if (this.getMessage() === 'running') {
+      return 'working';
+    }
+    return 'resolved';
+  }
+
+  getStatusText(): string | null {
+    return this.getStatusCode() === 'working'
+      ? 'status-working'
+      : 'status-done';
+  }
+
+  getTime(): string | null {
+    const time = this.submissionInfo?.overview?.time;
+    return time != undefined ? Math.round(time * 1000) + ' ms' : null;
+  }
+
+  getTestCaseNum(): number {
+    return this.submissionInfo?.caseResults.length ?? 0;
+  }
+
+  getTestCaseTitle(n: number): string {
+    const code = this.submissionInfo?.caseResults[n]?.status;
+    if (!code || !YosupoResultFetcher.isValidVerdict(code)) {
+      return 'running';
+    }
+    return YosupoResultFetcher.codeToVerdict[code];
+  }
+  getTestCaseSymbol(n: number): string {
+    const verdict = this.getTestCaseTitle(n);
+    return verdict === 'correct answer' ? '✓' : 'x';
+  }
+  getTestCaseTime(n: number): string | null {
+    const time = this.submissionInfo?.caseResults[n]?.time;
+    return time != undefined ? Math.round(time * 1000) + ' ms' : null;
+  }
+  getTestCaseMemory(n: number): string | null {
+    const mem = this.submissionInfo?.caseResults[n]?.memory;
+    return mem != undefined ? this.formatMemory(mem) : null;
   }
 }
 

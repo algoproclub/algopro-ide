@@ -15,6 +15,7 @@
   },
   "main": "lib/functions/src/index.js",
   "dependencies": {
+    "@protobuf-ts/grpcweb-transport": "^2.10.0",
     "cheerio": "^1.0.0-rc.12",
     "dotenv": "^16.4.1",
     "firebase-admin": "^11.8.0",

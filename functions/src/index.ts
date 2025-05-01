@@ -20,6 +20,7 @@ import {
   PlanetsResultFetcher,
   OjuzResultFetcher,
   NJudgeResultFetcher,
+  YosupoResultFetcher,
 } from './getResult';
 import {
   PendingSubmissions,
@@ -361,6 +362,8 @@ const updateResultNonCF = async (submissionData: SubmissionData) => {
     fetcher = new OjuzResultFetcher(submissionData);
   } else if (submissionData.platform === 'njudge') {
     fetcher = new NJudgeResultFetcher(submissionData);
+  } else if (submissionData.platform === 'yosupo') {
+    fetcher = new YosupoResultFetcher(submissionData);
   } else {
     throw new Error(`invalid platform name (${submissionData.platform})`);
   }
