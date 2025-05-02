@@ -4,6 +4,8 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import * as cheerio from 'cheerio';
 import { loginBotUrl } from './index';
 import { Database } from 'firebase-admin/database';
+import { GrpcWebFetchTransport } from '@protobuf-ts/grpcweb-transport';
+import { LibraryCheckerServiceClient } from './yosupo/library_checker.client';
 
 const GETSUBMISSIONDATA_DELAY_MS = 1000;
 const MAX_GETSUBMISSIONDATA_TRIES = 8;
@@ -636,6 +638,39 @@ export class NjudgeSubmitter extends Submitter {
       id,
       username: this.username,
       platform: 'njudge',
+    } as const;
+  }
+}
+
+export class YosupoSubmitter extends Submitter {
+  platformName = 'yosupo';
+
+  async loginWith(_account: unknown): Promise<boolean> {
+    // Yosupo does not require login
+    return true;
+  }
+
+  async submit({ problemID, sourceCode, language }: ProblemSolution) {
+    const transport = new GrpcWebFetchTransport({
+      baseUrl: 'https://v2.api.judge.yosupo.jp',
+      init: {
+        fetch: fetchWithProxy,
+      },
+    });
+    const client = new LibraryCheckerServiceClient(transport);
+    const response = await client.submit({
+      lang: {
+        cpp: 'cpp', // C++23
+        py: 'python3',
+        java: 'java',
+      }[language],
+      source: sourceCode,
+      problem: problemID,
+    });
+    return {
+      id: response.response.id.toString(),
+      username: null,
+      platform: 'yosupo',
     } as const;
   }
 }

@@ -26,7 +26,8 @@ export type Platform =
   | 'usaco'
   | 'planets'
   | 'ojuz'
-  | 'njudge';
+  | 'njudge'
+  | 'yosupo';
 
 export const platforms: string[] = [
   'codeforces',

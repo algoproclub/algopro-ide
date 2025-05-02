@@ -43,6 +43,7 @@ import {
   SPOJSubmitter,
   OjuzSubmitter,
   NjudgeSubmitter,
+  YosupoSubmitter,
   Submitter,
 } from './submit';
 import { JSDOM } from 'jsdom';
@@ -101,6 +102,9 @@ export const submitproblemsolution = onCall<
         break;
       case 'njudge':
         submitter = new NjudgeSubmitter();
+        break;
+      case 'yosupo':
+        submitter = new YosupoSubmitter();
         break;
       default:
         throw new HttpsError(
@@ -253,6 +257,7 @@ const accountData: { [key in Platform]: AccountData } = {
   },
   ojuz: {},
   njudge: {},
+  yosupo: {},
 };
 
 const updateTournamentResult = async (
