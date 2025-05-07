@@ -541,10 +541,10 @@ export class SPOJResultFetcher extends ResultFetcher {
   getMessage(): string {
     const message =
       (
-        this.summary!.querySelector('td.statusres > strong') ??
+        this.summary!.querySelector('td.statusres strong') ??
         this.summary!.querySelector('td.statusres > a') ??
         this.summary!.querySelector('td.statusres')
-      )?.childNodes[0].textContent
+      )?.textContent
         ?.toLowerCase()
         ?.trim() ?? '';
 
