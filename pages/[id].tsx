@@ -268,7 +268,6 @@ function EditorPage() {
       if (getInputEditorValue) runWithInput(getInputEditorValue());
     } else if (runAllList.includes(inputTab)) {
       runAllSamples();
-      runAllSamples();
     } else {
       const samples = problem?.samples;
       if (samples) {
