@@ -110,12 +110,8 @@ async function fetchProblemDataCodeforces(
   if (!matches) {
     return null;
   }
-  let url: string;
-  if (isGym) {
-    url = `https://codeforces.com/gym/${matches[1]}/problem/${matches[2]}`;
-  } else {
-    url = `https://codeforces.com/contest/${matches[1]}/problem/${matches[2]}`;
-  }
+  const url = `https://codeforces.com/${isGym ? 'gym' : 'contest'}/${matches[1]}/problem/${matches[2]}`;
+
   const problemPage = await fetchWithProxy(url, {
     headers: {
       'User-Agent':
