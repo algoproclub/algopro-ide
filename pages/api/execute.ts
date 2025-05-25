@@ -48,7 +48,7 @@ export default async (
   const requestData: RequestData = req.body;
   const execute_url = SHOULD_USE_DEV_EXECUTE_SERVER
     ? 'http://execute:1235'
-    : 'http://51.21.132.241:1235';
+    : 'http://execute.algopro.hu:1235';
   const executeResponse = await fetch(execute_url + '/execute', {
     method: 'POST',
     headers: {
