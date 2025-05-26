@@ -4,6 +4,7 @@ import { Sample } from '../../types/problem';
 import { useEditorContext } from '../../context/EditorContext';
 import LoadingIndicator from '../LoadingIndicator';
 import useUserPermission from '../../hooks/useUserPermission';
+import classNames from 'classnames';
 
 export function getSampleIndex(inputTab: string): number {
   return inputTab.length === 6 ? 1 : +inputTab.substring(7);
@@ -25,18 +26,24 @@ export const PreBox = ({
 
   return (
     <div
-      className={`mx-0 rounded-md break-all bg-[#121212] border border-t-0 border-gray-700 ${
-        roundedBottom ? '' : 'rounded-b-none'
-      } ${roundedTop ? '' : 'rounded-t-none'}`}
+      className={classNames(
+        // overflow-x-hidden allows overflow-auto below to function properly
+        'mx-0 rounded-md bg-[#121212] border border-t-0 border-gray-700 flex flex-col overflow-x-hidden',
+        roundedBottom ? '' : 'rounded-b-none',
+        roundedTop ? '' : 'rounded-t-none'
+      )}
     >
       <div
-        className={`py-2.5 px-4 bg-gray-800 border-b border-t rounded-t-md border-gray-700 font-semibold text-sm ${
+        className={classNames(
+          'py-2.5 px-4 bg-gray-800 border-b border-t rounded-t-md border-gray-700 font-semibold text-sm',
           roundedTop ? '' : 'rounded-t-none'
-        }`}
+        )}
       >
         <span>{title}</span>
       </div>
-      <pre className="px-4 py-3 whitespace-pre-wrap">{text}</pre>
+      <div className="overflow-auto">
+        <pre className="px-4 py-3">{text}</pre>
+      </div>
     </div>
   );
 };

@@ -42,6 +42,7 @@ if (!firebase.getApps()?.length) {
       ...firebaseConfig,
       authDomain: '127.0.0.1:9099',
       databaseURL: 'http://127.0.0.1:9000/?ns=algopro-app-default-rtdb',
+      storageBucket: 'algopro-app.appspot.com',
     });
     connectAuthEmulator(getAuth(), 'http://127.0.0.1:9099');
     connectDatabaseEmulator(getDatabase(), '127.0.0.1', 9000);
