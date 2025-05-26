@@ -22,4 +22,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/mraron/njudge => github.com/algoproclub/njudge v0.6.1-0.20250523184449-b9c171d3ac6b
+replace github.com/mraron/njudge => github.com/algoproclub/njudge v0.6.1-0.20250525113307-9fd29b8569dd
