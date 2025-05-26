@@ -158,6 +158,8 @@ function EditorPage() {
         .finally(() => setIsRunning(false));
     };
 
+    const runAllList = ['judge', 'hints', 'solutions'];
+
     const runAllSamples = async () => {
       if (!problem || !getMainEditorValue) {
         // editor is still loading
@@ -178,6 +180,8 @@ function EditorPage() {
 
         const newJudgeResults = judgeResults;
         const results: JudgeResult[] = [];
+
+        let lastIndex = 0;
         for (let index = 0; index < samples.length; ++index) {
           const sample = samples[index];
           const resp = await promises[index];
@@ -201,6 +205,7 @@ function EditorPage() {
           let tabIndex = tabsList.findIndex(tab => tab.label === tabName); // Find the index in tablists
           if (tabIndex === -1) tabIndex = tabsList.length + index;
           newJudgeResults[tabIndex] = data;
+          lastIndex = tabIndex;
         }
         if (samples.length > 1) {
           let verdicts = '';
@@ -234,8 +239,24 @@ function EditorPage() {
               '. ' +
               failedResult.statusDescription;
           newJudgeResults[1] = failedResult;
+          runAllList.forEach((item, index) => {
+            let tabindex = tabsList.findIndex(
+              tab => tab.value === item
+            );
+            if (tabindex === -1) tabindex = tabsList.length + index;
+            newJudgeResults[tabindex] = failedResult;
+          });
         } else {
-          newJudgeResults[1] = newJudgeResults[newJudgeResults.length - 1];
+          runAllList.forEach(item => {
+
+            let tabindex = tabsList.findIndex(
+              tab => tab.value === item
+            );
+            if (tabindex === -1) {
+              return;
+            }
+            newJudgeResults[tabindex] = newJudgeResults[lastIndex];
+          });
         }
         setJudgeResults(newJudgeResults);
       } catch (e) {
@@ -243,10 +264,9 @@ function EditorPage() {
       }
       setIsRunning(false);
     };
-
     if (inputTab === 'input') {
       if (getInputEditorValue) runWithInput(getInputEditorValue());
-    } else if (inputTab === 'judge') {
+    } else if (runAllList.includes(inputTab)) {
       runAllSamples();
     } else {
       const samples = problem?.samples;

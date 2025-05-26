@@ -539,14 +539,12 @@ export class SPOJResultFetcher extends ResultFetcher {
   }
 
   getMessage(): string {
+    const element =
+      this.summary!.querySelector('td.statusres strong') ??
+      this.summary!.querySelector('td.statusres > a') ??
+      this.summary!.querySelector('td.statusres');
     const message =
-      (
-        this.summary!.querySelector('td.statusres > strong') ??
-        this.summary!.querySelector('td.statusres > a') ??
-        this.summary!.querySelector('td.statusres')
-      )?.childNodes[0].textContent
-        ?.toLowerCase()
-        ?.trim() ?? '';
+      element?.childNodes[0].textContent?.toLowerCase()?.trim() ?? '';
 
     if (message.startsWith('compiling') || message.startsWith('running')) {
       return 'running';

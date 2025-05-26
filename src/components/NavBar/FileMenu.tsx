@@ -4,6 +4,7 @@ import {
   CogIcon,
   PlusIcon,
   ArrowDownTrayIcon,
+  ClipboardIcon,
   ArrowPathIcon,
   DocumentDuplicateIcon,
 } from '@heroicons/react/20/solid';
@@ -66,6 +67,19 @@ export const FileMenu = (props: {
     };
 
     download(fileNames[fileData.settings.language], code);
+  };
+
+  const handleCopyCode = () => {
+    if (!getMainEditorValue) {
+      alert("Editor hasn't loaded yet. Please wait.");
+      return;
+    }
+
+    const code = getMainEditorValue();
+    navigator.clipboard.writeText(code).catch((err) => {
+      console.error('Failed to copy text to clipboard:', err);
+      alert('Failed to copy text to clipboard. Please try again.');
+    });
   };
 
   const handleInsertFileTemplate = () => {
@@ -176,6 +190,26 @@ export const FileMenu = (props: {
                                     aria-hidden="true"
                                   />
                                   Download File
+                                </button>
+                              )}
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  type="button"
+                                  className={classNames(
+                                    active
+                                      ? 'bg-gray-700 text-gray-100'
+                                      : 'text-gray-200',
+                                    'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
+                                  )}
+                                  onClick={handleCopyCode}
+                                >
+                                  <ClipboardIcon
+                                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                    aria-hidden="true"
+                                  />
+                                  Copy Code
                                 </button>
                               )}
                             </Menu.Item>

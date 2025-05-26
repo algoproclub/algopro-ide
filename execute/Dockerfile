@@ -1,6 +1,6 @@
 FROM golang:1.22-bookworm
 
-RUN apt-get update && apt-get install -y pypy3
+RUN apt-get update && apt-get install -y pypy3 && mkdir /tmp/pch
 
 WORKDIR /app
 
