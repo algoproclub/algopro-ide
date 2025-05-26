@@ -1,4 +1,6 @@
 import React from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { isLineHighlightSetAtom } from '../atoms/workspace';
 
 /* eslint-disable no-control-regex */
 const ERASE_LINE = '\x1b[K';
@@ -29,6 +31,9 @@ const OutputLine = ({
   highlightLine?: (line: number) => void;
   clearLineHighlight?: () => void;
 }): JSX.Element => {
+  const isLineHighlightSet = useAtomValue(isLineHighlightSetAtom);
+  const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
+
   line = line.replaceAll(ERASE_LINE, '');
   const chunks = line.split(SET_COLOR_REGEX);
 
@@ -71,6 +76,11 @@ const OutputLine = ({
   const linkedLine = locationMatch
     ? Number(locationMatch.groups?.line)
     : undefined;
+
+  if (linkedLine !== undefined && !isLineHighlightSet) {
+    highlightLine?.(linkedLine);
+    setIsLineHighlightSet(true);
+  }
 
   if (linkedLine !== undefined && highlightLine) {
     return (

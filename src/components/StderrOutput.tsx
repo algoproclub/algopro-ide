@@ -1,0 +1,192 @@
+import React from 'react';
+import {
+  mainMonacoEditorAtom,
+  isLineHighlightSetAtom,
+} from '../atoms/workspace';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { OnMount } from './editor/MonacoEditor/monaco-editor-types';
+import { CodeEditor } from './editor/CodeEditor';
+
+const ASAN_REGEX =
+  /^([\s\S]*)={65}\s.+AddressSanitizer: (\S+) on address [\s\S]*?main\.cpp:(\d+)/;
+const ASAN_OPERATION_REGEX = /\n(.+) of size (\d+)/;
+const ASAN_LOCATION_REGEX =
+  /is located (\d+) bytes to the (.*) of (\d+)-byte region/;
+const ASAN_DECLARATION_REGEX =
+  /allocated by[\s\S]*main\.cpp:(\d+)[\s\S]*SUMMARY/;
+const ASAN_POINTER_REGEX = /\*>::allocate/;
+const ASAN_INNER_TYPE_REGEX = /std::__new_allocator<(.*?)[<>]/;
+const UBSAN_REGEX = /^([\s\S]*)main\.cpp:(\d*):/;
+
+const basicCppTypes = [
+  'int',
+  'long',
+  'long long',
+  'short',
+  'char',
+  'unsigned int',
+  'unsigned long',
+  'unsigned long long',
+  'unsigned short',
+  'unsigned char',
+  'float',
+  'double',
+  'long double',
+];
+
+const specialCppTypeSizes: Record<string, number> = {
+  'std::__cxx11::basic_string': 32,
+  'std::vector': 24,
+};
+
+function parseAsanError(stderr: string) {
+  const match = stderr.match(ASAN_REGEX);
+
+  if (match) {
+    const [, originalStderr, errorType, lineNumber] = match;
+    let indexError = null;
+    if (errorType === 'heap-buffer-overflow') {
+      const operationMatch = stderr.match(ASAN_OPERATION_REGEX);
+      const locationMatch = stderr.match(ASAN_LOCATION_REGEX);
+      const declaritonMatch = stderr.match(ASAN_DECLARATION_REGEX);
+      if (operationMatch && locationMatch && declaritonMatch) {
+        const [, operationType, typeSize] = operationMatch;
+        const [, offset, direction, regionSize] = locationMatch;
+        const [, declarationLineNumber] = declaritonMatch;
+        let actualTypeSize: number | null = null;
+        const pointerMatch = stderr.match(ASAN_POINTER_REGEX);
+        if (pointerMatch) {
+          actualTypeSize = 8;
+        } else {
+          const innerTypeMatch = stderr.match(ASAN_INNER_TYPE_REGEX);
+          if (innerTypeMatch && innerTypeMatch[1]) {
+            const innerType = innerTypeMatch[1];
+            if (specialCppTypeSizes[innerType]) {
+              actualTypeSize = specialCppTypeSizes[innerType];
+            }
+            if (basicCppTypes.includes(innerType)) {
+              actualTypeSize = parseInt(typeSize, 10);
+            }
+          }
+        }
+        let containerSize: number | string = '?';
+        let accessedIndex: number | string = '?';
+        if (actualTypeSize) {
+          containerSize = Math.floor(parseInt(regionSize, 10) / actualTypeSize);
+          if (direction === 'left') {
+            accessedIndex = Math.floor(-parseInt(offset, 10) / actualTypeSize);
+          } else if (direction === 'right') {
+            accessedIndex =
+              containerSize + Math.floor(parseInt(offset, 10) / actualTypeSize);
+          }
+        }
+        indexError = {
+          operationType,
+          containerSize,
+          accessedIndex,
+          declarationLineNumber: parseInt(declarationLineNumber, 10),
+        };
+      }
+    }
+    return {
+      originalStderr,
+      errorType,
+      lineNumber: parseInt(lineNumber, 10),
+      indexError,
+    };
+  }
+
+  return null;
+}
+
+function parseUBsanError(stderr: string) {
+  const match = stderr.match(UBSAN_REGEX);
+  if (match) {
+    const [, originalStderr, lineNumber] = match;
+    return {
+      originalStderr,
+      lineNumber: parseInt(lineNumber, 10),
+    };
+  }
+  return null;
+}
+
+export const StderrOutput = ({
+  output,
+  lightMode,
+  onMount,
+}: {
+  output: string;
+  lightMode: boolean;
+  onMount: OnMount | undefined;
+}): JSX.Element => {
+  const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
+  const isLineHighlightSet = useAtomValue(isLineHighlightSetAtom);
+  const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
+
+  const asanError = parseAsanError(output);
+  let decodedOutput = output;
+  let errorLineNumber: number | undefined = undefined;
+
+  if (asanError) {
+    const { originalStderr, errorType, lineNumber, indexError } = asanError;
+    errorLineNumber = lineNumber;
+    const errorLine = mainMonacoEditor?.getModel()?.getLineContent(lineNumber);
+    decodedOutput = `${originalStderr}${errorType} on line ${lineNumber}:\n${errorLine}\n`;
+
+    if (indexError) {
+      const {
+        operationType,
+        containerSize,
+        accessedIndex,
+        declarationLineNumber,
+      } = indexError;
+      const declarationLine = mainMonacoEditor
+        ?.getModel()
+        ?.getLineContent(declarationLineNumber);
+      decodedOutput += `Possible cause: ${operationType} on index ${accessedIndex} of size ${containerSize} container created on line ${declarationLineNumber}:\n${declarationLine}\n`;
+    }
+  }
+
+  const ubsanError = parseUBsanError(output);
+  if (!asanError && ubsanError) {
+    const lineNumber = ubsanError['lineNumber'];
+    errorLineNumber = lineNumber;
+    decodedOutput +=
+      mainMonacoEditor?.getModel()?.getLineContent(lineNumber) || '';
+  }
+
+  if (!isLineHighlightSet && errorLineNumber) {
+    mainMonacoEditor?.setLineHighlight(errorLineNumber);
+    setIsLineHighlightSet(true);
+  }
+
+  return (
+    <div
+      style={{
+        height: '100%',
+      }}
+      onMouseOver={() =>
+        errorLineNumber && mainMonacoEditor?.setLineHighlight(errorLineNumber)
+      }
+      onMouseLeave={() =>
+        errorLineNumber && mainMonacoEditor?.clearLineHighlight()
+      }
+    >
+      <CodeEditor
+        theme={lightMode ? 'light' : 'dark'}
+        language={'plaintext'}
+        value={decodedOutput}
+        saveViewState={false}
+        path="output"
+        options={{
+          minimap: { enabled: false },
+          readOnly: true,
+          automaticLayout: false,
+          insertSpaces: true,
+        }}
+        onMount={onMount}
+      />
+    </div>
+  );
+};

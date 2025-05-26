@@ -10,6 +10,7 @@ import { CodeEditor } from './editor/CodeEditor';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CompilerOutput } from './CompilerOutput';
 import { mainMonacoEditorAtom } from '../atoms/workspace';
+import { StderrOutput } from './StderrOutput';
 
 type StatusHistoryEntry = StatusData & { submissionTime?: number };
 
@@ -29,70 +30,6 @@ const tabs = [
   { label: 'results', value: 'results' },
   { label: 'history', value: 'history' },
 ];
-
-const specialCppTypeSizes: Record<string, number> = {
-  'std::__cxx11::basic_string': 32,
-  'std::vector': 24,
-};
-
-function parseAsanError(stderr: string) {
-  const asanRegex =
-    /^([\s\S]*)={65}\s.+AddressSanitizer: (\S+) on address [\s\S]*?main\.cpp:(\d+)/;
-  const match = stderr.match(asanRegex);
-
-  if (match) {
-    const [, originalStderr, errorType, lineNumber] = match;
-    let indexError = null;
-    if (errorType === 'heap-buffer-overflow') {
-      const operationRegex = /\n(.+) of size (\d+)/;
-      const operationMatch = stderr.match(operationRegex);
-      const locationRegex =
-        /is located (\d+) bytes to the (.*) of (\d+)-byte region/;
-      const locationMatch = stderr.match(locationRegex);
-      const declaritonRegex =
-        /allocated by[\s\S]*main\.cpp:(\d+)[\s\S]*SUMMARY/;
-      const declaritonMatch = stderr.match(declaritonRegex);
-      if (operationMatch && locationMatch && declaritonMatch) {
-        const [, operationType, typeSize] = operationMatch;
-        const [, offset, direction, regionSize] = locationMatch;
-        const [, lineNumber] = declaritonMatch;
-        let actualTypeSize = parseInt(typeSize, 10);
-        const innerTypeRegex = /std::__new_allocator<(.*?)[<>]/;
-        const innerTypeMatch = stderr.match(innerTypeRegex);
-        if (innerTypeMatch && innerTypeMatch[1]) {
-          const innerType = innerTypeMatch[1];
-          if (specialCppTypeSizes[innerType]) {
-            actualTypeSize = specialCppTypeSizes[innerType];
-          }
-        }
-        const containerSize = Math.floor(
-          parseInt(regionSize, 10) / actualTypeSize
-        );
-        let accessedIndex: number | string = '?';
-        if (direction === 'left') {
-          accessedIndex = Math.floor(-parseInt(offset, 10) / actualTypeSize);
-        } else if (direction === 'right') {
-          accessedIndex =
-            containerSize + Math.floor(parseInt(offset, 10) / actualTypeSize);
-        }
-        indexError = {
-          operationType,
-          containerSize,
-          accessedIndex,
-          declarationLineNumber: parseInt(lineNumber, 10),
-        };
-      }
-    }
-    return {
-      originalStderr,
-      errorType,
-      lineNumber: parseInt(lineNumber, 10),
-      indexError,
-    };
-  }
-
-  return null;
-}
 
 export const Output = ({
   result,
@@ -141,30 +78,6 @@ export const Output = ({
   const { userData } = useUserContext();
   const lightMode = userData.lightMode;
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
-
-  if (option === 'stderr' && outputText) {
-    const asanError = parseAsanError(outputText);
-    if (asanError) {
-      const { originalStderr, errorType, lineNumber, indexError } = asanError;
-      const errorLine = mainMonacoEditor
-        ?.getModel()
-        ?.getLineContent(lineNumber);
-      outputText = `${originalStderr}${errorType} on line ${lineNumber}:\n${errorLine}\n`;
-      if (indexError) {
-        const {
-          operationType,
-          containerSize,
-          accessedIndex,
-          declarationLineNumber,
-        } = indexError;
-        const declarationLine = mainMonacoEditor
-          ?.getModel()
-          ?.getLineContent(declarationLineNumber);
-        outputText += `Possible cause: ${operationType} on index ${accessedIndex} of size ${containerSize} container declared on line ${declarationLineNumber}:\n${declarationLine}\n`;
-      }
-      mainMonacoEditor?.setLineHighlight(lineNumber);
-    }
-  }
 
   return (
     <>
@@ -296,7 +209,7 @@ export const Output = ({
             </table>
           </div>
         )}
-        {(option === 'stdout' || option === 'stderr') && (
+        {option === 'stdout' && (
           <CodeEditor
             theme={lightMode ? 'light' : 'dark'}
             language={'plaintext'}
@@ -309,6 +222,13 @@ export const Output = ({
               automaticLayout: false,
               insertSpaces: true,
             }}
+            onMount={onMount}
+          />
+        )}
+        {option === 'stderr' && (
+          <StderrOutput
+            output={outputText ?? ''}
+            lightMode={lightMode}
             onMount={onMount}
           />
         )}
