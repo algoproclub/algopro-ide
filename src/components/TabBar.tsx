@@ -5,6 +5,7 @@ export interface TabBarProps {
   tabs: {
     label: string;
     value: string;
+    highlight?: boolean;
   }[];
   activeTab: string;
   onTabSelect?: (tab: { label: string; value: string }) => void;
@@ -17,6 +18,7 @@ export const TabBar = ({
   onTabSelect,
   homepage,
 }: TabBarProps): JSX.Element => {
+  tabs.find(tab => tab.value === activeTab)!.highlight = false;
   return (
     <div
       className={`flex whitespace-nowrap overflow-auto ${
@@ -30,16 +32,17 @@ export const TabBar = ({
             className={classNames(
               tab.value === activeTab
                 ? `${homepage ? 'bg-gray-700' : 'bg-[#323232]'} text-gray-200`
-                : 'text-gray-400 hover:text-gray-300 hover:bg-gray-800 active:bg-gray-800',
+                : `${tab.highlight ? 'text-yellow-400' : 'text-gray-400 hover:text-gray-300'}  hover:bg-gray-800 active:bg-gray-800`,
               `px-4 py-1 ${
                 homepage ? 'rounded-t-md' : ''
               } font-medium text-sm focus:outline-none transition`
             )}
             onClick={() => {
+              tab.highlight = false;
               if (onTabSelect) onTabSelect(tab);
             }}
           >
-            {tab.label}
+            {tab.label + (tab.highlight ? ' *' : '')}
           </button>
         ))}
       </div>

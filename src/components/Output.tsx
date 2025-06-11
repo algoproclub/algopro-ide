@@ -23,14 +23,6 @@ export interface OutputProps {
 
 type OutputTab = 'stdout' | 'stderr' | 'compile_output' | 'results' | 'history';
 
-const tabs = [
-  { label: 'stdout', value: 'stdout' },
-  { label: 'stderr', value: 'stderr' },
-  { label: 'compile output', value: 'compile_output' },
-  { label: 'results', value: 'results' },
-  { label: 'history', value: 'history' },
-];
-
 export const Output = ({
   result,
   statusData,
@@ -38,16 +30,44 @@ export const Output = ({
   onMount,
 }: OutputProps): JSX.Element => {
   const [option, setOption] = useState<OutputTab>('stdout');
+  const [tabs, setTabs] = useState<
+    Array<{ label: string; value: string; highlight: boolean }>
+  >([
+    { label: 'stdout', value: 'stdout', highlight: false },
+    { label: 'stderr', value: 'stderr', highlight: false },
+    { label: 'compile output', value: 'compile_output', highlight: false },
+    { label: 'results', value: 'results', highlight: false },
+    { label: 'history', value: 'history', highlight: false },
+  ]);
 
   useEffect(() => {
     let option = null;
+    const updatedTabs = tabs.map(tab => ({ ...tab, highlight: false }));
+
+    if (result?.stderr) {
+      option = 'stderr';
+      const stderrTab = updatedTabs.find(tab => tab.value === 'stderr');
+      if (stderrTab) stderrTab.highlight = true;
+    }
+    if (result?.stdout) {
+      option = 'stdout';
+      const stdoutTab = updatedTabs.find(tab => tab.value === 'stdout');
+      if (stdoutTab) stdoutTab.highlight = true;
+    }
+    if (result?.compilationMessage) {
+      const compileTab = updatedTabs.find(
+        tab => tab.value === 'compile_output'
+      );
+      if (compileTab) compileTab.highlight = true;
+    }
     if (
       result?.status === 'compile_error' ||
       result?.status === 'internal_error'
-    )
+    ) {
       option = 'compile_output';
-    else if (result?.stdout) option = 'stdout';
-    else if (result?.stderr) option = 'stderr';
+    }
+
+    setTabs(updatedTabs);
     if (option) setOption(option as OutputTab);
   }, [result?.status, result?.stdout, result?.stderr]);
 
