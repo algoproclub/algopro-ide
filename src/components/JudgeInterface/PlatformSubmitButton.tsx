@@ -84,7 +84,7 @@ export const GenericSubmitButton = ({
         testCases: null,
       });
       const lastAllowedTime = performance.now() + 5000;
-       
+      // eslint-disable-next-line no-constant-condition
       while (true) {
         try {
           const submissionData = await submitProblemSolution({
