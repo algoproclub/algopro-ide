@@ -549,7 +549,7 @@ export class SPOJResultFetcher extends ResultFetcher {
     if (message.startsWith('compiling') || message.startsWith('running')) {
       return 'running';
     }
-    if (message === 'accepted') {
+    if (message === 'accepted' || message === '100') {
       return 'correct answer';
     }
     return message;
