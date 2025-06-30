@@ -10,8 +10,9 @@ import { CodeEditor } from './editor/CodeEditor';
 const ASAN_REGEX =
   /^([\s\S]*)={65}\s.+AddressSanitizer: (\S+) on address [\s\S]*?main\.cpp:(\d+)/;
 const ASAN_OPERATION_REGEX = /\n(.+) of size (\d+)/;
-const ASAN_LOCATION_REGEX =
-  /is located (\d+) bytes to the (.*) of (\d+)-byte region/;
+const ASAN_LOCATION_REGEX = /is located (\d+) bytes (.*) (\d+)-byte region/;
+const LEFT_DIRECTION = 'before';
+const RIGHT_DIRECTION = 'after';
 const ASAN_DECLARATION_REGEX =
   /allocated by[\s\S]*main\.cpp:(\d+)[\s\S]*SUMMARY/;
 const ASAN_POINTER_REGEX = /\*>::allocate/;
@@ -73,9 +74,9 @@ function parseAsanError(stderr: string) {
         let accessedIndex: number | string = '?';
         if (actualTypeSize) {
           containerSize = Math.floor(parseInt(regionSize, 10) / actualTypeSize);
-          if (direction === 'left') {
+          if (direction === LEFT_DIRECTION) {
             accessedIndex = Math.floor(-parseInt(offset, 10) / actualTypeSize);
-          } else if (direction === 'right') {
+          } else if (direction === RIGHT_DIRECTION) {
             accessedIndex =
               containerSize + Math.floor(parseInt(offset, 10) / actualTypeSize);
           }

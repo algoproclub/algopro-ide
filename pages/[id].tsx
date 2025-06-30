@@ -11,6 +11,7 @@ import {
   layoutEditorsAtom,
   loadingAtom,
   mainEditorValueAtom,
+  mainMonacoEditorAtom,
   isLineHighlightSetAtom,
 } from '../src/atoms/workspace';
 import {
@@ -56,6 +57,7 @@ function EditorPage() {
   const getInputEditorValue = useAtomValue(inputEditorValueAtom);
   const [judgeResults, setJudgeResults] = useJudgeResults();
   const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
+  const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
 
   useUserFileConnection();
   useUpdateUserDashboard();
@@ -258,6 +260,7 @@ function EditorPage() {
       }
     }
     setIsLineHighlightSet(false);
+    mainMonacoEditor?.clearLineHighlight();
   };
 
   const handleKeydown = (event: KeyboardEvent) => {
