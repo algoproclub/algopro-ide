@@ -32,10 +32,10 @@ export const TabBar = ({
             className={classNames(
               tab.value === activeTab
                 ? `${homepage ? 'bg-gray-700' : 'bg-[#323232]'} text-gray-200`
-                : `${tab.highlight ? 'text-yellow-400' : 'text-gray-400 hover:text-gray-300'}  hover:bg-gray-800 active:bg-gray-800`,
+                : `${tab.highlight ? 'text-yellow-400 font-bold' : 'text-gray-400 hover:text-gray-300'}  hover:bg-gray-800 active:bg-gray-800`,
               `px-4 py-1 ${
                 homepage ? 'rounded-t-md' : ''
-              } font-medium text-sm focus:outline-none transition`
+              } text-sm focus:outline-none transition`
             )}
             onClick={() => {
               tab.highlight = false;
