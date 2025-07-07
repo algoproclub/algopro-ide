@@ -134,7 +134,7 @@ export default function MonacoEditor({
           []
         );
         editorRef.current._lineHighlight = null;
-      }, 2000);
+      }, 100);
     };
     editorRef.current.onDidFocusEditorWidget(() => {
       if (editorRef.current?._lineHighlight) {
