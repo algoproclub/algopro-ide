@@ -30,7 +30,7 @@ var (
 	MemoryLimit = 128 * memory.MiB
 
 	StdoutLimit = 5000 * memory.Byte
-	StderrLimit = 5000 * memory.Byte
+	StderrLimit = 10000 * memory.Byte
 
 	CppArgs = strings.Fields("-std=c++20 -O2 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -Wlogical-op -Wno-sign-compare -fsanitize=undefined -fsanitize=address -fno-sanitize-recover=all -g -DONLINE_JUDGE -fdiagnostics-color=always -fdiagnostics-urls=always")
 )
@@ -119,9 +119,10 @@ func (req Request) Run(ctx context.Context, sp sandbox.Provider) (*Response, err
 	stderrLimiter := iotest.TruncateWriter(stderr, int64(StderrLimit))
 
 	runSandbox := SandboxWithErrorStream{
+		// detect_stack_use_after_return=0 is a workaround for https://github.com/algoproclub/algopro-ide/issues/330
 		Sandbox: SandboxWithEnvs{
 			Sandbox: sbox,
-			Envs:    []string{"ASAN_OPTIONS=detect_leaks=0"},
+			Envs:    []string{"ASAN_OPTIONS=detect_leaks=0:detect_stack_use_after_return=0"},
 		},
 		ErrorStream: stderrLimiter,
 	}

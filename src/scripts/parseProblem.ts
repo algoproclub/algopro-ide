@@ -21,7 +21,7 @@ export const parseProblem = (url: string): URLProblem => {
       regex: /atcoder.jp\/contests\/[A-Za-z0-9]+\/tasks\/([A-Za-z0-9_]+)/,
     },
     { platform: 'cses', regex: /cses.fi\/problemset\/task\/([0-9]+)/ },
-    { platform: 'spoj', regex: /spoj.com\/problems\/([A-Z0-9]+)/ },
+    { platform: 'spoj', regex: /spoj.com\/problems\/([A-Z0-9_]+)/ },
     {
       platform: 'planets',
       regex: /planets.algopro.hu\/taskoverview\/([0-9a-z_-]+)/,
