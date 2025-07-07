@@ -5,13 +5,14 @@ import { NavBar } from '../src/components/NavBar/NavBar';
 import { EditorProvider, useEditorContext } from '../src/context/EditorContext';
 import { RunButton } from '../src/components/RunButton';
 import { submitToJudge } from '../src/scripts/judge';
-import { useAtom, useAtomValue } from 'jotai';
-import { useSetAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
   inputEditorValueAtom,
   layoutEditorsAtom,
   loadingAtom,
   mainEditorValueAtom,
+  mainMonacoEditorAtom,
+  isLineHighlightSetAtom,
 } from '../src/atoms/workspace';
 import {
   inputTabAtom,
@@ -55,6 +56,8 @@ function EditorPage() {
   const getMainEditorValue = useAtomValue(mainEditorValueAtom);
   const getInputEditorValue = useAtomValue(inputEditorValueAtom);
   const [judgeResults, setJudgeResults] = useJudgeResults();
+  const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
+  const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
 
   useUserFileConnection();
   useUpdateUserDashboard();
@@ -276,6 +279,8 @@ function EditorPage() {
         runWithInput(sample.input, sample.output, inputTab + ': ');
       }
     }
+    setIsLineHighlightSet(false);
+    mainMonacoEditor?.clearLineHighlight();
   };
 
   const handleKeydown = (event: KeyboardEvent) => {
