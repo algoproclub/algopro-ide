@@ -24,6 +24,9 @@ import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import { URLProblem } from '../src/types/problem';
 
 export const groups = [
+  'boa',
+  'farkas',
+  'medve',
   'anakonda',
   'bagoly',
   'capa',
