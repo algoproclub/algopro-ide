@@ -13,6 +13,7 @@ RUN firebase setup:emulators:ui
 
 COPY .firebaserc ./
 COPY firebase.json ./
+COPY firestore.rules ./
 COPY database.rules.json ./
 COPY storage.rules ./
 
