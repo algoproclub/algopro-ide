@@ -132,7 +132,11 @@ export const StderrOutput = ({
   if (asanError) {
     const { originalStderr, errorType, lineNumber, indexError } = asanError;
     errorLineNumber = lineNumber;
-    const errorLine = mainMonacoEditor?.getModel()?.getLineContent(lineNumber);
+    const model = mainMonacoEditor?.getModel();
+    const errorLine =
+      model == null || model.getLineCount() < lineNumber
+        ? '\t<line deleted>'
+        : model.getLineContent(lineNumber);
     decodedOutput = `${originalStderr}${errorType} on line ${lineNumber}:\n${errorLine}\n`;
 
     if (indexError) {
@@ -142,9 +146,10 @@ export const StderrOutput = ({
         accessedIndex,
         declarationLineNumber,
       } = indexError;
-      const declarationLine = mainMonacoEditor
-        ?.getModel()
-        ?.getLineContent(declarationLineNumber);
+      const declarationLine =
+        model == null || model.getLineCount() < declarationLineNumber
+          ? '\t<line deleted>'
+          : model.getLineContent(declarationLineNumber);
       decodedOutput += `Possible cause: ${operationType} on index ${accessedIndex} of size ${containerSize} container created on line ${declarationLineNumber}:\n${declarationLine}\n`;
     }
   }
@@ -153,8 +158,12 @@ export const StderrOutput = ({
   if (!asanError && ubsanError) {
     const lineNumber = ubsanError['lineNumber'];
     errorLineNumber = lineNumber;
-    decodedOutput +=
-      mainMonacoEditor?.getModel()?.getLineContent(lineNumber) || '';
+    const model = mainMonacoEditor?.getModel();
+    const errorLine =
+      model == null || model.getLineCount() < lineNumber
+        ? '\t<line deleted>'
+        : model.getLineContent(lineNumber);
+    decodedOutput += errorLine;
   }
 
   if (!isLineHighlightSet && errorLineNumber) {
