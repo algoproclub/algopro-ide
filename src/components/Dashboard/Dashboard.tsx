@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Fragment } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   getDatabase,
   ref,
@@ -274,8 +274,19 @@ const ClassesTab = () => {
           </thead>
           <tbody className="divide-y divide-gray-700 text-gray-300 bg-gray-900">
             {data.map((row, index) => {
-              if (!row) {
-                return <Fragment key={index}></Fragment>;
+              const curProblem = problems[Math.min(index, problems.length - 1)];
+              let tempFileID = 'Tap to Create';
+              let tempFileIDhref = `/solve/${curProblem.platform}/${curProblem.id}`;
+              let tempVerdict = 'Untried';
+              let tempCodeSize = '';
+              if (row) {
+                tempFileID = row.fileID.slice(1);
+                tempFileIDhref = `/${row.fileID.slice(1)}`;
+                tempVerdict =
+                  row.verdict[0].toUpperCase() + row.verdict.slice(1);
+                tempCodeSize = row.codeSize
+                  ? row.codeSize.toString()
+                  : 'Unknown';
               }
               return (
                 <tr key={index}>
@@ -292,47 +303,51 @@ const ClassesTab = () => {
                   <td>
                     <a
                       className="underline text-white hover:text-indigo-200 mr-2"
-                      href={`/${row.fileID.slice(1)}`}
+                      href={tempFileIDhref}
                       target="_blank"
                       rel="noreferrer"
                     >
-                      {row.fileID.split('-')[1]}
+                      {tempFileID}
                     </a>
                   </td>
                   <td>
                     <div className="flex items-center">
-                      <span className="mr-1.5">
-                        {row.verdict[0].toUpperCase() + row.verdict.slice(1)}
-                      </span>
-                      <span>
-                        {row.verdictType === 'wrong' && (
-                          <FontAwesomeIcon
-                            icon={{ prefix: 'fas', iconName: 'xmark' }}
-                            className="text-red-500"
-                          />
-                        )}
-                        {row.verdictType === 'accepted' && (
-                          <FontAwesomeIcon
-                            icon={{ prefix: 'fas', iconName: 'check' }}
-                            className="text-green-500"
-                          />
-                        )}
-                        {row.verdictType === 'error' && (
-                          <FontAwesomeIcon
-                            icon={{
-                              prefix: 'fas',
-                              iconName: 'triangle-exclamation',
-                            }}
-                            className="text-yellow-500"
-                          />
-                        )}
-                      </span>
+                      <span className="mr-1.5">{tempVerdict}</span>
+                      {row && (
+                        <span>
+                          {row.verdictType === 'wrong' && (
+                            <FontAwesomeIcon
+                              icon={{ prefix: 'fas', iconName: 'xmark' }}
+                              className="text-red-500"
+                            />
+                          )}
+                          {row.verdictType === 'accepted' && (
+                            <FontAwesomeIcon
+                              icon={{ prefix: 'fas', iconName: 'check' }}
+                              className="text-green-500"
+                            />
+                          )}
+                          {row.verdictType === 'error' && (
+                            <FontAwesomeIcon
+                              icon={{
+                                prefix: 'fas',
+                                iconName: 'triangle-exclamation',
+                              }}
+                              className="text-yellow-500"
+                            />
+                          )}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td>
-                    <TimeAgoLabel date={new Date(row.lastEdit)} />
+                    {row && row.lastEdit ? (
+                      <TimeAgoLabel date={new Date(row.lastEdit)} />
+                    ) : (
+                      'Unknown'
+                    )}
                   </td>
-                  <td>{row.codeSize}</td>
+                  <td>{row && tempCodeSize}</td>
                 </tr>
               );
             })}
