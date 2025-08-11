@@ -47,7 +47,7 @@ const Dropdown = ({
                   leaveFrom="transform scale-100 opacity-100"
                   leaveTo="transform scale-95 opacity-0"
                 >
-                  <Listbox.Options className="border border-gray-700 rounded-md bg-gray-900 divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden min-h-[2rem]">
+                  <Listbox.Options className="border border-gray-700 rounded-md bg-gray-900 divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden min-h-[2rem] max-h-60 overflow-y-auto">
                     {items.map((val, ind) => (
                       <Listbox.Option
                         className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700"
