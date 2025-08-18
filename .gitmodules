@@ -1,0 +1,3 @@
+[submodule "yjs"]
+	path = yjs
+	url = git@github.com:algoproclub/algopro-yjs.git
