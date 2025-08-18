@@ -18,7 +18,7 @@ import { useNullableUserContext } from '../../src/context/UserContext';
 import { StatusData } from '../../src/types/problem';
 import USACOResults from '../../src/components/JudgeInterface/USACOResults';
 import Split from 'react-split-grid';
-import WithTeacherLogin from '../../src/components/WithTeacherLogin';
+import WithAdminLogin from '../../src/components/WithAdminLogin';
 import { XMarkIcon } from '@heroicons/react/20/solid';
 import type * as monaco from 'monaco-editor';
 
@@ -217,7 +217,7 @@ const SpectatePage = () => {
   }
 
   return (
-    <WithTeacherLogin>
+    <WithAdminLogin>
       <>
         {files.length > 3 && (
           /* FIXME: Make user selection configurable when there are more than 3 participants. */
@@ -232,7 +232,7 @@ const SpectatePage = () => {
           <SolutionView fileID={files?.[2]} startTime={startTime} />
         </div>
       </>
-    </WithTeacherLogin>
+    </WithAdminLogin>
   );
 };
 

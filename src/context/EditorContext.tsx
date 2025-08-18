@@ -17,7 +17,7 @@ import React, {
   useState,
 } from 'react';
 import { ChatMessage } from '../components/Chat';
-import { useUserContext } from './UserContext';
+import { useUserContext, isTeacher } from './UserContext';
 import { FileSubmission, PlatformProblem, ProblemData } from '../types/problem';
 
 export type Language = 'cpp' | 'java' | 'py';
@@ -150,7 +150,10 @@ export function EditorProvider({
     editorContextValue.fileData.users[userData.id]?.permission ??
     editorContextValue.fileData.settings.defaultPermission;
 
-  if (userRole !== 'teacher' && userPermission === 'PRIVATE') {
+  // FIXME: This allows teachers from other schools to access the file.
+  //        We should not be doing permission checks in the frontend,
+  //        but rather enforce them with Firebase rules.
+  if (!isTeacher(userRole) && userPermission === 'PRIVATE') {
     return <>{permissionDeniedUI}</>;
   }
 
