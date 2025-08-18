@@ -78,7 +78,7 @@
       }
     },
     /* FIXME: Right now teachers can view all students' work */
-    ".read": "auth.token.admin === true || auth.token.teacher != []",
+    ".read": "auth.token.admin === true || auth.token.teacher.size > 0",
     ".write": false
   }
 }
