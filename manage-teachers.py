@@ -49,12 +49,16 @@ def add_permission(user):
     if args.admin:
         print(f"Adding {user.email} as admin")
         claims['admin'] = True
+        if claims['teacher'] and isinstance(claims['teacher'], bool):
+            claims['teacher'] = ['algopro']
     else:
         school = args.teacher[0]
         print(f"Adding {user.email} as teacher for school {school}")
-        claims.setdefault('teacher', [])
-        if school not in claims['teacher']:
-            claims['teacher'].append(school)
+        if isinstance(claims.get('teacher'), list):
+            if school not in claims['teacher']:
+                claims['teacher'].append(school)
+        else:
+            claims['teacher'] = [school]
 
     if not args.dry_run:
         firebase_admin.auth.set_custom_user_claims(user.uid, claims)
