@@ -57,7 +57,10 @@ export type UserData = {
   templateCode: TemplateCodeData;
 };
 
-type UserRole = 'student' | 'teacher';
+type UserRole = {
+  admin?: boolean;
+  teacher?: string[];
+};
 
 export type UserContextType = {
   firebaseUser: User | null;
@@ -96,9 +99,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setTemplateCode(null);
       } else {
         setLogged(true);
-        user
-          .getIdTokenResult()
-          .then(res => setUserRole(res.claims.teacher ? 'teacher' : 'student'));
+        user.getIdTokenResult().then(res =>
+          setUserRole({
+            teacher: res.claims?.teacher,
+            admin: res.claims?.admin,
+          } as UserRole)
+        );
         let displayName = user.displayName;
         if (!displayName) {
           displayName =
@@ -185,4 +191,11 @@ export function useUserContext() {
       "useUserContext() can only be called after UserProvider has finished loading. If you want to access userContext while it's still loading, use useNullableUserContext() instead"
     );
   return { firebaseUser, userData, userRole, updateUsername, templateCode };
+}
+
+export function isTeacher(userRole: UserRole | null): boolean {
+  if (userRole === null) return false;
+  if (userRole.admin) return true;
+  if (userRole.teacher && userRole.teacher.length > 0) return true;
+  return false;
 }

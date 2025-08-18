@@ -24,7 +24,7 @@ import {
   EditTextModal,
   handleKeyDown,
 } from '../../../src/components/EditTextModal';
-import WithTeacherLogin from '../../../src/components/WithTeacherLogin';
+import WithAdminLogin from '../../../src/components/WithAdminLogin';
 import { Hint } from '../../../src/types/problem';
 import Dropdown from '../../../src/components/Dropdown';
 import Checkbox from '../../../src/components/Checkbox';
@@ -857,8 +857,8 @@ const PageContent = () => {
 
 export default function EditPage() {
   return (
-    <WithTeacherLogin>
+    <WithAdminLogin>
       <PageContent />
-    </WithTeacherLogin>
+    </WithAdminLogin>
   );
 }

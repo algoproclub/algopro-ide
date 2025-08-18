@@ -7,7 +7,7 @@ import {
 } from 'firebase/database';
 import { useEffect, useMemo } from 'react';
 import { useEditorContext } from '../context/EditorContext';
-import { useUserContext } from '../context/UserContext';
+import { useUserContext, isTeacher } from '../context/UserContext';
 import { useOnlineUsers } from './useOnlineUsers';
 import useUserPermission from './useUserPermission';
 import { useAtomValue } from 'jotai';
@@ -29,12 +29,14 @@ export default function useUpdateUserDashboard() {
     const suffix = 'AlgoPro IDE';
     let prefix = undefined;
 
-    if (userRole === 'teacher' && settings.workspaceName) {
-      prefix = `[${owner}]: ${settings.workspaceName}`;
+    if (settings.workspaceName) {
+      if (isTeacher(userRole)) {
+        prefix = `[${owner}]: ${settings.workspaceName}`;
+      } else {
+        prefix = problem?.title ?? settings.workspaceName;
+      }
     }
-    if (userRole === 'student') {
-      prefix = problem?.title ?? settings.workspaceName;
-    }
+
     if (prefix) {
       prefix += ' - ';
     } else {

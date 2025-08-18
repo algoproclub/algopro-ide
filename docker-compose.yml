@@ -23,6 +23,11 @@ services:
       - type: bind
         source: functions/
         target: /app/functions
+      - './.firebaserc:/app/.firebaserc'
+      - './firebase.json:/app/firebase.json'
+      - './firestore.rules:/app/firestore.rules'
+      - './database.rules.json:/app/database.rules.json'
+      - './storage.rules:/app/storage.rules'
     depends_on: [functions]
   yjs:
     build:

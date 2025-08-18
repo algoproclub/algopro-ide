@@ -107,6 +107,11 @@ export default function MonacoEditor({
     editorRef.current._lineHighlight = null;
     editorRef.current._lineHighlightTimeout = null;
     editorRef.current.setLineHighlight = function (line: number) {
+      const model = this.getModel();
+      if (!model || line < 1 || line > model.getLineCount()) {
+        return;
+      }
+
       if (this._lineHighlightTimeout) {
         clearTimeout(this._lineHighlightTimeout);
       }
