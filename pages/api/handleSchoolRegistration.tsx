@@ -1,8 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getDatabase } from 'firebase-admin/database';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 import firebaseApp from '../../src/firebaseAdmin';
 import { compactDecrypt } from 'jose';
+import { registerToSchool } from './registerToSchool';
 
 type RequestData = {
   token: string;
@@ -10,7 +10,6 @@ type RequestData = {
   name: string | null;
 };
 
-const db = getDatabase(firebaseApp);
 const firestore = getFirestore(firebaseApp);
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
@@ -34,25 +33,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(400).send('Invalid token payload');
       return;
     }
-
     const now = Date.now();
     if (exp < now) {
       res.status(400).send('Token expired');
       return;
     }
-    const rtdbRef = db.ref(`users/${userID}/schools`);
-    await rtdbRef.transaction(current => {
-      if (Array.isArray(current)) {
-        return current.includes(schoolID) ? current : [...current, schoolID];
-      }
-      return [schoolID];
-    });
-
+    await registerToSchool(userID, schoolID);
     const userDocRef = firestore.doc(`userdata/${userID}`);
-    await userDocRef.set(
-      { schools: FieldValue.arrayUnion(schoolID) },
-      { merge: true }
-    );
     if (name) {
       await firestore.runTransaction(async tx => {
         const snap = await tx.get(userDocRef);

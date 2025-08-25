@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getDatabase } from 'firebase-admin/database';
 import firebaseApp from '../../src/firebaseAdmin';
 import { compactDecrypt } from 'jose';
+import { registerToSchool } from './registerToSchool';
 
 type RequestData = {
   token: string;
@@ -53,6 +54,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     await db.ref(`users/${userID}/data`).update({
       discordID,
     });
+    await registerToSchool(userID, 'algopro');
     res.status(200).end();
   } catch (e) {
     console.error('Registration error:', e);
