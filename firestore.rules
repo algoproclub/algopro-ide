@@ -20,15 +20,29 @@ service cloud.firestore {
       }
     }
 
-    // FIXME: Check teacher permission (and school ID) instead of admin
-    match /groups/{group}/classes/{class} {
-      allow read: if true;
-      allow write: if request.auth.token.admin == true;
+    match /groups/{group} {
+      // TODO: maybe allow read for user that is in the group!
+      allow read:  if request.auth.token.admin == true
+                   || resource.data.school in request.auth.token.teacher
+      allow write: if request.auth.token.admin == true
+                   || resource.data.school in request.auth.token.teacher
+
+      match /classes/{class} {
+        // TODO: maybe allow read for user that is in the group!
+        allow read:  if request.auth.token.admin == true
+                     || get(/databases/$(database)/documents/groups/$(group)).data.school in request.auth.token.teacher;
+        allow write: if request.auth.token.admin == true
+                     || get(/databases/$(database)/documents/groups/$(group)).data.school in request.auth.token.teacher;
+      }
     }
 
-    match /userdata/{userid} {
-      allow read: if request.auth.uid == userid || request.auth.token.admin == true;
-      allow write: if false;
+    match /userdata/{userId} {
+      allow read:  if request.auth.token.admin == true
+                   || resource.data.schools.hasAny(request.auth.token.teacher);
+                   // TODO: maybe allow user to read their own data.
+                   // || request.auth.uid == userId; // This doesn't work when LISTing users: userId is unset!
+      allow write: if request.auth.token.admin == true
+                   || resource.data.schools.hasAny(request.auth.token.teacher);
     }
   }
 }
