@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getDatabase } from 'firebase-admin/database';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import firebaseApp from '../../src/firebaseAdmin';
 import { compactDecrypt } from 'jose';
 
@@ -18,6 +18,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(400).send('Missing token or userID');
     return;
   }
+
   const { token, userID } = data;
   const secret =
     process.env.ONBOARDING_SECRET ?? 'abcdabcdabcdabcdabcdabcdabcdabcd';
@@ -32,18 +33,25 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(400).send('Invalid token payload');
       return;
     }
+
     const now = Date.now();
     if (exp < now) {
       res.status(400).send('Token expired');
       return;
     }
-    const rtdbRef = db.ref(`users/${userID}/schools/${schoolID}`);
-    await rtdbRef.set({ creationTime: Date.now() });
+    const rtdbRef = db.ref(`users/${userID}/schools`);
+    await rtdbRef.transaction(current => {
+      if (Array.isArray(current)) {
+        return current.includes(schoolID) ? current : [...current, schoolID];
+      }
+      return [schoolID];
+    });
 
-    const firestoreRef = firestore.doc(
-      `userdata/${userID}/schools/${schoolID}`
+    const userDocRef = firestore.doc(`userdata/${userID}`);
+    await userDocRef.set(
+      { schools: FieldValue.arrayUnion(schoolID) },
+      { merge: true }
     );
-    await firestoreRef.set({ creationTime: Date.now() }, { merge: true });
 
     res.status(200).end();
   } catch (e) {
