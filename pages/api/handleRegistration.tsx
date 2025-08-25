@@ -6,6 +6,7 @@ import { compactDecrypt } from 'jose';
 type RequestData = {
   token: string;
   userID: string;
+  name: string | null;
 };
 
 const db = getDatabase(firebaseApp);

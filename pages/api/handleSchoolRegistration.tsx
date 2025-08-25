@@ -7,6 +7,7 @@ import { compactDecrypt } from 'jose';
 type RequestData = {
   token: string;
   userID: string;
+  name: string | null;
 };
 
 const db = getDatabase(firebaseApp);
@@ -19,7 +20,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
-  const { token, userID } = data;
+  const { token, userID, name } = data;
   const secret =
     process.env.ONBOARDING_SECRET ?? 'abcdabcdabcdabcdabcdabcdabcdabcd';
   const secretKey = new TextEncoder().encode(secret);
@@ -52,7 +53,15 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       { schools: FieldValue.arrayUnion(schoolID) },
       { merge: true }
     );
-
+    if (name) {
+      await firestore.runTransaction(async tx => {
+        const snap = await tx.get(userDocRef);
+        const current = snap.exists ? snap.get('user_full_name') : null;
+        if (!current) {
+          tx.set(userDocRef, { user_full_name: name }, { merge: true });
+        }
+      });
+    }
     res.status(200).end();
   } catch (e) {
     console.error('Registration error:', e);

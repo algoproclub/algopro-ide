@@ -25,7 +25,11 @@ export default function Register({ handlerURL }: { handlerURL: string }) {
   useEffect(() => {}, [router.isReady, logged]);
 
   useEffect(() => {
-    const makeRequest = async (token: string, userID: string) => {
+    const makeRequest = async (
+      token: string,
+      userID: string,
+      name: string | null
+    ) => {
       const resp = await fetch(handlerURL, {
         method: 'POST',
         headers: {
@@ -34,6 +38,7 @@ export default function Register({ handlerURL }: { handlerURL: string }) {
         body: JSON.stringify({
           token,
           userID,
+          name,
         }),
       });
       return { message: await resp.text(), ok: resp.ok };
@@ -44,7 +49,11 @@ export default function Register({ handlerURL }: { handlerURL: string }) {
       router.isReady &&
       typeof router.query.token === 'string'
     ) {
-      makeRequest(router.query.token, firebaseUser.uid).then(resp => {
+      makeRequest(
+        router.query.token,
+        firebaseUser.uid,
+        firebaseUser.displayName
+      ).then(resp => {
         if (!resp.ok) {
           alert('Error: ' + resp.message);
         }
