@@ -22,19 +22,8 @@ import { parseProblem } from '../src/scripts/parseProblem';
 import { getPlatformName } from '../src/scripts/getPlatformName';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import { URLProblem } from '../src/types/problem';
+import { useUserContext } from '../src/context/UserContext';
 
-export const groups = [
-  'boa',
-  'farkas',
-  'medve',
-  'anakonda',
-  'bagoly',
-  'capa',
-  'kajman',
-  'piton',
-  'sas',
-  'tigris',
-];
 const times = ['1 hour', '3 hours', '1 day', '7 days', 'All'];
 const timeInMs = [
   1000 * 60 * 60,
@@ -44,7 +33,6 @@ const timeInMs = [
   Infinity,
 ];
 
-type Group = (typeof groups)[number];
 type Student = {
   id: string;
   name: string;
@@ -148,7 +136,7 @@ export const fetchSolutionData = async (
 };
 
 export const fetchProblems = async (
-  group: Group,
+  group: string,
   classID?: string
 ): Promise<ProblemData[]> => {
   if (!classID) {
@@ -175,32 +163,33 @@ export const fetchProblems = async (
   });
 };
 
-const fetchStudents = async (group: Group): Promise<Student[]> => {
-  const results = await getDocs(
+const fetchStudents = async (group: string): Promise<Student[]> => {
+  const groupSnap = await getDoc(doc(firestore, 'groups', group));
+  const school = groupSnap.get('school');
+
+  const usersSnap = await getDocs(
     query(
       collection(firestore, 'userdata'),
-      where('groups', 'array-contains', group)
+      where('schools', 'array-contains', school)
+      // Note: we need `schools` to be in the query to make the firebase rule work
+      //       Because we can only use `array-contains` once per query, we can't
+      //       also filter for a specific group via the query.
+      //       So we filter for our group via normal JS logic below
     )
   );
-  const users: Student[] = [];
-  results.forEach(doc => {
-    users.push({ id: doc.id, name: doc.data().user_full_name });
-  });
-  return users;
+  return usersSnap.docs
+    .filter(doc => doc.get('group') === group)
+    .map(doc => ({ id: doc.id, name: doc.data().user_full_name }));
 };
 
-export const fetchClasses = async (group: Group) => {
-  const classes: string[] = [];
-  const results = await getDocs(
+export const fetchClasses = async (group: string) => {
+  const classesSnap = await getDocs(
     query(
       collection(firestore, 'groups', group, 'classes'),
       orderBy('creationTime', 'desc')
     )
   );
-  results.forEach(doc => {
-    classes.push(doc.id);
-  });
-  return classes;
+  return classesSnap.docs.map(doc => doc.id);
 };
 
 const RefreshButton = ({ onRefresh }: { onRefresh: () => void }) => {
@@ -221,8 +210,9 @@ const Controls = ({
   groupInd,
   classInd,
   timeInd,
-  highlight,
+  groups,
   classes,
+  highlight,
   setGroupInd,
   setClassInd,
   setTimeInd,
@@ -232,6 +222,7 @@ const Controls = ({
   groupInd: number;
   classInd: number;
   timeInd: number;
+  groups: string[];
   classes: string[];
   highlight: boolean;
   setGroupInd: (_: number) => void;
@@ -276,8 +267,9 @@ const ControlDropdown = ({
   groupInd,
   classInd,
   timeInd,
-  highlight,
+  groups,
   classes,
+  highlight,
   setGroupInd,
   setClassInd,
   setTimeInd,
@@ -287,6 +279,7 @@ const ControlDropdown = ({
   groupInd: number;
   classInd: number;
   timeInd: number;
+  groups: string[];
   classes: string[];
   highlight: boolean;
   setGroupInd: (_: number) => void;
@@ -511,6 +504,9 @@ const GroupData = ({
 };
 
 const PageContent = () => {
+  const { firebaseUser } = useUserContext();
+  const [schools, setSchools] = useState<string[]>([]);
+  const [groups, setGroups] = useState<string[]>([]);
   const [groupInd, setGroupInd] = useState(0);
   const [timeInd, setTimeInd] = useState(0);
   const [classInd, setClassInd] = useState(0);
@@ -523,6 +519,34 @@ const PageContent = () => {
   document.title = 'Teacher interface - AlgoPro IDE';
 
   useEffect(() => {
+    if (!firebaseUser) {
+      return;
+    }
+    const updateSchools = async () => {
+      const idTokenResult = await firebaseUser.getIdTokenResult();
+      setSchools((idTokenResult.claims['teacher'] ?? []) as string[]);
+    };
+    updateSchools();
+  }, [firebaseUser]);
+
+  useEffect(() => {
+    if (schools.length === 0) return;
+    const updateGroups = async () => {
+      const groupDocs = await getDocs(
+        query(collection(firestore, 'groups'), where('school', 'in', schools))
+      );
+      const newGroups = groupDocs.docs.map(x => x.id);
+      if (!newGroups) {
+        return;
+      }
+      setGroups(newGroups);
+    };
+    updateGroups();
+  }, [schools]);
+
+  useEffect(() => {
+    if (groups.length === 0) return;
+
     fetchClasses(groups[groupInd]).then(res => {
       setClasses(res);
     });
@@ -569,6 +593,7 @@ const PageContent = () => {
   }, [classes]);
 
   const handleRefresh = async () => {
+    if (groups.length === 0) return;
     setClasses(await fetchClasses(groups[groupInd]));
     setStudents(await fetchStudents(groups[groupInd]));
   };
@@ -599,6 +624,7 @@ const PageContent = () => {
             groupInd={groupInd}
             classInd={classInd}
             timeInd={timeInd}
+            groups={groups}
             classes={classes}
             highlight={highlight}
             setGroupInd={index => setGroupInd(index)}
@@ -613,6 +639,7 @@ const PageContent = () => {
             groupInd={groupInd}
             classInd={classInd}
             timeInd={timeInd}
+            groups={groups}
             classes={classes}
             highlight={highlight}
             setGroupInd={index => setGroupInd(index)}
