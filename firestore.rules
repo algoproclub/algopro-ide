@@ -21,16 +21,16 @@ service cloud.firestore {
     }
 
     match /groups/{group} {
-      // TODO: maybe allow read for user that is in the group!
       allow read:  if request.auth.token.admin == true
                    || resource.data.school in request.auth.token.teacher
+                   || resource.data.school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
       allow write: if request.auth.token.admin == true
-                   || resource.data.school in request.auth.token.teacher
+                   || resource.data.school in request.auth.token.teacher;
 
       match /classes/{class} {
-        // TODO: maybe allow read for user that is in the group!
         allow read:  if request.auth.token.admin == true
-                     || get(/databases/$(database)/documents/groups/$(group)).data.school in request.auth.token.teacher;
+                     || get(/databases/$(database)/documents/groups/$(group)).data.school in request.auth.token.teacher
+                     || get(/databases/$(database)/documents/groups/$(group)).data.school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
         allow write: if request.auth.token.admin == true
                      || get(/databases/$(database)/documents/groups/$(group)).data.school in request.auth.token.teacher;
       }
@@ -38,9 +38,8 @@ service cloud.firestore {
 
     match /userdata/{userId} {
       allow read:  if request.auth.token.admin == true
-                   || resource.data.schools.hasAny(request.auth.token.teacher);
-                   // TODO: maybe allow user to read their own data.
-                   // || request.auth.uid == userId; // This doesn't work when LISTing users: userId is unset!
+                   || resource.data.schools.hasAny(request.auth.token.teacher)
+                   || request.auth.uid == userId;
       allow write: if request.auth.token.admin == true
                    || resource.data.schools.hasAny(request.auth.token.teacher);
     }
