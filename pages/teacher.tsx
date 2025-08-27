@@ -218,25 +218,25 @@ const RefreshButton = ({ onRefresh }: { onRefresh: () => void }) => {
 };
 
 const Controls = ({
-  group,
-  classID,
-  time,
+  groupInd,
+  classInd,
+  timeInd,
   highlight,
   classes,
-  setGroup,
-  setClassID,
-  setTime,
+  setGroupInd,
+  setClassInd,
+  setTimeInd,
   toggleHighlight,
   onRefresh,
 }: {
-  group: number;
-  classID: number;
-  time: number;
+  groupInd: number;
+  classInd: number;
+  timeInd: number;
   classes: string[];
   highlight: boolean;
-  setGroup: (_: number) => void;
-  setClassID: (_: number) => void;
-  setTime: (_: number) => void;
+  setGroupInd: (_: number) => void;
+  setClassInd: (_: number) => void;
+  setTimeInd: (_: number) => void;
   toggleHighlight: () => void;
   onRefresh: () => void;
 }) => {
@@ -246,20 +246,20 @@ const Controls = ({
         <Dropdown
           items={groups}
           label="Group"
-          selected={group}
-          setSelected={setGroup}
+          selected={groupInd}
+          setSelected={setGroupInd}
         />
         <Dropdown
           items={classes}
           label="Class"
-          selected={classID}
-          setSelected={setClassID}
+          selected={classInd}
+          setSelected={setClassInd}
         />
         <Dropdown
           items={times}
           label="Last edit"
-          selected={time}
-          setSelected={setTime}
+          selected={timeInd}
+          setSelected={setTimeInd}
         />
         <RefreshButton onRefresh={onRefresh} />
       </div>
@@ -273,31 +273,31 @@ const Controls = ({
 };
 
 const ControlDropdown = ({
-  group,
-  classID,
-  time,
+  groupInd,
+  classInd,
+  timeInd,
   highlight,
   classes,
-  setGroup,
-  setClassID,
-  setTime,
+  setGroupInd,
+  setClassInd,
+  setTimeInd,
   toggleHighlight,
   onRefresh,
 }: {
-  group: number;
-  classID: number;
-  time: number;
+  groupInd: number;
+  classInd: number;
+  timeInd: number;
   classes: string[];
   highlight: boolean;
-  setGroup: (_: number) => void;
-  setClassID: (_: number) => void;
-  setTime: (_: number) => void;
+  setGroupInd: (_: number) => void;
+  setClassInd: (_: number) => void;
+  setTimeInd: (_: number) => void;
   toggleHighlight: () => void;
   onRefresh: () => void;
 }) => {
   useEffect(() => {
-    setClassID(0);
-  }, [group]);
+    setClassInd(0);
+  }, [groupInd]);
 
   return (
     <Disclosure>
@@ -333,20 +333,20 @@ const ControlDropdown = ({
             <Dropdown
               items={groups}
               label="Group"
-              selected={group}
-              setSelected={setGroup}
+              selected={groupInd}
+              setSelected={setGroupInd}
             />
             <Dropdown
               items={classes}
               label="Class"
-              selected={classID}
-              setSelected={setClassID}
+              selected={classInd}
+              setSelected={setClassInd}
             />
             <Dropdown
               items={times}
               label="Last edit"
-              selected={time}
-              setSelected={setTime}
+              selected={timeInd}
+              setSelected={setTimeInd}
             />
             <Checkbox
               checked={highlight}
@@ -511,9 +511,9 @@ const GroupData = ({
 };
 
 const PageContent = () => {
-  const [group, setGroup] = useState(0);
-  const [time, setTime] = useState(0);
-  const [classID, setClassID] = useState(0);
+  const [groupInd, setGroupInd] = useState(0);
+  const [timeInd, setTimeInd] = useState(0);
+  const [classInd, setClassInd] = useState(0);
   const [highlight, setHighlight] = useState(false);
   const [classes, setClasses] = useState<string[]>([]);
   const [problems, setProblems] = useState<ProblemData[]>([]);
@@ -523,7 +523,7 @@ const PageContent = () => {
   document.title = 'Teacher interface - AlgoPro IDE';
 
   useEffect(() => {
-    fetchClasses(groups[group]).then(res => {
+    fetchClasses(groups[groupInd]).then(res => {
       setClasses(res);
     });
     const timeout = setInterval(() => {
@@ -533,11 +533,11 @@ const PageContent = () => {
     return () => {
       clearTimeout(timeout);
     };
-  }, [groups, group]);
+  }, [groups, groupInd]);
 
   useEffect(() => {
     handleRefresh();
-  }, [group, classID]);
+  }, [groupInd, classInd]);
 
   useEffect(() => {
     const updateData = async () => {
@@ -563,14 +563,14 @@ const PageContent = () => {
 
   useEffect(() => {
     const updateProblems = async () => {
-      setProblems(await fetchProblems(groups[group], classes[classID]));
+      setProblems(await fetchProblems(groups[groupInd], classes[classInd]));
     };
     updateProblems();
   }, [classes]);
 
   const handleRefresh = async () => {
-    setClasses(await fetchClasses(groups[group]));
-    setStudents(await fetchStudents(groups[group]));
+    setClasses(await fetchClasses(groups[groupInd]));
+    setStudents(await fetchStudents(groups[groupInd]));
   };
   const transpose = (array: (SolutionData | null)[][]) => {
     return array.length > 0
@@ -584,7 +584,7 @@ const PageContent = () => {
   const filteredProblems = problems.filter((_, i) => problemWithID[i]);
   const transposed = transpose(data);
 
-  const fromTime = currentTime - timeInMs[time];
+  const fromTime = currentTime - timeInMs[timeInd];
   const hasSolution = transposed.map(solutions =>
     solutions.some(sol => sol !== null && sol.lastEdit >= fromTime)
   );
@@ -596,28 +596,28 @@ const PageContent = () => {
       <div className="mx-auto max-w-7xl mt-4 space-y-4">
         <div className="md:hidden">
           <ControlDropdown
-            group={group}
-            classID={classID}
-            time={time}
+            groupInd={groupInd}
+            classInd={classInd}
+            timeInd={timeInd}
             classes={classes}
             highlight={highlight}
-            setGroup={index => setGroup(index)}
-            setClassID={index => setClassID(index)}
-            setTime={index => setTime(index)}
+            setGroupInd={index => setGroupInd(index)}
+            setClassInd={index => setClassInd(index)}
+            setTimeInd={index => setTimeInd(index)}
             toggleHighlight={() => setHighlight(val => !val)}
             onRefresh={handleRefresh}
           />
         </div>
         <div className="hidden md:block">
           <Controls
-            group={group}
-            classID={classID}
-            time={time}
+            groupInd={groupInd}
+            classInd={classInd}
+            timeInd={timeInd}
             classes={classes}
             highlight={highlight}
-            setGroup={index => setGroup(index)}
-            setClassID={index => setClassID(index)}
-            setTime={index => setTime(index)}
+            setGroupInd={index => setGroupInd(index)}
+            setClassInd={index => setClassInd(index)}
+            setTimeInd={index => setTimeInd(index)}
             toggleHighlight={() => setHighlight(val => !val)}
             onRefresh={handleRefresh}
           />
