@@ -3,9 +3,10 @@ import React, { useEffect, useRef } from 'react';
 import { MessagePage } from '../src/components/MessagePage';
 import { useNullableUserContext } from '../src/context/UserContext';
 import { DEFAULT_COMPILER_OPTIONS } from './new';
+import WithRegistration from '../src/components/WithRegistration';
 import va from '@vercel/analytics';
 
-export default function NewFilePage() {
+function PageContent() {
   const router = useRouter();
   const { userData, firebaseUser, logged } = useNullableUserContext();
 
@@ -52,4 +53,12 @@ export default function NewFilePage() {
 
   if (logged === false) return loginUI;
   return loadingUI;
+}
+
+export default function NewFilePage() {
+  return (
+    <WithRegistration>
+      <PageContent />
+    </WithRegistration>
+  );
 }

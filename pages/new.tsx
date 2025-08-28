@@ -8,6 +8,7 @@ import { getDatabase, ref, update } from 'firebase/database';
 import { SharingPermissions } from '../src/components/SharingPermissions';
 import va from '@vercel/analytics';
 import { RadioGroupContents } from '../src/components/settings/RadioGroupContents';
+import WithRegistration from '../src/components/WithRegistration';
 
 export const DEFAULT_COMPILER_OPTIONS = {
   cpp: '-std=c++20 -O2 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -Wlogical-op -Wno-sign-compare -Wno-vla-cxx-extension',
@@ -15,7 +16,7 @@ export const DEFAULT_COMPILER_OPTIONS = {
   py: '',
 };
 
-export default function NewFilePage() {
+function PageContent() {
   const { userData, firebaseUser } = useNullableUserContext();
   const router = useRouter();
   const [lang, setLang] = useState<Language>('cpp');
@@ -162,5 +163,13 @@ export default function NewFilePage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function NewFilePage() {
+  return (
+    <WithRegistration>
+      <PageContent />
+    </WithRegistration>
   );
 }

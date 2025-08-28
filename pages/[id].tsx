@@ -21,7 +21,7 @@ import {
   showSidebarAtom,
   tabsListAtom,
 } from '../src/atoms/workspaceUI';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMediaQuery } from '../src/hooks/useMediaQuery';
 import Workspace from '../src/components/Workspace/Workspace';
 import { MobileBottomNav } from '../src/components/NavBar/MobileBottomNav';
@@ -39,6 +39,7 @@ import { ProblemData } from '../src/types/problem';
 import { fetchProblemFromDb } from '../src/scripts/fetchProblemFromDb';
 import Link from 'next/link';
 import ProfileSettings from '../src/components/settings/ProfileSettings';
+import WithRegistration from '../src/components/WithRegistration';
 
 function EditorPage() {
   const { fileData, updateFileData } = useEditorContext();
@@ -243,18 +244,13 @@ function EditorPage() {
               failedResult.statusDescription;
           newJudgeResults[1] = failedResult;
           runAllList.forEach((item, index) => {
-            let tabindex = tabsList.findIndex(
-              tab => tab.value === item
-            );
+            let tabindex = tabsList.findIndex(tab => tab.value === item);
             if (tabindex === -1) tabindex = tabsList.length + index;
             newJudgeResults[tabindex] = failedResult;
           });
         } else {
           runAllList.forEach(item => {
-
-            let tabindex = tabsList.findIndex(
-              tab => tab.value === item
-            );
+            const tabindex = tabsList.findIndex(tab => tab.value === item);
             if (tabindex === -1) {
               return;
             }
@@ -340,7 +336,7 @@ function EditorPage() {
   );
 }
 
-export default function FilePage() {
+function PageContent() {
   const router = useRouter();
   const queryId = router.query.id;
   const firebaseFileID = '-' + queryId;
@@ -389,5 +385,13 @@ export default function FilePage() {
       </EditorProvider>
       <ConfirmOverrideModal />
     </>
+  );
+}
+
+export default function FilePage() {
+  return (
+    <WithRegistration>
+      <PageContent />
+    </WithRegistration>
   );
 }

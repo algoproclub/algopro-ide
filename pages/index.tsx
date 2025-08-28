@@ -7,11 +7,12 @@ import { useConnectionContext } from '../src/context/ConnectionContext';
 import { useNullableUserContext } from '../src/context/UserContext';
 import ProfileSettings from '../src/components/settings/ProfileSettings';
 import { SettingsMenu } from '../src/components/NavBar/SettingsMenu';
+import NoRegistrationMessage from '../src/NoRegistrationMessage';
 
 export default function DashboardPage(): JSX.Element {
   const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
   const connectionContext = useConnectionContext();
-  const { userData, logged } = useNullableUserContext();
+  const { userData, logged, registered } = useNullableUserContext();
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export default function DashboardPage(): JSX.Element {
         <h1 className="text-gray-100 text-2xl md:text-4xl font-black">
           AlgoPro IDE
         </h1>
-        <div className="text-gray-400 mt-6">
+        <div className="text-gray-400 mt-6 mb-2">
           Based on the{' '}
           <a
             className="underline text-gray-200"
@@ -43,8 +44,6 @@ export default function DashboardPage(): JSX.Element {
           </a>
         </div>
 
-        <div className="h-1"></div>
-
         {logged === false ? (
           <div className="text-gray-400">
             Not signed in.{' '}
@@ -57,6 +56,8 @@ export default function DashboardPage(): JSX.Element {
           </div>
         ) : !userData ? (
           <div className="text-gray-400">Loading...</div>
+        ) : !registered ? (
+          <NoRegistrationMessage />
         ) : (
           <Dashboard />
         )}

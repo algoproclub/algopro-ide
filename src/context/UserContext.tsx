@@ -63,6 +63,7 @@ export type UserContextType = {
   firebaseUser: User | null;
   userData: UserData | null;
   userRole: UserRole | null;
+  registered: boolean | null;
   logged: boolean | null;
   /**
    * Updates firebaseUser.displayName. Normally doing this doesn't trigger rerender
@@ -80,12 +81,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [registered, setRegistered] = useState<boolean | null>(null);
   const [logged, setLogged] = useState<boolean | null>(null);
   const [, triggerRerender] = useState<number>(0);
   const [templateCode, setTemplateCode] = useState<Record<
     Language,
     string
   > | null>(null);
+
+  const updateClaims = useCallback(() => {
+    user?.getIdTokenResult().then(res => {
+      setUserRole(res.claims.teacher ? 'teacher' : 'student');
+      setRegistered(!!res.claims.registered);
+    });
+  }, [user]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getAuth(), user => {
@@ -94,11 +103,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setUserData(null);
         setUserRole(null);
         setTemplateCode(null);
+        setRegistered(null);
       } else {
         setLogged(true);
-        user
-          .getIdTokenResult()
-          .then(res => setUserRole(res.claims.teacher ? 'teacher' : 'student'));
+        updateClaims();
         let displayName = user.displayName;
         if (!displayName) {
           displayName =
@@ -114,6 +122,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    updateClaims();
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -145,8 +157,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       update(ref(getDatabase(), `users/${user.uid}/data`), { name: newName });
 
       return updateProfile(user, { displayName: newName }).then(() => {
-        // we need to trigger a rerender because firebase user never changes
-        // but some parts of the app needs to rerender when firebaseUser.displayName changes
         triggerRerender(Date.now());
       });
     },
@@ -159,6 +169,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         firebaseUser: user,
         userData,
         userRole,
+        registered,
         updateUsername,
         logged,
         templateCode,
