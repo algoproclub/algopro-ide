@@ -96,17 +96,33 @@ const ResultView = ({ startTime }: { startTime: number }) => {
   );
 };
 
-const SolutionViewContent = ({ startTime }: { startTime: number }) => {
-  const { fileData } = useEditorContext();
-  const owner = Object.values(
-    Object.fromEntries(
-      Object.entries(fileData.users).filter(([, v]) => v.permission === 'OWNER')
-    )
-  )[0];
+const SolutionViewContent = ({
+  startTime,
+  participants,
+  selectedFileID,
+  onFileChange,
+}: {
+  startTime: number;
+  participants: { name: string; fileID: string }[];
+  selectedFileID: string;
+  onFileChange: (fileID: string) => void;
+}) => {
   return (
     <div className="flex flex-col min-h-0 overflow-hidden w-full">
-      <div className="px-4 py-2 border-b border-gray-600 font-semibold text-gray-400 bg-gray-900 min-h-0 truncate">
-        {owner?.name}
+      <div className="px-4 py-2 border-b border-gray-600 font-semibold text-gray-400 bg-gray-900 min-h-0 truncate flex items-center justify-between">
+        <div className="relative w-full">
+          <select
+            className="appearance-none bg-gray-800 border border-gray-600 rounded-md p-2 text-sm text-white hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition w-full"
+            value={selectedFileID}
+            onChange={e => onFileChange(e.target.value)}
+          >
+            {participants.map(participant => (
+              <option key={participant.fileID} value={participant.fileID}>
+                {participant.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
       <Split
         render={({ getGridProps, getGutterProps }) => (
@@ -139,9 +155,13 @@ const SolutionViewContent = ({ startTime }: { startTime: number }) => {
 export const SolutionView = ({
   fileID,
   startTime,
+  participants,
+  onFileChange,
 }: {
   fileID: string;
   startTime: number;
+  participants: { name: string; fileID: string }[];
+  onFileChange: (fileID: string) => void;
 }): JSX.Element => {
   return (
     <EditorProvider
@@ -150,29 +170,25 @@ export const SolutionView = ({
       fileNotFoundUI={<></>}
       permissionDeniedUI={<></>}
     >
-      <SolutionViewContent startTime={startTime} />
+      <SolutionViewContent
+        startTime={startTime}
+        participants={participants}
+        selectedFileID={fileID}
+        onFileChange={onFileChange}
+      />
     </EditorProvider>
   );
 };
 
-const WarningBanner = ({
-  children,
-}: {
-  children?: React.ReactNode;
-}): JSX.Element => {
-  const [show, setShow] = useState(true);
-  return (
-    (show && (
-      <div className="border border-yellow-500 bg-yellow-700 text-white px-4 py-3 m-2 rounded relative">
-        <strong className="font-bold">Warning </strong>
-        <span className="block sm:inline">{children}</span>
-        <XMarkIcon
-          className="h-6 w-6 absolute top-3 right-2 cursor-pointer"
-          onClick={() => setShow(false)}
-        />
-      </div>
-    )) || <></>
-  );
+const getDisplayName = async (
+  participant: { fileID: string }
+): Promise<string> => {
+  const fileUserSnapshot = await get(ref(db, `files/${participant.fileID}/users`));
+  const users = fileUserSnapshot.val();
+  const user = Object.values(users).find(
+    (user => (user as { permission: string }).permission === 'OWNER')
+  ) as { name: string } | undefined;
+  return user ? user.name : 'Unknown';
 };
 
 const SpectatePage = () => {
@@ -184,29 +200,32 @@ const SpectatePage = () => {
     [left, middle, right].filter(x => x) as string[]
   );
   const [startTime, setStartTime] = useState(0);
+  const [participants, setParticipants] = useState<
+    { name: string; fileID: string }[]
+  >([]);
 
   useEffect(() => {
     if (files.length > 0) return;
 
     const fetchFiles = async () => {
-      const latestIDSnapshot = await get(ref(db, 'tournaments/latestID'));
-      const tournamentID = latestIDSnapshot.val();
-
       const participantsSnapshot = await get(
-        ref(db, `tournaments/${tournamentID}/participants`)
+        ref(db, 'tournaments/latestID/participants')
       );
-      const participants = participantsSnapshot.val() as {
+      const participantsData = participantsSnapshot.val() as {
         [userName: string]: { fileID: string };
       };
-      setStartTime(
-        Date.parse(
-          (await get(ref(db, `tournaments/${tournamentID}/info/start`))).val()
-        )
+
+      const participantList = await Promise.all(
+        Object.entries(participantsData).map(async ([, data]) => {
+          const displayName = await getDisplayName({ fileID: data.fileID });
+          return {
+            name: displayName,
+            fileID: data.fileID.slice(1),
+          };
+        })
       );
-      const fileIDs = Object.entries(participants).map(([_, p]) =>
-        p.fileID.slice(1)
-      );
-      setFiles(fileIDs);
+      setParticipants(participantList);
+      setFiles(participantList.slice(0, 3).map(p => p.fileID));
     };
 
     fetchFiles();
@@ -218,20 +237,32 @@ const SpectatePage = () => {
 
   return (
     <WithAdminLogin>
-      <>
-        {files.length > 3 && (
-          /* FIXME: Make user selection configurable when there are more than 3 participants. */
-          <WarningBanner>
-            There are more than 3 participants in this contest. Only the first 3
-            are shown.
-          </WarningBanner>
-        )}
-        <div className="h-full w-full flex divide-x divide-gray-700">
-          <SolutionView fileID={files?.[0]} startTime={startTime} />
-          <SolutionView fileID={files?.[1]} startTime={startTime} />
-          <SolutionView fileID={files?.[2]} startTime={startTime} />
-        </div>
-      </>
+      <div className="h-full w-full flex divide-x divide-gray-700">
+        <SolutionView
+          fileID={files?.[0]}
+          startTime={startTime}
+          participants={participants}
+          onFileChange={newFileID =>
+            setFiles(prev => [newFileID, prev[1], prev[2]])
+          }
+        />
+        <SolutionView
+          fileID={files?.[1]}
+          startTime={startTime}
+          participants={participants}
+          onFileChange={newFileID =>
+            setFiles(prev => [prev[0], newFileID, prev[2]])
+          }
+        />
+        <SolutionView
+          fileID={files?.[2]}
+          startTime={startTime}
+          participants={participants}
+          onFileChange={newFileID =>
+            setFiles(prev => [prev[0], prev[1], newFileID])
+          }
+        />
+      </div>
     </WithAdminLogin>
   );
 };
