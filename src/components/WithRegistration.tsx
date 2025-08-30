@@ -3,7 +3,7 @@ import { MessagePage } from './MessagePage';
 import { useNullableUserContext } from '../context/UserContext';
 import NoRegistrationMessage from '../NoRegistrationMessage';
 
-export default function WithTeacherLogin({
+export default function WithRegistration({
   children,
 }: {
   children: JSX.Element;
