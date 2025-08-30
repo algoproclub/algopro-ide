@@ -168,8 +168,8 @@ const RecentTab = ({
 const ClassesTab = () => {
   const { firebaseUser } = useUserContext();
   const [groups, setGroups] = useState<string[]>([]);
-  const [group, setGroup] = useState(0);
-  const [classID, setClassID] = useState(0);
+  const [groupInd, setGroupInd] = useState(0);
+  const [classInd, setClassInd] = useState(0);
   const [classes, setClasses] = useState<string[]>([]);
   const [problems, setProblems] = useState<ProblemData[]>([]);
   const [data, setData] = useState<(SolutionData | null)[]>([]);
@@ -195,12 +195,12 @@ const ClassesTab = () => {
     if (groups.length === 0) return;
 
     handleRefresh();
-  }, [group, groups, classID]);
+  }, [groupInd, groups, classInd]);
 
   useEffect(() => {
     if (groups.length === 0) return;
 
-    fetchClasses(groups[group]).then(res => {
+    fetchClasses(groups[groupInd]).then(res => {
       setClasses(res);
     });
     const timeout = setInterval(() => {
@@ -216,7 +216,7 @@ const ClassesTab = () => {
     if (groups.length === 0) return;
 
     const updateProblems = async () => {
-      setProblems(await fetchProblems(groups[group], classes[classID]));
+      setProblems(await fetchProblems(groups[groupInd], classes[classInd]));
     };
     updateProblems();
   }, [classes]);
@@ -242,7 +242,7 @@ const ClassesTab = () => {
   }, [problems]);
 
   const handleRefresh = async () => {
-    setClasses(await fetchClasses(groups[group]));
+    setClasses(await fetchClasses(groups[groupInd]));
   };
 
   return (
@@ -251,14 +251,14 @@ const ClassesTab = () => {
         <Dropdown
           items={groups}
           label={'Group'}
-          selected={group}
-          setSelected={(index: number) => setGroup(index)}
+          selected={groupInd}
+          setSelected={(index: number) => setGroupInd(index)}
         />
         <Dropdown
           items={classes}
           label={'Class'}
-          selected={classID}
-          setSelected={(index: number) => setClassID(index)}
+          selected={classInd}
+          setSelected={(index: number) => setClassInd(index)}
         />
       </div>
       <div className="overflow-x-auto">
@@ -355,11 +355,11 @@ const ClassesTab = () => {
         </table>
       </div>
       <Pagination
-        page={classID}
-        setPage={(val: number) => setClassID(val)}
+        page={classInd}
+        setPage={(val: number) => setClassInd(val)}
         minPage={0}
         maxPage={Math.max(0, classes.length - 1)}
-        label={`Class: ${classes[classID] ?? '-'}`}
+        label={`Class: ${classes[classInd] ?? '-'}`}
       />
     </div>
   );

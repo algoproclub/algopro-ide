@@ -8,6 +8,7 @@ import {
   UserCredential,
   signInWithCredential,
   signOut,
+  signInWithEmailAndPassword,
 } from 'firebase/auth';
 import { ConnectionContextType } from '../context/ConnectionContext';
 import { SHOULD_USE_FIREBASE_EMULATOR } from '../dev_constants';
@@ -35,6 +36,14 @@ export const signInWithGoogleAtom = atom(
     // Remove user from user list before signing in
     const prevConnectionRefs = connectionContext.getConnectionRefs();
     connectionContext.clearConnectionRefs();
+
+    const useDummyAccount = false;
+    if (useDummyAccount) {
+      //const email = 'admin@example.com';
+      const email = 'algoproteacher1@example.com';
+      signInWithEmailAndPassword(auth, email, 'password123');
+      return;
+    }
 
     if (SHOULD_USE_FIREBASE_EMULATOR) {
       // Note: for some reason firebase emulator does not work with `linkWithPopup`

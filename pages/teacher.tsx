@@ -22,19 +22,8 @@ import { parseProblem } from '../src/scripts/parseProblem';
 import { getPlatformName } from '../src/scripts/getPlatformName';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import { URLProblem } from '../src/types/problem';
+import { useUserContext } from '../src/context/UserContext';
 
-export const groups = [
-  'boa',
-  'farkas',
-  'medve',
-  'anakonda',
-  'bagoly',
-  'capa',
-  'kajman',
-  'piton',
-  'sas',
-  'tigris',
-];
 const times = ['1 hour', '3 hours', '1 day', '7 days', 'All'];
 const timeInMs = [
   1000 * 60 * 60,
@@ -44,7 +33,6 @@ const timeInMs = [
   Infinity,
 ];
 
-type Group = (typeof groups)[number];
 type Student = {
   id: string;
   name: string;
@@ -148,7 +136,7 @@ export const fetchSolutionData = async (
 };
 
 export const fetchProblems = async (
-  group: Group,
+  group: string,
   classID?: string
 ): Promise<ProblemData[]> => {
   if (!classID) {
@@ -175,32 +163,33 @@ export const fetchProblems = async (
   });
 };
 
-const fetchStudents = async (group: Group): Promise<Student[]> => {
-  const results = await getDocs(
+const fetchStudents = async (group: string): Promise<Student[]> => {
+  const groupSnap = await getDoc(doc(firestore, 'groups', group));
+  const school = groupSnap.get('school');
+
+  const usersSnap = await getDocs(
     query(
       collection(firestore, 'userdata'),
-      where('groups', 'array-contains', group)
+      where('schools', 'array-contains', school)
+      // Note: we need `schools` to be in the query to make the firebase rule work
+      //       Because we can only use `array-contains` once per query, we can't
+      //       also filter for a specific group via the query.
+      //       So we filter for our group via normal JS logic below
     )
   );
-  const users: Student[] = [];
-  results.forEach(doc => {
-    users.push({ id: doc.id, name: doc.data().user_full_name });
-  });
-  return users;
+  return usersSnap.docs
+    .filter(doc => doc.get('group') === group)
+    .map(doc => ({ id: doc.id, name: doc.data().user_full_name }));
 };
 
-export const fetchClasses = async (group: Group) => {
-  const classes: string[] = [];
-  const results = await getDocs(
+export const fetchClasses = async (group: string) => {
+  const classesSnap = await getDocs(
     query(
       collection(firestore, 'groups', group, 'classes'),
       orderBy('creationTime', 'desc')
     )
   );
-  results.forEach(doc => {
-    classes.push(doc.id);
-  });
-  return classes;
+  return classesSnap.docs.map(doc => doc.id);
 };
 
 const RefreshButton = ({ onRefresh }: { onRefresh: () => void }) => {
@@ -218,25 +207,27 @@ const RefreshButton = ({ onRefresh }: { onRefresh: () => void }) => {
 };
 
 const Controls = ({
-  group,
-  classID,
-  time,
-  highlight,
+  groupInd,
+  classInd,
+  timeInd,
+  groups,
   classes,
-  setGroup,
-  setClassID,
-  setTime,
+  highlight,
+  setGroupInd,
+  setClassInd,
+  setTimeInd,
   toggleHighlight,
   onRefresh,
 }: {
-  group: number;
-  classID: number;
-  time: number;
+  groupInd: number;
+  classInd: number;
+  timeInd: number;
+  groups: string[];
   classes: string[];
   highlight: boolean;
-  setGroup: (_: number) => void;
-  setClassID: (_: number) => void;
-  setTime: (_: number) => void;
+  setGroupInd: (_: number) => void;
+  setClassInd: (_: number) => void;
+  setTimeInd: (_: number) => void;
   toggleHighlight: () => void;
   onRefresh: () => void;
 }) => {
@@ -246,20 +237,20 @@ const Controls = ({
         <Dropdown
           items={groups}
           label="Group"
-          selected={group}
-          setSelected={setGroup}
+          selected={groupInd}
+          setSelected={setGroupInd}
         />
         <Dropdown
           items={classes}
           label="Class"
-          selected={classID}
-          setSelected={setClassID}
+          selected={classInd}
+          setSelected={setClassInd}
         />
         <Dropdown
           items={times}
           label="Last edit"
-          selected={time}
-          setSelected={setTime}
+          selected={timeInd}
+          setSelected={setTimeInd}
         />
         <RefreshButton onRefresh={onRefresh} />
       </div>
@@ -273,31 +264,33 @@ const Controls = ({
 };
 
 const ControlDropdown = ({
-  group,
-  classID,
-  time,
-  highlight,
+  groupInd,
+  classInd,
+  timeInd,
+  groups,
   classes,
-  setGroup,
-  setClassID,
-  setTime,
+  highlight,
+  setGroupInd,
+  setClassInd,
+  setTimeInd,
   toggleHighlight,
   onRefresh,
 }: {
-  group: number;
-  classID: number;
-  time: number;
+  groupInd: number;
+  classInd: number;
+  timeInd: number;
+  groups: string[];
   classes: string[];
   highlight: boolean;
-  setGroup: (_: number) => void;
-  setClassID: (_: number) => void;
-  setTime: (_: number) => void;
+  setGroupInd: (_: number) => void;
+  setClassInd: (_: number) => void;
+  setTimeInd: (_: number) => void;
   toggleHighlight: () => void;
   onRefresh: () => void;
 }) => {
   useEffect(() => {
-    setClassID(0);
-  }, [group]);
+    setClassInd(0);
+  }, [groupInd]);
 
   return (
     <Disclosure>
@@ -333,20 +326,20 @@ const ControlDropdown = ({
             <Dropdown
               items={groups}
               label="Group"
-              selected={group}
-              setSelected={setGroup}
+              selected={groupInd}
+              setSelected={setGroupInd}
             />
             <Dropdown
               items={classes}
               label="Class"
-              selected={classID}
-              setSelected={setClassID}
+              selected={classInd}
+              setSelected={setClassInd}
             />
             <Dropdown
               items={times}
               label="Last edit"
-              selected={time}
-              setSelected={setTime}
+              selected={timeInd}
+              setSelected={setTimeInd}
             />
             <Checkbox
               checked={highlight}
@@ -511,9 +504,12 @@ const GroupData = ({
 };
 
 const PageContent = () => {
-  const [group, setGroup] = useState(0);
-  const [time, setTime] = useState(0);
-  const [classID, setClassID] = useState(0);
+  const { firebaseUser } = useUserContext();
+  const [schools, setSchools] = useState<string[]>([]);
+  const [groups, setGroups] = useState<string[]>([]);
+  const [groupInd, setGroupInd] = useState(0);
+  const [timeInd, setTimeInd] = useState(0);
+  const [classInd, setClassInd] = useState(0);
   const [highlight, setHighlight] = useState(false);
   const [classes, setClasses] = useState<string[]>([]);
   const [problems, setProblems] = useState<ProblemData[]>([]);
@@ -523,7 +519,35 @@ const PageContent = () => {
   document.title = 'Teacher interface - AlgoPro IDE';
 
   useEffect(() => {
-    fetchClasses(groups[group]).then(res => {
+    if (!firebaseUser) {
+      return;
+    }
+    const updateSchools = async () => {
+      const idTokenResult = await firebaseUser.getIdTokenResult();
+      setSchools((idTokenResult.claims['teacher'] ?? []) as string[]);
+    };
+    updateSchools();
+  }, [firebaseUser]);
+
+  useEffect(() => {
+    if (schools.length === 0) return;
+    const updateGroups = async () => {
+      const groupDocs = await getDocs(
+        query(collection(firestore, 'groups'), where('school', 'in', schools))
+      );
+      const newGroups = groupDocs.docs.map(x => x.id);
+      if (!newGroups) {
+        return;
+      }
+      setGroups(newGroups);
+    };
+    updateGroups();
+  }, [schools]);
+
+  useEffect(() => {
+    if (groups.length === 0) return;
+
+    fetchClasses(groups[groupInd]).then(res => {
       setClasses(res);
     });
     const timeout = setInterval(() => {
@@ -533,11 +557,11 @@ const PageContent = () => {
     return () => {
       clearTimeout(timeout);
     };
-  }, [groups, group]);
+  }, [groups, groupInd]);
 
   useEffect(() => {
     handleRefresh();
-  }, [group, classID]);
+  }, [groupInd, classInd]);
 
   useEffect(() => {
     const updateData = async () => {
@@ -563,14 +587,15 @@ const PageContent = () => {
 
   useEffect(() => {
     const updateProblems = async () => {
-      setProblems(await fetchProblems(groups[group], classes[classID]));
+      setProblems(await fetchProblems(groups[groupInd], classes[classInd]));
     };
     updateProblems();
   }, [classes]);
 
   const handleRefresh = async () => {
-    setClasses(await fetchClasses(groups[group]));
-    setStudents(await fetchStudents(groups[group]));
+    if (groups.length === 0) return;
+    setClasses(await fetchClasses(groups[groupInd]));
+    setStudents(await fetchStudents(groups[groupInd]));
   };
   const transpose = (array: (SolutionData | null)[][]) => {
     return array.length > 0
@@ -584,7 +609,7 @@ const PageContent = () => {
   const filteredProblems = problems.filter((_, i) => problemWithID[i]);
   const transposed = transpose(data);
 
-  const fromTime = currentTime - timeInMs[time];
+  const fromTime = currentTime - timeInMs[timeInd];
   const hasSolution = transposed.map(solutions =>
     solutions.some(sol => sol !== null && sol.lastEdit >= fromTime)
   );
@@ -596,28 +621,30 @@ const PageContent = () => {
       <div className="mx-auto max-w-7xl mt-4 space-y-4">
         <div className="md:hidden">
           <ControlDropdown
-            group={group}
-            classID={classID}
-            time={time}
+            groupInd={groupInd}
+            classInd={classInd}
+            timeInd={timeInd}
+            groups={groups}
             classes={classes}
             highlight={highlight}
-            setGroup={index => setGroup(index)}
-            setClassID={index => setClassID(index)}
-            setTime={index => setTime(index)}
+            setGroupInd={index => setGroupInd(index)}
+            setClassInd={index => setClassInd(index)}
+            setTimeInd={index => setTimeInd(index)}
             toggleHighlight={() => setHighlight(val => !val)}
             onRefresh={handleRefresh}
           />
         </div>
         <div className="hidden md:block">
           <Controls
-            group={group}
-            classID={classID}
-            time={time}
+            groupInd={groupInd}
+            classInd={classInd}
+            timeInd={timeInd}
+            groups={groups}
             classes={classes}
             highlight={highlight}
-            setGroup={index => setGroup(index)}
-            setClassID={index => setClassID(index)}
-            setTime={index => setTime(index)}
+            setGroupInd={index => setGroupInd(index)}
+            setClassInd={index => setClassInd(index)}
+            setTimeInd={index => setTimeInd(index)}
             toggleHighlight={() => setHighlight(val => !val)}
             onRefresh={handleRefresh}
           />
