@@ -127,7 +127,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [updateClaims]);
 
   useEffect(() => {
     if (!user) return;
@@ -205,6 +205,5 @@ export function useUserContext() {
 export function isTeacher(userRole: UserRole | null): boolean {
   if (userRole === null) return false;
   if (userRole.admin) return true;
-  if (userRole.teacher && userRole.teacher.length > 0) return true;
-  return false;
+  return !!(userRole.teacher && userRole.teacher.length > 0);
 }
