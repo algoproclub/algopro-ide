@@ -228,10 +228,10 @@ const Controls = ({
   schoolNames,
   groupNames,
   classes,
-  setSchool,
-  setGroup,
-  setClassID,
-  setTime,
+  setSchoolInd,
+  setGroupInd,
+  setClassInd,
+  setTimeInd,
   toggleHighlight,
   onRefresh,
 }: {
@@ -243,10 +243,10 @@ const Controls = ({
   schoolNames: string[];
   groupNames: string[];
   classes: string[];
-  setSchool: (_: number) => void;
-  setGroup: (_: number) => void;
-  setClassID: (_: number) => void;
-  setTime: (_: number) => void;
+  setSchoolInd: (_: number) => void;
+  setGroupInd: (_: number) => void;
+  setClassInd: (_: number) => void;
+  setTimeInd: (_: number) => void;
   toggleHighlight: () => void;
   onRefresh: () => void;
 }) => {
@@ -257,25 +257,25 @@ const Controls = ({
           items={schoolNames}
           label="School"
           selected={schoolInd}
-          setSelected={setSchool}
+          setSelected={setSchoolInd}
         />
         <Dropdown
           items={groupNames}
           label="Group"
           selected={groupInd}
-          setSelected={setGroup}
+          setSelected={setGroupInd}
         />
         <Dropdown
           items={classes}
           label="Class"
           selected={classInd}
-          setSelected={setClassID}
+          setSelected={setClassInd}
         />
         <Dropdown
           items={times}
           label="Last edit"
           selected={timeInd}
-          setSelected={setTime}
+          setSelected={setTimeInd}
         />
         <RefreshButton onRefresh={onRefresh} />
       </div>
@@ -297,10 +297,10 @@ const ControlDropdown = ({
   schoolNames,
   groupNames,
   classes,
-  setSchool,
-  setGroup,
-  setClassID,
-  setTime,
+  setSchoolInd,
+  setGroupInd,
+  setClassInd,
+  setTimeInd,
   toggleHighlight,
   onRefresh,
 }: {
@@ -312,20 +312,20 @@ const ControlDropdown = ({
   schoolNames: string[];
   groupNames: string[];
   classes: string[];
-  setSchool: (_: number) => void;
-  setGroup: (_: number) => void;
-  setClassID: (_: number) => void;
-  setTime: (_: number) => void;
+  setSchoolInd: (_: number) => void;
+  setGroupInd: (_: number) => void;
+  setClassInd: (_: number) => void;
+  setTimeInd: (_: number) => void;
   toggleHighlight: () => void;
   onRefresh: () => void;
 }) => {
   useEffect(() => {
-    setGroup(0);
-    setClassID(0);
+    setGroupInd(0);
+    setClassInd(0);
   }, [schoolInd]);
 
   useEffect(() => {
-    setClassID(0);
+    setClassInd(0);
   }, [groupInd]);
 
   return (
@@ -361,25 +361,25 @@ const ControlDropdown = ({
               items={schoolNames}
               label="School"
               selected={schoolInd}
-              setSelected={setSchool}
+              setSelected={setSchoolInd}
             />
             <Dropdown
               items={groupNames}
               label="Group"
               selected={groupInd}
-              setSelected={setGroup}
+              setSelected={setGroupInd}
             />
             <Dropdown
               items={classes}
               label="Class"
               selected={classInd}
-              setSelected={setClassID}
+              setSelected={setClassInd}
             />
             <Dropdown
               items={times}
               label="Last edit"
               selected={timeInd}
-              setSelected={setTime}
+              setSelected={setTimeInd}
             />
             <Checkbox
               checked={highlight}
@@ -669,10 +669,10 @@ const PageContent = () => {
             schoolNames={schoolNames}
             groupNames={groupNames}
             highlight={highlight}
-            setSchool={index => setSchoolInd(index)}
-            setGroup={index => setGroupInd(index)}
-            setClassID={index => setClassInd(index)}
-            setTime={index => setTimeInd(index)}
+            setSchoolInd={index => setSchoolInd(index)}
+            setGroupInd={index => setGroupInd(index)}
+            setClassInd={index => setClassInd(index)}
+            setTimeInd={index => setTimeInd(index)}
             toggleHighlight={() => setHighlight(val => !val)}
             onRefresh={handleRefresh}
           />
@@ -687,10 +687,10 @@ const PageContent = () => {
             schoolNames={schoolNames}
             groupNames={groupNames}
             highlight={highlight}
-            setSchool={index => setSchoolInd(index)}
-            setGroup={index => setGroupInd(index)}
-            setClassID={index => setClassInd(index)}
-            setTime={index => setTimeInd(index)}
+            setSchoolInd={index => setSchoolInd(index)}
+            setGroupInd={index => setGroupInd(index)}
+            setClassInd={index => setClassInd(index)}
+            setTimeInd={index => setTimeInd(index)}
             toggleHighlight={() => setHighlight(val => !val)}
             onRefresh={handleRefresh}
           />
