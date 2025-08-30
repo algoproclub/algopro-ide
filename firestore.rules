@@ -20,15 +20,28 @@ service cloud.firestore {
       }
     }
 
-    // FIXME: Check teacher permission (and school ID) instead of admin
-    match /groups/{group}/classes/{class} {
-      allow read: if true;
-      allow write: if request.auth.token.admin == true;
+    match /groups/{group} {
+      allow read:  if request.auth.token.admin == true
+                   || resource.data.school in request.auth.token.teacher
+                   || resource.data.school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
+      allow write: if request.auth.token.admin == true
+                   || resource.data.school in request.auth.token.teacher;
+
+      match /classes/{class} {
+        allow read:  if request.auth.token.admin == true
+                     || get(/databases/$(database)/documents/groups/$(group)).data.school in request.auth.token.teacher
+                     || get(/databases/$(database)/documents/groups/$(group)).data.school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
+        allow write: if request.auth.token.admin == true
+                     || get(/databases/$(database)/documents/groups/$(group)).data.school in request.auth.token.teacher;
+      }
     }
 
-    match /userdata/{userid} {
-      allow read: if request.auth.uid == userid || request.auth.token.admin == true;
-      allow write: if false;
+    match /userdata/{userId} {
+      allow read:  if request.auth.token.admin == true
+                   || resource.data.schools.hasAny(request.auth.token.teacher)
+                   || request.auth.uid == userId;
+      allow write: if request.auth.token.admin == true
+                   || resource.data.schools.hasAny(request.auth.token.teacher);
     }
   }
 }
