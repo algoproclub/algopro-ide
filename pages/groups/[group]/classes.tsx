@@ -9,14 +9,14 @@ import {
   query,
   setDoc,
 } from 'firebase/firestore';
-import { ProblemData, URLProblem } from '../../src/types/problem';
+import { ProblemData, URLProblem } from '../../../src/types/problem';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
-import { getPlatformName } from '../../src/scripts/getPlatformName';
-import { EditInlineTextModal } from '../../src/components/EditTextModal';
-import { parseProblem } from '../../src/scripts/parseProblem';
+import { getPlatformName } from '../../../src/scripts/getPlatformName';
+import { EditInlineTextModal } from '../../../src/components/EditTextModal';
+import { parseProblem } from '../../../src/scripts/parseProblem';
 import { Disclosure } from '@headlessui/react';
-import WithTeacherLogin from '../../src/components/WithTeacherLogin';
+import WithTeacherLogin from '../../../src/components/WithTeacherLogin';
 
 const firestore = getFirestore();
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
@@ -317,15 +317,16 @@ const PageContent = () => {
   document.title = `[${group}] class editor`;
 
   useEffect(() => {
-    if (typeof router.query.id === 'string') {
-      setGroup(router.query.id);
+    if (typeof router.query.group === 'string') {
+      setGroup(router.query.group);
     }
   }, [router]);
 
   useEffect(() => {
     const loadData = async () => {
+      if (group === null) return;
       const results = await getDocs(
-        query(collection(firestore, `groups/${group}/classes`))
+        query(collection(firestore, 'groups', group, 'classes'))
       );
       const classes: Classes = {};
       results.forEach(doc => {

@@ -177,33 +177,32 @@ export const fetchProblems = async (
 };
 
 const fetchStudents = async (groupID: string): Promise<Student[]> => {
-  if (!groupID) return [];
-  const results = await getDocs(
+  const groupSnap = await getDoc(doc(firestore, 'groups', groupID));
+  const school = groupSnap.get('school');
+
+  const usersSnap = await getDocs(
     query(
       collection(firestore, 'userdata'),
-      where('groups', 'array-contains', groupID)
+      where('schools', 'array-contains', school)
+      // Note: we need `schools` to be in the query to make the firebase rule work
+      //       Because we can only use `array-contains` once per query, we can't
+      //       also filter for a specific group via the query.
+      //       So we filter for our group via normal JS logic below
     )
   );
-  const users: Student[] = [];
-  results.forEach(docu => {
-    users.push({ id: docu.id, name: docu.data().user_full_name });
-  });
-  return users;
+  return usersSnap.docs
+    .filter(doc => doc.get('groups').includes(groupID))
+    .map(doc => ({ id: doc.id, name: doc.data().user_full_name }));
 };
 
 export const fetchClasses = async (groupID: string) => {
-  if (!groupID) return [] as string[];
-  const classes: string[] = [];
-  const results = await getDocs(
+  const classesSnap = await getDocs(
     query(
       collection(firestore, 'groups', groupID, 'classes'),
       orderBy('creationTime', 'desc')
     )
   );
-  results.forEach(d => {
-    classes.push(d.id);
-  });
-  return classes;
+  return classesSnap.docs.map(doc => doc.id);
 };
 
 const RefreshButton = ({ onRefresh }: { onRefresh: () => void }) => {
@@ -541,10 +540,10 @@ const GroupData = ({
 };
 
 const PageContent = () => {
+  const { userRole } = useUserContext();
   const [school, setSchool] = useState(0);
   const [group, setGroup] = useState(0);
   const [time, setTime] = useState(0);
-  const { userRole } = useUserContext();
   const [classID, setClassID] = useState(0);
   const [highlight, setHighlight] = useState(false);
 
@@ -568,22 +567,21 @@ const PageContent = () => {
     if (!schoolIDs) {
       return [];
     }
-    const schools = await Promise.all(
+    return await Promise.all(
       schoolIDs.map(async (id: string) => {
         const docu = await getDoc(doc(firestore, 'schools', id));
         return { id, name: docu.data()?.name };
       })
     );
-    return schools;
   };
 
   useEffect(() => {
-    const run = async () => {
+    const fetchSchools = async () => {
       const sch = await fetchTeacherSchools();
       setSchools(sch);
     };
-    run();
-  }, []);
+    fetchSchools();
+  }, [userRole]);
 
   useEffect(() => {
     const run = async () => {
@@ -604,15 +602,10 @@ const PageContent = () => {
 
   useEffect(() => {
     if (!selectedGroupID) return;
-    const refresh = () => void handleRefresh();
-    refresh();
-    const interval = setInterval(refresh, 15000);
+    handleRefresh();
+    const interval = setInterval(handleRefresh, 15000);
     return () => clearInterval(interval);
   }, [selectedGroupID]);
-
-  useEffect(() => {
-    handleRefresh();
-  }, [group, classID]);
 
   useEffect(() => {
     const updateData = async () => {

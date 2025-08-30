@@ -3,8 +3,9 @@ import { MessagePage } from '../../src/components/MessagePage';
 import { useRouter } from 'next/router';
 import invariant from 'tiny-invariant';
 import { useNullableUserContext } from '../../src/context/UserContext';
+import WithRegistration from '../../src/components/WithRegistration';
 
-export default function CopyFilePage(): JSX.Element {
+function PageContent(): JSX.Element {
   const router = useRouter();
 
   const { firebaseUser } = useNullableUserContext();
@@ -41,11 +42,19 @@ export default function CopyFilePage(): JSX.Element {
         }
       }
     })();
-  }, [router.isReady, firebaseUser]);
+  }, [router.isReady, firebaseUser, router]);
 
   if (error) {
     return <MessagePage message={'Error: ' + error} />;
   }
 
   return <MessagePage message="Copying file..." showHomeButton={false} />;
+}
+
+export default function CopyFilePage() {
+  return (
+    <WithRegistration>
+      <PageContent />
+    </WithRegistration>
+  );
 }
