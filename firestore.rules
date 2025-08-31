@@ -5,11 +5,9 @@ service cloud.firestore {
 
     match /schools/{schoolID} {
       allow read: if request.auth.token.admin == true ||
-                     schoolID in request.auth.token.teacher ||
-                     schoolID in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
+                     schoolID in request.auth.token.teacher;
       allow write: if request.auth.token.admin == true ||
-                      schoolID in request.auth.token.teacher ||
-                      schoolID in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
+                      schoolID in request.auth.token.teacher;
     }
 
     // TODO: update with proper rules
