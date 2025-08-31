@@ -1,11 +1,12 @@
 import { useRouter } from 'next/router';
 import { MessagePage } from '../../../src/components/MessagePage';
+import WithRegistration from '../../../src/components/WithRegistration';
 import { useNullableUserContext } from '../../../src/context/UserContext';
 import React, { useEffect, useRef, useState } from 'react';
 import invariant from 'tiny-invariant';
 import va from '@vercel/analytics';
 
-export default function CreatePlatformFile(): JSX.Element {
+function PageContent(): JSX.Element {
   const router = useRouter();
 
   const { firebaseUser, userData, logged } = useNullableUserContext();
@@ -72,4 +73,12 @@ export default function CreatePlatformFile(): JSX.Element {
 
   if (logged === false) return loginUI;
   return loadingUI;
+}
+
+export default function CreatePlatformFile() {
+  return (
+    <WithRegistration>
+      <PageContent />
+    </WithRegistration>
+  );
 }

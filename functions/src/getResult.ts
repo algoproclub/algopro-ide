@@ -170,7 +170,10 @@ export class NJudgeResultFetcher extends ResultFetcher {
   }
 
   getTestCaseSymbol(n: number): string {
-    return this.getTestCaseTitle(n) === 'correct answer' ? '✓' : 'x';
+    const title = this.getTestCaseTitle(n);
+    if (title === 'correct answer') return '✓';
+    if (title === 'partially correct') return '~';
+    return 'x';
   }
 
   getStatusText(): string | null {
@@ -358,7 +361,9 @@ export class OjuzResultFetcher extends ResultFetcher {
   }
   getTestCaseSymbol(n: number): string {
     const verdict = this.getTestCaseTitle(n);
-    return verdict === 'correct answer' ? '✓' : 'x';
+    if (verdict === 'correct answer') return '✓';
+    if (verdict === 'partially correct') return '~';
+    return 'x';
   }
   getTestCaseTime(n: number): string | null {
     return this.testCases![n][3].toLowerCase();
@@ -942,7 +947,10 @@ export class AtCoderResultFetcher extends ResultFetcher {
   }
 
   getTestCaseSymbol(n: number): string {
-    return this.getTestCaseTitle(n) === 'correct answer' ? '✓' : 'x';
+    const title = this.getTestCaseTitle(n);
+    if (title === 'correct answer') return '✓';
+    if (title === 'partially correct') return '~';
+    return 'x';
   }
 
   async initialize(): Promise<void> {
@@ -1116,7 +1124,9 @@ export class CSESResultFetcher extends ResultFetcher {
 
   getTestCaseSymbol(n: number): string {
     const verdict = this.getTestCaseTitle(n);
-    return verdict === 'correct answer' ? '✓' : 'x';
+    if (verdict === 'correct answer') return '✓';
+    if (verdict === 'partially correct') return '~';
+    return 'x';
   }
 
   async initialize() {

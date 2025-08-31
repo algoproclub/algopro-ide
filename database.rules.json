@@ -4,21 +4,27 @@
       "$secretid": {
         ".read": "$secretid == auth.uid",
         ".write": "auth.uid == $secretid",
-        ".indexOn": "lastAccessTime"
+        ".indexOn": "lastAccessTime",
+        "schools": {
+          ".write": false
+        }
       }
     },
     "files": {
+      ".read": "auth != null && auth.token.registered === true",
+      ".write": "auth != null && auth.token.registered === true",
+
       "$secretid": {
-        ".write": "!root.child('files').child($secretid).exists()",
-        ".read": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ'",
+        ".write": "auth != null && auth.token.registered === true && !root.child('files').child($secretid).exists()",
+        ".read": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ')",
         "users": {
           "$user": {
-            ".read": "$user === auth.uid",
-            ".write": "(auth.uid === $user && !root.child('files').child($secretid).child('settings').child('users').exists()) || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || (auth.uid === $user && data.child('permission').val() === newData.child('permission').val())"
+            ".read": "auth != null && auth.token.registered === true && $user === auth.uid",
+            ".write": "auth != null && auth.token.registered === true && ((auth.uid === $user && !root.child('files').child($secretid).child('settings').child('users').exists()) || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || (auth.uid === $user && data.child('permission').val() === newData.child('permission').val()))"
           }
         },
         "input": {
-          ".write": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE'",
+          ".write": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE')",
           "history": {
             "$revision": {
               /* Prevent overwriting existing revisions. */
@@ -31,10 +37,10 @@
           }
         },
         "solvedStatus": {
-          ".write": "root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER'"
+          ".write": "auth != null && auth.token.registered === true && root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER'"
         },
         "settings": {
-          ".read": true,
+          ".read": "auth != null && auth.token.registered === true",
           /* TODO: Find out what is wrong with the rules below. For now, we will allow any writes by the OWNER.
           "$setting": {
             ".write": "!root.child('files').child($secretid).child('settings').child('defaultPermission').exists() || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE'"
@@ -45,28 +51,28 @@
           "creationTime": {
             ".write": "!root.child('files').child($secretid).child('settings').child('creationTime').exists()"
           } */
-          ".write": "root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER'"
+          ".write": "auth != null && auth.token.registered === true && root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER'"
         },
 
         "chat": {
-          ".read": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ'",
-          ".write": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE'"
+          ".read": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ')",
+          ".write": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE')"
         },
 
         "isCodeRunning": {
-          ".read": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ'",
-          ".write": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE'"
+          ".read": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ')",
+          ".write": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE')"
         },
 
         "state": {
-          ".read": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ'",
-          ".write": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE'"
+          ".read": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ')",
+          ".write": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE')"
         },
 
         "classroom": {
-          ".read": true,
+          ".read": "auth != null && auth.token.registered === true",
           "$setting": {
-            ".write": "root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER'"
+            ".write": "auth != null && auth.token.registered === true && root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER'"
           }
         }
       }
@@ -74,12 +80,10 @@
     "submissions": {
       "$secretid": {
         ".write": false,
-        ".read": "root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ'"
+        ".read": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ')"
       }
     },
-    /* FIXME: Right now teachers can view all students' work */
-    /* This is apparently how you check if an array is non-empty. Don't change it! */
-    ".read": "auth.token.admin === true || (auth.token.teacher != null && auth.token.teacher['0'] != null)",
+    ".read": "auth.token.teacher === true",
     ".write": false
   }
 }

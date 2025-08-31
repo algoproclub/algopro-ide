@@ -414,7 +414,7 @@ const PageContent = () => {
     const fromTime = Date.now() - timeInMillis.slice(-1)[0];
     const newFileList = await Promise.all(
       Object.entries(filesObj)
-        .filter(([_, fileData]) => {
+        .filter(([, fileData]) => {
           if (!fileData.users) {
             return false;
           }
@@ -630,14 +630,30 @@ const PageContent = () => {
               {pageContent?.map((data, ind) => (
                 <tr className="divide-x divide-gray-600" key={ind}>
                   <>
-                    <td className="px-4 py-2 whitespace-nowrap">
+                    <td className="relative p-0 whitespace-nowrap">
+                      <span className="invisible block px-4 py-2">
+                        {data.workspaceName && data.workspaceName.trim() !== ''
+                          ? data.workspaceName
+                          : '(Unnamed Workspace)'}
+                      </span>
+
                       <a
                         href={`/${data.fileID.slice(1)}`}
-                        className="text-indigo-300 hover:underline"
+                        className="absolute inset-0 flex items-center px-4 py-2 text-sm font-medium text-indigo-300 hover:underline"
                         target="_blank"
                         rel="noreferrer"
+                        aria-label={
+                          data.workspaceName && data.workspaceName.trim() !== ''
+                            ? data.workspaceName
+                            : 'Open workspace'
+                        }
                       >
-                        {data.workspaceName}
+                        <span className="truncate block w-full">
+                          {data.workspaceName &&
+                          data.workspaceName.trim() !== ''
+                            ? data.workspaceName
+                            : '(Unnamed Workspace)'}
+                        </span>
                       </a>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">

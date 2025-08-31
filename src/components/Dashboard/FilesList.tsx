@@ -91,22 +91,38 @@ export default function FilesList(props: FilesListProps): JSX.Element {
         <tbody className="divide-y divide-gray-700 bg-gray-900">
           {props.files.map(file => (
             <tr key={file.id}>
-              <td
-                className={`text-sm font-medium truncate ${
-                  file.hidden ? 'text-gray-400' : 'text-white'
-                }`}
-              >
-                {file.hidden ? (
+              {file.hidden ? (
+                <td
+                  className={`text-sm font-medium truncate ${
+                    file.hidden ? 'text-gray-400' : 'text-white'
+                  }`}
+                >
                   <span>(Hidden) {file.title || '(Unnamed File)'}</span>
-                ) : (
+                </td>
+              ) : (
+                <td className="relative px-4 py-2">
+                  <span className="invisible block">
+                    {file.title && file.title.trim() !== ''
+                      ? file.title
+                      : '(Unnamed File)'}
+                  </span>
                   <Link
                     href={`/${file.id.substring(1)}`}
-                    className="text-gray-100 underline hover:text-indigo-200"
+                    className="absolute inset-0 flex items-center text-sm font-medium text-gray-100 hover:bg-gray-800 transition whitespace-normal break-words px-4 py-2"
+                    aria-label={
+                      file.title && file.title.trim() !== ''
+                        ? file.title
+                        : '(Unnamed File)'
+                    }
                   >
-                    {file.title || '(Unnamed File)'}
+                    <span className="block w-full">
+                      {file.title && file.title.trim() !== ''
+                        ? file.title
+                        : '(Unnamed File)'}
+                    </span>
                   </Link>
-                )}
-              </td>
+                </td>
+              )}
               <td className="whitespace-nowrap text-sm text-gray-400">
                 {dayjs(file.lastAccessTime).fromNow()}
               </td>
