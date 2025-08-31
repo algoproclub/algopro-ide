@@ -26,6 +26,7 @@ type SchoolStudentDataType = {
 const PageContent = () => {
   const router = useRouter();
   const [group, setGroup] = useState<string | null>(null);
+  const [groupName, setGroupName] = useState<string | null>(null);
 
   document.title = `Manage group [${group}]`;
 
@@ -53,6 +54,9 @@ const PageContent = () => {
         : '(school not set)';
 
       setSchool(mySchool);
+      setGroupName(
+        (await getDoc(doc(firestore, 'groups', group))).data()?.name ?? group
+      );
       const q = query(
         collection(firestore, 'userdata'),
         where('schools', 'array-contains', mySchoolID),
@@ -96,7 +100,7 @@ const PageContent = () => {
               icon={{ iconName: 'user-group', prefix: 'fas' }}
             />
             <span className="truncate">
-              <span className="font-semibold">{group}</span>
+              <span className="font-semibold">{groupName}</span>
               <span className="ml-1 truncate">({school})</span>
             </span>
           </span>
