@@ -299,11 +299,15 @@ const USACOTestCase = ({
       ? 'bg-green-700 border-green-700'
       : data.title === 'Did not run'
         ? 'bg-gray-700 border-gray-700'
-        : 'bg-red-700 border-red-700';
+        : data.title?.toLowerCase()?.includes('partially')
+          ? 'bg-yellow-700 border-yellow-700'
+          : 'bg-red-700 border-red-700';
   const textColor =
     data.title?.toLowerCase() === 'correct answer'
       ? 'text-green-100'
-      : 'text-red-100';
+      : data.title?.toLowerCase()?.includes('partially')
+        ? 'text-yellow-100'
+        : 'text-red-100';
   return (
     <div
       className={classNames(
@@ -324,6 +328,12 @@ const USACOTestCase = ({
         {data.symbol === 'x' && (
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'xmark' }}
+            className="w-6 h-6"
+          />
+        )}
+        {data.symbol === '~' && (
+          <FontAwesomeIcon
+            icon={{ prefix: 'fas', iconName: 'check' }}
             className="w-6 h-6"
           />
         )}

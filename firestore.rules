@@ -3,6 +3,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    match /schools/{schoolID} {
+      allow read: if request.auth.token.admin == true ||
+                     schoolID in request.auth.token.teacher ||
+                     schoolID in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
+      allow write: if request.auth.token.admin == true ||
+                      schoolID in request.auth.token.teacher ||
+                      schoolID in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
+    }
+
     // TODO: update with proper rules
     match /problemsets/{problemset}/problems/{problem} {
       allow read: if true;
@@ -22,17 +31,17 @@ service cloud.firestore {
 
     match /groups/{group} {
       allow read:  if request.auth.token.admin == true
-                   || resource.data.school in request.auth.token.teacher
-                   || resource.data.school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
+                   || resource.data.schoolID in request.auth.token.teacher
+                   || resource.data.schoolID in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
       allow write: if request.auth.token.admin == true
-                   || resource.data.school in request.auth.token.teacher;
+                   || resource.data.schoolID in request.auth.token.teacher;
 
       match /classes/{class} {
         allow read:  if request.auth.token.admin == true
-                     || get(/databases/$(database)/documents/groups/$(group)).data.school in request.auth.token.teacher
-                     || get(/databases/$(database)/documents/groups/$(group)).data.school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
+                     || get(/databases/$(database)/documents/groups/$(group)).data.schoolID in request.auth.token.teacher
+                     || get(/databases/$(database)/documents/groups/$(group)).data.schoolID in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
         allow write: if request.auth.token.admin == true
-                     || get(/databases/$(database)/documents/groups/$(group)).data.school in request.auth.token.teacher;
+                     || get(/databases/$(database)/documents/groups/$(group)).data.schoolID in request.auth.token.teacher;
       }
     }
 
