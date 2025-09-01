@@ -137,7 +137,7 @@ export const fetchSolutionData = async (
 const fetchGroupsForSchool = async (schoolID: string): Promise<GroupInfo[]> => {
   if (!schoolID) return [];
   const results = await getDocs(
-    query(collection(firestore, 'groups'), where('schoolID', '==', schoolID))
+    query(collection(firestore, 'groups'), where('school', '==', schoolID))
   );
   const groups: GroupInfo[] = [];
   results.forEach(d => {
@@ -178,7 +178,7 @@ export const fetchProblems = async (
 
 const fetchStudents = async (groupID: string): Promise<Student[]> => {
   const groupSnap = await getDoc(doc(firestore, 'groups', groupID));
-  const schoolID = groupSnap.get('schoolID');
+  const schoolID = groupSnap.get('school');
 
   const usersSnap = await getDocs(
     query(
@@ -589,7 +589,6 @@ const PageContent = () => {
         setStudents([]);
         setProblems([]);
         setData([]);
-        return;
       }
       setGroupsList(await fetchGroupsForSchool(selectedSchoolID));
     };
