@@ -191,7 +191,7 @@ const fetchStudents = async (groupID: string): Promise<Student[]> => {
     )
   );
   return usersSnap.docs
-    .filter(doc => doc.get('groups').includes(groupID))
+    .filter(doc => doc.get('groups')?.includes(groupID) === true)
     .map(doc => ({ id: doc.id, name: doc.data().user_full_name }));
 };
 
