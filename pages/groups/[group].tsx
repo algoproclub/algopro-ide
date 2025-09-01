@@ -47,7 +47,7 @@ const PageContent = () => {
       if (group === null) return;
 
       const groupSnapshot = await getDoc(doc(firestore, 'groups', group));
-      const mySchoolID = groupSnapshot.get('schoolID');
+      const mySchoolID = groupSnapshot.get('school');
       const mySchool = mySchoolID
         ? ((await getDoc(doc(firestore, 'schools', mySchoolID))).data()?.name ??
           '(school not set)')
