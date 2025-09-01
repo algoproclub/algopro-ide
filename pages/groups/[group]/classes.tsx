@@ -174,7 +174,7 @@ const ClassDropdown = ({
               </div>
             </Disclosure.Button>
             <Disclosure.Panel className="relative border border-gray-600">
-              <div className="flex items-center justify-between bg-gray-800 px-3 py-2 border-b border-gray-600 text-sm space-x-2">
+              <div className="flex items-center justify-between bg-gray-800 px-3 py-2 border-b border-gray-600 space-x-2">
                 <div className="flex items-center space-x-2">
                   <span className="font-bold">Tasks</span>
                   <FontAwesomeIcon
@@ -186,23 +186,23 @@ const ClassDropdown = ({
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
-                    className="rounded-md border border-gray-600 px-2 py-1 hover:bg-gray-700 active:bg-gray-600"
+                    className="rounded-md bg-gray-600  px-3 py-1.5 hover:bg-gray-500 active:bg-gray-400"
                     onClick={copyContent}
                   >
                     Copy
                     <FontAwesomeIcon
                       icon={{ prefix: 'far', iconName: 'copy' }}
-                      className="ml-2"
+                      className="ml-2 w-4 h-4"
                     />
                   </button>
                   <button
-                    className="rounded-md border border-gray-600 px-2 py-1 hover:bg-gray-700 active:bg-gray-600"
+                    className="rounded-md bg-green-700  px-3 py-1.5 hover:bg-green-800 active:bg-green-900"
                     onClick={addNewTasks}
                   >
                     New
                     <FontAwesomeIcon
                       icon={{ prefix: 'fas', iconName: 'plus' }}
-                      className="ml-2"
+                      className="ml-2 w-4 h-4"
                     />
                   </button>
                 </div>
@@ -372,7 +372,7 @@ const PageContent = () => {
     <div className="px-2">
       {group && (
         <div className="mx-auto max-w-7xl mt-4 space-y-3">
-          <div className="p-4 border border-gray-600 bg-gray-800 flex items-end space-x-3 text-sm">
+          <div className="p-4 border border-gray-600 bg-gray-800 flex items-end space-x-3">
             <label className="w-full">
               Class ID
               <input
