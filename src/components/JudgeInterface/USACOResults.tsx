@@ -318,7 +318,9 @@ const USACOTestCase = ({
       title={capitalize(data.title)}
       onClick={onClick ?? (() => {})}
     >
-      <div className={`font-semibold text-center ${textColor} pt-1`}>
+      <div
+        className={`font-semibold flex items-center justify-center ${textColor} pt-1`}
+      >
         {data.symbol === '✓' && (
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'check' }}
@@ -406,7 +408,7 @@ export default function USACOResults({
   return (
     <div className="mt-3">
       <div className="pb-3">
-        <div className="flex items-start font-medium text-gray-200 border-gray-700 space-x-2">
+        <div className="flex items-center font-medium text-gray-200 border-gray-700 space-x-2">
           <span>
             {!['error', 'resolved'].includes(data.statusCode) && (
               <FontAwesomeIcon

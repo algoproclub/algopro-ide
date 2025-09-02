@@ -66,7 +66,7 @@ const CopyButton = () => {
         <>
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'copy' }}
-            className="mr-2"
+            className="mr-2 w-4 h-4"
           />
           Copy code
         </>
@@ -75,7 +75,7 @@ const CopyButton = () => {
         <>
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'check' }}
-            className="mr-2"
+            className="mr-2 w-4 h-4"
           />
           Code copied
         </>

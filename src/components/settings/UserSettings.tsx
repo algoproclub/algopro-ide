@@ -175,7 +175,7 @@ export default function UserSettings({
             setSubmenu(val => (val === 'userdata' ? '' : 'userdata'))
           }
         >
-          <span>
+          <span className="flex items-center">
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'user' }}
               className="w-3.5 h-3.5 mr-2"
@@ -209,7 +209,7 @@ export default function UserSettings({
             setSubmenu(val => (val === 'codesettings' ? '' : 'codesettings'))
           }
         >
-          <span>
+          <span className="flex items-center">
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'code' }}
               className="w-3.5 h-3.5 mr-2"
@@ -250,7 +250,7 @@ export default function UserSettings({
             )
           }
         >
-          <span>
+          <span className="flex items-center">
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'wand-magic-sparkles' }}
               className="w-3.5 h-3.5 mr-2"
@@ -299,7 +299,7 @@ export default function UserSettings({
             setSubmenu(val => (val === 'templates' ? '' : 'templates'))
           }
         >
-          <span>
+          <span className="flex items-center">
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'file' }}
               className="w-3.5 h-3.5 mr-2"

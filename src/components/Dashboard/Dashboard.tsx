@@ -47,7 +47,6 @@ const Pagination = ({
   maxPage: number;
   label: string;
 }) => {
-  console.log(page, minPage, maxPage);
   return (
     <div className="px-3.5 py-3 flex items-center space-x-2 text-sm bg-gray-800">
       <button
@@ -382,11 +381,11 @@ export default function Dashboard() {
 
       <div className="h-8"></div>
 
-      <h2 className="text-gray-200 text-xl font-black mb-5">
-        Your workspaces{' '}
+      <h2 className="text-gray-200 text-xl font-black mb-5 flex items-center">
+        Your workspaces
         <FontAwesomeIcon
           icon={{ prefix: 'fas', iconName: 'computer' }}
-          className="ml-1"
+          className="ml-2 w-6 h-6"
         />
       </h2>
       <TabBar

@@ -122,6 +122,7 @@ const HTMLEditor = ({
             onClick={() => setFullscreen(value => !value)}
           >
             <FontAwesomeIcon
+              className="w-4 h-4"
               icon={{
                 prefix: 'fas',
                 iconName: `${fullscreen ? 'compress' : 'expand'}`,
@@ -296,7 +297,10 @@ const RemovableTag = ({
         className="px-2 py-1 rounded-md hover:bg-gray-700"
         onClick={removeTag}
       >
-        <FontAwesomeIcon icon={{ prefix: 'fas', iconName: 'trash' }} />
+        <FontAwesomeIcon
+          icon={{ prefix: 'fas', iconName: 'trash' }}
+          className="w-3.5 h-3.5"
+        />
       </button>
     </div>
   );
@@ -358,20 +362,26 @@ const PageContent = () => {
                 className="space-x-1 px-3 py-2 w-[5.5rem] border-x border-gray-700"
                 rowSpan={rowCount}
               >
-                <button
-                  className="px-2 py-1 rounded-md hover:bg-gray-700"
-                  onClick={onEdit}
-                >
-                  <FontAwesomeIcon icon={{ prefix: 'fas', iconName: 'edit' }} />
-                </button>
-                <button
-                  className="px-2 py-1 rounded-md hover:bg-gray-700"
-                  onClick={onDelete}
-                >
-                  <FontAwesomeIcon
-                    icon={{ prefix: 'fas', iconName: 'trash' }}
-                  />
-                </button>
+                <div className="flex items-center">
+                  <button
+                    className="px-2 py-1 rounded-md hover:bg-gray-700"
+                    onClick={onEdit}
+                  >
+                    <FontAwesomeIcon
+                      icon={{ prefix: 'fas', iconName: 'edit' }}
+                      className="w-3.5 h-3.5"
+                    />
+                  </button>
+                  <button
+                    className="px-2 py-1 rounded-md hover:bg-gray-700"
+                    onClick={onDelete}
+                  >
+                    <FontAwesomeIcon
+                      icon={{ prefix: 'fas', iconName: 'trash' }}
+                      className="w-3.5 h-3.5"
+                    />
+                  </button>
+                </div>
               </td>
             )}
           </tr>
@@ -713,13 +723,13 @@ const PageContent = () => {
         <div className="border border-gray-600 flex items-center justify-between bg-gray-800 px-3 py-2 border-b text-sm space-x-2">
           <span className="font-bold">Hints</span>
           <button
-            className="rounded-md border border-gray-600 px-2 py-1 hover:bg-gray-700 active:bg-gray-600"
+            className="rounded-md border border-gray-600 px-2 py-1 hover:bg-gray-700 active:bg-gray-600 flex items-center"
             onClick={handleAddNewHint}
           >
             New
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'plus' }}
-              className="ml-2"
+              className="ml-2 w-4 h-4"
             />
           </button>
         </div>
