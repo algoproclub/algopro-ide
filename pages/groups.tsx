@@ -8,7 +8,8 @@ import {
   getDoc,
   doc,
   setDoc,
-  deleteDoc,
+  writeBatch,
+  arrayRemove,
 } from 'firebase/firestore';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import { useUserContext } from '../src/context/UserContext';
@@ -129,7 +130,20 @@ const PageContent = () => {
   };
   const deleteGroup = (id: string) => {
     const doDelete = async () => {
-      await deleteDoc(doc(firestore, 'groups', id));
+      const q = query(
+        collection(firestore, 'userdata'),
+        where('groups', 'array-contains', id)
+      );
+      const snap = await getDocs(q);
+      const batch = writeBatch(firestore);
+      batch.delete(doc(firestore, 'groups', id));
+
+      snap.forEach(d => {
+        batch.update(doc(firestore, 'userdata', d.id), {
+          groups: arrayRemove(id),
+        });
+      });
+      await batch.commit();
       await fetchGroups();
       setIsOpen(false);
     };
