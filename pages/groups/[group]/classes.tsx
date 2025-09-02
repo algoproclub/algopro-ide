@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Dispatch, useEffect, useState, SetStateAction } from 'react';
 import { useRouter } from 'next/router';
 import {
   collection,
@@ -45,7 +45,7 @@ const EditTaskModal = ({
 }: {
   isOpen: boolean;
   text: string;
-  setText: React.Dispatch<React.SetStateAction<string>>;
+  setText: Dispatch<SetStateAction<string>>;
   onSave: (text: string) => void;
   onClose: () => void;
 }) => {
@@ -54,7 +54,7 @@ const EditTaskModal = ({
       isOpen={isOpen}
       text={text}
       title="Edit task"
-      setText={setText}
+      setText={(text: string) => setText(text)}
       onSave={onSave}
       onClose={onClose}
     />
@@ -139,6 +139,7 @@ const ClassDropdown = ({
       )
         .filter(problem => problem !== null)
         .map(problem => problem as URLProblem);
+
       if (newTasks.length > 0) {
         onUpdate({
           ...data,
@@ -154,7 +155,10 @@ const ClassDropdown = ({
         isOpen={isOpen}
         text={url}
         setText={setURL}
-        onSave={onSaveTask}
+        onSave={(text: string) => {
+          onSaveTask(text);
+          setIsOpen(false);
+        }}
         onClose={() => setIsOpen(false)}
       />
       <Disclosure>
@@ -229,7 +233,7 @@ const ClassDropdown = ({
                     <div className="border-l px-3 py-2 border-gray-700 flex items-center space-x-2">
                       {platform && id && (
                         <a
-                          title="Jump to edit interface"
+                          title="Jump to class edit page"
                           className="px-2 py-1 rounded-md hover:bg-gray-700"
                           href={`/edit/${platform}/${id}`}
                           target="_blank"

@@ -571,7 +571,7 @@ const PageContent = () => {
       const schools = await Promise.all(
         schoolIDs.map(async (id: string) => {
           const docu = await getDoc(doc(firestore, 'schools', id));
-          return { id, name: docu.data()?.name };
+          return { id, name: docu.data()?.name || docu.id };
         })
       );
       setSchools(schools);

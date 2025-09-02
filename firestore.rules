@@ -8,8 +8,7 @@ service cloud.firestore {
                      school in request.auth.token.teacher ||
                      school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
       allow write: if request.auth.token.admin == true ||
-                      school in request.auth.token.teacher ||
-                      school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
+                      school in request.auth.token.teacher;
     }
 
     // TODO: update with proper rules
@@ -30,11 +29,29 @@ service cloud.firestore {
     }
 
     match /groups/{group} {
-      allow read:  if request.auth.token.admin == true
-                   || resource.data.school in request.auth.token.teacher
-                   || resource.data.school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
-      allow write: if request.auth.token.admin == true
-                   || resource.data.school in request.auth.token.teacher;
+      function isValidGroup(s) {
+        return s is string && s.matches('^[a-z0-9_-]+$');
+      }
+      allow read: if resource == null
+                  || request.auth.token.admin == true
+                  || resource.data.school in request.auth.token.teacher
+                  || resource.data.school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
+
+      allow create: if (
+                        request.auth.token.admin == true
+                        || (request.auth.token.teacher is list && request.auth.token.teacher.size() > 0)
+                      )
+                      && isValidGroup(request.resource.id)
+                      && (!('name' in request.resource.data) || isValidGroup(request.resource.data.name));
+
+      allow update: if (
+                        request.auth.token.admin == true
+                        || resource.data.school in request.auth.token.teacher
+                      )
+                      && (!('name' in request.resource.data) || isValidGroup(request.resource.data.name));
+
+      allow delete: if request.auth.token.admin == true
+                    || resource.data.school in request.auth.token.teacher;
 
       match /classes/{class} {
         allow read:  if request.auth.token.admin == true
