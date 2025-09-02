@@ -170,7 +170,8 @@ const PageContent = () => {
                   className="mr-2 w-4 h-4 flex-shrink-0"
                 />
                 <span className="truncate">
-                  {group.name} ({group.id})
+                  <span className="font-semibold">{group.name} </span>
+                  <span className="text-gray-300">({group.id})</span>
                 </span>
               </div>
               <div className="px-3 py-2 flex-shrink-0">
