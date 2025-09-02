@@ -57,7 +57,6 @@ const PageContent = () => {
           })
         );
       }
-      console.log('schools', schools);
       setSchools(schools);
     };
     fetchTeacherSchools();
@@ -165,14 +164,16 @@ const PageContent = () => {
               className="flex items-center justify-between divide-x divide-gray-700"
               key={group.id}
             >
-              <div className="px-4 py-2 truncate flex items-center">
+              <div className="px-4 py-2 flex items-center truncate">
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'user-group' }}
-                  className="mr-2 w-4 h-4"
+                  className="mr-2 w-4 h-4 flex-shrink-0"
                 />
-                {group.name} ({group.id})
+                <span className="truncate">
+                  {group.name} ({group.id})
+                </span>
               </div>
-              <div className="px-3 py-2">
+              <div className="px-3 py-2 flex-shrink-0">
                 <Link href={`groups/${group.id}`}>
                   <button
                     title="Jump to group edit page"
