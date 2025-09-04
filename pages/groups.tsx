@@ -132,16 +132,18 @@ const PageContent = () => {
     const doDelete = async () => {
       const q = query(
         collection(firestore, 'userdata'),
-        where('groups', 'array-contains', id)
+        where('schools', 'array-contains', schools[schoolInd].id)
       );
       const snap = await getDocs(q);
       const batch = writeBatch(firestore);
       batch.delete(doc(firestore, 'groups', id));
 
       snap.forEach(d => {
-        batch.update(doc(firestore, 'userdata', d.id), {
-          groups: arrayRemove(id),
-        });
+        if (d.get('groups').includes(id)) {
+          batch.update(doc(firestore, 'userdata', d.id), {
+            groups: arrayRemove(id),
+          });
+        }
       });
       await batch.commit();
       await fetchGroups();
