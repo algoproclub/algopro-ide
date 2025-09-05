@@ -120,7 +120,7 @@ const PageContent = () => {
       });
     } catch (e) {
       alert(
-        'The group could not be created. Please make sure that the group ID and the group name consist only of letters, digits, underscores (_), or hyphens (-).'
+        'The group could not be created. Please make sure that the group ID consists only of letters, digits, underscores (_), or hyphens (-).'
       );
       console.error(e);
       return;

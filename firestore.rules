@@ -41,14 +41,10 @@ service cloud.firestore {
                         request.auth.token.admin == true
                         || (request.auth.token.teacher is list && request.auth.token.teacher.size() > 0)
                       )
-                      && isValidGroup(request.resource.id)
-                      && (!('name' in request.resource.data) || isValidGroup(request.resource.data.name));
+                      && isValidGroup(request.resource.id);
 
-      allow update: if (
-                        request.auth.token.admin == true
-                        || resource.data.school in request.auth.token.teacher
-                      )
-                      && (!('name' in request.resource.data) || isValidGroup(request.resource.data.name));
+      allow update: if request.auth.token.admin == true
+                    || resource.data.school in request.auth.token.teacher
 
       allow delete: if request.auth.token.admin == true
                     || resource.data.school in request.auth.token.teacher;
