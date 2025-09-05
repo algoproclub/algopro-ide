@@ -13,7 +13,7 @@ import {
 } from 'firebase/firestore';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import { useUserContext } from '../src/context/UserContext';
-import { GroupInfo, School } from './teacher';
+import { fetchTeacherSchools, GroupInfo, School } from './teacher';
 import Dropdown from '../src/components/Dropdown';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { EditGroupModal, TwoFieldValue } from '../src/components/EditTextModal';
@@ -32,32 +32,11 @@ const PageContent = () => {
   const schoolNames = schools.map(s => s.name);
 
   useEffect(() => {
-    const fetchTeacherSchools = async () => {
-      let schools: School[] = [];
-      if (userRole?.admin) {
-        const results = await getDocs(collection(firestore, 'schools'));
-        results.forEach(docu => {
-          const data = docu.data();
-          schools.push({
-            id: docu.id,
-            name: data?.name || docu.id,
-          });
-        });
-      } else {
-        const schoolIDs = userRole?.teacher;
-        if (!schoolIDs) {
-          return [];
-        }
-        schools = await Promise.all(
-          schoolIDs.map(async (id: string) => {
-            const docu = await getDoc(doc(firestore, 'schools', id));
-            return { id, name: docu.data()?.name || docu.id };
-          })
-        );
-      }
+    const initSchools = async () => {
+      const schools = await fetchTeacherSchools(userRole);
       setSchools(schools);
     };
-    fetchTeacherSchools();
+    initSchools();
   }, [userRole]);
 
   const fetchGroups = async () => {
@@ -211,7 +190,7 @@ const PageContent = () => {
                   >
                     <FontAwesomeIcon
                       icon={{ prefix: 'fas', iconName: 'arrow-right' }}
-                      className="w-3.5 h-3.5"
+                      className="w-3.5 h-3.5 inline"
                     />
                   </button>
                 </Link>
@@ -224,7 +203,7 @@ const PageContent = () => {
                 >
                   <FontAwesomeIcon
                     icon={{ prefix: 'fas', iconName: 'trash' }}
-                    className="w-3.5 h-3.5"
+                    className="w-3.5 h-3.5 inline"
                   />
                 </button>
               </div>
