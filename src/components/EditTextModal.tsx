@@ -210,46 +210,47 @@ export type TwoFieldValue = {
   right: string;
 };
 
-export function EditInlineTwoFieldsModal({
+export function EditGroupModal({
   isOpen,
-  title,
   value,
+  schoolID,
   onSave,
   onClose,
-  leftLabel,
-  rightLabel,
 }: {
   isOpen: boolean;
-  title: string;
   value: TwoFieldValue;
+  schoolID: string;
   onSave: (v: TwoFieldValue) => void;
   onClose: () => void;
-  leftLabel?: string;
-  rightLabel?: string;
 }) {
   return (
     <EditModal<TwoFieldValue>
       isOpen={isOpen}
-      title={title}
+      title="Add new group"
       value={value}
       onSave={onSave}
       onClose={onClose}
       renderEditor={(val, setVal) => (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex flex-col space-y-1.5">
-            <label className="text-sm text-gray-200">{leftLabel}</label>
-            <input
-              className="border border-gray-700 w-full bg-gray-900 text-sm rounded-md px-3 py-2"
-              value={val.left}
-              onChange={e => setVal(v => ({ ...v, left: e.target.value }))}
-              onKeyDown={e => {
-                if (e.key === 'Enter') e.preventDefault();
-              }}
-            />
+            <label className="text-sm text-gray-200">Group ID</label>
+            <div className="flex items-center space-x-0.5">
+              <span className="border border-gray-700 bg-gray-800 text-sm rounded-md px-3 py-2 w-fit flex-shrink">
+                {schoolID}
+                {'~'}
+              </span>
+              <input
+                className="border border-gray-700 w-full bg-gray-900 text-sm rounded-md px-3 py-2"
+                value={val.left}
+                onChange={e => setVal(v => ({ ...v, left: e.target.value }))}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') e.preventDefault();
+                }}
+              />
+            </div>
           </div>
-
           <div className="flex flex-col space-y-1.5">
-            <label className="text-sm text-gray-200">{rightLabel}</label>
+            <label className="text-sm text-gray-200">Group name</label>
             <input
               className="border border-gray-700 w-full bg-gray-900 text-sm rounded-md px-3 py-2"
               value={val.right}

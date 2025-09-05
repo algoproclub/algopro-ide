@@ -16,10 +16,7 @@ import { useUserContext } from '../src/context/UserContext';
 import { GroupInfo, School } from './teacher';
 import Dropdown from '../src/components/Dropdown';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  EditInlineTwoFieldsModal,
-  TwoFieldValue,
-} from '../src/components/EditTextModal';
+import { EditGroupModal, TwoFieldValue } from '../src/components/EditTextModal';
 import Link from 'next/link';
 
 const firestore = getFirestore();
@@ -91,7 +88,9 @@ const PageContent = () => {
   }, [schoolInd, schools]);
 
   const onSave = async (group: TwoFieldValue) => {
-    if (group.left == '' || group.right == '') {
+    const groupID = `${schools[schoolInd].id}~${group.left}`;
+    const groupName = group.right;
+    if (groupID == '' || groupName == '') {
       alert(
         'The group could not be created. The group ID and the group name cannot be empty.'
       );
@@ -99,7 +98,7 @@ const PageContent = () => {
     }
     let success = true;
     try {
-      const groupDoc = await getDoc(doc(firestore, 'groups', group.left));
+      const groupDoc = await getDoc(doc(firestore, 'groups', groupID));
       if (groupDoc.exists()) {
         success = false;
       }
@@ -114,8 +113,8 @@ const PageContent = () => {
       return;
     }
     try {
-      await setDoc(doc(firestore, 'groups', group.left), {
-        name: group.right,
+      await setDoc(doc(firestore, 'groups', groupID), {
+        name: groupName,
         school: schools[schoolInd].id,
       });
     } catch (e) {
@@ -160,15 +159,15 @@ const PageContent = () => {
 
   return (
     <div className="px-2">
-      <EditInlineTwoFieldsModal
-        isOpen={isOpen}
-        title="Add new group"
-        value={{ left: '', right: '' }}
-        onSave={onSave}
-        onClose={() => setIsOpen(false)}
-        leftLabel="Group ID"
-        rightLabel="Group name"
-      />
+      {schools[schoolInd] && (
+        <EditGroupModal
+          isOpen={isOpen}
+          schoolID={schools[schoolInd].id}
+          value={{ left: '', right: '' }}
+          onSave={onSave}
+          onClose={() => setIsOpen(false)}
+        />
+      )}
       <div className="mx-auto max-w-7xl border border-gray-600 bg-gray-800 mt-4">
         <div className="p-4 border-b border-gray-600 flex items-center">
           <Dropdown

@@ -29,8 +29,8 @@ service cloud.firestore {
     }
 
     match /groups/{group} {
-      function isValidGroup(s) {
-        return s is string && s.matches('^[a-z0-9_-]+$');
+      function isValidGroup(schoolID, id) {
+        return schoolID is string && id is string && id.matches('^' + schoolID + '~[a-z0-9_-]+$');
       }
       allow read: if resource == null
                   || request.auth.token.admin == true
@@ -41,13 +41,17 @@ service cloud.firestore {
                         request.auth.token.admin == true
                         || (request.auth.token.teacher is list && request.auth.token.teacher.size() > 0)
                       )
-                      && isValidGroup(request.resource.id);
+                      && isValidGroup(request.resource.data.school, request.resource.id);
 
       allow update: if request.auth.token.admin == true
                     || resource.data.school in request.auth.token.teacher
 
       allow delete: if request.auth.token.admin == true
                     || resource.data.school in request.auth.token.teacher;
+
+      match /school {
+        allow write: if request.auth.token.admin == true;
+      }
 
       match /classes/{class} {
         allow read:  if request.auth.token.admin == true
