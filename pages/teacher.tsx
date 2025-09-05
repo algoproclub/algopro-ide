@@ -629,7 +629,7 @@ const PageContent = () => {
       setProblems(await fetchProblems(selectedGroupID, classes[classInd]));
     };
     updateProblems();
-  }, [classes]);
+  }, [classes, classInd]);
 
   const handleRefresh = async () => {
     if (!selectedGroupID) return;
