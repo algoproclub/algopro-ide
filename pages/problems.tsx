@@ -28,7 +28,10 @@ const Tag = ({
           className="px-2 py-1 rounded-md hover:bg-gray-700"
           onClick={() => tagToggle(tag)}
         >
-          <FontAwesomeIcon icon={{ prefix: 'fas', iconName: 'trash' }} />
+          <FontAwesomeIcon
+            icon={{ prefix: 'fas', iconName: 'trash' }}
+            className="inline w-3.5 h-3.5"
+          />
         </button>
       )}
     </div>
@@ -158,6 +161,7 @@ const PageContent = () => {
                         >
                           <span className="mr-3">{option}</span>
                           <FontAwesomeIcon
+                            className="inline w-3.5 h-3.5"
                             icon={{
                               prefix: 'fas',
                               iconName: tagFilters.includes(option)
@@ -212,27 +216,27 @@ const PageContent = () => {
                     {platform && id && (
                       <a
                         title="Edit problem"
-                        className="px-2 py-1 rounded-md hover:bg-gray-700"
+                        className="px-2 py-1 rounded-md hover:bg-gray-700 inline-block"
                         href={`/edit/${platform}/${id}`}
                         target="_blank"
                         rel="noreferrer"
                       >
                         <FontAwesomeIcon
                           icon={{ prefix: 'fas', iconName: 'edit' }}
-                          className="w-3.5 h-3.5"
+                          className="w-3.5 h-3.5 inline"
                         />
                       </a>
                     )}
                     <a
                       title="Open original problem"
-                      className="px-2 py-1 rounded-md hover:bg-gray-700"
+                      className="px-2 py-1 rounded-md hover:bg-gray-700 inline-block"
                       href={url}
                       target="_blank"
                       rel="noreferrer"
                     >
                       <FontAwesomeIcon
                         icon={{ prefix: 'fas', iconName: 'arrow-right' }}
-                        className="w-3.5 h-3.5"
+                        className="w-3.5 h-3.5 inline"
                       />
                     </a>
                   </td>

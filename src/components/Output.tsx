@@ -164,12 +164,12 @@ export const Output = ({
                           {item.message?.toLowerCase() === 'correct answer' ? (
                             <FontAwesomeIcon
                               icon={{ prefix: 'fas', iconName: 'check' }}
-                              className="text-green-500 w-3.5 h-3.5 mr-1.5"
+                              className="text-green-500 w-3.5 h-3.5 mr-1.5 inline"
                             />
                           ) : (
                             <FontAwesomeIcon
                               icon={{ prefix: 'fas', iconName: 'xmark' }}
-                              className="w-3.5 h-3.5 text-red-500 mr-1.5"
+                              className="w-3.5 h-3.5 text-red-500 mr-1.5 inline"
                             />
                           )}
                           {item.message}
@@ -179,7 +179,7 @@ export const Output = ({
                                 prefix: 'fas',
                                 iconName: 'up-right-from-square',
                               }}
-                              className="w-3.5 h-3.5 ml-1.5"
+                              className="w-3.5 h-3.5 ml-1.5 inline"
                             />
                           )}
                         </a>
@@ -198,7 +198,7 @@ export const Output = ({
                                 <FontAwesomeIcon
                                   title={tc.title}
                                   icon={{ prefix: 'fas', iconName: 'check' }}
-                                  className="text-green-500 w-3.5 h-3.5 mr-0.5"
+                                  className="text-green-500 w-3.5 h-3.5 mr-0.5 inline"
                                   key={index}
                                 />
                               ) : (
@@ -219,7 +219,7 @@ export const Output = ({
                                       return 'xmark';
                                     })(),
                                   }}
-                                  className="mr-0.5 w-3.5 h-3.5 text-red-500"
+                                  className="mr-0.5 w-3.5 h-3.5 text-red-500 inline"
                                   key={index}
                                 />
                               )

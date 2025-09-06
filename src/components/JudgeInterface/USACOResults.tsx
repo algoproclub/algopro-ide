@@ -324,19 +324,19 @@ const USACOTestCase = ({
         {data.symbol === '✓' && (
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'check' }}
-            className="w-6 h-6"
+            className="inline w-6 h-6"
           />
         )}
         {data.symbol === 'x' && (
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'xmark' }}
-            className="w-6 h-6"
+            className="inline w-6 h-6"
           />
         )}
         {data.symbol === '~' && (
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'check' }}
-            className="w-6 h-6"
+            className="inline w-6 h-6"
           />
         )}
       </div>
@@ -413,20 +413,20 @@ export default function USACOResults({
             {!['error', 'resolved'].includes(data.statusCode) && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'gear' }}
-                className="w-3.5 h-3.5 text-gray-400 animate-spin-slow"
+                className="w-3.5 h-3.5 inline text-gray-400 animate-spin-slow"
               />
             )}
             {data.statusCode === 'error' && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'exclamation-triangle' }}
-                className="text-yellow-500 w-3.5 h-3.5"
+                className="text-yellow-500 inline w-3.5 h-3.5"
               />
             )}
             {data.statusCode === 'resolved' &&
               data.message?.toLowerCase() === 'correct answer' && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'check' }}
-                  className="text-green-500 w-3.5 h-3.5"
+                  className="text-green-500 inline w-3.5 h-3.5"
                 />
               )}
             {data.statusCode === 'resolved' &&
@@ -434,7 +434,7 @@ export default function USACOResults({
               data.message?.toLowerCase()?.includes('partially') && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'check' }}
-                  className="text-yellow-500 w-3.5 h-3.5"
+                  className="text-yellow-500 inline w-3.5 h-3.5"
                 />
               )}
             {data.statusCode === 'resolved' &&
@@ -442,7 +442,7 @@ export default function USACOResults({
               !data.message?.toLowerCase()?.includes('partially') && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'xmark' }}
-                  className="w-3.5 h-3.5 text-red-500"
+                  className="w-3.5 h-3.5 inline text-red-500"
                 />
               )}
           </span>

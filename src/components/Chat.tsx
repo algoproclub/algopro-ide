@@ -96,7 +96,7 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
             Send{' '}
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'paper-plane' }}
-              className="ml-2 w-4 h-4"
+              className="ml-2 inline w-4 h-4"
             />
           </button>
         </form>

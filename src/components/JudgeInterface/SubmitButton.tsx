@@ -155,7 +155,7 @@ export default function SubmitButton({
         >
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'ellipsis-vertical' }}
-            className={`w-3.5 h-3.5 text-gray-200 transition duration-200`}
+            className={`w-3.5 h-3.5 inline text-gray-200 transition duration-200`}
           />
         </button>
       )}
@@ -176,7 +176,7 @@ export default function SubmitButton({
           <>
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'ban' }}
-              className="mr-2.5 w-3.5 h-3.5"
+              className="mr-2.5 inline w-3.5 h-3.5"
             />
             Cannot Submit
           </>
@@ -184,7 +184,7 @@ export default function SubmitButton({
           <>
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'paper-plane' }}
-              className="mr-2.5 w-3.5 h-3.5"
+              className="mr-2.5 inline w-3.5 h-3.5"
             />
             <span>Submit</span>
           </>

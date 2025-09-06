@@ -213,7 +213,7 @@ const RefreshButton = ({ onRefresh }: { onRefresh: () => void }) => {
     >
       <FontAwesomeIcon
         icon={{ prefix: 'fas', iconName: 'arrows-rotate' }}
-        className="w-4 text-gray-100"
+        className="w-4 h-4 inline text-gray-100"
       />
     </button>
   );
@@ -342,7 +342,7 @@ const ControlDropdown = ({
                 Filter
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-                  className={`ml-2 w-3.5 h-3.5 transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`}
+                  className={`ml-2 w-3.5 h-3.5 inline transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`}
                 />
               </div>
             </Disclosure.Button>
@@ -352,7 +352,7 @@ const ControlDropdown = ({
             >
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'arrows-rotate' }}
-                className="w-4 text-gray-100"
+                className="w-4 h-4 inline text-gray-100"
               />
             </button>
           </div>
@@ -492,13 +492,13 @@ const GroupData = ({
                               {data[i][j]!.verdictType === 'wrong' && (
                                 <FontAwesomeIcon
                                   icon={{ prefix: 'fas', iconName: 'xmark' }}
-                                  className="text-red-500"
+                                  className="inline w-4 h-4 text-red-500"
                                 />
                               )}
                               {data[i][j]!.verdictType === 'accepted' && (
                                 <FontAwesomeIcon
                                   icon={{ prefix: 'fas', iconName: 'check' }}
-                                  className="text-green-500"
+                                  className="inline w-4 h-4 text-green-500"
                                 />
                               )}
                               {data[i][j]!.verdictType === 'error' && (
@@ -507,7 +507,7 @@ const GroupData = ({
                                     prefix: 'fas',
                                     iconName: 'triangle-exclamation',
                                   }}
-                                  className="text-yellow-500"
+                                  className="inline w-4 h-4 text-yellow-500"
                                 />
                               )}
                             </span>

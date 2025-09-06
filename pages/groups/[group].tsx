@@ -96,7 +96,7 @@ const PageContent = () => {
         <div className="p-4 pl-5 border-b border-gray-600 flex justify-between items-center truncate">
           <span className="flex items-center truncate">
             <FontAwesomeIcon
-              className="flex-shrink-0 w-5 h-5 mr-1.5"
+              className="flex-shrink-0 w-5 h-5 mr-1.5 inline"
               icon={{ iconName: 'user-group', prefix: 'fas' }}
             />
             <span className="truncate">
@@ -117,7 +117,7 @@ const PageContent = () => {
               <button className="px-4 py-2.5 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 rounded-md flex items-center">
                 Classes
                 <FontAwesomeIcon
-                  className="ml-2 w-4 h-4"
+                  className="ml-2 w-4 h-4 inline"
                   icon={{ prefix: 'fas', iconName: 'right-to-bracket' }}
                 />
               </button>
@@ -140,12 +140,12 @@ const PageContent = () => {
                       {data.isInGroup ? (
                         <FontAwesomeIcon
                           icon={{ prefix: 'fas', iconName: 'minus' }}
-                          className="w-4 h-4 ml-2"
+                          className="w-4 h-4 ml-2 inline"
                         />
                       ) : (
                         <FontAwesomeIcon
                           icon={{ prefix: 'fas', iconName: 'plus' }}
-                          className="w-4 h-4 ml-2"
+                          className="w-4 h-4 ml-2 inline"
                         />
                       )}
                     </button>

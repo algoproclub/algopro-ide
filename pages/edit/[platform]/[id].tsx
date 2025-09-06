@@ -122,7 +122,7 @@ const HTMLEditor = ({
             onClick={() => setFullscreen(value => !value)}
           >
             <FontAwesomeIcon
-              className="w-4 h-4"
+              className="w-4 h-4 inline"
               icon={{
                 prefix: 'fas',
                 iconName: `${fullscreen ? 'compress' : 'expand'}`,
@@ -299,7 +299,7 @@ const RemovableTag = ({
       >
         <FontAwesomeIcon
           icon={{ prefix: 'fas', iconName: 'trash' }}
-          className="w-3.5 h-3.5"
+          className="w-3.5 h-3.5 inline"
         />
       </button>
     </div>
@@ -369,7 +369,7 @@ const PageContent = () => {
                   >
                     <FontAwesomeIcon
                       icon={{ prefix: 'fas', iconName: 'edit' }}
-                      className="w-3.5 h-3.5"
+                      className="w-3.5 h-3.5 inline"
                     />
                   </button>
                   <button
@@ -378,7 +378,7 @@ const PageContent = () => {
                   >
                     <FontAwesomeIcon
                       icon={{ prefix: 'fas', iconName: 'trash' }}
-                      className="w-3.5 h-3.5"
+                      className="w-3.5 h-3.5 inline"
                     />
                   </button>
                 </div>
@@ -729,7 +729,7 @@ const PageContent = () => {
             New
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'plus' }}
-              className="ml-2 w-4 h-4"
+              className="ml-2 w-4 h-4 inline"
             />
           </button>
         </div>

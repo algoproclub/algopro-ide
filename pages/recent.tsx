@@ -122,14 +122,14 @@ const Pagination = ({
       >
         <FontAwesomeIcon
           icon={{ prefix: 'fas', iconName: 'angles-left' }}
-          className="w-3 h-3"
+          className="w-3 h-3 inline"
         />
       </button>
       {pageData.current >= 4 && (
         <div className="flex items-center">
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'ellipsis' }}
-            className="w-3 h-3 px-2"
+            className="w-3 h-3 px-2 inline"
           />
         </div>
       )}
@@ -142,7 +142,7 @@ const Pagination = ({
         <div className="flex items-center">
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'ellipsis' }}
-            className="w-3 h-3 px-2"
+            className="w-3 h-3 px-2 inline"
           />
         </div>
       )}
@@ -152,7 +152,7 @@ const Pagination = ({
       >
         <FontAwesomeIcon
           icon={{ prefix: 'fas', iconName: 'angles-right' }}
-          className="w-3 h-3"
+          className="w-3 h-3 inline"
         />
       </button>
     </>
@@ -499,7 +499,7 @@ const PageContent = () => {
                     Filter
                     <FontAwesomeIcon
                       icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-                      className={`ml-2 w-3.5 h-3.5 transform duration-200 ${
+                      className={`ml-2 w-3.5 h-3.5 inline transform duration-200 ${
                         open ? 'rotate-180' : 'rotate-0'
                       }`}
                     />
@@ -510,6 +510,7 @@ const PageContent = () => {
                   onClick={updateFileList}
                 >
                   <FontAwesomeIcon
+                    className="inline"
                     icon={{ prefix: 'fas', iconName: 'arrows-rotate' }}
                   />
                 </button>
@@ -593,25 +594,25 @@ const PageContent = () => {
                     <span>{val}</span>
                     {sortOptions.by !== ind && (
                       <FontAwesomeIcon
-                        className="w-3 h-3"
+                        className="w-3 h-3 inline"
                         icon={{ prefix: 'fas', iconName: 'sort' }}
                       />
                     )}
                     {sortOptions.by === ind && sortOptions.order === 0 && (
                       <FontAwesomeIcon
-                        className="w-3 h-3"
+                        className="w-3 h-3 inline"
                         icon={{ prefix: 'fas', iconName: 'sort' }}
                       />
                     )}
                     {sortOptions.by === ind && sortOptions.order === 1 && (
                       <FontAwesomeIcon
-                        className="w-3 h-3"
+                        className="w-3 h-3 inline"
                         icon={{ prefix: 'fas', iconName: 'sort-up' }}
                       />
                     )}
                     {sortOptions.by === ind && sortOptions.order === 2 && (
                       <FontAwesomeIcon
-                        className="w-3 h-3"
+                        className="w-3 h-3 inline"
                         icon={{ prefix: 'fas', iconName: 'sort-down' }}
                       />
                     )}
@@ -664,13 +665,13 @@ const PageContent = () => {
                         {data.submissionStatus === 'pending' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'cog' }}
-                            className="w-3.5 h-3.5 text-gray-400 animate-spin-slow"
+                            className="w-3.5 h-3.5 inline text-gray-400 animate-spin-slow"
                           />
                         )}
                         {data.submissionStatus === 'untried' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'ellipsis' }}
-                            className="w-3.5 h-3.5 text-gray-500"
+                            className="w-3.5 h-3.5 inline text-gray-500"
                           />
                         )}
                         {data.submissionStatus === 'error' && (
@@ -679,19 +680,19 @@ const PageContent = () => {
                               prefix: 'fas',
                               iconName: 'exclamation-triangle',
                             }}
-                            className="w-3.5 h-3.5 text-yellow-500"
+                            className="w-3.5 h-3.5 inline text-yellow-500"
                           />
                         )}
                         {data.submissionStatus === 'accepted' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'check' }}
-                            className="w-3.5 h-3.5 text-green-500"
+                            className="w-3.5 h-3.5 inline text-green-500"
                           />
                         )}
                         {data.submissionStatus === 'incorrect' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'xmark' }}
-                            className="w-3.5 h-3.5 text-red-500"
+                            className="w-3.5 h-3.5 inlinetext-red-500"
                           />
                         )}
                         <span className="ml-2">
