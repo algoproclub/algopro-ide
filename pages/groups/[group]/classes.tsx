@@ -325,11 +325,11 @@ const PageContent = () => {
 
   useEffect(() => {
     const initialize = async (group: string) => {
-      const groupDoc = await getDoc(doc(firestore, 'groups', group));
-      const schoolID = groupDoc.get('school');
-      const schoolDoc = await getDoc(doc(firestore, 'schools', schoolID));
-      setGroupName(groupDoc.get('name'));
-      setSchoolName(schoolDoc.get('name'));
+      const groupSnap = await getDoc(doc(firestore, 'groups', group));
+      const schoolID = groupSnap.get('school');
+      const schoolSnap = await getDoc(doc(firestore, 'schools', schoolID));
+      setGroupName(groupSnap.get('name'));
+      setSchoolName(schoolSnap.get('name'));
     };
     if (typeof router.query.group === 'string') {
       setGroup(router.query.group);
