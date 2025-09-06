@@ -108,8 +108,8 @@ export const fetchTeacherSchools = async (userRole: UserRole | null) => {
     }
     return await Promise.all(
       schoolIDs.map(async (id: string) => {
-        const docu = await getDoc(doc(firestore, 'schools', id));
-        return { id, name: docu.data()?.name || docu.id };
+        const snap = await getDoc(doc(firestore, 'schools', id));
+        return { id, name: snap.data()?.name || snap.id };
       })
     );
   }
