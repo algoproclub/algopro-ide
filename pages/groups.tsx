@@ -43,16 +43,14 @@ const PageContent = () => {
     if (!schools[schoolInd]) {
       return;
     }
-    const groupsSnap = (
-      await getDocs(
-        query(
-          collection(firestore, 'groups'),
-          where('school', '==', schools[schoolInd].id)
-        )
+    const groupsSnap = await getDocs(
+      query(
+        collection(firestore, 'groups'),
+        where('school', '==', schools[schoolInd].id)
       )
-    ).docs;
+    );
     setGroups(
-      groupsSnap.map(docu => {
+      groupsSnap.docs.map(docu => {
         return {
           id: docu.id,
           name: docu.get('name') || docu.id,
