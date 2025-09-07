@@ -69,12 +69,6 @@ const PageContent = () => {
   const onSave = async (group: TwoFieldValue) => {
     const groupID = `${schools[schoolInd].id}~${group.left}`;
     const groupName = group.right;
-    if (groupID == '' || groupName == '') {
-      alert(
-        'The group could not be created. The group ID and the group name cannot be empty.'
-      );
-      return;
-    }
     let success = true;
     try {
       const groupSnap = await getDoc(doc(firestore, 'groups', groupID));
@@ -98,7 +92,7 @@ const PageContent = () => {
       });
     } catch (e) {
       alert(
-        'The group could not be created. Please make sure that the group ID consists only of letters, digits, underscores (_), or hyphens (-).'
+        'The group could not be created. Please make sure that the group ID and the group name are non-empty, and the ID consists only of letters, digits, underscores (_), or hyphens (-).'
       );
       console.error(e);
       return;

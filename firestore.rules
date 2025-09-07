@@ -39,13 +39,18 @@ service cloud.firestore {
 
       allow create: if (
                         request.auth.token.admin == true
-                        || (request.auth.token.teacher is list && request.auth.token.teacher.size() > 0)
+                        || (
+                          request.auth.token.teacher is list &&
+                          request.auth.token.teacher.size() > 0 &&
+                          request.resource.data.school in request.auth.token.teacher)
                       )
                       && isValidGroup(request.resource.data.school, request.resource.id);
 
       allow update: if request.auth.token.admin == true
-                    || resource.data.school in request.auth.token.teacher
-                    && resource.data.school == request.resource.data.school;
+                    || (
+                      resource.data.school in request.auth.token.teacher &&
+                      resource.data.school == request.resource.data.school
+                    );
 
       allow delete: if request.auth.token.admin == true
                     || resource.data.school in request.auth.token.teacher;
