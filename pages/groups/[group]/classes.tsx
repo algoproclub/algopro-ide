@@ -328,8 +328,8 @@ const PageContent = () => {
       const groupSnap = await getDoc(doc(firestore, 'groups', group));
       const schoolID = groupSnap.get('school');
       const schoolSnap = await getDoc(doc(firestore, 'schools', schoolID));
-      setGroupName(groupSnap.get('name'));
-      setSchoolName(schoolSnap.get('name'));
+      setGroupName(groupSnap.get('name') || groupSnap.id);
+      setSchoolName(schoolSnap.get('name') || schoolSnap.id);
     };
     if (typeof router.query.group === 'string') {
       setGroup(router.query.group);
