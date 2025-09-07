@@ -41,7 +41,6 @@ service cloud.firestore {
                         request.auth.token.admin == true
                         || (
                           request.auth.token.teacher is list &&
-                          request.auth.token.teacher.size() > 0 &&
                           request.resource.data.school in request.auth.token.teacher)
                       )
                       && isValidGroup(request.resource.data.school, request.resource.id);
