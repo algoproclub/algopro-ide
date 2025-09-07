@@ -39,9 +39,7 @@ service cloud.firestore {
 
       allow create: if (
                         request.auth.token.admin == true
-                        || (
-                          request.auth.token.teacher is list &&
-                          request.resource.data.school in request.auth.token.teacher)
+                        request.resource.data.school in request.auth.token.teacher
                       )
                       && isValidGroup(request.resource.data.school, request.resource.id);
 
