@@ -25,7 +25,7 @@ firebase_admin.initialize_app(
 )
 print("Initialized app")
 
-db_root_ref = db.reference(url="http://127.0.0.1:9000/?ns=algopro-app-default-rtdb")
+db_root_ref = db.reference(url="https://algopro-app-default-rtdb.europe-west1.firebasedatabase.app")
 print("Conencted to database")
 
 fs_client = firestore.client()
