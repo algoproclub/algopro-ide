@@ -692,7 +692,7 @@ const PageContent = () => {
                         {data.submissionStatus === 'incorrect' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'xmark' }}
-                            className="w-3.5 h-3.5 inlinetext-red-500"
+                            className="w-3.5 h-3.5 inline text-red-500"
                           />
                         )}
                         <span className="ml-2">
