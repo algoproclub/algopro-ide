@@ -124,7 +124,7 @@ const PageContent = () => {
             </Link>
           </div>
         </div>
-        <div className="w-full divide-y divide-gray-700 bg-gray-900">
+        <div className="w-full divide-y divide-gray-700 bg-gray-900 min-h-4">
           {schoolStudentDatas
             .filter(data => memberEditorOpen || data.isInGroup)
             .map(data => (
