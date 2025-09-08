@@ -1,15 +1,22 @@
 from google.cloud.firestore import DocumentReference, Client
 
 def change_group_ids(fs_client: Client, old_group_id_to_new_group_id: dict[str, str]) -> None:
+
+    def get_new_group_id(old_id: str) -> str:
+        # we fall back to the old_id if we didn't rename a group
+        return old_group_id_to_new_group_id.get(old_id, old_id)
+
     user_to_group_changes = {}
+
     for doc in fs_client.collection("userdata").list_documents():
         doc: DocumentReference = doc
         snap = doc.get()
-        old_groups = snap.get("groups")
-        if len(old_groups) == 0:
+        old_groups: list[str] = snap.get("groups")
+
+        if all(id not in old_group_id_to_new_group_id.keys() for id in old_groups):
             continue
 
-        new_groups = [old_group_id_to_new_group_id[og] for og in old_groups]
+        new_groups = [get_new_group_id(og) for og in old_groups]
         user_to_group_changes[doc.id] = {
             "old": old_groups,
             "new": new_groups,

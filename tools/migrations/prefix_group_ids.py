@@ -45,7 +45,8 @@ old_group_id_to_new_group_id = {}
 for doc in fs_client.collection("groups").list_documents():
     doc: DocumentReference = doc
     snap = doc.get()
-    old_group_id_to_new_group_id[doc.id] = snap.get("school") + "~" + doc.id
+    if "~" not in doc.id:
+        old_group_id_to_new_group_id[doc.id] = snap.get("school") + "~" + doc.id
 
 
 change_group_ids(fs_client, old_group_id_to_new_group_id)
