@@ -45,9 +45,14 @@ except FileNotFoundError:
 print()
 
 
-def make_group(*, group_id: str, school: str) -> None:
+def make_school(*, school_id: str, name: str):
+    school_doc = fs_client.document("schools", school_id)
+    school_doc.set({"name": name})
+
+
+def make_group(*, group_id: str, name: str, school: str) -> None:
     group_doc = fs_client.document("groups", group_id)
-    group_doc.set({"school": school})
+    group_doc.set({"name": name, "school": school})
 
 
 def make_class(*, group_id: str, class_id: str, tasks: list) -> None:
@@ -66,6 +71,7 @@ def make_user(
     groups: list[str],
 ) -> auth.UserRecord:
     claims = {}
+    claims["registered"] = True
     if is_admin:
         claims["admin"] = True
     if len(teacher_in_schools) > 0:
@@ -95,7 +101,9 @@ def make_user(
     return user
 
 
-make_group(group_id="algopro-group-1", school="algopro")
+make_school(school_id="algopro", name="Algo Pro Club")
+
+make_group(group_id="algopro-group-1", name="Algo Pro Group 1", school="algopro")
 make_class(
     group_id="algopro-group-1",
     class_id="01",
@@ -111,7 +119,7 @@ make_class(
             "platform": "cses",
             "title": "Repetitions",
             "url": "https://cses.fi/problemset/task/1069",
-        }
+        },
     ],
 )
 make_class(
@@ -127,7 +135,7 @@ make_class(
     ],
 )
 
-make_group(group_id="algopro-group-2", school="algopro")
+make_group(group_id="algopro-group-2", name="Algo Pro Group 2", school="algopro")
 make_class(
     group_id="algopro-group-2",
     class_id="01",
