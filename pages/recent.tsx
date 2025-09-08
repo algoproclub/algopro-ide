@@ -510,7 +510,7 @@ const PageContent = () => {
                   onClick={updateFileList}
                 >
                   <FontAwesomeIcon
-                    className="inline"
+                    className="w-4 h-4 inline"
                     icon={{ prefix: 'fas', iconName: 'arrows-rotate' }}
                   />
                 </button>
