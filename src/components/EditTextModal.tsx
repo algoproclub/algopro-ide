@@ -1,22 +1,42 @@
-import React, { Fragment, KeyboardEventHandler } from 'react';
+import React, {
+  Fragment,
+  useEffect,
+  useState,
+  KeyboardEventHandler,
+} from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
-export const EditTextModal = ({
+export type RenderEditor<T> = (
+  value: T,
+  setValue: React.Dispatch<React.SetStateAction<T>>
+) => React.ReactNode;
+
+export function EditModal<T>({
   isOpen,
   title,
-  text,
+  value,
   onSave,
   onClose,
-  children,
+  renderEditor,
+  saveLabel = 'Save',
+  cancelLabel = 'Cancel',
 }: {
   isOpen: boolean;
   title: string;
-  text: string;
-  onSave: (text: string) => void;
+  value: T;
+  onSave: (value: T) => void;
   onClose: () => void;
-  children: JSX.Element;
-}) => {
+  renderEditor: RenderEditor<T>;
+  saveLabel?: string;
+  cancelLabel?: string;
+}) {
+  const [draft, setDraft] = useState<T>(value);
+
+  useEffect(() => {
+    if (isOpen) setDraft(value);
+  }, [isOpen, value]);
+
   return (
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog
@@ -38,6 +58,7 @@ export const EditTextModal = ({
           >
             <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-75 transition-opacity" />
           </Transition.Child>
+
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -56,28 +77,30 @@ export const EditTextModal = ({
                   {title}
                 </Dialog.Title>
               </div>
+
               <div className="p-4 sm:p-6 space-y-6">
-                <div>{children}</div>
+                <div>{renderEditor(draft, setDraft)}</div>
+
                 <div className="flex items-center space-x-2.5">
                   <button
                     type="button"
                     className="inline-flex items-center px-4 py-2 border border-gray-700 shadow-sm text-[0.92rem] font-medium rounded-md text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     onClick={onClose}
                   >
-                    Cancel
+                    {cancelLabel}
                   </button>
                   <button
                     type="button"
                     className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     onClick={() => {
-                      onSave(text);
-                      onClose();
+                      onSave(draft);
                     }}
                   >
-                    Save
+                    {saveLabel}
                   </button>
                 </div>
               </div>
+
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
@@ -94,88 +117,151 @@ export const EditTextModal = ({
       </Dialog>
     </Transition.Root>
   );
-};
+}
 
-export const handleKeyDown: KeyboardEventHandler<
-  HTMLTextAreaElement
-> = event => {
-  if (event.key === 'Tab') {
-    event.preventDefault();
-
-    const textarea = event.target as HTMLTextAreaElement;
+export const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = e => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const textarea = e.target as HTMLTextAreaElement;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-
     textarea.value =
       textarea.value.substring(0, start) + '\t' + textarea.value.substring(end);
-    textarea.setSelectionRange(start + '\t'.length, start + '\t'.length);
+    textarea.setSelectionRange(start + 1, start + 1);
   }
 };
 
-export const EditTextAreaModal = ({
+export function EditTextAreaModal({
   isOpen,
-  text,
   title,
+  text,
   setText,
   onSave,
   onClose,
 }: {
   isOpen: boolean;
-  text: string;
   title: string;
+  text: string;
   setText: (text: string) => void;
   onSave: (text: string) => void;
   onClose: () => void;
-}) => {
+}) {
   return (
-    <EditTextModal
+    <EditModal<string>
       isOpen={isOpen}
       title={title}
-      text={text}
+      value={text}
       onSave={onSave}
       onClose={onClose}
-    >
-      <textarea
-        className="font-mono h-60 bg-gray-900 border-gray-700 w-full min-h-[10rem] text-sm"
-        value={text}
-        onKeyDown={handleKeyDown}
-        onChange={e => setText(e.target.value)}
-      />
-    </EditTextModal>
+      renderEditor={(val, setVal) => (
+        <textarea
+          className="font-mono h-60 bg-gray-900 border border-gray-700 w-full min-h-[10rem] text-sm"
+          value={val}
+          onKeyDown={handleKeyDown}
+          onChange={e => {
+            setVal(e.target.value);
+            setText(e.target.value);
+          }}
+        />
+      )}
+    />
   );
-};
+}
 
-export const EditInlineTextModal = ({
+export function EditInlineTextModal({
   isOpen,
-  text,
   title,
+  text,
   setText,
   onSave,
   onClose,
 }: {
   isOpen: boolean;
-  text: string;
   title: string;
-  setText: React.Dispatch<React.SetStateAction<string>>;
+  text: string;
+  setText: (text: string) => void;
   onSave: (text: string) => void;
   onClose: () => void;
-}) => {
+}) {
   return (
-    <EditTextModal
+    <EditModal<string>
       isOpen={isOpen}
       title={title}
-      text={text}
+      value={text}
       onSave={onSave}
       onClose={onClose}
-    >
-      <input
-        className="border border-gray-700 w-full bg-gray-900 text-sm"
-        type="text"
-        value={text}
-        onChange={e => {
-          setText(e.target.value);
-        }}
-      />
-    </EditTextModal>
+      renderEditor={(val, setVal) => (
+        <input
+          className="border border-gray-700 w-full bg-gray-900 text-sm"
+          type="text"
+          value={val}
+          onChange={e => {
+            setVal(e.target.value);
+            setText(e.target.value);
+          }}
+        />
+      )}
+    />
   );
+}
+
+export type TwoFieldValue = {
+  left: string;
+  right: string;
 };
+
+export function EditGroupModal({
+  isOpen,
+  value,
+  schoolID,
+  onSave,
+  onClose,
+}: {
+  isOpen: boolean;
+  value: TwoFieldValue;
+  schoolID: string;
+  onSave: (v: TwoFieldValue) => void;
+  onClose: () => void;
+}) {
+  return (
+    <EditModal<TwoFieldValue>
+      isOpen={isOpen}
+      title="Add new group"
+      value={value}
+      onSave={onSave}
+      onClose={onClose}
+      renderEditor={(val, setVal) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="flex flex-col space-y-1.5">
+            <label className="text-sm text-gray-200">Group ID</label>
+            <div className="flex items-center space-x-0.5">
+              <span className="border border-gray-700 bg-gray-800 text-sm rounded-md px-3 py-2 w-fit flex-shrink">
+                {schoolID}
+                {'~'}
+              </span>
+              <input
+                className="border border-gray-700 w-full bg-gray-900 text-sm rounded-md px-3 py-2"
+                value={val.left}
+                onChange={e => setVal(v => ({ ...v, left: e.target.value }))}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') e.preventDefault();
+                }}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col space-y-1.5">
+            <label className="text-sm text-gray-200">Group name</label>
+            <input
+              className="border border-gray-700 w-full bg-gray-900 text-sm rounded-md px-3 py-2"
+              value={val.right}
+              onChange={e => setVal(v => ({ ...v, right: e.target.value }))}
+              onKeyDown={e => {
+                if (e.key === 'Enter') e.preventDefault();
+              }}
+            />
+          </div>
+        </div>
+      )}
+    />
+  );
+}

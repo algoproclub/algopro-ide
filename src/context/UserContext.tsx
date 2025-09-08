@@ -57,7 +57,7 @@ export type UserData = {
   templateCode: TemplateCodeData;
 };
 
-type UserRole = {
+export type UserRole = {
   admin?: boolean;
   teacher?: string[];
 };
