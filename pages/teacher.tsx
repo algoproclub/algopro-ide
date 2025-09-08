@@ -21,7 +21,7 @@ import Checkbox from '../src/components/Checkbox';
 import { parseProblem } from '../src/scripts/parseProblem';
 import { getPlatformName } from '../src/scripts/getPlatformName';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
-import { useUserContext } from '../src/context/UserContext';
+import { UserRole, useUserContext } from '../src/context/UserContext';
 
 const times = ['1 hour', '3 hours', '1 day', '7 days', 'All'];
 const timeInMs = [
@@ -94,6 +94,25 @@ const getVerdict = ({
       return 'untried';
   }
   return message ?? '-';
+};
+
+export const fetchTeacherSchools = async (userRole: UserRole | null) => {
+  if (userRole?.admin) {
+    return (await getDocs(collection(firestore, 'schools'))).docs.map(docu => {
+      return { id: docu.id, name: docu.data().name || docu.id };
+    });
+  } else {
+    const schoolIDs = userRole?.teacher;
+    if (!schoolIDs) {
+      return [];
+    }
+    return await Promise.all(
+      schoolIDs.map(async (id: string) => {
+        const snap = await getDoc(doc(firestore, 'schools', id));
+        return { id, name: snap.data()?.name || snap.id };
+      })
+    );
+  }
 };
 
 export const fetchSolutionData = async (
@@ -563,20 +582,11 @@ const PageContent = () => {
   const selectedGroupID = groupsList[groupInd]?.id || '';
 
   useEffect(() => {
-    const fetchTeacherSchools = async () => {
-      const schoolIDs = userRole?.teacher;
-      if (!schoolIDs) {
-        return [];
-      }
-      const schools = await Promise.all(
-        schoolIDs.map(async (id: string) => {
-          const docu = await getDoc(doc(firestore, 'schools', id));
-          return { id, name: docu.data()?.name };
-        })
-      );
+    const initSchools = async () => {
+      const schools = await fetchTeacherSchools(userRole);
       setSchools(schools);
     };
-    fetchTeacherSchools();
+    initSchools();
   }, [userRole]);
 
   useEffect(() => {
