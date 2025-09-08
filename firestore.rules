@@ -42,14 +42,14 @@ service cloud.firestore {
                         request.resource.data.school in request.auth.token.teacher
                       )
                       && isValidGroup(request.resource.data.school, request.resource.id)
-                      && request.resource.data.name.length > 0;
+                      && request.resource.data.name.size() > 0;
 
       allow update: if resource.data.school == request.resource.data.school
                     && (
                       request.auth.token.admin == true ||
                       resource.data.school in request.auth.token.teacher
                     )
-                    && request.resource.data.name.length > 0;
+                    && request.resource.data.name.size() > 0;
 
       allow delete: if request.auth.token.admin == true
                     || resource.data.school in request.auth.token.teacher;
