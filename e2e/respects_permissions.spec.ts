@@ -198,9 +198,9 @@ test.describe('Respects Permissions', () => {
     await page.click('text=Workspace Settings');
     await page.click('div[role="radio"]:has-text("Public Read & Write")');
     await page.click('text=Save');
+    await page2.reload();
     await page2.waitForSelector('button:has-text("Run Code")');
-    // let monaco load
-    await page2.waitForTimeout(500);
+    await waitForEditorToLoad(page2);
 
     // test input: we should be able to type stuff now
     await page2.click('[data-test-id="input-editor"]');

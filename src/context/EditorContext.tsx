@@ -1,7 +1,6 @@
 import {
   DataSnapshot,
   getDatabase,
-  off,
   onValue,
   ref,
   update,
@@ -17,7 +16,6 @@ import React, {
   useState,
 } from 'react';
 import { ChatMessage } from '../components/Chat';
-import { useUserContext, isTeacher } from './UserContext';
 import { FileSubmission, PlatformProblem, ProblemData } from '../types/problem';
 
 export type Language = 'cpp' | 'java' | 'py';
@@ -100,10 +98,9 @@ export function EditorProvider({
   permissionDeniedUI: React.ReactNode;
   children: React.ReactNode;
 }): JSX.Element {
-  const { userData } = useUserContext();
-  const { userRole } = useUserContext();
   const [fileData, setFileData] = useState<FileData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [permissionDenied, setPermissionDenied] = useState<boolean>(false);
   const doNotInitializeTheseFileIdsRef = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -121,10 +118,17 @@ export function EditorProvider({
       );
     };
 
-    const fileRef = ref(getDatabase(), 'files/' + fileId);
-    onValue(fileRef, handleDataChange);
+    const handleNoPerms = (_err: Error) => {
+      setLoading(false);
+      setPermissionDenied(true);
+    };
 
-    return () => off(fileRef, 'value', handleDataChange);
+    const fileRef = ref(getDatabase(), 'files/' + fileId);
+    const unsubscribe = onValue(fileRef, handleDataChange, handleNoPerms);
+
+    return () => {
+      unsubscribe();
+    };
   }, [fileId]);
 
   const updateFileData = useCallback(
@@ -142,19 +146,12 @@ export function EditorProvider({
     return <>{loadingUI}</>;
   }
 
-  if (!editorContextValue.fileData) {
-    return <>{fileNotFoundUI}</>;
+  if (permissionDenied) {
+    return <>{permissionDeniedUI}</>;
   }
 
-  const userPermission =
-    editorContextValue.fileData.users[userData.id]?.permission ??
-    editorContextValue.fileData.settings.defaultPermission;
-
-  // FIXME: This allows teachers from other schools to access the file.
-  //        We should not be doing permission checks in the frontend,
-  //        but rather enforce them with Firebase rules.
-  if (!isTeacher(userRole) && userPermission === 'PRIVATE') {
-    return <>{permissionDeniedUI}</>;
+  if (!editorContextValue.fileData) {
+    return <>{fileNotFoundUI}</>;
   }
 
   // i don't know why the cast is needed. Somehow we should figure out how to
