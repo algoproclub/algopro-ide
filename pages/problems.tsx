@@ -198,7 +198,10 @@ const PageContent = () => {
                 );
               })
               .map(({ platform, id, url, title, tags }, index) => (
-                <tr className="h-[3.5rem]" key={index}>
+                <tr
+                  className="h-[3.5rem]"
+                  key={platform && id ? `${platform}:${id}` : index}
+                >
                   <td className="py-2 px-3 w-[10.0rem] border-x border-gray-700 bg-gray-800 font-bold">
                     {platform && getPlatformName(platform)} {title}
                   </td>
