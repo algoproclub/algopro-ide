@@ -12,11 +12,11 @@ import {
   where,
 } from 'firebase/firestore';
 import {
-  Platform,
+  type Platform,
   platforms,
-  ProblemTag,
+  type ProblemTag,
   problemTags,
-  TagProblem,
+  type TagProblem,
 } from '../src/types/problem';
 import Checkbox from '../src/components/Checkbox';
 import { useUserContext, type UserRole } from '../src/context/UserContext';
