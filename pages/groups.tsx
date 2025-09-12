@@ -109,7 +109,7 @@ const PageContent = () => {
       batch.delete(doc(firestore, 'groups', id));
 
       snap.forEach(d => {
-        if (d.get('groups').includes(id)) {
+        if ((d.get('groups') ?? []).includes(id)) {
           batch.update(doc(firestore, 'userdata', d.id), {
             groups: arrayRemove(id),
           });
