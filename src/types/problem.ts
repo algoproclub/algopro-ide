@@ -18,17 +18,7 @@ export type TagProblem = {
   tags: ProblemTag[] | null;
 };
 
-export type Platform =
-  | 'codeforces'
-  | 'cses'
-  | 'atcoder'
-  | 'spoj'
-  | 'usaco'
-  | 'planets'
-  | 'ojuz'
-  | 'njudge';
-
-export const platforms: Platform[] = [
+export const platforms = [
   'codeforces',
   'cses',
   'atcoder',
@@ -37,7 +27,9 @@ export const platforms: Platform[] = [
   'planets',
   'ojuz',
   'njudge',
-];
+] as const;
+
+export type Platform = (typeof platforms)[number];
 
 export type Language = 'cpp' | 'py' | 'java';
 
