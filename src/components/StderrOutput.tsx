@@ -2,6 +2,7 @@ import React from 'react';
 import {
   mainMonacoEditorAtom,
   isLineHighlightSetAtom,
+  savedEditorValue as savedEditorValueAtom,
 } from '../atoms/workspace';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { OnMount } from './editor/MonacoEditor/monaco-editor-types';
@@ -123,20 +124,25 @@ export const StderrOutput = ({
 }): JSX.Element => {
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
   const isLineHighlightSet = useAtomValue(isLineHighlightSetAtom);
+  const savedEditorValue = useAtomValue(savedEditorValueAtom);
   const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
 
-  const asanError = parseAsanError(output);
   let decodedOutput = output;
+  const editorValueLines = savedEditorValue
+    ? savedEditorValue.split('\n')
+    : mainMonacoEditor?.getValue().split('\n') || null;
+  const getLineContent = (lineNumber: number) => {
+    return editorValueLines == null || editorValueLines.length < lineNumber
+      ? '\t<line not found>'
+      : editorValueLines[lineNumber - 1];
+  };
+  const asanError = parseAsanError(output);
   let errorLineNumber: number | undefined = undefined;
 
   if (asanError) {
     const { originalStderr, errorType, lineNumber, indexError } = asanError;
     errorLineNumber = lineNumber;
-    const model = mainMonacoEditor?.getModel();
-    const errorLine =
-      model == null || model.getLineCount() < lineNumber
-        ? '\t<line deleted>'
-        : model.getLineContent(lineNumber);
+    const errorLine = getLineContent(lineNumber);
     decodedOutput = `${originalStderr}${errorType} on line ${lineNumber}:\n${errorLine}\n`;
 
     if (indexError) {
@@ -146,10 +152,7 @@ export const StderrOutput = ({
         accessedIndex,
         declarationLineNumber,
       } = indexError;
-      const declarationLine =
-        model == null || model.getLineCount() < declarationLineNumber
-          ? '\t<line deleted>'
-          : model.getLineContent(declarationLineNumber);
+      const declarationLine = getLineContent(declarationLineNumber);
       decodedOutput += `Possible cause: ${operationType} on index ${accessedIndex} of size ${containerSize} container created on line ${declarationLineNumber}:\n${declarationLine}\n`;
     }
   }
@@ -158,11 +161,7 @@ export const StderrOutput = ({
   if (!asanError && ubsanError) {
     const lineNumber = ubsanError['lineNumber'];
     errorLineNumber = lineNumber;
-    const model = mainMonacoEditor?.getModel();
-    const errorLine =
-      model == null || model.getLineCount() < lineNumber
-        ? '\t<line deleted>'
-        : model.getLineContent(lineNumber);
+    const errorLine = getLineContent(lineNumber);
     decodedOutput += errorLine;
   }
 
