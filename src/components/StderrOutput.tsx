@@ -144,7 +144,7 @@ export const StderrOutput = ({
     ? savedEditorValue.split('\n')
     : null;
   const getLineContent = (lineNumber: number) => {
-    return editorValueLines == null || editorValueLines.length < lineNumber
+    return editorValueLines == null || lineNumber <= 0 || lineNumber > editorValueLines.length
       ? '\t<not available, run the code again to see>'
       : editorValueLines[lineNumber - 1];
   };
