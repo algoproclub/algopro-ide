@@ -119,7 +119,7 @@ function validateLine(
   lineContent: string,
   model: editor.ITextModel | null | undefined
 ): boolean {
-  if (model && lineNumber < model.getLineCount()) {
+  if (model && lineNumber <= model.getLineCount()) {
     return model.getLineContent(lineNumber) === lineContent;
   }
   return false;
