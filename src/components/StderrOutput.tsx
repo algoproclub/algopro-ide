@@ -7,6 +7,7 @@ import {
 import { useAtomValue, useSetAtom } from 'jotai';
 import { OnMount } from './editor/MonacoEditor/monaco-editor-types';
 import { CodeEditor } from './editor/CodeEditor';
+import { editor } from 'monaco-editor';
 
 const ASAN_REGEX =
   /^([\s\S]*)={65}\s.+AddressSanitizer: (\S+) on address [\s\S]*?main\.cpp:(\d+)/;
@@ -113,6 +114,17 @@ function parseUBsanError(stderr: string) {
   return null;
 }
 
+function validateLine(
+  lineNumber: number,
+  lineContent: string,
+  model: editor.ITextModel | null | undefined
+): boolean {
+  if (model && lineNumber < model.getLineCount()) {
+    return model.getLineContent(lineNumber) === lineContent;
+  }
+  return false;
+}
+
 export const StderrOutput = ({
   output,
   lightMode,
@@ -130,20 +142,21 @@ export const StderrOutput = ({
   let decodedOutput = output;
   const editorValueLines = savedEditorValue
     ? savedEditorValue.split('\n')
-    : mainMonacoEditor?.getValue().split('\n') || null;
+    : null;
   const getLineContent = (lineNumber: number) => {
     return editorValueLines == null || editorValueLines.length < lineNumber
-      ? '\t<line not found>'
+      ? '\t<not available, run the code again to see>'
       : editorValueLines[lineNumber - 1];
   };
   const asanError = parseAsanError(output);
   let errorLineNumber: number | undefined = undefined;
+  let errorLineContent: string = '';
 
   if (asanError) {
     const { originalStderr, errorType, lineNumber, indexError } = asanError;
     errorLineNumber = lineNumber;
-    const errorLine = getLineContent(lineNumber);
-    decodedOutput = `${originalStderr}${errorType} on line ${lineNumber}:\n${errorLine}\n`;
+    errorLineContent = getLineContent(lineNumber);
+    decodedOutput = `${originalStderr}${errorType} on line ${lineNumber}:\n${errorLineContent}\n`;
 
     if (indexError) {
       const {
@@ -176,7 +189,13 @@ export const StderrOutput = ({
         height: '100%',
       }}
       onMouseOver={() =>
-        errorLineNumber && mainMonacoEditor?.setLineHighlight(errorLineNumber)
+        errorLineNumber &&
+        validateLine(
+          errorLineNumber,
+          errorLineContent,
+          mainMonacoEditor?.getModel()
+        ) &&
+        mainMonacoEditor?.setLineHighlight(errorLineNumber)
       }
       onMouseLeave={() =>
         errorLineNumber && mainMonacoEditor?.clearLineHighlight()
