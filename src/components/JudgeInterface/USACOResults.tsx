@@ -318,23 +318,25 @@ const USACOTestCase = ({
       title={capitalize(data.title)}
       onClick={onClick ?? (() => {})}
     >
-      <div className={`font-semibold text-center ${textColor} pt-1`}>
+      <div
+        className={`font-semibold flex items-center justify-center ${textColor} pt-1`}
+      >
         {data.symbol === '✓' && (
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'check' }}
-            className="w-6 h-6"
+            className="inline w-6 h-6"
           />
         )}
         {data.symbol === 'x' && (
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'xmark' }}
-            className="w-6 h-6"
+            className="inline w-6 h-6"
           />
         )}
         {data.symbol === '~' && (
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'check' }}
-            className="w-6 h-6"
+            className="inline w-6 h-6"
           />
         )}
       </div>
@@ -406,25 +408,25 @@ export default function USACOResults({
   return (
     <div className="mt-3">
       <div className="pb-3">
-        <div className="flex items-start font-medium text-gray-200 border-gray-700 space-x-2">
+        <div className="flex items-center font-medium text-gray-200 border-gray-700 space-x-2">
           <span>
             {!['error', 'resolved'].includes(data.statusCode) && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'gear' }}
-                className="w-3.5 h-3.5 text-gray-400 animate-spin-slow"
+                className="w-3.5 h-3.5 inline text-gray-400 animate-spin-slow"
               />
             )}
             {data.statusCode === 'error' && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'exclamation-triangle' }}
-                className="text-yellow-500 w-3.5 h-3.5"
+                className="text-yellow-500 inline w-3.5 h-3.5"
               />
             )}
             {data.statusCode === 'resolved' &&
               data.message?.toLowerCase() === 'correct answer' && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'check' }}
-                  className="text-green-500 w-3.5 h-3.5"
+                  className="text-green-500 inline w-3.5 h-3.5"
                 />
               )}
             {data.statusCode === 'resolved' &&
@@ -432,7 +434,7 @@ export default function USACOResults({
               data.message?.toLowerCase()?.includes('partially') && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'check' }}
-                  className="text-yellow-500 w-3.5 h-3.5"
+                  className="text-yellow-500 inline w-3.5 h-3.5"
                 />
               )}
             {data.statusCode === 'resolved' &&
@@ -440,7 +442,7 @@ export default function USACOResults({
               !data.message?.toLowerCase()?.includes('partially') && (
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'xmark' }}
-                  className="w-3.5 h-3.5 text-red-500"
+                  className="w-3.5 h-3.5 inline text-red-500"
                 />
               )}
           </span>
