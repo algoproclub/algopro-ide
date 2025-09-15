@@ -21,7 +21,7 @@ import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement'
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { LanguageSelectorDropdown } from '../../../src/components/JudgeInterface/GenericJudgeInterface';
 import {
-  EditTextModal,
+  EditModal,
   handleKeyDown,
 } from '../../../src/components/EditTextModal';
 import WithAdminLogin from '../../../src/components/WithAdminLogin';
@@ -228,49 +228,60 @@ const EditHintModal = ({
   const text = checked ? (hint[selectedLang] ?? '') : hint;
 
   return (
-    <EditTextModal
+    <EditModal<string | Hint>
       isOpen={isOpen}
       title="Edit hint"
-      text={text}
-      onSave={(_: string) => onSave(hint)}
+      value={text}
+      onSave={(val: Hint) => {
+        onSave(val);
+        onClose();
+      }}
       onClose={onClose}
-    >
-      <div className="space-y-2">
-        <Dropdown
-          items={codeLangs}
-          label="Language"
-          selected={selected}
-          setSelected={setSelected}
-          disabled={!checked}
-        />
-        <div className="pl-1">
-          <Checkbox
-            checked={checked}
-            label="Language-dependent hint"
-            toggleChecked={confirmedToggle}
-          />
-        </div>
-        <textarea
-          className="font-mono h-60 bg-gray-900 border-gray-700 w-full min-h-[10rem] text-sm"
-          value={text}
-          onKeyDown={handleKeyDown}
-          onChange={e =>
-            setHint(h => {
-              const val = e.target.value;
-              if (typeof h == 'string') {
-                return val;
-              } else if (val !== '') {
-                return { ...h, [selectedLang]: val };
-              } else {
-                return Object.fromEntries(
-                  Object.entries(h).filter(([key]) => key !== selectedLang)
-                ) as Hint;
-              }
-            })
-          }
-        />
-      </div>
-    </EditTextModal>
+      renderEditor={(val, setVal) => {
+        const displayText =
+          typeof val === 'string' ? val : (val[selectedLang] ?? '');
+
+        return (
+          <div className="space-y-2">
+            <Dropdown
+              items={codeLangs}
+              label="Language"
+              selected={selected}
+              setSelected={setSelected}
+              disabled={!checked}
+            />
+            <div className="pl-1">
+              <Checkbox
+                checked={checked}
+                label="Language-dependent hint"
+                toggleChecked={confirmedToggle}
+              />
+            </div>
+            <textarea
+              className="font-mono h-60 bg-gray-900 border-gray-700 w-full min-h-[10rem] text-sm"
+              value={displayText}
+              onKeyDown={handleKeyDown}
+              onChange={e => {
+                const valStr = e.target.value;
+                setVal(prev => {
+                  if (typeof prev === 'string') {
+                    return valStr;
+                  } else if (valStr !== '') {
+                    return { ...prev, [selectedLang]: valStr } as Hint;
+                  } else {
+                    return Object.fromEntries(
+                      Object.entries(prev).filter(
+                        ([key]) => key !== selectedLang
+                      )
+                    ) as Hint;
+                  }
+                });
+              }}
+            />
+          </div>
+        );
+      }}
+    />
   );
 };
 
