@@ -5,9 +5,9 @@ import { useEditorContext } from '../../context/EditorContext';
 import { useUserContext } from '../../context/UserContext';
 import { StatusData } from '../../types/problem';
 import { registerSubmission } from '../../scripts/updateStatus';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useAtomValue } from 'jotai';
 import { mainEditorValueAtom } from '../../atoms/workspace';
+import { CopyButton } from '../CopyButton';
 
 const TextInput = ({
   text,
@@ -42,46 +42,16 @@ const TextInput = ({
   );
 };
 
-const CopyButton = () => {
+const CopyCodeButton = () => {
   const getMainEditorValue = useAtomValue(mainEditorValueAtom);
-  const [copied, setCopied] = useState(0);
 
   const handleCopyCode = () => {
-    navigator.clipboard
-      .writeText(getMainEditorValue ? getMainEditorValue() : '')
-      .then(() => {
-        setCopied(prevCopied => prevCopied + 1);
-        setTimeout(() => {
-          setCopied(prevCopied => prevCopied - 1);
-        }, 5000);
-      });
+    return navigator.clipboard.writeText(
+      getMainEditorValue ? getMainEditorValue() : ''
+    );
   };
 
-  return (
-    <button
-      className="flex items-center justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-      onClick={handleCopyCode}
-    >
-      {copied === 0 && (
-        <>
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'copy' }}
-            className="mr-2"
-          />
-          Copy code
-        </>
-      )}
-      {copied > 0 && (
-        <>
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'check' }}
-            className="mr-2"
-          />
-          Code copied
-        </>
-      )}
-    </button>
-  );
+  return <CopyButton handleCopy={handleCopyCode} />;
 };
 
 const LoadResultsModal = ({
@@ -179,7 +149,7 @@ const LoadResultsModal = ({
                   >
                     Cancel
                   </button>
-                  <CopyButton />
+                  <CopyCodeButton />
                   <button
                     type="button"
                     className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
