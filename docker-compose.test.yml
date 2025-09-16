@@ -7,5 +7,7 @@ services:
         source: playwright-report/
         target: /app/playwright-report
     network_mode: 'host'
-    depends_on: [web]
+    depends_on:
+      web:
+        condition: service_healthy
   login-bot: !reset null

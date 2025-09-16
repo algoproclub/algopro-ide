@@ -72,6 +72,16 @@ services:
       - type: bind
         source: patches/
         target: /app/patches
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "require(''http'').get(''http://localhost:3000'', r => process.exit(r.statusCode < 500 ? 0 : 1)).on(''error'', () => process.exit(1))"',
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
     depends_on:
       yjs:
         condition: service_started
