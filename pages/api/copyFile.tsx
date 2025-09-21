@@ -67,6 +67,7 @@ export default async (
       userPerm !== 'OWNER'
     ) {
       res.status(403).send({ message: 'This file is private.' });
+      return;
     }
   }
 

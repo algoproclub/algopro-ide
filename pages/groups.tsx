@@ -108,6 +108,12 @@ const PageContent = () => {
       const batch = writeBatch(firestore);
       batch.delete(doc(firestore, 'groups', id));
 
+      const classesRef = collection(firestore, 'groups', id, 'classes');
+      const classesSnap = await getDocs(classesRef);
+
+      classesSnap.forEach(docu => {
+        batch.delete(docu.ref);
+      });
       snap.forEach(d => {
         if (d.get('groups').includes(id)) {
           batch.update(doc(firestore, 'userdata', d.id), {

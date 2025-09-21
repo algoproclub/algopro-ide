@@ -172,7 +172,7 @@ const ClassDropdown = ({
                 Class {classID}
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-                  className={`ml-2 w-3.5 h-3.5 transform duration-200 ${
+                  className={`ml-2 w-3.5 h-3.5 transform duration-200 inline ${
                     open ? 'rotate-180' : 'rotate-0'
                   }`}
                 />
@@ -184,30 +184,30 @@ const ClassDropdown = ({
                   <span className="font-bold">Tasks</span>
                   <FontAwesomeIcon
                     icon={{ prefix: 'fas', iconName: 'circle' }}
-                    className={`w-[0.45rem] h-[0.45rem] ${
+                    className={`w-[0.45rem] h-[0.45rem] inline ${
                       unsaved ? 'text-yellow-500' : 'text-green-500'
                     }`}
                   />
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
-                    className="rounded-md bg-gray-600  px-3 py-1.5 hover:bg-gray-500 active:bg-gray-400"
+                    className="rounded-md bg-gray-600  px-3 py-1.5 hover:bg-gray-500 active:bg-gray-400 flex items-center"
                     onClick={copyContent}
                   >
                     Copy
                     <FontAwesomeIcon
                       icon={{ prefix: 'far', iconName: 'copy' }}
-                      className="ml-2 w-4 h-4"
+                      className="ml-2 w-4 h-4 inline"
                     />
                   </button>
                   <button
-                    className="rounded-md bg-green-700  px-3 py-1.5 hover:bg-green-800 active:bg-green-900"
+                    className="rounded-md bg-green-700  px-3 py-1.5 hover:bg-green-800 active:bg-green-900 flex items-center"
                     onClick={addNewTasks}
                   >
-                    New
+                    <span>New</span>
                     <FontAwesomeIcon
                       icon={{ prefix: 'fas', iconName: 'plus' }}
-                      className="ml-2 w-4 h-4"
+                      className="ml-2 w-4 h-4 inline"
                     />
                   </button>
                 </div>
@@ -242,7 +242,7 @@ const ClassDropdown = ({
                         >
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'arrow-right' }}
-                            className="w-3.5 h-3.5"
+                            className="w-3.5 h-3.5 inline"
                           />
                         </a>
                       )}
@@ -268,7 +268,7 @@ const ClassDropdown = ({
                       >
                         <FontAwesomeIcon
                           icon={{ prefix: 'fas', iconName: 'edit' }}
-                          className="w-3.5 h-3.5"
+                          className="w-3.5 h-3.5 inline"
                         />
                       </button>
                       <button
@@ -283,7 +283,7 @@ const ClassDropdown = ({
                       >
                         <FontAwesomeIcon
                           icon={{ prefix: 'fas', iconName: 'trash' }}
-                          className="w-3.5 h-3.5"
+                          className="w-3.5 h-3.5 inline"
                         />
                       </button>
                     </div>
@@ -410,7 +410,7 @@ const PageContent = () => {
                 />
               </label>
               <button
-                className="flex-shrink-0 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-md"
+                className="flex-shrink-0 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-md flex items-center"
                 onClick={() => {
                   if (newID in classes) {
                     alert('The entered ID already exists.');
@@ -429,7 +429,7 @@ const PageContent = () => {
                 New class
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'plus' }}
-                  className="ml-2"
+                  className="ml-2 w-4 h-4 inline"
                 />
               </button>
             </div>

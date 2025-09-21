@@ -92,11 +92,11 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
             onKeyDown={handleKeyDown}
             ref={chatInputRef}
           />
-          <button className="rounded-b-md block w-full py-2.5 text-sm font-bold text-indigo-100 hover:text-indigo-100 border border-0 border-gray-600 bg-gray-700 hover:bg-gray-600 active:bg-[#5b5b5b] focus:outline-none">
+          <button className="flex items-center justify-center rounded-b-md block w-full py-2.5 text-sm font-bold text-indigo-100 hover:text-indigo-100 border border-0 border-gray-600 bg-gray-700 hover:bg-gray-600 active:bg-[#5b5b5b] focus:outline-none">
             Send{' '}
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'paper-plane' }}
-              className="ml-1"
+              className="ml-2 inline w-4 h-4"
             />
           </button>
         </form>
