@@ -5,6 +5,7 @@ import { fetchTeacherSchools } from './teacher';
 import { useUserContext } from '../src/context/UserContext';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { CopyButton } from '../src/components/CopyButton';
+import { SHOULD_USE_FIREBASE_EMULATOR } from '../src/dev_constants';
 
 const generateToken = httpsCallable<
   { schoolID: string; expTime: number },
@@ -38,7 +39,11 @@ const PageContent = () => {
       expTime: expTimes[expInd].time,
     }).then(res => {
       if (res.data) {
-        setLink('https://ide.algopro.hu/register/school/' + res.data);
+        setLink(
+          (SHOULD_USE_FIREBASE_EMULATOR
+            ? 'http://localhost:3000/register/school/'
+            : 'https://ide.algopro.hu/register/school/') + res.data
+        );
       }
     });
   };
@@ -78,7 +83,12 @@ const PageContent = () => {
             className="block h-8 bg-gray-800 border-0 border-b focus:outline-0 focus:ring-0 py-1 px-2 border-gray-600 w-full text-sm cursor-text"
           />
           <div className="flex-shrink-0 w-48">
-            <CopyButton handleCopy={copyLink} />
+            <CopyButton
+              disabled={link === ''}
+              handleCopy={copyLink}
+              copiedLabel="Link copied"
+              btnLabel="Copy link"
+            />
           </div>
         </div>
       </div>

@@ -51,7 +51,13 @@ const CopyCodeButton = () => {
     );
   };
 
-  return <CopyButton handleCopy={handleCopyCode} />;
+  return (
+    <CopyButton
+      handleCopy={handleCopyCode}
+      copiedLabel="Code copied"
+      btnLabel="Copy code"
+    />
+  );
 };
 
 const LoadResultsModal = ({
