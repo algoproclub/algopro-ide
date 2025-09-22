@@ -1,6 +1,56 @@
 import { Platform, URLProblem } from '../types/problem';
+import {
+  buildCodeforcesUrl,
+  buildAtCoderUrl,
+  buildCsesUrl,
+  buildSpojUrl,
+  buildPlanetsUrl,
+  buildOjuzUrl,
+  buildNjudgeUrl,
+} from './problemUtils';
 
 export const parseProblem = (url: string): URLProblem => {
+  // First, handle ide.algopro.hu/solve links
+  const ideMatch = url.match(/ide\.algopro\.hu\/solve\/([^/]+)\/([^/]+)/);
+  if (ideMatch) {
+    const platform = ideMatch[1] as Platform;
+    const id = ideMatch[2];
+
+    let constructedUrl: string;
+    switch (platform) {
+      case 'planets':
+        constructedUrl = buildPlanetsUrl(id);
+        break;
+      case 'cses':
+        constructedUrl = buildCsesUrl(id);
+        break;
+      case 'spoj':
+        constructedUrl = buildSpojUrl(id);
+        break;
+      case 'ojuz':
+        constructedUrl = buildOjuzUrl(id);
+        break;
+      case 'njudge':
+        constructedUrl = buildNjudgeUrl(id);
+        break;
+      case 'codeforces':
+        constructedUrl = buildCodeforcesUrl(id) ?? url;
+        break;
+      case 'atcoder':
+        constructedUrl = buildAtCoderUrl(id) ?? url;
+        break;
+      default:
+        constructedUrl = url;
+    }
+
+    return {
+      title: null,
+      url: constructedUrl,
+      platform,
+      id,
+    };
+  }
+
   const platforms: {
     platform: Platform;
     regex: RegExp;
@@ -15,6 +65,11 @@ export const parseProblem = (url: string): URLProblem => {
       platform: 'codeforces',
       regex: /codeforces\.com\/contest\/(\d+\/problem\/[A-Z]+[0-9]*)/,
       process: (id: string) => id.replace('/problem/', ''),
+    },
+    {
+      platform: 'codeforces',
+      regex: /codeforces\.com\/gym\/(\d+\/problem\/[A-Z]+[0-9]*)/,
+      process: (id: string) => 'gym' + id.replace('/problem/', ''),
     },
     {
       platform: 'atcoder',
