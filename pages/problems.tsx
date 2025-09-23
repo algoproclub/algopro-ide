@@ -2,16 +2,28 @@ import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import React, { useEffect, useState } from 'react';
 import { getPlatformName } from '../src/scripts/getPlatformName';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { collection, getDocs, getFirestore, query } from 'firebase/firestore';
 import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  getFirestore,
+  query,
+  where,
+} from 'firebase/firestore';
+import {
+  type Platform,
   platforms,
-  ProblemTag,
+  type ProblemTag,
   problemTags,
-  TagProblem,
+  type TagProblem,
 } from '../src/types/problem';
 import Checkbox from '../src/components/Checkbox';
+import { useUserContext, type UserRole } from '../src/context/UserContext';
+import { get, getDatabase, ref } from 'firebase/database';
 
 const firestore = getFirestore();
+const database = getDatabase();
 
 const Tag = ({
   tag,
@@ -38,7 +50,119 @@ const Tag = ({
   );
 };
 
+type Option = { id: string; name: string };
+
+async function getSchools(userRole: UserRole | null): Promise<Option[]> {
+  if (userRole?.admin) {
+    const schoolsSnap = await getDocs(collection(firestore, 'schools'));
+    return schoolsSnap.docs.map(docu => ({
+      id: docu.id,
+      name: docu.data().name || docu.id,
+    }));
+  }
+
+  const schoolIDs = userRole?.teacher;
+
+  if (!schoolIDs) {
+    return [];
+  }
+
+  const results = await Promise.all(
+    schoolIDs.map(async id => {
+      const snap = await getDoc(doc(firestore, 'schools', id));
+      return { id, name: snap.data()?.name || snap.id };
+    })
+  );
+
+  return results;
+}
+
+async function getGroups(schoolID: string): Promise<Option[]> {
+  const groupsSnap = await getDocs(
+    query(collection(firestore, 'groups'), where('school', '==', schoolID))
+  );
+
+  return groupsSnap.docs.map(docu => ({
+    id: docu.id,
+    name: docu.data().name || docu.id,
+  }));
+}
+
+type UserProblemMap = Record<Platform, Record<string, string>>;
+
+async function getUserProblemMap(id: string): Promise<UserProblemMap> {
+  return Object.fromEntries(
+    await Promise.all(
+      platforms.map(platform =>
+        get(
+          ref(
+            database,
+            `users/${id}/platform-${platform}/problem-id-to-file-id`
+          )
+        ).then(u => [platform, u.val() ?? {}])
+      )
+    )
+  );
+}
+
+type ProblemKey = `${Platform}:${string}`;
+type SolvedAggregated = {
+  studentCount: number;
+  problems: Record<ProblemKey, number>;
+};
+
+async function getSolvedCounts(
+  schoolId: string,
+  groupId: string
+): Promise<SolvedAggregated> {
+  const schoolStudentsSnap = await getDocs(
+    query(
+      collection(firestore, 'userdata'),
+      where('schools', 'array-contains', schoolId)
+    )
+  );
+
+  const groupStudentIds = schoolStudentsSnap.docs
+    .filter(doc => doc.get('groups')?.includes(groupId) === true)
+    .map(doc => doc.id);
+
+  const userProblemMaps: Record<string, UserProblemMap> = Object.fromEntries(
+    await Promise.all(
+      groupStudentIds.map(id => getUserProblemMap(id).then(u => [id, u]))
+    )
+  );
+
+  const solvedCounts: Record<ProblemKey, number> = {};
+
+  for (const userProblemMap of Object.values(userProblemMaps)) {
+    for (const platform of platforms) {
+      const problemIdToFileId = userProblemMap[platform];
+
+      const solvedResults = await Promise.all(
+        Object.entries(problemIdToFileId).map(([problemId, fileId]) =>
+          get(ref(database, `files/${fileId}/solvedStatus/solved`)).then(
+            snap => ({ problemId, solved: !!snap.val() })
+          )
+        )
+      );
+
+      for (const { problemId, solved } of solvedResults) {
+        if (solved) {
+          solvedCounts[`${platform}:${problemId}`] =
+            (solvedCounts[`${platform}:${problemId}`] ?? 0) + 1;
+        }
+      }
+    }
+  }
+
+  return {
+    studentCount: groupStudentIds.length,
+    problems: solvedCounts,
+  };
+}
+
 const PageContent = () => {
+  const { userRole } = useUserContext();
   const [problemset, setProblemset] = useState<TagProblem[]>([]);
   const [platformFilter, setPlatformFilter] = useState<Record<string, boolean>>(
     Object.fromEntries(platforms.map(label => [label, true]))
@@ -47,6 +171,37 @@ const PageContent = () => {
   const [tagFilters, setTagFilters] = useState<ProblemTag[]>([]);
   const [tagFilterInput, setTagFilterInput] = useState<string>('');
   const [tagFilterFocus, setTagFilterFocus] = useState(false);
+
+  const [schools, setSchools] = useState<Option[]>([]);
+  const [groups, setGroups] = useState<Option[]>([]);
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>();
+  const [selectedGroupId, setSelectedGroupId] = useState<string>();
+
+  const [solvedCounts, setSolvedCounts] = useState<SolvedAggregated>({
+    studentCount: 0,
+    problems: {},
+  });
+
+  useEffect(() => {
+    getSchools(userRole).then(setSchools);
+  }, [userRole]);
+
+  useEffect(() => {
+    setSelectedGroupId(undefined);
+
+    if (!selectedSchoolId) {
+      setGroups([]);
+      return;
+    }
+
+    getGroups(selectedSchoolId).then(setGroups);
+  }, [selectedSchoolId]);
+
+  useEffect(() => {
+    if (selectedGroupId && selectedSchoolId) {
+      getSolvedCounts(selectedSchoolId, selectedGroupId).then(setSolvedCounts);
+    }
+  }, [selectedGroupId, selectedSchoolId]);
 
   const togglePlatformFilter = (label: string) => {
     setPlatformFilter(prev => ({
@@ -180,6 +335,51 @@ const PageContent = () => {
                 <Tag tag={item} key={index} tagToggle={toggleTag} />
               ))}
             </td>
+            <td className="px-3 py-1.5 border-x border-gray-700 w-[22rem]">
+              <div className="flex flex-col space-y-3 py-2">
+                <div className="flex flex-col">
+                  <label className="text-xs text-gray-400 mb-1">School</label>
+                  <select
+                    aria-label="School"
+                    className="bg-gray-900 border border-gray-700 h-8 px-2 pr-8 rounded text-sm"
+                    value={selectedSchoolId ?? ''}
+                    onChange={e =>
+                      setSelectedSchoolId(e.target.value || undefined)
+                    }
+                  >
+                    <option value="">Select school…</option>
+                    {schools.map(({ id, name }) => (
+                      <option key={id} value={id}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-xs text-gray-400 mb-1">Group</label>
+                  <select
+                    aria-label="Group"
+                    className="bg-gray-900 border border-gray-700 h-8 px-2 pr-8 rounded text-sm disabled:opacity-50"
+                    value={selectedGroupId ?? ''}
+                    onChange={e =>
+                      setSelectedGroupId(e.target.value || undefined)
+                    }
+                    disabled={!selectedSchoolId || groups.length === 0}
+                  >
+                    <option value="">
+                      {selectedSchoolId
+                        ? 'Select group…'
+                        : 'Select school first'}
+                    </option>
+                    {groups.map(({ id, name }) => (
+                      <option key={id} value={id}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -202,7 +402,10 @@ const PageContent = () => {
                 );
               })
               .map(({ platform, id, url, title, tags }, index) => (
-                <tr className="h-[3.5rem]" key={index}>
+                <tr
+                  className="h-[3.5rem]"
+                  key={platform && id ? `${platform}:${id}` : index}
+                >
                   <td className="py-2 px-3 w-[10.0rem] border-x border-gray-700 bg-gray-800 font-bold">
                     {platform && getPlatformName(platform)} {title}
                   </td>
@@ -212,6 +415,15 @@ const PageContent = () => {
                         <Tag key={index} tag={tag}></Tag>
                       ))}
                   </td>
+                  {selectedGroupId && platform && id && (
+                    <td className="px-3 py-1.5 w-[8rem] border-x border-gray-700 text-center">
+                      <span className="whitespace-nowrap">
+                        Solved:{' '}
+                        {solvedCounts.problems[`${platform}:${id}`] ?? 0}/
+                        {solvedCounts.studentCount}
+                      </span>
+                    </td>
+                  )}
                   <td className="space-x-1 px-2 py-1.5 w-[1.5rem] border-x border-gray-700 bg-gray-800">
                     {platform && id && (
                       <a
