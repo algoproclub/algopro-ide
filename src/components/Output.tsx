@@ -122,16 +122,16 @@ export const Output = ({
           </div>
         )}
         {option === 'history' && (
-          <div className="px-4 h-full overflow-y-auto">
+          <div className="h-full overflow-y-auto w-full">
             <table
-              className={'text-gray-200 table-tasks space-x-2'}
-              style={{
-                border: '1px solid #141414',
-                marginBottom: '20px',
-                marginTop: '20px',
-              }}
+              className={
+                'text-gray-200 table-tasks space-x-2 w-full border-b border-gray-700'
+              }
             >
-              <thead style={{ backgroundColor: '#121212' }}>
+              <thead
+                className="border-b border-gray-700 text-left text-sm"
+                style={{ backgroundColor: '#121212' }}
+              >
                 <tr>
                   <th></th>
                   <th>Verdict</th>
@@ -140,7 +140,7 @@ export const Output = ({
                   <th>Testcases</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-700 text-sm">
                 {statusDataHistory
                   .slice()
                   .reverse()
@@ -158,18 +158,18 @@ export const Output = ({
                         <a
                           href={item.link || undefined}
                           target="_blank"
-                          className={item.link ? 'hover:underline' : undefined}
+                          className={`${item.link ? 'hover:underline' : undefined} flex items-center`}
                           rel="noreferrer"
                         >
                           {item.message?.toLowerCase() === 'correct answer' ? (
                             <FontAwesomeIcon
                               icon={{ prefix: 'fas', iconName: 'check' }}
-                              className="text-green-500 w-3.5 h-3.5 mr-1"
+                              className="text-green-500 w-3.5 h-3.5 mr-1.5 inline"
                             />
                           ) : (
                             <FontAwesomeIcon
                               icon={{ prefix: 'fas', iconName: 'xmark' }}
-                              className="w-3.5 h-3.5 text-red-500 mr-1"
+                              className="w-3.5 h-3.5 text-red-500 mr-1.5 inline"
                             />
                           )}
                           {item.message}
@@ -179,7 +179,7 @@ export const Output = ({
                                 prefix: 'fas',
                                 iconName: 'up-right-from-square',
                               }}
-                              className="w-3.5 h-3.5 ml-1"
+                              className="w-3.5 h-3.5 ml-1.5 inline"
                             />
                           )}
                         </a>
@@ -191,38 +191,40 @@ export const Output = ({
                         {item.memory ?? '-'}
                       </td>
                       <td>
-                        {item.testCases &&
-                          item.testCases.map((tc, index) =>
-                            tc.title == 'correct answer' ? (
-                              <FontAwesomeIcon
-                                title={tc.title}
-                                icon={{ prefix: 'fas', iconName: 'check' }}
-                                className="text-green-500 w-3.5 h-3.5 mr-0.5"
-                                key={index}
-                              />
-                            ) : (
-                              <FontAwesomeIcon
-                                title={tc.title}
-                                icon={{
-                                  prefix: (() => {
-                                    if (tc.title === 'time limit exceeded')
-                                      return 'far';
-                                    return 'fas';
-                                  })(),
+                        <div className="flex flex-wrap">
+                          {item.testCases &&
+                            item.testCases.map((tc, index) =>
+                              tc.title == 'correct answer' ? (
+                                <FontAwesomeIcon
+                                  title={tc.title}
+                                  icon={{ prefix: 'fas', iconName: 'check' }}
+                                  className="text-green-500 w-3.5 h-3.5 mr-0.5 inline"
+                                  key={index}
+                                />
+                              ) : (
+                                <FontAwesomeIcon
+                                  title={tc.title}
+                                  icon={{
+                                    prefix: (() => {
+                                      if (tc.title === 'time limit exceeded')
+                                        return 'far';
+                                      return 'fas';
+                                    })(),
 
-                                  iconName: (() => {
-                                    if (tc.title === 'time limit exceeded')
-                                      return 'clock';
-                                    if (tc.title === 'runtime error')
-                                      return 'bug';
-                                    return 'xmark';
-                                  })(),
-                                }}
-                                className="mr-0.5 w-3.5 h-3.5 text-red-500"
-                                key={index}
-                              />
-                            )
-                          )}
+                                    iconName: (() => {
+                                      if (tc.title === 'time limit exceeded')
+                                        return 'clock';
+                                      if (tc.title === 'runtime error')
+                                        return 'bug';
+                                      return 'xmark';
+                                    })(),
+                                  }}
+                                  className="mr-0.5 w-3.5 h-3.5 text-red-500 inline"
+                                  key={index}
+                                />
+                              )
+                            )}
+                        </div>
                       </td>
                     </tr>
                   ))}

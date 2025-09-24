@@ -18,7 +18,8 @@
     "cheerio": "^1.0.0-rc.12",
     "dotenv": "^16.4.1",
     "firebase-admin": "^11.8.0",
-    "firebase-functions": "^5.0.1",
+    "firebase-functions": "^6.4.0",
+    "jose": "^6.1.0",
     "jsdom": "^19.0.0"
   },
   "devDependencies": {
