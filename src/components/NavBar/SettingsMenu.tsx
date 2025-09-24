@@ -44,7 +44,7 @@ export const SettingsMenu = (props: {
         <>
           <div data-testid="settings-menu-button">
             <Menu.Button
-              className={`relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 focus:outline-none ${
+              className={`relative inline-flex items-center px-4 py-1.5 shadow-sm text-sm font-medium text-gray-200 focus:outline-none ${
                 open ? 'bg-gray-800' : 'hover:bg-gray-800 active:bg-gray-700'
               }`}
               ref={setReferenceElement}

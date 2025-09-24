@@ -175,16 +175,16 @@ export default function UserSettings({
             setSubmenu(val => (val === 'userdata' ? '' : 'userdata'))
           }
         >
-          <span>
+          <span className="flex items-center">
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'user' }}
-              className="w-3.5 h-3.5 mr-2"
+              className="w-3.5 h-3.5 inline mr-2"
             />
             User data
           </span>
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-            className={`w-3.5 h-3.5 ${
+            className={`w-3.5 h-3.5 inline ${
               submenu !== 'userdata' ? 'rotate-0' : 'rotate-180'
             } transition duration-200`}
           />
@@ -209,16 +209,16 @@ export default function UserSettings({
             setSubmenu(val => (val === 'codesettings' ? '' : 'codesettings'))
           }
         >
-          <span>
+          <span className="flex items-center">
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'code' }}
-              className="w-3.5 h-3.5 mr-2"
+              className="w-3.5 h-3.5 inline mr-2"
             />
             Code settings
           </span>
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-            className={`w-3.5 h-3.5 ${
+            className={`w-3.5 h-3.5 inline ${
               submenu !== 'codesettings' ? 'rotate-0' : 'rotate-180'
             } transition duration-200`}
           />
@@ -250,16 +250,16 @@ export default function UserSettings({
             )
           }
         >
-          <span>
+          <span className="flex items-center">
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'wand-magic-sparkles' }}
-              className="w-3.5 h-3.5 mr-2"
+              className="w-3.5 h-3.5 inline mr-2"
             />
             Visual settings
           </span>
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-            className={`w-3.5 h-3.5 ${
+            className={`w-3.5 h-3.5 inline ${
               submenu !== 'visualsettings' ? 'rotate-0' : 'rotate-180'
             } transition duration-200`}
           />
@@ -299,16 +299,16 @@ export default function UserSettings({
             setSubmenu(val => (val === 'templates' ? '' : 'templates'))
           }
         >
-          <span>
+          <span className="flex items-center">
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'file' }}
-              className="w-3.5 h-3.5 mr-2"
+              className="w-3.5 h-3.5 inline mr-2"
             />
             File templates
           </span>
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-            className={`w-3.5 h-3.5 ${
+            className={`w-3.5 h-3.5 inline ${
               submenu !== 'templates' ? 'rotate-0' : 'rotate-180'
             } transition duration-200`}
           />

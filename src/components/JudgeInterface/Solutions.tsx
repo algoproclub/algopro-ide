@@ -64,7 +64,7 @@ const Solutions = ({
           >
             <button className="inline-flex items-center whitespace-nowrap px-4 py-2.5 bg-indigo-900 hover:bg-indigo-800 active:bg-indigo-700 rounded-md text-sm font-medium">
               <FontAwesomeIcon
-                className="mr-2 h-4 w-4"
+                className="mr-2 inline h-4 w-4"
                 aria-hidden="true"
                 icon={{ iconName: 'arrow-left', prefix: 'fas' }}
               />

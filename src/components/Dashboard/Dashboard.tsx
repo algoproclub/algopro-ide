@@ -47,7 +47,6 @@ const Pagination = ({
   maxPage: number;
   label: string;
 }) => {
-  console.log(page, minPage, maxPage);
   return (
     <div className="px-3.5 py-3 flex items-center space-x-2 text-sm bg-gray-800">
       <button
@@ -57,7 +56,7 @@ const Pagination = ({
       >
         <FontAwesomeIcon
           icon={{ prefix: 'fas', iconName: 'chevron-left' }}
-          className="mr-1.5 w-3.5 h-3.5"
+          className="mr-1.5 inline w-3.5 h-3.5"
         />
         Next
       </button>
@@ -70,7 +69,7 @@ const Pagination = ({
         Previous
         <FontAwesomeIcon
           icon={{ prefix: 'fas', iconName: 'chevron-right' }}
-          className="ml-1.5 w-3.5 h-3.5"
+          className="ml-1.5 inline w-3.5 h-3.5"
         />
       </button>
     </div>
@@ -318,13 +317,13 @@ const ClassesTab = () => {
                           {row.verdictType === 'wrong' && (
                             <FontAwesomeIcon
                               icon={{ prefix: 'fas', iconName: 'xmark' }}
-                              className="text-red-500"
+                              className="inline w-4 h-4 text-red-500"
                             />
                           )}
                           {row.verdictType === 'accepted' && (
                             <FontAwesomeIcon
                               icon={{ prefix: 'fas', iconName: 'check' }}
-                              className="text-green-500"
+                              className="inline w-4 h-4 text-green-500"
                             />
                           )}
                           {row.verdictType === 'error' && (
@@ -333,7 +332,7 @@ const ClassesTab = () => {
                                 prefix: 'fas',
                                 iconName: 'triangle-exclamation',
                               }}
-                              className="text-yellow-500"
+                              className="inline w-4 h-4 text-yellow-500"
                             />
                           )}
                         </span>
@@ -382,11 +381,11 @@ export default function Dashboard() {
 
       <div className="h-8"></div>
 
-      <h2 className="text-gray-200 text-xl font-black mb-5">
-        Your workspaces{' '}
+      <h2 className="text-gray-200 text-xl font-black mb-5 flex items-center">
+        Your workspaces
         <FontAwesomeIcon
           icon={{ prefix: 'fas', iconName: 'computer' }}
-          className="ml-1"
+          className="ml-2 inline w-6 h-6"
         />
       </h2>
       <TabBar
