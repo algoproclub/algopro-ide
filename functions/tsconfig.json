@@ -6,6 +6,7 @@
     "outDir": "lib",
     "sourceMap": true,
     "strict": true,
+    "esModuleInterop": true,
     "target": "es2021",
     "typeRoots": ["./node_modules/@types"]
   },

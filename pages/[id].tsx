@@ -40,6 +40,7 @@ import { fetchProblemFromDb } from '../src/scripts/fetchProblemFromDb';
 import Link from 'next/link';
 import ProfileSettings from '../src/components/settings/ProfileSettings';
 import WithRegistration from '../src/components/WithRegistration';
+import { fetchProblemTestcases } from '../src/scripts/fetchProblemTestcases';
 
 function EditorPage() {
   const { fileData, updateFileData } = useEditorContext();
@@ -62,6 +63,15 @@ function EditorPage() {
 
   useUserFileConnection();
   useUpdateUserDashboard();
+
+  useEffect(() => {
+    const problem = fileData.problem;
+    if (!problem) return;
+
+    fetchProblemTestcases(problem.platform, problem.id, false).then(res => {
+      console.log(`Testcase fetching: ${res}`);
+    });
+  }, [fileData.problem]);
 
   const [inputTab, setInputTab] = useAtom(inputTabAtom);
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
