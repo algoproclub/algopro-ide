@@ -46,8 +46,21 @@ import {
 } from './submit';
 import { JSDOM } from 'jsdom';
 import { CompactEncrypt } from 'jose';
+import { fetchProblemTestcases as fetchProblemTestcasesImpl } from './fetchProblemTestcases';
 
 require('dotenv').config({ path: '.env.local' });
+
+admin.initializeApp(
+  process.env.FUNCTIONS_EMULATOR
+    ? {
+        projectId: 'algopro-app',
+        databaseURL: 'http://firebase:9000?ns=algopro-app-default-rtdb',
+        storageBucket: 'algopro-app.appspot.com',
+      }
+    : undefined
+);
+const db = admin.database();
+const storage = admin.storage();
 
 export const cfAPIKey = defineString('CF_API_KEY');
 export const deeplAPIKey = defineString('DEEPL_API_KEY');
@@ -110,6 +123,33 @@ export const submitproblemsolution = onCall<
     }
     await submitter.login(db);
     return await submitter.submit(problemSolution, uuid);
+  }
+);
+
+export const fetchProblemTestcases = onCall<
+  { platform: string; id: string; force: boolean },
+  Promise<string>
+>(
+  { region: 'europe-west1', maxInstances: 1, concurrency: 1 },
+  async request => {
+    if (!request.auth) {
+      return 'Unauthorized';
+    }
+
+    const data = request.data;
+    // only admins may use the "force" functionality
+    if (data.force && !request.auth?.token?.admin) {
+      console.log('Non-teacher user tried to force fetch testcases');
+      return 'Unauthorized';
+    }
+
+    return await fetchProblemTestcasesImpl(
+      db,
+      storage.bucket(),
+      data.platform,
+      data.id,
+      data.force
+    );
   }
 );
 
@@ -260,16 +300,6 @@ export const enum Errors {
 }
 
 export class IncorrectDataError extends Error {}
-
-admin.initializeApp(
-  process.env.FUNCTIONS_EMULATOR
-    ? {
-        projectId: 'algopro-app',
-        databaseURL: 'http://firebase:9000?ns=algopro-app-default-rtdb',
-      }
-    : undefined
-);
-const db = admin.database();
 
 const accountData: { [key in Platform]: AccountData } = {
   atcoder: {

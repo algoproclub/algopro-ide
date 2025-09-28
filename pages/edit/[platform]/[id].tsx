@@ -28,6 +28,7 @@ import WithAdminLogin from '../../../src/components/WithAdminLogin';
 import { Hint } from '../../../src/types/problem';
 import Dropdown from '../../../src/components/Dropdown';
 import Checkbox from '../../../src/components/Checkbox';
+import { fetchProblemTestcases } from '../../../src/scripts/fetchProblemTestcases';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -651,6 +652,14 @@ const PageContent = () => {
     }
   };
 
+  const handleForceFetchTestcases = async () => {
+    if (!platform || !problemID) {
+      return;
+    }
+    const res = await fetchProblemTestcases(platform, problemID, true);
+    console.log(`Testcase fetching: ${res}`);
+  };
+
   const handleKeyDownTagInput = (
     event: React.KeyboardEvent<HTMLInputElement>
   ) => {
@@ -705,6 +714,12 @@ const PageContent = () => {
           onClick={handleAutoTranslateOpenAI}
         >
           Auto translate (OpenAI)
+        </button>
+        <button
+          className="px-4 py-2 rounded-md border border-gray-600 hover:bg-gray-700 active:bg-gray-600"
+          onClick={handleForceFetchTestcases}
+        >
+          Force-fetch testcases
         </button>
         <button
           className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800"
