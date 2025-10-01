@@ -225,13 +225,12 @@ const EditHintModal = ({
 
   const checked = typeof hint != 'string';
   const selectedLang = codeLangs[selected];
-  const text = checked ? (hint[selectedLang] ?? '') : hint;
 
   return (
     <EditModal<string | Hint>
       isOpen={isOpen}
       title="Edit hint"
-      value={text}
+      value={hint}
       onSave={(val: Hint) => {
         onSave(val);
         onClose();
