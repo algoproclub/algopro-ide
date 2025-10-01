@@ -9,9 +9,20 @@ import {
   buildNjudgeUrl,
 } from './problemUtils';
 
+const IDE_HOST = new URL(process.env.NEXT_PUBLIC_BASE_URL!).host;
+
 export const parseProblem = (url: string): URLProblem => {
-  // First, handle ide.algopro.hu/solve links
-  const ideMatch = url.match(/ide\.algopro\.hu\/solve\/([^/]+)\/([^/]+)/);
+  // First, handle IDE solve links.
+
+  let parsedURL: URL | undefined = undefined;
+  try {
+    parsedURL = new URL(url);
+  } catch (e) {
+    // ignored
+  }
+  const ideMatch =
+    parsedURL?.host === IDE_HOST && url.match(/\/solve\/([^/]+)\/([^/]+)/);
+
   if (ideMatch) {
     const platform = ideMatch[1] as Platform;
     const id = ideMatch[2];
