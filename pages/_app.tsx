@@ -37,13 +37,8 @@ const firebaseConfig = {
 };
 
 if (!firebase.getApps()?.length) {
+  firebase.initializeApp(firebaseConfig);
   if (SHOULD_USE_FIREBASE_EMULATOR) {
-    firebase.initializeApp({
-      ...firebaseConfig,
-      authDomain: '127.0.0.1:9099',
-      databaseURL: 'http://127.0.0.1:9000/?ns=algopro-app-default-rtdb',
-      storageBucket: 'algopro-app.appspot.com',
-    });
     connectAuthEmulator(getAuth(), 'http://127.0.0.1:9099');
     connectDatabaseEmulator(getDatabase(), '127.0.0.1', 9000);
     connectFunctionsEmulator(
@@ -54,7 +49,6 @@ if (!firebase.getApps()?.length) {
     connectFirestoreEmulator(getFirestore(), '127.0.0.1', 8080);
     connectStorageEmulator(getStorage(), '127.0.0.1', 9199);
   } else {
-    firebase.initializeApp(firebaseConfig);
     if (typeof window !== 'undefined') {
       isSupported().then(result => {
         if (result) getAnalytics();

@@ -1,4 +1,10 @@
-import { getApp, getApps, initializeApp, cert } from 'firebase-admin/app';
+import {
+  getApp,
+  getApps,
+  initializeApp,
+  cert,
+  AppOptions,
+} from 'firebase-admin/app';
 
 // // get this JSON from the Firebase board
 // // you can also store the values in environment variables
@@ -21,24 +27,23 @@ import { getApp, getApps, initializeApp, cert } from 'firebase-admin/app';
 // import serviceAccount from './serviceAccountKey.json';
 
 if (getApps().length === 0) {
+  const firebaseConfig: AppOptions = {
+    databaseURL:
+      'https://algopro-app-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'algopro-app.firebasestorage.app',
+  };
+
   if (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
-    initializeApp({
-      credential: cert({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      }),
-      databaseURL:
-        'https://algopro-app-default-rtdb.europe-west1.firebasedatabase.app',
-      storageBucket: 'algopro-app.firebasestorage.app',
+    firebaseConfig.credential = cert({
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     });
   } else {
-    initializeApp({
-      projectId: 'algopro-app',
-      databaseURL: 'http://firebase:9000?ns=algopro-app-default-rtdb',
-      storageBucket: 'algopro-app.appspot.com',
-    });
+    firebaseConfig.projectId = 'algopro-app';
   }
+
+  initializeApp(firebaseConfig);
 }
 
 const firebaseApp = getApp();

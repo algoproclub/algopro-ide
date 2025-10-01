@@ -53,9 +53,10 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - FIREBASE_STORAGE_EMULATOR_HOST=firebase:9199
-      - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
       - FIRESTORE_EMULATOR_HOST=firebase:8080
+      - FIREBASE_DATABASE_EMULATOR_HOST=firebase:9000
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
+      - FIREBASE_STORAGE_EMULATOR_HOST=firebase:9199
     ports:
       - '3000:3000'
       - '127.0.0.1:9229:9229'
