@@ -227,7 +227,7 @@ const EditHintModal = ({
   const selectedLang = codeLangs[selected];
 
   return (
-    <EditModal<string | Hint>
+    <EditModal<Hint>
       isOpen={isOpen}
       title="Edit hint"
       value={hint}
