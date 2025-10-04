@@ -10,6 +10,7 @@ import { python } from '@codemirror/lang-python';
 import { vim } from '@replit/codemirror-vim';
 import { EditorProps } from '../MonacoEditor/monaco-editor-types';
 import * as Y from 'yjs';
+import useLspClient from './lsp';
 
 import './codemirror-styles.css';
 import { useEffect, useMemo, useState } from 'react';
@@ -19,6 +20,8 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
   const [yCollabExtension, setYCollabExtension] = useState<Extension | null>(
     null
   );
+  const lspClient = useLspClient(props.language, props.lspOptions);
+
   useEffect(() => {
     if (!props.yjsInfo) return;
 
@@ -68,8 +71,25 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
         console.error('Unknown language: ' + props.language);
       }
     }
+    if (lspClient) {
+      extensions.push(
+        lspClient.plugin(
+          'file:///root/' + (props.path ?? 'default'),
+          props.language === 'cpp' || props.language === 'python'
+            ? props.language
+            : undefined
+        )
+      );
+    }
     return extensions;
-  }, [props.language, yCollabExtension, props.options?.tabSize, props.vim]);
+  }, [
+    props.language,
+    yCollabExtension,
+    props.options?.tabSize,
+    props.vim,
+    props.path,
+    lspClient,
+  ]);
 
   // todo: need to deal with props.options.tabSize
   return (

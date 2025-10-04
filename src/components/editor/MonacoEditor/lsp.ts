@@ -9,19 +9,8 @@ import {
   WebSocketMessageReader,
   WebSocketMessageWriter,
 } from 'vscode-ws-jsonrpc';
-import toast from 'react-hot-toast';
 import { useEffect } from 'react';
-
-// note: all the toast notifications should probably be moved up to MonacoEditor.tsx
-const notify = (message: string) => {
-  toast(message, {
-    style: {
-      borderRadius: '10px',
-      background: '#333',
-      color: '#fff',
-    },
-  });
-};
+import { notifyLsp, notifyLspClosed } from '../lspNotifications';
 
 function createLSPConnection(
   language: 'cpp' | 'python',
@@ -31,7 +20,7 @@ function createLSPConnection(
     throw new Error('Unsupported LSP language: ' + language);
   }
 
-  notify('Connecting to server...');
+  notifyLsp('Connecting to server...');
   const url = new URL(
     `wss://thecodingwizard--lsp-server-main.modal.run:443/${
       language === 'cpp' ? 'clangd' : 'pyright'
@@ -67,7 +56,7 @@ function createLSPConnection(
     if (message.id === 0 && message.result?.capabilities) {
       // assume this is the first message from the server
       // and that connection is successfully established
-      notify('Connected');
+      notifyLsp('Connected');
     }
   });
 
@@ -78,13 +67,7 @@ function createLSPConnection(
       console.error('Connection died');
     }
 
-    if (event.reason) {
-      notify('Connection closed: ' + event.reason);
-    } else if (event.wasClean) {
-      notify('Connection closed');
-    } else {
-      notify('Connection closed unexpectedly');
-    }
+    notifyLspClosed(event);
 
     if (languageClient) {
       languageClient.stop();
