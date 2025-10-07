@@ -90,7 +90,7 @@ const ClassDropdown = ({
       .map((task, i) => {
         return `${prefix}.${i + 1}. ${
           task.title ? task.title : '-'
-        }\nhttps://ide.algopro.hu/solve/${task.platform}/${task.id}`;
+        }\n${process.env.NEXT_PUBLIC_BASE_URL}/solve/${task.platform}/${task.id}`;
       })
       .join('\n\n');
 

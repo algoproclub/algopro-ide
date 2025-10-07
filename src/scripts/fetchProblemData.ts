@@ -18,12 +18,10 @@ async function fetchWithProxy(
   url: string,
   init?: RequestInit
 ): Promise<Response> {
-  const loginBotUrl =
-    process.env.NODE_ENV !== 'production'
-      ? 'http://login-bot:3100'
-      : 'https://login-bot.algopro.hu';
   return await fetch(
-    loginBotUrl + '/proxy?' + new URLSearchParams({ url }).toString(),
+    process.env.LOGIN_BOT_URL +
+      '/proxy?' +
+      new URLSearchParams({ url }).toString(),
     init
   );
 }

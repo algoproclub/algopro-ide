@@ -5,7 +5,6 @@ import { fetchTeacherSchools } from './teacher';
 import { useUserContext } from '../src/context/UserContext';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { CopyButton } from '../src/components/CopyButton';
-import { SHOULD_USE_FIREBASE_EMULATOR } from '../src/dev_constants';
 
 const generateToken = httpsCallable<
   { schoolID: string; expTime: number },
@@ -40,9 +39,7 @@ const PageContent = () => {
     }).then(res => {
       if (res.data) {
         setLink(
-          (SHOULD_USE_FIREBASE_EMULATOR
-            ? 'http://localhost:3000/register/school/'
-            : 'https://ide.algopro.hu/register/school/') + res.data
+          `${process.env.NEXT_PUBLIC_BASE_URL}/register/school/${res.data}`
         );
       }
     });
