@@ -46,10 +46,11 @@ app = firebase_admin.initialize_app(cred)
 def add_permission(user):
     claims = user.custom_claims or {}
 
+    claims['registered'] = True
     if args.admin:
         print(f"Adding {user.email} as admin")
         claims['admin'] = True
-        if claims['teacher'] and isinstance(claims['teacher'], bool):
+        if isinstance(claims.get('teacher'), bool) and claims['teacher']:
             claims['teacher'] = ['algopro']
     else:
         school = args.teacher[0]
