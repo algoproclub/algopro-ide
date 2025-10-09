@@ -1,0 +1,61 @@
+name: Deploy to Production (MATFIZ org)
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_MATFIZ_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_MATFIZ_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_MATFIZ_DEPLOY_TOKEN }}
+  FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_MATFIZ_PROJECT_ID }}
+
+on:
+  push:
+    branches:
+      - matfiz-deployment
+
+jobs:
+  deploy-matfiz:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: matfiz-deployment
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Pull Vercel environment variables
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_MATFIZ_DEPLOY_TOKEN }}
+
+      - name: Deploy to Vercel
+        run: vercel deploy --prod --token=${{ secrets.VERCEL_MATFIZ_DEPLOY_TOKEN }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Authenticate to Firebase with service account
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_MATFIZ_SERVICE_ACCOUNT_JSON }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/firebase-service-account.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
+
+      - name: Install Cloud Functions dependencies
+        run: npm --prefix functions ci
+
+      - name: Deploy Firebase Functions and Security Rules
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CF_API_SECRET: ${{ secrets.CF_API_SECRET }}
+          LOGIN_BOT_URL: ${{ secrets.LOGIN_BOT_URL }}
+          ONBOARDING_SECRET: ${{ secrets.MATFIZ_ONBOARDING_SECRET }}
+        run: |
+          # Create .env file for Firebase Functions params
+          echo "CF_API_KEY=$CF_API_KEY" >> functions/.env
+          echo "DEEPL_API_KEY=$DEEPL_API_KEY" >> functions/.env
+          echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> functions/.env
+          echo "CF_API_SECRET=$CF_API_SECRET" >> functions/.env
+          echo "LOGIN_BOT_URL=$LOGIN_BOT_URL" >> functions/.env
+          echo "ONBOARDING_SECRET=$ONBOARDING_SECRET" >> functions/.env
+
+          firebase deploy --project "$FIREBASE_PROJECT_ID" --non-interactive
