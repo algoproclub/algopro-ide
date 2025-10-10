@@ -83,7 +83,9 @@
         ".read": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ')"
       }
     },
-    ".read": "auth.token.teacher === true",
+    /* FIXME: Right now teachers can view all students' work */
+    /* This is apparently how you check if an array is non-empty. Don't change it! */
+    ".read": "auth.token.admin === true || (auth.token.teacher != null && auth.token.teacher['0'] != null)",
     ".write": false
   }
 }
