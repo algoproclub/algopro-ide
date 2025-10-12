@@ -12,6 +12,7 @@ import {
   buildSpojUrl,
   buildOjuzUrl,
   buildNjudgeUrl,
+  buildYosupoUrl,
 } from './problemUtils';
 
 async function fetchWithProxy(
@@ -71,6 +72,8 @@ export async function fetchProblemData({
       return fetchProblemDataOjuz(id);
     case 'njudge':
       return fetchProblemDataNjudge(id);
+    case 'yosupo':
+      return fetchProblemDataYosupo(id);
     default:
       throw new Error(`platform '${platform}' is unimplemented`);
   }
@@ -479,5 +482,122 @@ async function fetchProblemDataNjudge(
     input: 'stdin',
     output: 'stdout',
     source: `njudge ${problemID}`,
+  };
+}
+
+async function fetchProblemDataYosupo(
+  problemID: string
+): Promise<ProblemData | null> {
+  const url = buildYosupoUrl(problemID);
+  const problemPage = await fetch(url);
+  if (problemPage.status !== 200) {
+    console.error(`Yosupo fetch failed for ${problemID}: status ${problemPage.status}`);
+    return null;
+  }
+
+  const html = await problemPage.text();
+  const document = cheerio.load(html);
+
+  // Try multiple selectors for title - Yosupo might use different structures
+  let title = '';
+  const titleSelectors = ['h1', '.title', '.problem-title', 'title', '[class*="title"]'];
+  for (const selector of titleSelectors) {
+    title = document(selector).first().text().trim();
+    if (title) break;
+  }
+  if (!title) {
+    title = `Yosupo Problem ${problemID}`; // fallback
+  }
+
+  // Extract problem statement - Yosupo might have the content in different containers
+  let statement = '';
+  const statementSelectors = [
+    '.problem-statement',
+    '.statement',
+    '.content',
+    '.problem-content',
+    'main',
+    'article',
+    '.markdown',
+    '[class*="problem"]'
+  ];
+
+  for (const selector of statementSelectors) {
+    const element = document(selector).first();
+    if (element.length > 0 && element.text().trim().length > 50) { // Ensure it's substantial content
+      statement = element.html() || element.text();
+      break;
+    }
+  }
+
+  // If no statement found, try to get all text content from body
+  if (!statement) {
+    const bodyText = document('body').text();
+    // Remove common header/footer text and extract main content
+    const lines = bodyText.split('\n').filter(line => line.trim().length > 10);
+    statement = lines.slice(0, 10).join('\n'); // Take first 10 substantial lines
+  }
+
+  // Extract samples - Yosupo typically has sample input/output in pre tags
+  const samples: Sample[] = [];
+  const preElements = document('pre');
+
+  if (preElements.length >= 2) {
+    // Group consecutive pre elements as input/output pairs
+    for (let i = 0; i < preElements.length; i += 2) {
+      if (i + 1 < preElements.length) {
+        const input = htmlToPlaintext(preElements[i]);
+        const output = htmlToPlaintext(preElements[i + 1]);
+        if (input.trim() && output.trim()) {
+          samples.push({ input: input.trim(), output: output.trim() });
+        }
+      }
+    }
+  }
+
+  // Alternative: look for sections with "Sample" in headers
+  if (samples.length === 0) {
+    const sampleSections = document('*').filter((_, el) => {
+      const text = document(el).text().toLowerCase();
+      return text.includes('sample input') || text.includes('sample output');
+    });
+
+    if (sampleSections.length > 0) {
+      sampleSections.each((_, el) => {
+        const section = document(el);
+        const pres = section.find('pre');
+        if (pres.length >= 2) {
+          const input = htmlToPlaintext(pres[0]);
+          const output = htmlToPlaintext(pres[1]);
+          if (input.trim() && output.trim()) {
+            samples.push({ input: input.trim(), output: output.trim() });
+          }
+        }
+      });
+    }
+  }
+
+  // Extract time and memory limits - Yosupo might not have explicit limits
+  const bodyText = document('body').text();
+  const timeMatch = bodyText.match(/time(?:\s*limit)?:?\s*(\d+(?:\.\d+)?)\s*sec/i);
+  const memoryMatch = bodyText.match(/memory(?:\s*limit)?:?\s*(\d+(?:\.\d+)?)\s*(?:mb|gb)/i);
+
+  const timeLimit = timeMatch ? timeMatch[1] + 's' : undefined;
+  const memoryLimit = memoryMatch ? memoryMatch[1] + memoryMatch[2] : undefined;
+
+  return {
+    id: problemID,
+    submittable: true,
+    platform: 'yosupo',
+    url,
+    title,
+    statement: statement || null,
+    input: 'stdin',
+    output: 'stdout',
+    source: `Yosupo Library Checker ${problemID}`,
+    timeLimit,
+    memoryLimit,
+    samples,
+    templateCode: null,
   };
 }
