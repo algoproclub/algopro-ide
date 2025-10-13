@@ -13,6 +13,7 @@ import {
   mainEditorValueAtom,
   mainMonacoEditorAtom,
   isLineHighlightSetAtom,
+  savedEditorValue,
 } from '../src/atoms/workspace';
 import {
   inputTabAtom,
@@ -58,6 +59,7 @@ function EditorPage() {
   const getInputEditorValue = useAtomValue(inputEditorValueAtom);
   const [judgeResults, setJudgeResults] = useJudgeResults();
   const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
+  const setSavedEditorValue = useSetAtom(savedEditorValue);
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
 
   useUserFileConnection();
@@ -263,6 +265,9 @@ function EditorPage() {
       }
       setIsRunning(false);
     };
+
+    setSavedEditorValue(getMainEditorValue ? getMainEditorValue() : null);
+
     if (inputTab === 'input') {
       if (getInputEditorValue) runWithInput(getInputEditorValue());
     } else if (runAllList.includes(inputTab)) {
