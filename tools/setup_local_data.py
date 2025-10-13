@@ -50,8 +50,9 @@ def make_school(*, school_id: str, name: str):
     school_doc.set({"name": name})
 
 
-def make_group(*, group_id: str, name: str, school: str) -> None:
-    group_doc = fs_client.document("groups", group_id)
+def make_group(*, unprefixed_id: str, name: str, school: str) -> None:
+    id = school + "~" + unprefixed_id
+    group_doc = fs_client.document("groups", id)
     group_doc.set({"name": name, "school": school})
 
 
@@ -103,9 +104,9 @@ def make_user(
 
 make_school(school_id="algopro", name="Algo Pro Club")
 
-make_group(group_id="algopro-group-1", name="Algo Pro Group 1", school="algopro")
+make_group(school="algopro", unprefixed_id="group-1", name="Algo Pro Group 1",)
 make_class(
-    group_id="algopro-group-1",
+    group_id="algopro~group-1",
     class_id="01",
     tasks=[
         {
@@ -123,7 +124,7 @@ make_class(
     ],
 )
 make_class(
-    group_id="algopro-group-1",
+    group_id="algopro~group-1",
     class_id="02",
     tasks=[
         {
@@ -135,9 +136,9 @@ make_class(
     ],
 )
 
-make_group(group_id="algopro-group-2", name="Algo Pro Group 2", school="algopro")
+make_group(school="algopro", unprefixed_id="group-2", name="Algo Pro Group 2")
 make_class(
-    group_id="algopro-group-2",
+    group_id="algopro~group-2",
     class_id="01",
     tasks=[
         {
@@ -177,7 +178,7 @@ make_user(
     is_admin=False,
     teacher_in_schools=[],
     student_in_schools=["algopro"],
-    groups=["algopro-group-1"],
+    groups=["algopro~group-1"],
 )
 
 make_user(
@@ -187,7 +188,7 @@ make_user(
     is_admin=False,
     teacher_in_schools=[],
     student_in_schools=["algopro"],
-    groups=["algopro-group-1"],
+    groups=["algopro~group-1"],
 )
 
 make_user(
