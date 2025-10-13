@@ -133,7 +133,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
 
     const handleSnapshot = (snap: DataSnapshot) => {
-      const data = snap.val()?.data ?? {};
+      const data = snap.val() ?? {};
       setUserData({
         id: user.uid,
         editorMode: data.editorMode ?? 'Normal',
@@ -148,9 +148,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       });
       setTemplateCode({ ...defaultCode, ...data?.templateCode });
     };
-    onValue(ref(getDatabase(), `users/${user.uid}`), handleSnapshot);
+    onValue(ref(getDatabase(), `users/${user.uid}/data`), handleSnapshot);
     return () =>
-      off(ref(getDatabase(), `users/${user.uid}`), 'value', handleSnapshot);
+      off(
+        ref(getDatabase(), `users/${user.uid}/data`),
+        'value',
+        handleSnapshot
+      );
   }, [user]);
 
   const updateUsername = useCallback(
