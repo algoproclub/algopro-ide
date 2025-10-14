@@ -28,9 +28,8 @@ if (getApps().length === 0) {
         privateKey: process.env.FIREBASE_PRIVATE_KEY,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
       }),
-      databaseURL:
-        'https://algopro-app-default-rtdb.europe-west1.firebasedatabase.app',
-      storageBucket: 'algopro-app.firebasestorage.app',
+      databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
   } else {
     initializeApp({

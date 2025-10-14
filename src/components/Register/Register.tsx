@@ -2,24 +2,30 @@ import { useNullableUserContext } from '../../context/UserContext';
 import { useUpdateAtom } from 'jotai/utils';
 import {
   signInWithGoogleAtom,
+  signInWithMicrosoftAtom,
   signOutAtom,
 } from '../../atoms/firebaseUserAtoms';
-import { useConnectionContext } from '../../context/ConnectionContext';
+import {
+  ConnectionContextType,
+  useConnectionContext,
+} from '../../context/ConnectionContext';
 import { useRouter } from 'next/router';
 import React, { useEffect } from 'react';
 import { ConfirmOverrideModal } from '../ConfirmOverrideModal';
+import { SignInButton, GoogleIcon, MicrosoftIcon } from '../SignInButton';
 
 export default function Register({ handlerURL }: { handlerURL: string }) {
   const { firebaseUser, logged } = useNullableUserContext();
   const signInWithGoogle = useUpdateAtom(signInWithGoogleAtom);
+  const signInWithMicrosoft = useUpdateAtom(signInWithMicrosoftAtom);
   const signOut = useUpdateAtom(signOutAtom);
   const connectionContext = useConnectionContext();
   const router = useRouter();
 
-  const login = () => {
+  const login = (handler: (ctx: ConnectionContextType) => void) => {
     if (router.isReady) {
       try {
-        signInWithGoogle(connectionContext);
+        handler(connectionContext);
       } catch (e) {
         console.error(e);
       }
@@ -76,13 +82,17 @@ export default function Register({ handlerURL }: { handlerURL: string }) {
             <div className="font-semibold block text-center py-4 px-6 border-b border-gray-700">
               Registration
             </div>
-            <div className="py-4 px-6">
-              <button
-                className="block items-center w-full px-6 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1E1E1E] focus:ring-indigo-500"
-                onClick={login}
-              >
-                Sign in now
-              </button>
+            <div className="py-4 px-6 space-x-2">
+              <SignInButton
+                service="Google"
+                Icon={GoogleIcon}
+                onClick={() => login(signInWithGoogle)}
+              />
+              <SignInButton
+                service="Microsoft"
+                Icon={MicrosoftIcon}
+                onClick={() => login(signInWithMicrosoft)}
+              />
             </div>
           </div>
           <ConfirmOverrideModal />

@@ -56,6 +56,11 @@ services:
       - FIREBASE_STORAGE_EMULATOR_HOST=firebase:9199
       - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
       - FIRESTORE_EMULATOR_HOST=firebase:8080
+      - NEXT_PUBLIC_BASE_URL=http://localhost:3000
+      - NEXT_PUBLIC_YJS_URL=ws://localhost:1234
+      - YJS_API_URL=http://yjs:1234
+      - EXECUTE_URL=http://execute:1235
+      - LOGIN_BOT_URL=http://login-bot:3100
     ports:
       - '3000:3000'
       - '127.0.0.1:9229:9229'

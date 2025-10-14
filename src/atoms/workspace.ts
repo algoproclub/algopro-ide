@@ -13,6 +13,7 @@ export const mainCodemirrorEditorAtom = atom<EditorView | null>(null);
 export const inputCodemirrorEditorAtom = atom<EditorView | null>(null);
 
 export const isLineHighlightSetAtom = atom<boolean>(false);
+export const savedEditorValue = atom<string | null>(null);
 
 export const layoutEditorsAtom = atom(null, (get, _set, _arg) => {
   get(mainMonacoEditorAtom)?.layout();

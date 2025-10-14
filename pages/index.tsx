@@ -1,18 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
 import { useSetAtom } from 'jotai';
-import { signInWithGoogleAtom } from '../src/atoms/firebaseUserAtoms';
+import {
+  signInWithGoogleAtom,
+  signInWithMicrosoftAtom,
+} from '../src/atoms/firebaseUserAtoms';
+import {
+  SignInButton,
+  GoogleIcon,
+  MicrosoftIcon,
+} from '../src/components/SignInButton';
 import Dashboard from '../src/components/Dashboard/Dashboard';
-import { useConnectionContext } from '../src/context/ConnectionContext';
 import { useNullableUserContext } from '../src/context/UserContext';
 import ProfileSettings from '../src/components/settings/ProfileSettings';
 import { SettingsMenu } from '../src/components/NavBar/SettingsMenu';
 import NoRegistrationMessage from '../src/NoRegistrationMessage';
+import { useConnectionContext } from '../src/context/ConnectionContext';
 
 export default function DashboardPage(): JSX.Element {
-  const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
-  const connectionContext = useConnectionContext();
   const { userData, logged, registered } = useNullableUserContext();
+  const connectionContext = useConnectionContext();
+  const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
+  const signInWithMicrosoft = useSetAtom(signInWithMicrosoftAtom);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -45,15 +54,21 @@ export default function DashboardPage(): JSX.Element {
         </div>
 
         {logged === false ? (
-          <div className="text-gray-400">
-            Not signed in.{' '}
-            <button
-              className="mt-3 block items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1E1E1E] focus:ring-indigo-500"
-              onClick={() => signInWithGoogle(connectionContext)}
-            >
-              Sign in now
-            </button>
-          </div>
+          <>
+            <div className="text-gray-400">Not signed in.</div>
+            <div className="mt-2 space-x-2">
+              <SignInButton
+                service="Google"
+                Icon={GoogleIcon}
+                onClick={() => signInWithGoogle(connectionContext)}
+              />
+              <SignInButton
+                service="Microsoft"
+                Icon={MicrosoftIcon}
+                onClick={() => signInWithMicrosoft(connectionContext)}
+              />
+            </div>
+          </>
         ) : !userData ? (
           <div className="text-gray-400">Loading...</div>
         ) : !registered ? (
