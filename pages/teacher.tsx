@@ -129,10 +129,10 @@ export const fetchSolutionData = async (
   if (!fileID) {
     return null;
   }
-  const fileRef = ref(database, `files/${fileID}`);
+  const fileRef = ref(database, `files/${fileID}/teacher`);
   const fileData = (await get(fileRef)).val();
 
-  if (!fileData.teacher) {
+  if (!fileData) {
     return null;
   }
   const submissionRef = ref(database, `submissions/${fileID}/statusData`);
@@ -148,8 +148,8 @@ export const fetchSolutionData = async (
     fileID: fileID,
     verdict: verdict,
     verdictType: verdictType,
-    codeSize: fileData.teacher.codeSize,
-    lastEdit: fileData.teacher.editTime,
+    codeSize: fileData.codeSize,
+    lastEdit: fileData.editTime,
   };
 };
 
@@ -210,7 +210,7 @@ const fetchStudents = async (groupID: string): Promise<Student[]> => {
     )
   );
   return usersSnap.docs
-    .filter(doc => doc.get('groups')?.includes(groupID) === true)
+    .filter(doc => ((doc.get('groups') ?? []) as string[]).includes(groupID))
     .map(doc => ({ id: doc.id, name: doc.data().user_full_name }));
 };
 

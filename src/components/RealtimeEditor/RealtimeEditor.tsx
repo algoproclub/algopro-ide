@@ -11,7 +11,6 @@ import colorFromUserId, {
 } from '../../scripts/colorFromUserId';
 import { useUserContext } from '../../context/UserContext';
 import { useEditorContext } from '../../context/EditorContext';
-import { SHOULD_USE_DEV_YJS_SERVER } from '../../dev_constants';
 import { CodeEditor } from '../editor/CodeEditor';
 import type * as awarenessProtocol from 'y-protocols/awareness';
 
@@ -20,10 +19,6 @@ export interface RealtimeEditorProps extends EditorProps {
   useEditorWithVim?: boolean;
   dataTestId?: string;
 }
-
-const WEBSOCKET_SERVER = SHOULD_USE_DEV_YJS_SERVER
-  ? 'ws://localhost:1234'
-  : 'wss://yjs.algopro.hu';
 
 const RealtimeEditor = ({
   defaultValue,
@@ -58,7 +53,7 @@ const RealtimeEditor = ({
 
     const ydocument = new Y.Doc();
     const provider = new WebsocketProvider(
-      WEBSOCKET_SERVER,
+      process.env.NEXT_PUBLIC_YJS_URL!,
       documentId,
       ydocument
     );
