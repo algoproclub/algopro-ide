@@ -7,6 +7,7 @@ import {
   onValue,
   off,
   get,
+  limitToLast,
 } from 'firebase/database';
 import FilesList, { File } from './FilesList';
 import { useUserContext } from '../../context/UserContext';
@@ -29,8 +30,8 @@ const firestore = getFirestore();
 const db = getDatabase();
 
 const tabs = [
-  { label: 'Recent', value: 'recent' },
   { label: 'Classes', value: 'classes' },
+  { label: 'Recent', value: 'recent' },
 ];
 const PAGE_SIZE = 8;
 
@@ -93,7 +94,12 @@ const RecentTab = ({
     if (!firebaseUser) return;
 
     const dbRef = ref(db, `users/${firebaseUser.uid}/files`);
-    const fileQuery = query(dbRef, orderByChild('lastAccessTime'));
+    // TODO: Implement proper pagination on the query level instead of just cutting down the results to 100.
+    const fileQuery = query(
+      dbRef,
+      orderByChild('lastAccessTime'),
+      limitToLast(100)
+    );
 
     onValue(fileQuery, snap => {
       if (!snap.exists) {
@@ -366,7 +372,7 @@ const ClassesTab = () => {
 
 export default function Dashboard() {
   const [showHidden, setShowHidden] = useState<boolean>(false);
-  const [tab, setTab] = useState('recent');
+  const [tab, setTab] = useState('classes');
 
   return (
     <div>
@@ -396,13 +402,13 @@ export default function Dashboard() {
         }}
         homepage={true}
       />
+      {tab === 'classes' && <ClassesTab />}
       {tab === 'recent' && (
         <RecentTab
           showHidden={showHidden}
           toggleShowHidden={() => setShowHidden(val => !val)}
         />
       )}
-      {tab === 'classes' && <ClassesTab />}
     </div>
   );
 }

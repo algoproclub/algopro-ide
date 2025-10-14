@@ -4,7 +4,9 @@
       "$secretid": {
         ".read": "$secretid == auth.uid",
         ".write": "auth.uid == $secretid",
-        ".indexOn": "lastAccessTime",
+        "files": {
+          ".indexOn": ["lastAccessTime"]
+        },
         "schools": {
           ".write": false
         }
