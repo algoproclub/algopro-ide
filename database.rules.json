@@ -13,6 +13,7 @@
     "files": {
       ".read": "auth != null && auth.token.registered === true",
       ".write": "auth != null && auth.token.registered === true",
+      ".indexOn": "teacher/editTime",
 
       "$secretid": {
         ".write": "auth != null && auth.token.registered === true && !root.child('files').child($secretid).exists()",
