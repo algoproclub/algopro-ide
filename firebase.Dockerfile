@@ -1,4 +1,4 @@
-FROM node:slim
+FROM node:22-trixie-slim
 RUN apt-get update
 RUN apt-get -y install default-jre-headless
 
