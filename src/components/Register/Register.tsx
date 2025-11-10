@@ -3,6 +3,7 @@ import { useUpdateAtom } from 'jotai/utils';
 import {
   signInWithGoogleAtom,
   signInWithMicrosoftAtom,
+  signInWithGithubAtom,
   signOutAtom,
 } from '../../atoms/firebaseUserAtoms';
 import {
@@ -12,12 +13,18 @@ import {
 import { useRouter } from 'next/router';
 import React, { useEffect } from 'react';
 import { ConfirmOverrideModal } from '../ConfirmOverrideModal';
-import { SignInButton, GoogleIcon, MicrosoftIcon } from '../SignInButton';
+import {
+  SignInButton,
+  GoogleIcon,
+  MicrosoftIcon,
+  GithubIcon,
+} from '../SignInButton';
 
 export default function Register({ handlerURL }: { handlerURL: string }) {
   const { firebaseUser, logged } = useNullableUserContext();
   const signInWithGoogle = useUpdateAtom(signInWithGoogleAtom);
   const signInWithMicrosoft = useUpdateAtom(signInWithMicrosoftAtom);
+  const signInWithGithub = useUpdateAtom(signInWithGithubAtom);
   const signOut = useUpdateAtom(signOutAtom);
   const connectionContext = useConnectionContext();
   const router = useRouter();
@@ -92,6 +99,11 @@ export default function Register({ handlerURL }: { handlerURL: string }) {
                 service="Microsoft"
                 Icon={MicrosoftIcon}
                 onClick={() => login(signInWithMicrosoft)}
+              />
+              <SignInButton
+                service="GitHub"
+                Icon={GithubIcon}
+                onClick={() => login(signInWithGithub)}
               />
             </div>
           </div>

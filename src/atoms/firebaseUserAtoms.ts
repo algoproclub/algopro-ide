@@ -91,6 +91,7 @@ export const signInWithGoogleAtom = signInAtom(new GoogleAuthProvider());
 export const signInWithMicrosoftAtom = signInAtom(
   new OAuthProvider('microsoft.com')
 );
+export const signInWithGithubAtom = signInAtom(new OAuthProvider('github.com'));
 
 export const signOutAtom = atom(
   null,
