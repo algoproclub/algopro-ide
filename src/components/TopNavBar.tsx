@@ -17,7 +17,7 @@ import { useState } from 'react';
 
 export const TopNavBar = (): JSX.Element => {
   const router = useRouter();
-  const { userRole, userData } = useNullableUserContext();
+  const { userRole, userData, registered } = useNullableUserContext();
   const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
 
   // Don't show on editor pages (they have their own NavBar)
@@ -63,7 +63,7 @@ export const TopNavBar = (): JSX.Element => {
                 </div>
               </Link>
 
-              {userData && (
+              {userData && registered && (
                 <Link
                   href="/new"
                   className={`${navItemClass} ${
