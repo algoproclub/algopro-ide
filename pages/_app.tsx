@@ -19,6 +19,7 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import { far } from '@fortawesome/free-regular-svg-icons';
 import en from 'javascript-time-ago/locale/en';
 import TimeAgo from 'javascript-time-ago';
+import { TopNavBar } from '../src/components/TopNavBar';
 
 TimeAgo.addDefaultLocale(en);
 
@@ -73,6 +74,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       <Toaster position="bottom-right" />
       <UserProvider>
         <ConnectionProvider>
+          <TopNavBar />
           <Component {...pageProps} />
         </ConnectionProvider>
       </UserProvider>
