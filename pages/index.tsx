@@ -4,11 +4,13 @@ import { useSetAtom } from 'jotai';
 import {
   signInWithGoogleAtom,
   signInWithMicrosoftAtom,
+  signInWithGithubAtom,
 } from '../src/atoms/firebaseUserAtoms';
 import {
   SignInButton,
   GoogleIcon,
   MicrosoftIcon,
+  GithubIcon,
 } from '../src/components/SignInButton';
 import Dashboard from '../src/components/Dashboard/Dashboard';
 import { useNullableUserContext } from '../src/context/UserContext';
@@ -20,6 +22,7 @@ export default function DashboardPage(): JSX.Element {
   const connectionContext = useConnectionContext();
   const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
   const signInWithMicrosoft = useSetAtom(signInWithMicrosoftAtom);
+  const signInWithGithub = useSetAtom(signInWithGithubAtom);
 
   useEffect(() => {
     document.title = 'AlgoPro IDE';
@@ -59,6 +62,11 @@ export default function DashboardPage(): JSX.Element {
                 service="Microsoft"
                 Icon={MicrosoftIcon}
                 onClick={() => signInWithMicrosoft(connectionContext)}
+              />
+              <SignInButton
+                service="GitHub"
+                Icon={GithubIcon}
+                onClick={() => signInWithGithub(connectionContext)}
               />
             </div>
           </>
