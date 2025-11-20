@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
 import { useSetAtom } from 'jotai';
 import {
@@ -12,8 +12,6 @@ import {
 } from '../src/components/SignInButton';
 import Dashboard from '../src/components/Dashboard/Dashboard';
 import { useNullableUserContext } from '../src/context/UserContext';
-import ProfileSettings from '../src/components/settings/ProfileSettings';
-import { SettingsMenu } from '../src/components/NavBar/SettingsMenu';
 import NoRegistrationMessage from '../src/NoRegistrationMessage';
 import { useConnectionContext } from '../src/context/ConnectionContext';
 
@@ -22,7 +20,6 @@ export default function DashboardPage(): JSX.Element {
   const connectionContext = useConnectionContext();
   const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
   const signInWithMicrosoft = useSetAtom(signInWithMicrosoftAtom);
-  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     document.title = 'AlgoPro IDE';
@@ -32,10 +29,6 @@ export default function DashboardPage(): JSX.Element {
     <div className="p-4 sm:p-6 md:p-8 lg:p-12 min-h-full flex flex-col max-w-6xl mx-auto">
       <ConfirmOverrideModal />
       <div className="flex-1 relative">
-        <ProfileSettings isOpen={isOpen} onClose={() => setIsOpen(false)} />
-        <div className="absolute top-4 right-4">
-          {logged && <SettingsMenu setIsProfileSettingsOpen={setIsOpen} />}
-        </div>
         <h1 className="text-gray-100 text-2xl md:text-4xl font-black">
           AlgoPro IDE
         </h1>
