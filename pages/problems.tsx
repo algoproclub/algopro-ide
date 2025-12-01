@@ -211,9 +211,15 @@ const PageContent = () => {
   };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   // lazily loaded Yosupo API data ? . .
   const [yosupoLoaded, setYosupoLoaded] = useState(false);
   // 
+=======
+  // Track whether we've lazily loaded Yosupo API data
+  const [yosupoLoaded, setYosupoLoaded] = useState(false);
+
+>>>>>>> davidbranch
 =======
   // Track whether we've lazily loaded Yosupo API data
   const [yosupoLoaded, setYosupoLoaded] = useState(false);
@@ -237,7 +243,11 @@ const PageContent = () => {
   }, []);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   // Lazy-load Yosupo problems 
+=======
+  // Lazy-load Yosupo problems from API when its checkbox is turned on
+>>>>>>> davidbranch
 =======
   // Lazy-load Yosupo problems from API when its checkbox is turned on
 >>>>>>> davidbranch
