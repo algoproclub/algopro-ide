@@ -16,7 +16,19 @@ export default function HTMLStatement({
             // For Codeforces
             { left: '$$$$$$', right: '$$$$$$', display: true },
             { left: '$$$', right: '$$$', display: false },
+            // Common LaTeX delimiters (Yosupo and others)
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false },
           ],
+          // Allow math rendering inside pre/code blocks (Yosupo samples)
+          ignoredTags: ['script', 'noscript', 'style', 'textarea'],
+          throwOnError: false,
+        });
+
+        // Match KaTeX styling to multiline blocks so rendered math keeps layout.
+        node.querySelectorAll('pre .katex').forEach(element => {
+          element.classList.add('katex-display');
+        });
         });
 
         const render = (element: HTMLElement, displayMode: boolean) => {
