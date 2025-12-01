@@ -1,5 +1,5 @@
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { getPlatformName } from '../src/scripts/getPlatformName';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -210,10 +210,12 @@ const PageContent = () => {
     }));
   };
 
+  // lazily loaded Yosupo API data ? . .
+  const [yosupoLoaded, setYosupoLoaded] = useState(false);
+  // 
   useEffect(() => {
-    const loadData = async () => {
+    const loadFirestoreProblems = async () => {
       const problems: TagProblem[] = [];
-
       for (const platform of platforms) {
         const results = await getDocs(
           query(collection(firestore, `problemsets/${platform}/problems`))
@@ -223,13 +225,36 @@ const PageContent = () => {
           problems.push(problem);
         });
       }
-
       setProblemset(problems);
     };
-    loadData().then(() => {
-      console.log('done');
-    });
+    loadFirestoreProblems();
   }, []);
+
+  // Lazy-load Yosupo problems 
+  useEffect(() => {
+    const shouldLoadYosupo = platformFilter['yosupo'] && !yosupoLoaded;
+    if (!shouldLoadYosupo) return;
+    (async () => {
+      try {
+        const res = await fetch('/api/yosupoProblems');
+        if (!res.ok) return;
+        const data = (await res.json()) as TagProblem[] | { error: string };
+        if (Array.isArray(data)) {
+          // Merge only new items by id
+          setProblemset(prev => {
+            const seen = new Set(
+              prev.filter(p => p.platform && p.id).map(p => `${p.platform}:${p.id}`)
+            );
+            const toAdd = data.filter(p => p.id && !seen.has(`yosupo:${p.id}`));
+            return [...prev, ...toAdd];
+          });
+          setYosupoLoaded(true);
+        }
+      } catch (e) {
+        // ignore network errors in restricted envs
+      }
+    })();
+  }, [platformFilter, yosupoLoaded]);
 
   const tagFilterInputOptions = problemTags.filter(option =>
     option.toLowerCase().includes(tagFilterInput.toLowerCase())
