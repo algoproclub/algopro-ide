@@ -47,3 +47,7 @@ export function buildOjuzUrl(problemID: string) {
 export function buildNjudgeUrl(problemID: string) {
   return `https://njudge.hu/problemset/main/${problemID}/`;
 }
+
+export function buildYosupoUrl(problemID: string) {
+  return `https://judge.yosupo.jp/problem/${problemID}`;
+}

@@ -3,6 +3,7 @@ import { Sample } from '../types/judge';
 import { ElementType } from 'domelementtype';
 import * as domhandler from 'domhandler';
 import * as cheerio from 'cheerio';
+import showdown from 'showdown';
 import { getFirestore } from 'firebase-admin/firestore';
 import {
   CODEFORCES_TITLE_REGEX,
@@ -12,6 +13,7 @@ import {
   buildSpojUrl,
   buildOjuzUrl,
   buildNjudgeUrl,
+  buildYosupoUrl,
 } from './problemUtils';
 
 async function fetchWithProxy(
@@ -24,6 +26,20 @@ async function fetchWithProxy(
       new URLSearchParams({ url }).toString(),
     init
   );
+}
+
+async function fetchWithOptionalProxy(
+  url: string,
+  init?: RequestInit
+): Promise<Response> {
+  if (process.env.LOGIN_BOT_URL) {
+    try {
+      return await fetchWithProxy(url, init);
+    } catch (error) {
+      console.warn('Proxy fetch failed, falling back to direct fetch', error);
+    }
+  }
+  return await fetch(url, init);
 }
 
 // FIXME: We might need to escape HTML entities (?)
@@ -71,6 +87,8 @@ export async function fetchProblemData({
       return fetchProblemDataOjuz(id);
     case 'njudge':
       return fetchProblemDataNjudge(id);
+    case 'yosupo':
+      return fetchProblemDataYosupo(id);
     default:
       throw new Error(`platform '${platform}' is unimplemented`);
   }
@@ -480,4 +498,647 @@ async function fetchProblemDataNjudge(
     output: 'stdout',
     source: `njudge ${problemID}`,
   };
+}
+
+const YOSUPO_REST_BASE = 'https://v3.api.judge.yosupo.jp';
+const YOSUPO_STORAGE_BASE = new URL(
+  'https://storage.googleapis.com/v2-prod-library-checker-data-public/'
+);
+const YOSUPO_VERSION_PREFIX = 'v4';
+
+const GITHUB_API_BASE =
+  'https://api.github.com/repos/yosupo06/library-checker-problems/contents';
+const GITHUB_RAW_BASE =
+  'https://raw.githubusercontent.com/yosupo06/library-checker-problems/master';
+const GITHUB_HEADERS = {
+  'User-Agent': 'AlgoPro IDE/1.0',
+  Accept: 'application/vnd.github.v3+json',
+} as const;
+
+type YosupoProblemInfo = {
+  title: string;
+  time_limit: number;
+  version: string;
+  overall_version: string;
+  testcases_version: string;
+  source_url: string;
+};
+
+type YosupoInfoToml = {
+  tests: { name: string; number: number }[];
+  params: Record<string, bigint>;
+};
+
+const YOSUPO_KEYWORD_MAP: Record<string, string> = {
+  statement: 'Problem Statement',
+  constraints: 'Constraints',
+  input: 'Input',
+  output: 'Output',
+  sample: 'Sample',
+  samples: 'Samples',
+  note: 'Note',
+  notes: 'Notes',
+  subtasks: 'Subtasks',
+  prerequisites: 'Prerequisites',
+};
+
+function defaultYosupoKeyword(key: string): string {
+  return key
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function formatYosupoParam(value: bigint): string {
+  if (value === 0n) {
+    return '0';
+  }
+  if (value % 100_000n === 0n) {
+    let k = 5n;
+    while (value % 10n ** (k + 1n) === 0n) {
+      k += 1n;
+    }
+    if (value === 10n ** k) {
+      return `10^{${k}}`;
+    }
+    return `${value / 10n ** k} \\times 10^{${k}}`;
+  }
+  if (value % (1n << 10n) === 0n) {
+    let k = 10n;
+    while (value % (1n << (k + 1n)) === 0n) {
+      k += 1n;
+    }
+    if (value === 1n << k) {
+      return `2^{${k}}`;
+    }
+  }
+  return value.toString();
+}
+
+function parseTomlString(value: string): string | null {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^["'](.*)["']$/);
+  if (match) {
+    return match[1];
+  }
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function parseTomlBigInt(value: string): bigint | null {
+  const sanitized = value.replace(/_/g, '').trim();
+  if (/^-?\d+$/.test(sanitized)) {
+    try {
+      return BigInt(sanitized);
+    } catch {
+      return null;
+    }
+  }
+  if (/^-?\d+\.\d+$/.test(sanitized)) {
+    return BigInt(Math.floor(Number(sanitized)));
+  }
+  return null;
+}
+
+function parseYosupoInfoToml(raw: string): YosupoInfoToml {
+  const info: YosupoInfoToml = { tests: [], params: {} };
+  let currentTest: { name?: string; number?: number } | null = null;
+  let section: 'tests' | 'params' | null = null;
+
+  const commitTest = () => {
+    if (currentTest?.name && typeof currentTest.number === 'number') {
+      info.tests.push({
+        name: currentTest.name,
+        number: currentTest.number,
+      });
+    }
+    currentTest = null;
+  };
+
+  const lines = raw.split(/\r?\n/);
+  for (const rawLine of lines) {
+    const trimmedLine = rawLine.trim();
+    if (trimmedLine === '' || trimmedLine.startsWith('#')) {
+      continue;
+    }
+
+    if (trimmedLine === '[[tests]]') {
+      commitTest();
+      section = 'tests';
+      currentTest = {};
+      continue;
+    }
+
+    if (trimmedLine === '[params]') {
+      commitTest();
+      section = 'params';
+      currentTest = null;
+      continue;
+    }
+
+    if (trimmedLine.startsWith('[[') || trimmedLine.startsWith('[')) {
+      commitTest();
+      section = null;
+      currentTest = null;
+      continue;
+    }
+
+    const match = trimmedLine.match(/^([A-Za-z0-9_.-]+)\s*=\s*(.+)$/);
+    if (!match) {
+      continue;
+    }
+
+    const [, key, valueRawOriginal] = match;
+    let valueRaw = valueRawOriginal.trim();
+    const commentIndex = valueRaw.indexOf('#');
+    if (commentIndex >= 0) {
+      valueRaw = valueRaw.slice(0, commentIndex).trim();
+    }
+
+    if (section === 'tests' && currentTest) {
+      if (key === 'name') {
+        const name = parseTomlString(valueRaw);
+        if (name !== null) {
+          currentTest.name = name;
+        }
+      } else if (key === 'number') {
+        const parsed = Number(valueRaw.replace(/_/g, ''));
+        if (!Number.isNaN(parsed)) {
+          currentTest.number = parsed;
+        }
+      }
+      continue;
+    }
+
+    if (section === 'params') {
+      const paramValue = parseTomlBigInt(valueRaw);
+      if (paramValue !== null) {
+        info.params[key] = paramValue;
+      }
+      continue;
+    }
+  }
+
+  commitTest();
+  return info;
+}
+
+type GithubContentEntry = {
+  name: string;
+  path: string;
+  type: 'file' | 'dir';
+  download_url: string | null;
+};
+
+async function fetchGithubJson<T>(
+  url: string,
+  init?: RequestInit
+): Promise<T | null> {
+  const response = await fetchWithOptionalProxy(url, {
+    ...init,
+    headers: {
+      ...GITHUB_HEADERS,
+      ...(init?.headers ?? {}),
+    },
+  });
+  if (!response.ok) {
+    return null;
+  }
+  return (await response.json()) as T;
+}
+
+async function fetchGithubContents(
+  path: string
+): Promise<GithubContentEntry[] | null> {
+  const trimmed = path.replace(/^\/+|\/+$/g, '');
+  const url =
+    trimmed.length === 0
+      ? `${GITHUB_API_BASE}?ref=master`
+      : `${GITHUB_API_BASE}/${trimmed}?ref=master`;
+  return await fetchGithubJson<GithubContentEntry[]>(url);
+}
+
+async function fetchGithubFileText(path: string): Promise<string | null> {
+  const trimmed = path.replace(/^\/+/, '');
+  const response = await fetchWithOptionalProxy(
+    `${GITHUB_RAW_BASE}/${trimmed}`
+  );
+  if (!response.ok) {
+    return null;
+  }
+  return await response.text();
+}
+
+async function fetchGithubFileByDownloadUrl(
+  url: string | null
+): Promise<string | null> {
+  if (!url) {
+    return null;
+  }
+  const response = await fetchWithOptionalProxy(url);
+  if (!response.ok) {
+    return null;
+  }
+  return await response.text();
+}
+
+function prettifyYosupoSlug(slug: string): string {
+  return slug
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+async function locateGithubProblemPath(slug: string): Promise<string | null> {
+  const preferredPrefixes = [
+    'sample',
+    'datastructure',
+    'graph',
+    'math',
+    'geometry',
+    'string',
+    'tree',
+    'misc',
+    'dp',
+    'flow',
+    'enumerative',
+    'numbertheory',
+  ];
+
+  const visited = new Set<string>();
+
+  const tryDirectory = async (dir: string): Promise<string | null> => {
+    const contents = await fetchGithubContents(dir);
+    if (!contents) {
+      return null;
+    }
+    visited.add(dir);
+    const match = contents.find(
+      entry => entry.type === 'dir' && entry.name === slug
+    );
+    return match ? match.path : null;
+  };
+
+  for (const prefix of preferredPrefixes) {
+    const result = await tryDirectory(prefix);
+    if (result) {
+      return result;
+    }
+  }
+
+  const root = await fetchGithubContents('');
+  if (!root) {
+    return null;
+  }
+
+  for (const entry of root) {
+    if (entry.type !== 'dir') {
+      continue;
+    }
+    if (visited.has(entry.path)) {
+      continue;
+    }
+    const result = await tryDirectory(entry.path);
+    if (result) {
+      return result;
+    }
+  }
+
+  return null;
+}
+
+function stripExtension(filename: string): string {
+  const index = filename.lastIndexOf('.');
+  return index >= 0 ? filename.slice(0, index) : filename;
+}
+
+async function fetchGithubExamples(
+  basePath: string
+): Promise<{ examples: Record<string, string>; samples: Sample[] }> {
+  const examples: Record<string, string> = {};
+  const samples: Sample[] = [];
+
+  const inputEntries = await fetchGithubContents(`${basePath}/in`);
+  const outputEntries = await fetchGithubContents(`${basePath}/out`);
+
+  if (!inputEntries || !outputEntries) {
+    return { examples, samples };
+  }
+
+  const outputMap = new Map<string, GithubContentEntry>();
+  for (const entry of outputEntries) {
+    if (entry.type === 'file') {
+      outputMap.set(stripExtension(entry.name), entry);
+    }
+  }
+
+  for (const entry of inputEntries) {
+    if (entry.type !== 'file') {
+      continue;
+    }
+    const baseName = stripExtension(entry.name);
+    const inputText = await fetchGithubFileByDownloadUrl(entry.download_url);
+    if (inputText === null) {
+      continue;
+    }
+    const outputEntry = outputMap.get(baseName);
+    const outputText =
+      outputEntry === undefined
+        ? ''
+        : await fetchGithubFileByDownloadUrl(outputEntry.download_url);
+
+    examples[`${baseName}.in`] = trimTrailingNewlines(inputText);
+    if (outputText !== null && outputText !== undefined) {
+      examples[`${baseName}.out`] = trimTrailingNewlines(outputText);
+      samples.push({
+        input: trimTrailingNewlines(inputText),
+        output: trimTrailingNewlines(outputText ?? ''),
+      });
+    } else {
+      samples.push({
+        input: trimTrailingNewlines(inputText),
+        output: '',
+      });
+    }
+  }
+
+  return { examples, samples };
+}
+
+async function fetchYosupoProblemFromGithub(
+  problemID: string
+): Promise<ProblemData | null> {
+  try {
+    const problemPath = await locateGithubProblemPath(problemID);
+    if (!problemPath) {
+      return null;
+    }
+
+    const [taskMd, infoToml] = await Promise.all([
+      fetchGithubFileText(`${problemPath}/task.md`),
+      fetchGithubFileText(`${problemPath}/info.toml`),
+    ]);
+
+    if (!taskMd) {
+      return null;
+    }
+
+    const info = infoToml
+      ? parseYosupoInfoToml(infoToml)
+      : { tests: [], params: {} };
+
+    const { examples, samples } = await fetchGithubExamples(problemPath);
+    const statementHtml = renderYosupoStatement(taskMd, info, examples);
+
+    return {
+      id: problemID,
+      submittable: true,
+      platform: 'yosupo',
+      url: buildYosupoUrl(problemID),
+      title: info.title ?? prettifyYosupoSlug(problemID),
+      statement: statementHtml,
+      input: 'stdin',
+      output: 'stdout',
+      source: `Yosupo Library Checker ${problemID}`,
+      samples,
+      timeLimit:
+        typeof info.timeLimit === 'number'
+          ? `${info.timeLimit}s`
+          : undefined,
+      templateCode: null,
+    };
+  } catch (error) {
+    console.error(`GitHub fallback failed for Yosupo ${problemID}`, error);
+    return null;
+  }
+}
+
+function buildYosupoFileUrl(
+  problemID: string,
+  metadata: YosupoProblemInfo,
+  filename: string
+): string {
+  return new URL(
+    `${YOSUPO_VERSION_PREFIX}/files/${problemID}/${metadata.overall_version}/${problemID}/${filename}`,
+    YOSUPO_STORAGE_BASE
+  ).toString();
+}
+
+function buildYosupoExampleUrl(
+  problemID: string,
+  metadata: YosupoProblemInfo,
+  kind: 'in' | 'out',
+  exampleName: string
+): string {
+  return new URL(
+    `${YOSUPO_VERSION_PREFIX}/examples/${problemID}/${metadata.testcases_version}/${kind}/${exampleName}.${kind}`,
+    YOSUPO_STORAGE_BASE
+  ).toString();
+}
+
+function trimTrailingNewlines(value: string): string {
+  return value.replace(/[\r\n]+$/, '');
+}
+
+async function fetchTextIfOk(url: string): Promise<string | null> {
+  const response = await fetchWithOptionalProxy(url);
+  if (!response.ok) {
+    console.warn(`Failed to fetch ${url}: ${response.status}`);
+    return null;
+  }
+  return await response.text();
+}
+
+function renderYosupoMarkdown(
+  source: string,
+  params: Record<string, bigint>,
+  examples: Record<string, string>,
+  targetLang: 'en' | 'ja' = 'en'
+): string {
+  const output: string[] = [];
+  const lines = source.split(/\r?\n/);
+  let currentLang: string | null = null;
+  let exampleCounter = 0;
+
+  const keywordRegex = /@{keyword\.([a-zA-Z0-9_]+)}/g;
+  const paramRegex = /@{param\.([A-Z0-9_]+)}/g;
+
+  for (const rawLine of lines) {
+    const trimmed = rawLine.trim();
+    const langMatch = trimmed.match(/^@{lang\.([a-zA-Z0-9_]+)}$/);
+    if (langMatch) {
+      const langValue = langMatch[1].toLowerCase();
+      if (langValue === 'end') {
+        currentLang = null;
+      } else {
+        currentLang = langValue;
+      }
+      continue;
+    }
+
+    if (currentLang && currentLang !== targetLang) {
+      continue;
+    }
+
+    const exampleMatch = trimmed.match(/^@{example\.([a-zA-Z0-9_]+)}$/);
+    if (exampleMatch) {
+      exampleCounter += 1;
+      const baseName = exampleMatch[1];
+      const input =
+        examples[`${baseName}.in`] ?? `${baseName}.in not found!`;
+      const outputSample =
+        examples[`${baseName}.out`] ?? `${baseName}.out not found!`;
+      output.push(`### #${exampleCounter}`);
+      output.push('');
+      output.push('```');
+      output.push(input);
+      output.push('```');
+      output.push('');
+      output.push('```');
+      output.push(outputSample);
+      output.push('```');
+      continue;
+    }
+
+    let line = rawLine;
+    line = line.replace(keywordRegex, (_, key: string) => {
+      const normalized = key.toLowerCase();
+      return (
+        YOSUPO_KEYWORD_MAP[normalized] ?? defaultYosupoKeyword(normalized)
+      );
+    });
+    line = line.replace(paramRegex, (_, key: string) => {
+      const paramValue = params[key];
+      return paramValue !== undefined
+        ? formatYosupoParam(paramValue)
+        : key;
+    });
+    output.push(line);
+  }
+
+  return output.join('\n');
+}
+
+function renderYosupoStatement(
+  taskMd: string,
+  info: YosupoInfoToml,
+  examples: Record<string, string>
+): string {
+  const markdown = renderYosupoMarkdown(taskMd, info.params, examples);
+  const converter = new showdown.Converter({
+    simpleLineBreaks: true,
+    strikethrough: true,
+    tables: true,
+    ghCodeBlocks: true,
+  });
+  return converter.makeHtml(markdown);
+}
+
+async function fetchYosupoExamples(
+  problemID: string,
+  metadata: YosupoProblemInfo,
+  info: YosupoInfoToml
+): Promise<{ examples: Record<string, string>; samples: Sample[] }> {
+  const examples: Record<string, string> = {};
+  const samples: Sample[] = [];
+
+  const exampleTest = info.tests.find(test => test.name === 'example.in');
+  const exampleCount = exampleTest?.number ?? 0;
+  const exampleNames = Array.from({ length: exampleCount }, (_, idx) =>
+    `example_${idx.toString().padStart(2, '0')}`
+  );
+
+  for (const name of exampleNames) {
+    const [inputRaw, outputRaw] = await Promise.all([
+      fetchTextIfOk(buildYosupoExampleUrl(problemID, metadata, 'in', name)),
+      fetchTextIfOk(buildYosupoExampleUrl(problemID, metadata, 'out', name)),
+    ]);
+
+    if (inputRaw !== null) {
+      examples[`${name}.in`] = trimTrailingNewlines(inputRaw);
+    }
+    if (outputRaw !== null) {
+      examples[`${name}.out`] = trimTrailingNewlines(outputRaw);
+    }
+
+    if (inputRaw !== null || outputRaw !== null) {
+      samples.push({
+        input: inputRaw !== null ? trimTrailingNewlines(inputRaw) : '',
+        output: outputRaw !== null ? trimTrailingNewlines(outputRaw) : '',
+      });
+    }
+  }
+
+  return { examples, samples };
+}
+
+async function fetchYosupoProblemPrimary(
+  problemID: string
+): Promise<ProblemData | null> {
+  try {
+    const metadataResponse = await fetchWithOptionalProxy(
+      `${YOSUPO_REST_BASE}/problems/${problemID}`
+    );
+    if (!metadataResponse.ok) {
+      return null;
+    }
+    const metadata = (await metadataResponse.json()) as YosupoProblemInfo;
+
+    const [taskMd, infoToml] = await Promise.all([
+      fetchTextIfOk(buildYosupoFileUrl(problemID, metadata, 'task.md')),
+      fetchTextIfOk(buildYosupoFileUrl(problemID, metadata, 'info.toml')),
+    ]);
+
+    if (!taskMd) {
+      return null;
+    }
+
+    const info = infoToml
+      ? parseYosupoInfoToml(infoToml)
+      : { tests: [], params: {} };
+
+    const { examples, samples } = await fetchYosupoExamples(
+      problemID,
+      metadata,
+      info
+    );
+
+    const statementHtml = renderYosupoStatement(taskMd, info, examples);
+
+    return {
+      id: problemID,
+      submittable: true,
+      platform: 'yosupo',
+      url: buildYosupoUrl(problemID),
+      title: metadata.title ?? `Yosupo ${problemID}`,
+      statement: statementHtml,
+      input: 'stdin',
+      output: 'stdout',
+      source: `Yosupo Library Checker ${problemID}`,
+      samples,
+      timeLimit:
+        typeof metadata.time_limit === 'number'
+          ? `${metadata.time_limit}s`
+          : undefined,
+      templateCode: null,
+    };
+  } catch (error) {
+    console.error(`Failed to fetch Yosupo problem ${problemID}`, error);
+    return null;
+  }
+}
+
+async function fetchProblemDataYosupo(
+  problemID: string
+): Promise<ProblemData | null> {
+  const primary = await fetchYosupoProblemPrimary(problemID);
+  if (primary) {
+    return primary;
+  }
+
+  const fallback = await fetchYosupoProblemFromGithub(problemID);
+  if (fallback) {
+    return fallback;
+  }
+
+  return null;
 }

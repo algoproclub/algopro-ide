@@ -210,9 +210,15 @@ const PageContent = () => {
     }));
   };
 
+<<<<<<< HEAD
   // lazily loaded Yosupo API data ? . .
   const [yosupoLoaded, setYosupoLoaded] = useState(false);
   // 
+=======
+  // Track whether we've lazily loaded Yosupo API data
+  const [yosupoLoaded, setYosupoLoaded] = useState(false);
+
+>>>>>>> davidbranch
   useEffect(() => {
     const loadFirestoreProblems = async () => {
       const problems: TagProblem[] = [];
@@ -230,7 +236,11 @@ const PageContent = () => {
     loadFirestoreProblems();
   }, []);
 
+<<<<<<< HEAD
   // Lazy-load Yosupo problems 
+=======
+  // Lazy-load Yosupo problems from API when its checkbox is turned on
+>>>>>>> davidbranch
   useEffect(() => {
     const shouldLoadYosupo = platformFilter['yosupo'] && !yosupoLoaded;
     if (!shouldLoadYosupo) return;
