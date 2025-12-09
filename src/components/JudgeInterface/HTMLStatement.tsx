@@ -16,7 +16,12 @@ export default function HTMLStatement({
             // For Codeforces
             { left: '$$$$$$', right: '$$$$$$', display: true },
             { left: '$$$', right: '$$$', display: false },
+            // C LaTeX delimiters 
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false },
           ],
+          // math render inside pre/code blocks
+          ignoredTags: ['script', 'noscript', 'style', 'textarea'],
         });
 
         const render = (element: HTMLElement, displayMode: boolean) => {
