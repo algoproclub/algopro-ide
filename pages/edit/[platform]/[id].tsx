@@ -28,6 +28,11 @@ import WithAdminLogin from '../../../src/components/WithAdminLogin';
 import { Hint } from '../../../src/types/problem';
 import Dropdown from '../../../src/components/Dropdown';
 import Checkbox from '../../../src/components/Checkbox';
+import {
+  buildGraphEditorUrlFromStatement,
+  extractExampleInputFromStatement,
+  parseGraphInput,
+} from '../../../src/utils/graphEditor';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -419,6 +424,32 @@ const PageContent = () => {
   const [language, setLanguage] = useState('-');
   const [solutionLanguage, setSolutionLanguage] = useState(0);
   const router = useRouter();
+  const [graphError, setGraphError] = useState<string | null>(null);
+  const [graphEditorEnabled, setGraphEditorEnabled] = useState<boolean>(false);
+  const [graphStats, setGraphStats] = useState<{
+    edges: number;
+    nodes: number;
+  } | null>(null);
+
+  const runParseFromStatement = useCallback((statementHtml: string) => {
+    // Pull example input and parse as graph; updates stats/error.
+    const exampleInput = extractExampleInputFromStatement(statementHtml);
+    if (!exampleInput) {
+      setGraphStats(null);
+      setGraphError('Example input not found.');
+      return null;
+    }
+    try {
+      const parsed = parseGraphInput(exampleInput);
+      setGraphStats({ edges: parsed.m, nodes: parsed.n });
+      setGraphError(null);
+      return parsed;
+    } catch (error) {
+      setGraphStats(null);
+      setGraphError((error as Error).message);
+      return null;
+    }
+  }, []);
 
   const getTranslated = async (platform: string, id: string) => {
     if (language === '-') {
@@ -456,6 +487,17 @@ const PageContent = () => {
         setTranslated(data?.statement ?? '');
         setHints(data?.hints ?? []);
         setTags(data?.tags ?? []);
+        if (language === '-') {
+          // Default lang: mirror backend graph toggle; re-parse or clear state.
+          const shouldShowEditor = !!data?.graphEditorEnabled;
+          setGraphEditorEnabled(shouldShowEditor);
+          if (shouldShowEditor) {
+            runParseFromStatement(data?.statement ?? '');
+          } else {
+            setGraphError(null);
+            setGraphStats(null);
+          }
+        }
       })
       .catch(error => {
         console.error(error);
@@ -545,6 +587,30 @@ const PageContent = () => {
     }
   }, []);
 
+  const handleOpenGraphEditor = useCallback(() => {
+    // Validate current statement and open graph editor in new tab.
+    const parsed = runParseFromStatement(translated);
+    if (!parsed) return;
+    const url = buildGraphEditorUrlFromStatement(translated);
+    if (!url) return;
+    window.open(url, '_blank', 'noopener');
+  }, [runParseFromStatement, translated]);
+
+  const handleToggleGraphEditor = useCallback(() => {
+    // Toggle graph mode; parse- enable
+    setGraphEditorEnabled(prev => {
+      const next = !prev;
+      if (next) {
+        runParseFromStatement(translated);
+      } else {
+        setGraphError(null);
+        setGraphStats(null);
+      }
+      return next;
+    });
+    setUnsaved(true);
+  }, [runParseFromStatement, translated]);
+
   useEffect(() => {
     setUnsavedSol(solution !== initSolution);
   }, [solution]);
@@ -581,6 +647,7 @@ const PageContent = () => {
         statement: translated,
         hints,
         tags,
+        graphEditorEnabled,
       });
     } else {
       await setDoc(problemDoc, {
@@ -871,6 +938,43 @@ const PageContent = () => {
           </table>
         </div>
       )}
+      <div className="mt-4 p-3 bg-gray-800 border border-gray-600">
+        <div className="flex items-center mb-2">
+          <Checkbox
+            checked={graphEditorEnabled}
+            label="Graph"
+            labelClassName="font-semibold text-sm"
+            toggleChecked={handleToggleGraphEditor}
+          />
+        </div>
+        {graphEditorEnabled ? (
+          <>
+            <div className="text-xs mt-1">
+              {graphError && (
+                <span className="text-red-400">Error: {graphError}</span>
+              )}
+              {!graphError && graphStats && (
+                <span className="text-green-400">
+                  Parsed. n={graphStats.nodes} m={graphStats.edges}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center space-x-2 mt-2">
+              <button
+                className={`px-3 py-1.5 rounded-md border border-gray-600 hover:bg-gray-700 active:bg-gray-600 ${
+                  graphError ? 'opacity-60 cursor-not-allowed' : ''
+                }`}
+                onClick={handleOpenGraphEditor}
+                disabled={!!graphError}
+              >
+                Graph editor
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="text-xs text-gray-400">Disabled.</div>
+        )}
+      </div>
     </div>
   );
 };
