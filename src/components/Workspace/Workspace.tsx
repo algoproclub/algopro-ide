@@ -206,12 +206,20 @@ export default function Workspace({
     setLanguage('hu' in translations ? 'hu' : 'en');
   }, [translations]);
 
+  const gridColumns =
+    isDesktop && !showSidebar
+      ? 'grid-cols-[3fr,3px,2fr,0px,0px]'
+      : 'grid-cols-[3fr,3px,2fr,3px,1fr]';
+
   return (
     <Split
+      // Allow panes to shrink almost completely without breaking split-grid math.
+      columnMinSize={1}
+      rowMinSize={1}
       onDragEnd={() => layoutEditors()}
       render={({ getGridProps, getGutterProps }) => (
         <div
-          className={`grid grid-cols-[3fr,3px,2fr,3px,1fr] grid-rows-[2fr,3px,1fr] h-full overflow-hidden`}
+          className={`grid ${gridColumns} grid-rows-[2fr,3px,1fr] h-full overflow-hidden`}
           {...getGridProps()}
         >
           <CodeInterface
@@ -232,7 +240,7 @@ export default function Workspace({
           </div>
           <div
             className={classNames(
-              'flex flex-col min-h-0 overflow-hidden',
+              'flex flex-col min-h-0 overflow-hidden min-w-0',
               !isDesktop && 'col-span-full mb-[6px]',
               !isDesktop && mobileActiveTab !== 'io' && 'hidden',
               isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
@@ -243,7 +251,7 @@ export default function Workspace({
               activeTab={inputTab}
               onTabSelect={x => setInputTab(x.value)}
             />
-            <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden min-w-[24rem]">
+            <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden min-w-0">
               {inputTab === 'input' && (
                 <LazyRealtimeEditor
                   theme={lightMode ? 'light' : 'dark'}
@@ -344,7 +352,7 @@ export default function Workspace({
           </div>
           <div
             className={classNames(
-              'flex flex-col min-h-0 overflow-hidden min-w-[24rem]',
+              'flex flex-col min-h-0 overflow-hidden min-w-0',
               !isDesktop && 'col-span-full mt-[6px]',
               !isDesktop && mobileActiveTab !== 'io' && 'hidden',
               isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
@@ -376,7 +384,7 @@ export default function Workspace({
               </div>
               <div
                 className={classNames(
-                  'row-span-full min-w-[24rem] bg-[#1E1E1E] text-gray-200 flex flex-col overflow-auto',
+                  'row-span-full min-w-0 bg-[#1E1E1E] text-gray-200 flex flex-col overflow-auto',
                   isDesktop ? 'col-start-5' : 'col-span-full pt-4'
                 )}
               >
