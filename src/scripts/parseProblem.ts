@@ -95,7 +95,7 @@ export const parseProblem = (url: string): URLProblem => {
     { platform: 'ojuz', regex: /oj.uz\/problem\/view\/([A-Za-z0-9_]+)/ },
     {
       platform: 'njudge',
-      regex: /njudge.hu\/problemset\/main\/([A-Za-z0-9_]+)\//,
+      regex: /njudge.hu\/problemset\/main\/([A-Za-z0-9_-]+)\//,
     },
   ];
 
