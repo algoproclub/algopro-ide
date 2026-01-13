@@ -46,7 +46,7 @@ jobs:
           echo "CF_API_SECRET=$CF_API_SECRET" >> functions/.env
           echo "LOGIN_BOT_URL=$LOGIN_BOT_URL" >> functions/.env
 
-          firebase deploy --project "algopro-app-staging" --non-interactive --force
+          firebase deploy --project "algopro-dev" --non-interactive --force
   trigger-vercel-deploy:
     runs-on: ubuntu-latest
     permissions:

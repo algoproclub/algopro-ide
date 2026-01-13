@@ -1,7 +1,7 @@
 {
   "projects": {
     "default": "algopro-app",
-    "staging": "algopro-app-staging"
+    "staging": "algopro-dev"
   },
   "targets": {},
   "etags": {}
