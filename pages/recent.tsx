@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Listbox, Transition, Disclosure } from '@headlessui/react';
-import { getDatabase, ref, get } from 'firebase/database';
+import {
+  getDatabase,
+  ref,
+  get,
+  query,
+  orderByChild,
+  startAt,
+} from 'firebase/database';
 import { FileData } from '../src/context/EditorContext';
 import { StatusData } from '../src/types/problem';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
@@ -122,14 +129,14 @@ const Pagination = ({
       >
         <FontAwesomeIcon
           icon={{ prefix: 'fas', iconName: 'angles-left' }}
-          className="w-3 h-3"
+          className="w-3 h-3 inline"
         />
       </button>
       {pageData.current >= 4 && (
         <div className="flex items-center">
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'ellipsis' }}
-            className="w-3 h-3 px-2"
+            className="w-3 h-3 px-2 inline"
           />
         </div>
       )}
@@ -142,7 +149,7 @@ const Pagination = ({
         <div className="flex items-center">
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'ellipsis' }}
-            className="w-3 h-3 px-2"
+            className="w-3 h-3 px-2 inline"
           />
         </div>
       )}
@@ -152,7 +159,7 @@ const Pagination = ({
       >
         <FontAwesomeIcon
           icon={{ prefix: 'fas', iconName: 'angles-right' }}
-          className="w-3 h-3"
+          className="w-3 h-3 inline"
         />
       </button>
     </>
@@ -294,7 +301,7 @@ const SubmissionStatusDropdown = ({
 };
 
 const PageContent = () => {
-  const [selected, setSelected] = useState(0);
+  const [lastEditOption, setLastEditOption] = useState(0);
   const [showVerdict, setShowVerdict] = useState<ShowVerdict>({
     accepted: true,
     incorrect: true,
@@ -343,7 +350,7 @@ const PageContent = () => {
     setShownFiles(sortedFileList(filteredFileList(files)));
   }, [
     files,
-    selected,
+    lastEditOption,
     showVerdict,
     sortOptions,
     showNoProblem,
@@ -389,11 +396,9 @@ const PageContent = () => {
     return fileList;
   };
   const filteredFileList = (fileList: MainFileData[]) => {
-    const fromTime = Date.now() - timeInMillis[selected];
     return fileList.filter(
       fileData =>
         fileData.lastEdit &&
-        fileData.lastEdit >= fromTime &&
         (fileData.hasProblem || showNoProblem) &&
         fileData.workspaceName
           ?.toLowerCase()
@@ -405,16 +410,27 @@ const PageContent = () => {
   const updateFileList = async () => {
     setLoading(cnt => cnt + 1);
 
+    const fromTime = Date.now() - timeInMillis[lastEditOption];
+
     const filesObj: { [key: string]: Partial<FileData> } = (
-      await get(ref(db, 'files'))
+      await get(
+        query(
+          ref(db, 'files'),
+          orderByChild('teacher/editTime'),
+          startAt(fromTime)
+        )
+      )
     ).val();
     if (!filesObj) {
+      // If no files match the selected time range, the query will return null.
+      setFiles([]);
+      setLoading(cnt => cnt - 1);
       return;
     }
-    const fromTime = Date.now() - timeInMillis.slice(-1)[0];
+
     const newFileList = await Promise.all(
       Object.entries(filesObj)
-        .filter(([_, fileData]) => {
+        .filter(([, fileData]) => {
           if (!fileData.users) {
             return false;
           }
@@ -499,7 +515,7 @@ const PageContent = () => {
                     Filter
                     <FontAwesomeIcon
                       icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-                      className={`ml-2 w-3.5 h-3.5 transform duration-200 ${
+                      className={`ml-2 w-3.5 h-3.5 inline transform duration-200 ${
                         open ? 'rotate-180' : 'rotate-0'
                       }`}
                     />
@@ -510,13 +526,17 @@ const PageContent = () => {
                   onClick={updateFileList}
                 >
                   <FontAwesomeIcon
+                    className="w-4 h-4 inline"
                     icon={{ prefix: 'fas', iconName: 'arrows-rotate' }}
                   />
                 </button>
               </div>
               <Disclosure.Panel>
                 <div className="mt-2 space-y-3 px-6 py-5 border bg-gray-800 border-gray-600 z-10 relative">
-                  <TimeDropdown selected={selected} setSelected={setSelected} />
+                  <TimeDropdown
+                    selected={lastEditOption}
+                    setSelected={setLastEditOption}
+                  />
                   <SubmissionStatusDropdown
                     showVerdict={showVerdict}
                     setShowVerdict={setShowVerdict}
@@ -593,25 +613,25 @@ const PageContent = () => {
                     <span>{val}</span>
                     {sortOptions.by !== ind && (
                       <FontAwesomeIcon
-                        className="w-3 h-3"
+                        className="w-3 h-3 inline"
                         icon={{ prefix: 'fas', iconName: 'sort' }}
                       />
                     )}
                     {sortOptions.by === ind && sortOptions.order === 0 && (
                       <FontAwesomeIcon
-                        className="w-3 h-3"
+                        className="w-3 h-3 inline"
                         icon={{ prefix: 'fas', iconName: 'sort' }}
                       />
                     )}
                     {sortOptions.by === ind && sortOptions.order === 1 && (
                       <FontAwesomeIcon
-                        className="w-3 h-3"
+                        className="w-3 h-3 inline"
                         icon={{ prefix: 'fas', iconName: 'sort-up' }}
                       />
                     )}
                     {sortOptions.by === ind && sortOptions.order === 2 && (
                       <FontAwesomeIcon
-                        className="w-3 h-3"
+                        className="w-3 h-3 inline"
                         icon={{ prefix: 'fas', iconName: 'sort-down' }}
                       />
                     )}
@@ -630,14 +650,30 @@ const PageContent = () => {
               {pageContent?.map((data, ind) => (
                 <tr className="divide-x divide-gray-600" key={ind}>
                   <>
-                    <td className="px-4 py-2 whitespace-nowrap">
+                    <td className="relative p-0 whitespace-nowrap">
+                      <span className="invisible block px-4 py-2">
+                        {data.workspaceName && data.workspaceName.trim() !== ''
+                          ? data.workspaceName
+                          : '(Unnamed Workspace)'}
+                      </span>
+
                       <a
                         href={`/${data.fileID.slice(1)}`}
-                        className="text-indigo-300 hover:underline"
+                        className="absolute inset-0 flex items-center px-4 py-2 text-sm font-medium text-indigo-300 hover:underline"
                         target="_blank"
                         rel="noreferrer"
+                        aria-label={
+                          data.workspaceName && data.workspaceName.trim() !== ''
+                            ? data.workspaceName
+                            : 'Open workspace'
+                        }
                       >
-                        {data.workspaceName}
+                        <span className="truncate block w-full">
+                          {data.workspaceName &&
+                          data.workspaceName.trim() !== ''
+                            ? data.workspaceName
+                            : '(Unnamed Workspace)'}
+                        </span>
                       </a>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
@@ -648,13 +684,13 @@ const PageContent = () => {
                         {data.submissionStatus === 'pending' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'cog' }}
-                            className="w-3.5 h-3.5 text-gray-400 animate-spin-slow"
+                            className="w-3.5 h-3.5 inline text-gray-400 animate-spin-slow"
                           />
                         )}
                         {data.submissionStatus === 'untried' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'ellipsis' }}
-                            className="w-3.5 h-3.5 text-gray-500"
+                            className="w-3.5 h-3.5 inline text-gray-500"
                           />
                         )}
                         {data.submissionStatus === 'error' && (
@@ -663,19 +699,19 @@ const PageContent = () => {
                               prefix: 'fas',
                               iconName: 'exclamation-triangle',
                             }}
-                            className="w-3.5 h-3.5 text-yellow-500"
+                            className="w-3.5 h-3.5 inline text-yellow-500"
                           />
                         )}
                         {data.submissionStatus === 'accepted' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'check' }}
-                            className="w-3.5 h-3.5 text-green-500"
+                            className="w-3.5 h-3.5 inline text-green-500"
                           />
                         )}
                         {data.submissionStatus === 'incorrect' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'xmark' }}
-                            className="w-3.5 h-3.5 text-red-500"
+                            className="w-3.5 h-3.5 inline text-red-500"
                           />
                         )}
                         <span className="ml-2">

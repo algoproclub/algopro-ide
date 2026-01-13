@@ -4,7 +4,6 @@ import colorFromUserId from '../../src/scripts/colorFromUserId';
 import { getAuth } from 'firebase-admin/auth';
 import firebaseApp from '../../src/firebaseAdmin';
 import { getDatabase, ServerValue } from 'firebase-admin/database';
-import { SHOULD_USE_DEV_YJS_SERVER } from '../../src/dev_constants';
 
 type RequestData = {
   idToken: string;
@@ -67,6 +66,7 @@ export default async (
       userPerm !== 'OWNER'
     ) {
       res.status(403).send({ message: 'This file is private.' });
+      return;
     }
   }
 
@@ -88,10 +88,7 @@ export default async (
   const fileID: string = ref.key!;
 
   const copyYjsPromies = ['cpp', 'java', 'py', 'input', 'scribble'].map(key => {
-    const HOST_URL = SHOULD_USE_DEV_YJS_SERVER
-      ? 'http://yjs:1234'
-      : 'https://yjs.algopro.hu';
-    return fetch(`${HOST_URL}/copyFile`, {
+    return fetch(`${process.env.YJS_API_URL}/copyFile`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -57,12 +57,16 @@ export type UserData = {
   templateCode: TemplateCodeData;
 };
 
-type UserRole = 'student' | 'teacher';
+export type UserRole = {
+  admin?: boolean;
+  teacher?: string[];
+};
 
 export type UserContextType = {
   firebaseUser: User | null;
   userData: UserData | null;
   userRole: UserRole | null;
+  registered: boolean | null;
   logged: boolean | null;
   /**
    * Updates firebaseUser.displayName. Normally doing this doesn't trigger rerender
@@ -80,12 +84,23 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [registered, setRegistered] = useState<boolean | null>(null);
   const [logged, setLogged] = useState<boolean | null>(null);
   const [, triggerRerender] = useState<number>(0);
   const [templateCode, setTemplateCode] = useState<Record<
     Language,
     string
   > | null>(null);
+
+  const updateClaims = useCallback(() => {
+    user?.getIdTokenResult().then(res => {
+      setUserRole({
+        teacher: res.claims?.teacher,
+        admin: res.claims?.admin,
+      } as UserRole);
+      setRegistered(!!res.claims.registered);
+    });
+  }, [user]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getAuth(), user => {
@@ -94,11 +109,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setUserData(null);
         setUserRole(null);
         setTemplateCode(null);
+        setRegistered(null);
       } else {
         setLogged(true);
-        user
-          .getIdTokenResult()
-          .then(res => setUserRole(res.claims.teacher ? 'teacher' : 'student'));
+        updateClaims();
         let displayName = user.displayName;
         if (!displayName) {
           displayName =
@@ -113,13 +127,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [updateClaims]);
 
   useEffect(() => {
     if (!user) return;
 
     const handleSnapshot = (snap: DataSnapshot) => {
-      const data = snap.val()?.data ?? {};
+      const data = snap.val() ?? {};
       setUserData({
         id: user.uid,
         editorMode: data.editorMode ?? 'Normal',
@@ -134,9 +148,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       });
       setTemplateCode({ ...defaultCode, ...data?.templateCode });
     };
-    onValue(ref(getDatabase(), `users/${user.uid}`), handleSnapshot);
+    onValue(ref(getDatabase(), `users/${user.uid}/data`), handleSnapshot);
     return () =>
-      off(ref(getDatabase(), `users/${user.uid}`), 'value', handleSnapshot);
+      off(
+        ref(getDatabase(), `users/${user.uid}/data`),
+        'value',
+        handleSnapshot
+      );
   }, [user]);
 
   const updateUsername = useCallback(
@@ -159,6 +177,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         firebaseUser: user,
         userData,
         userRole,
+        registered,
         updateUsername,
         logged,
         templateCode,
@@ -185,4 +204,10 @@ export function useUserContext() {
       "useUserContext() can only be called after UserProvider has finished loading. If you want to access userContext while it's still loading, use useNullableUserContext() instead"
     );
   return { firebaseUser, userData, userRole, updateUsername, templateCode };
+}
+
+export function isTeacher(userRole: UserRole | null): boolean {
+  if (userRole === null) return false;
+  if (userRole.admin) return true;
+  return !!(userRole.teacher && userRole.teacher.length > 0);
 }

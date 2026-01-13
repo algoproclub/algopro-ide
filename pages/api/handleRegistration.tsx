@@ -2,18 +2,20 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getDatabase } from 'firebase-admin/database';
 import firebaseApp from '../../src/firebaseAdmin';
 import { compactDecrypt } from 'jose';
+import { registerToSchool } from './registerToSchool';
 
 type RequestData = {
   token: string;
   userID: string;
+  name: string | null;
 };
 
 const db = getDatabase(firebaseApp);
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const data: RequestData = req.body;
-  if (!data || !data.token || !data.userID) {
-    res.status(400).send('Bad data');
+  if (!data || !data?.token || !data?.userID) {
+    res.status(400).send('Missing token or userID');
     return;
   }
   const { token, userID } = data;
@@ -52,8 +54,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     await db.ref(`users/${userID}/data`).update({
       discordID,
     });
+    await registerToSchool(userID, 'algopro');
     res.status(200).end();
   } catch (e) {
+    console.error('Registration error:', e);
     res.status(400).send('Decryption failed or request error');
     return;
   }

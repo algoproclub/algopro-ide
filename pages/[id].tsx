@@ -5,13 +5,15 @@ import { NavBar } from '../src/components/NavBar/NavBar';
 import { EditorProvider, useEditorContext } from '../src/context/EditorContext';
 import { RunButton } from '../src/components/RunButton';
 import { submitToJudge } from '../src/scripts/judge';
-import { useAtom, useAtomValue } from 'jotai';
-import { useSetAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
   inputEditorValueAtom,
   layoutEditorsAtom,
   loadingAtom,
   mainEditorValueAtom,
+  mainMonacoEditorAtom,
+  isLineHighlightSetAtom,
+  savedEditorValue,
 } from '../src/atoms/workspace';
 import {
   inputTabAtom,
@@ -20,7 +22,7 @@ import {
   showSidebarAtom,
   tabsListAtom,
 } from '../src/atoms/workspaceUI';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMediaQuery } from '../src/hooks/useMediaQuery';
 import Workspace from '../src/components/Workspace/Workspace';
 import { MobileBottomNav } from '../src/components/NavBar/MobileBottomNav';
@@ -38,6 +40,7 @@ import { ProblemData } from '../src/types/problem';
 import { fetchProblemFromDb } from '../src/scripts/fetchProblemFromDb';
 import Link from 'next/link';
 import ProfileSettings from '../src/components/settings/ProfileSettings';
+import WithRegistration from '../src/components/WithRegistration';
 
 function EditorPage() {
   const { fileData, updateFileData } = useEditorContext();
@@ -55,6 +58,9 @@ function EditorPage() {
   const getMainEditorValue = useAtomValue(mainEditorValueAtom);
   const getInputEditorValue = useAtomValue(inputEditorValueAtom);
   const [judgeResults, setJudgeResults] = useJudgeResults();
+  const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
+  const setSavedEditorValue = useSetAtom(savedEditorValue);
+  const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
 
   useUserFileConnection();
   useUpdateUserDashboard();
@@ -158,6 +164,8 @@ function EditorPage() {
         .finally(() => setIsRunning(false));
     };
 
+    const runAllList = ['judge', 'hints', 'solutions'];
+
     const runAllSamples = async () => {
       if (!problem || !getMainEditorValue) {
         // editor is still loading
@@ -178,6 +186,8 @@ function EditorPage() {
 
         const newJudgeResults = judgeResults;
         const results: JudgeResult[] = [];
+
+        let lastIndex = 0;
         for (let index = 0; index < samples.length; ++index) {
           const sample = samples[index];
           const resp = await promises[index];
@@ -201,6 +211,7 @@ function EditorPage() {
           let tabIndex = tabsList.findIndex(tab => tab.label === tabName); // Find the index in tablists
           if (tabIndex === -1) tabIndex = tabsList.length + index;
           newJudgeResults[tabIndex] = data;
+          lastIndex = tabIndex;
         }
         if (samples.length > 1) {
           let verdicts = '';
@@ -234,8 +245,19 @@ function EditorPage() {
               '. ' +
               failedResult.statusDescription;
           newJudgeResults[1] = failedResult;
+          runAllList.forEach((item, index) => {
+            let tabindex = tabsList.findIndex(tab => tab.value === item);
+            if (tabindex === -1) tabindex = tabsList.length + index;
+            newJudgeResults[tabindex] = failedResult;
+          });
         } else {
-          newJudgeResults[1] = newJudgeResults[newJudgeResults.length - 1];
+          runAllList.forEach(item => {
+            const tabindex = tabsList.findIndex(tab => tab.value === item);
+            if (tabindex === -1) {
+              return;
+            }
+            newJudgeResults[tabindex] = newJudgeResults[lastIndex];
+          });
         }
         setJudgeResults(newJudgeResults);
       } catch (e) {
@@ -244,9 +266,11 @@ function EditorPage() {
       setIsRunning(false);
     };
 
+    setSavedEditorValue(getMainEditorValue ? getMainEditorValue() : null);
+
     if (inputTab === 'input') {
       if (getInputEditorValue) runWithInput(getInputEditorValue());
-    } else if (inputTab === 'judge') {
+    } else if (runAllList.includes(inputTab)) {
       runAllSamples();
     } else {
       const samples = problem?.samples;
@@ -256,6 +280,8 @@ function EditorPage() {
         runWithInput(sample.input, sample.output, inputTab + ': ');
       }
     }
+    setIsLineHighlightSet(false);
+    mainMonacoEditor?.clearLineHighlight();
   };
 
   const handleKeydown = (event: KeyboardEvent) => {
@@ -315,7 +341,7 @@ function EditorPage() {
   );
 }
 
-export default function FilePage() {
+function PageContent() {
   const router = useRouter();
   const queryId = router.query.id;
   const firebaseFileID = '-' + queryId;
@@ -364,5 +390,13 @@ export default function FilePage() {
       </EditorProvider>
       <ConfirmOverrideModal />
     </>
+  );
+}
+
+export default function FilePage() {
+  return (
+    <WithRegistration>
+      <PageContent />
+    </WithRegistration>
   );
 }

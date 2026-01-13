@@ -1,6 +1,6 @@
 import React from 'react';
 import { MessagePage } from './MessagePage';
-import { useNullableUserContext } from '../context/UserContext';
+import { useNullableUserContext, isTeacher } from '../context/UserContext';
 
 export default function WithTeacherLogin({
   children,
@@ -20,13 +20,14 @@ export default function WithTeacherLogin({
   if (!userData)
     return <MessagePage message="Loading..." showHomeButton={false} />;
 
-  if (userRole !== 'teacher')
+  if (!isTeacher(userRole)) {
     return (
       <MessagePage
         message="You must be a teacher to view this page."
         showHomeButton={true}
       />
     );
+  }
 
   return <>{children}</>;
 }

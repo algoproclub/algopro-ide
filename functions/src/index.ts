@@ -1,5 +1,5 @@
 import { defineString } from 'firebase-functions/params';
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import {
@@ -11,20 +11,20 @@ import {
   SubmissionData as ClientSubmissionData,
 } from '../../src/types/problem';
 import {
-  getCFRequestURL,
-  CFResultFetcher,
   AtCoderResultFetcher,
-  ResultFetcher,
+  CFResultFetcher,
   CSESResultFetcher,
-  SPOJResultFetcher,
-  PlanetsResultFetcher,
-  OjuzResultFetcher,
+  getCFRequestURL,
   NJudgeResultFetcher,
   YosupoResultFetcher,
+  OjuzResultFetcher,
+  PlanetsResultFetcher,
+  ResultFetcher,
+  SPOJResultFetcher,
 } from './getResult';
 import {
-  PendingSubmissions,
   AccountData,
+  PendingSubmissions,
   SubmissionData,
   TournamentResult,
 } from './types';
@@ -39,14 +39,15 @@ import {
   AtCoderSubmitter,
   CFSubmitter,
   CSESSubmitter,
+  NjudgeSubmitter,
+  OjuzSubmitter,
   PlanetsSubmitter,
   SPOJSubmitter,
-  OjuzSubmitter,
-  NjudgeSubmitter,
   YosupoSubmitter,
   Submitter,
 } from './submit';
 import { JSDOM } from 'jsdom';
+import { CompactEncrypt } from 'jose';
 
 require('dotenv').config({ path: '.env.local' });
 
@@ -153,6 +154,43 @@ export const translate = onCall<
     logger.log(error);
   }
   return translation;
+});
+
+export const generateToken = onCall<
+  {
+    schoolID: string;
+    expTime: number;
+  },
+  Promise<string | null>
+>({ region: 'europe-west1' }, async request => {
+  const { schoolID, expTime } = request.data;
+  if (
+    !request.auth?.token?.admin &&
+    !request.auth?.token?.teacher?.includes(schoolID)
+  ) {
+    return null;
+  }
+  const times = [
+    3 * 24 * 60 * 60 * 1000,
+    7 * 24 * 60 * 60 * 1000,
+    14 * 24 * 60 * 60 * 1000,
+  ];
+  if (!times.includes(expTime)) {
+    return null;
+  }
+  const payload = {
+    school_id: schoolID,
+    exp: Date.now() + expTime,
+  };
+  const secret =
+    process.env.ONBOARDING_SECRET || 'abcdabcdabcdabcdabcdabcdabcdabcd';
+  const secretKey = new TextEncoder().encode(secret);
+
+  return await new CompactEncrypt(
+    new TextEncoder().encode(JSON.stringify(payload))
+  )
+    .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
+    .encrypt(secretKey);
 });
 
 export const translateOpenAI = onCall<

@@ -1,8 +1,8 @@
 import Dropdown from '../src/components/Dropdown';
 import dynamic from 'next/dynamic';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
-import { Platform, StatusCode } from '../src/types/problem';
+import { Platform, StatusCode, URLProblem } from '../src/types/problem';
 import {
   collection,
   doc,
@@ -21,17 +21,8 @@ import Checkbox from '../src/components/Checkbox';
 import { parseProblem } from '../src/scripts/parseProblem';
 import { getPlatformName } from '../src/scripts/getPlatformName';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
-import { URLProblem } from '../src/types/problem';
+import { UserRole, useUserContext } from '../src/context/UserContext';
 
-export const groups = [
-  'anakonda',
-  'bagoly',
-  'capa',
-  'kajman',
-  'piton',
-  'sas',
-  'tigris',
-];
 const times = ['1 hour', '3 hours', '1 day', '7 days', 'All'];
 const timeInMs = [
   1000 * 60 * 60,
@@ -41,7 +32,9 @@ const timeInMs = [
   Infinity,
 ];
 
-type Group = (typeof groups)[number];
+export type School = { id: string; name: string };
+export type GroupInfo = { id: string; name: string; schoolID: string };
+
 type Student = {
   id: string;
   name: string;
@@ -52,6 +45,7 @@ export type ProblemData = {
   url: string;
   source: string;
 };
+
 type VerdictType = 'accepted' | 'wrong' | 'untried' | 'error';
 export type SolutionData = {
   fileID: string;
@@ -66,9 +60,7 @@ const database = getDatabase();
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
     import('@fortawesome/react-fontawesome').then(mod => mod.FontAwesomeIcon),
-  {
-    ssr: false,
-  }
+  { ssr: false }
 );
 
 const getVerdictType = ({
@@ -104,6 +96,25 @@ const getVerdict = ({
   return message ?? '-';
 };
 
+export const fetchTeacherSchools = async (userRole: UserRole | null) => {
+  if (userRole?.admin) {
+    return (await getDocs(collection(firestore, 'schools'))).docs.map(docu => {
+      return { id: docu.id, name: docu.data().name || docu.id };
+    });
+  } else {
+    const schoolIDs = userRole?.teacher;
+    if (!schoolIDs) {
+      return [];
+    }
+    return await Promise.all(
+      schoolIDs.map(async (id: string) => {
+        const snap = await getDoc(doc(firestore, 'schools', id));
+        return { id, name: snap.data()?.name || snap.id };
+      })
+    );
+  }
+};
+
 export const fetchSolutionData = async (
   platform: Platform,
   problemID: string,
@@ -118,15 +129,14 @@ export const fetchSolutionData = async (
   if (!fileID) {
     return null;
   }
-  const fileRef = ref(database, `files/${fileID}`);
+  const fileRef = ref(database, `files/${fileID}/teacher`);
   const fileData = (await get(fileRef)).val();
 
-  if (!fileData.teacher) {
+  if (!fileData) {
     return null;
   }
   const submissionRef = ref(database, `submissions/${fileID}/statusData`);
   const submissionData = (await get(submissionRef)).val();
-
   const verdictType = submissionData
     ? getVerdictType(submissionData)
     : 'untried';
@@ -134,25 +144,38 @@ export const fetchSolutionData = async (
     message: submissionData?.message,
     verdictType,
   });
-
   return {
     fileID: fileID,
     verdict: verdict,
     verdictType: verdictType,
-    codeSize: fileData.teacher.codeSize,
-    lastEdit: fileData.teacher.editTime,
+    codeSize: fileData.codeSize,
+    lastEdit: fileData.editTime,
   };
 };
 
+const fetchGroupsForSchool = async (schoolID: string): Promise<GroupInfo[]> => {
+  if (!schoolID) return [];
+  const results = await getDocs(
+    query(collection(firestore, 'groups'), where('school', '==', schoolID))
+  );
+  const groups: GroupInfo[] = [];
+  results.forEach(d => {
+    const data = d.data();
+    groups.push({ id: d.id, name: data?.name || d.id, schoolID });
+  });
+  groups.sort((a, b) => a.name.localeCompare(b.name));
+  return groups;
+};
+
 export const fetchProblems = async (
-  group: Group,
+  groupID: string,
   classID?: string
 ): Promise<ProblemData[]> => {
-  if (!classID) {
+  if (!groupID || !classID) {
     return [];
   }
   const problems: URLProblem[] | undefined = (
-    await getDoc(doc(firestore, 'groups', group, 'classes', classID))
+    await getDoc(doc(firestore, 'groups', groupID, 'classes', classID))
   ).data()?.tasks;
 
   if (!problems) {
@@ -172,32 +195,33 @@ export const fetchProblems = async (
   });
 };
 
-const fetchStudents = async (group: Group): Promise<Student[]> => {
-  const results = await getDocs(
+const fetchStudents = async (groupID: string): Promise<Student[]> => {
+  const groupSnap = await getDoc(doc(firestore, 'groups', groupID));
+  const schoolID = groupSnap.get('school');
+
+  const usersSnap = await getDocs(
     query(
       collection(firestore, 'userdata'),
-      where('groups', 'array-contains', group)
+      where('schools', 'array-contains', schoolID)
+      // Note: we need `schools` to be in the query to make the firebase rule work
+      //       Because we can only use `array-contains` once per query, we can't
+      //       also filter for a specific group via the query.
+      //       So we filter for our group via normal JS logic below
     )
   );
-  const users: Student[] = [];
-  results.forEach(doc => {
-    users.push({ id: doc.id, name: doc.data().user_full_name });
-  });
-  return users;
+  return usersSnap.docs
+    .filter(doc => ((doc.get('groups') ?? []) as string[]).includes(groupID))
+    .map(doc => ({ id: doc.id, name: doc.data().user_full_name }));
 };
 
-export const fetchClasses = async (group: Group) => {
-  const classes: string[] = [];
-  const results = await getDocs(
+export const fetchClasses = async (groupID: string) => {
+  const classesSnap = await getDocs(
     query(
-      collection(firestore, 'groups', group, 'classes'),
+      collection(firestore, 'groups', groupID, 'classes'),
       orderBy('creationTime', 'desc')
     )
   );
-  results.forEach(doc => {
-    classes.push(doc.id);
-  });
-  return classes;
+  return classesSnap.docs.map(doc => doc.id);
 };
 
 const RefreshButton = ({ onRefresh }: { onRefresh: () => void }) => {
@@ -208,32 +232,40 @@ const RefreshButton = ({ onRefresh }: { onRefresh: () => void }) => {
     >
       <FontAwesomeIcon
         icon={{ prefix: 'fas', iconName: 'arrows-rotate' }}
-        className="w-4 text-gray-100"
+        className="w-4 h-4 inline text-gray-100"
       />
     </button>
   );
 };
 
 const Controls = ({
-  group,
-  classID,
-  time,
+  schoolInd,
+  groupInd,
+  classInd,
+  timeInd,
   highlight,
+  schoolNames,
+  groupNames,
   classes,
-  setGroup,
-  setClassID,
-  setTime,
+  setSchoolInd,
+  setGroupInd,
+  setClassInd,
+  setTimeInd,
   toggleHighlight,
   onRefresh,
 }: {
-  group: number;
-  classID: number;
-  time: number;
-  classes: string[];
+  schoolInd: number;
+  groupInd: number;
+  classInd: number;
+  timeInd: number;
   highlight: boolean;
-  setGroup: (_: number) => void;
-  setClassID: (_: number) => void;
-  setTime: (_: number) => void;
+  schoolNames: string[];
+  groupNames: string[];
+  classes: string[];
+  setSchoolInd: (_: number) => void;
+  setGroupInd: (_: number) => void;
+  setClassInd: (_: number) => void;
+  setTimeInd: (_: number) => void;
   toggleHighlight: () => void;
   onRefresh: () => void;
 }) => {
@@ -241,22 +273,28 @@ const Controls = ({
     <div className="bg-gray-800 w-full space-y-2.5 px-5 py-3.5 border border-gray-600">
       <div className="w-full flex space-x-2 items-end">
         <Dropdown
-          items={groups}
+          items={schoolNames}
+          label="School"
+          selected={schoolInd}
+          setSelected={setSchoolInd}
+        />
+        <Dropdown
+          items={groupNames}
           label="Group"
-          selected={group}
-          setSelected={setGroup}
+          selected={groupInd}
+          setSelected={setGroupInd}
         />
         <Dropdown
           items={classes}
           label="Class"
-          selected={classID}
-          setSelected={setClassID}
+          selected={classInd}
+          setSelected={setClassInd}
         />
         <Dropdown
           items={times}
           label="Last edit"
-          selected={time}
-          setSelected={setTime}
+          selected={timeInd}
+          setSelected={setTimeInd}
         />
         <RefreshButton onRefresh={onRefresh} />
       </div>
@@ -270,31 +308,44 @@ const Controls = ({
 };
 
 const ControlDropdown = ({
-  group,
-  classID,
-  time,
+  schoolInd,
+  groupInd,
+  classInd,
+  timeInd,
   highlight,
+  schoolNames,
+  groupNames,
   classes,
-  setGroup,
-  setClassID,
-  setTime,
+  setSchoolInd,
+  setGroupInd,
+  setClassInd,
+  setTimeInd,
   toggleHighlight,
   onRefresh,
 }: {
-  group: number;
-  classID: number;
-  time: number;
-  classes: string[];
+  schoolInd: number;
+  groupInd: number;
+  classInd: number;
+  timeInd: number;
   highlight: boolean;
-  setGroup: (_: number) => void;
-  setClassID: (_: number) => void;
-  setTime: (_: number) => void;
+  schoolNames: string[];
+  groupNames: string[];
+  classes: string[];
+  setSchoolInd: (_: number) => void;
+  setGroupInd: (_: number) => void;
+  setClassInd: (_: number) => void;
+  setTimeInd: (_: number) => void;
   toggleHighlight: () => void;
   onRefresh: () => void;
 }) => {
   useEffect(() => {
-    setClassID(0);
-  }, [group]);
+    setGroupInd(0);
+    setClassInd(0);
+  }, [schoolInd]);
+
+  useEffect(() => {
+    setClassInd(0);
+  }, [groupInd]);
 
   return (
     <Disclosure>
@@ -310,9 +361,7 @@ const ControlDropdown = ({
                 Filter
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-                  className={`ml-2 w-3.5 h-3.5 transform duration-200 ${
-                    open ? 'rotate-180' : 'rotate-0'
-                  }`}
+                  className={`ml-2 w-3.5 h-3.5 inline transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`}
                 />
               </div>
             </Disclosure.Button>
@@ -322,28 +371,34 @@ const ControlDropdown = ({
             >
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'arrows-rotate' }}
-                className="w-4 text-gray-100"
+                className="w-4 h-4 inline text-gray-100"
               />
             </button>
           </div>
           <Disclosure.Panel className="px-5 py-6 relative space-y-4 border border-gray-600">
             <Dropdown
-              items={groups}
+              items={schoolNames}
+              label="School"
+              selected={schoolInd}
+              setSelected={setSchoolInd}
+            />
+            <Dropdown
+              items={groupNames}
               label="Group"
-              selected={group}
-              setSelected={setGroup}
+              selected={groupInd}
+              setSelected={setGroupInd}
             />
             <Dropdown
               items={classes}
               label="Class"
-              selected={classID}
-              setSelected={setClassID}
+              selected={classInd}
+              setSelected={setClassInd}
             />
             <Dropdown
               items={times}
               label="Last edit"
-              selected={time}
-              setSelected={setTime}
+              selected={timeInd}
+              setSelected={setTimeInd}
             />
             <Checkbox
               checked={highlight}
@@ -389,9 +444,7 @@ const GroupData = ({
               {problems.map((problem, index) => (
                 <th
                   key={index}
-                  className={`w-60 ${
-                    index == 0 ? '!border-l-0' : ''
-                  } !sticky top-0 !z-30 bg-gray-800 border-b`}
+                  className={`w-60 ${index == 0 ? '!border-l-0' : ''} !sticky top-0 !z-30 bg-gray-800 border-b`}
                 >
                   <a
                     href={problem.url}
@@ -427,9 +480,7 @@ const GroupData = ({
                 {data[i].map((_, j) => (
                   <td
                     key={j}
-                    className={`relative ${
-                      j == 0 ? '!border-l-0' : ''
-                    } border-b`}
+                    className={`relative ${j == 0 ? '!border-l-0' : ''} border-b`}
                   >
                     {data[i][j] && (
                       <>
@@ -460,13 +511,13 @@ const GroupData = ({
                               {data[i][j]!.verdictType === 'wrong' && (
                                 <FontAwesomeIcon
                                   icon={{ prefix: 'fas', iconName: 'xmark' }}
-                                  className="text-red-500"
+                                  className="inline w-4 h-4 text-red-500"
                                 />
                               )}
                               {data[i][j]!.verdictType === 'accepted' && (
                                 <FontAwesomeIcon
                                   icon={{ prefix: 'fas', iconName: 'check' }}
-                                  className="text-green-500"
+                                  className="inline w-4 h-4 text-green-500"
                                 />
                               )}
                               {data[i][j]!.verdictType === 'error' && (
@@ -475,7 +526,7 @@ const GroupData = ({
                                     prefix: 'fas',
                                     iconName: 'triangle-exclamation',
                                   }}
-                                  className="text-yellow-500"
+                                  className="inline w-4 h-4 text-yellow-500"
                                 />
                               )}
                             </span>
@@ -508,10 +559,15 @@ const GroupData = ({
 };
 
 const PageContent = () => {
-  const [group, setGroup] = useState(0);
-  const [time, setTime] = useState(0);
-  const [classID, setClassID] = useState(0);
+  const { userRole } = useUserContext();
+  const [schoolInd, setSchoolInd] = useState(0);
+  const [groupInd, setGroupInd] = useState(0);
+  const [timeInd, setTimeInd] = useState(0);
+  const [classInd, setClassInd] = useState(0);
   const [highlight, setHighlight] = useState(false);
+
+  const [schools, setSchools] = useState<School[]>([]);
+  const [groupsList, setGroupsList] = useState<GroupInfo[]>([]);
   const [classes, setClasses] = useState<string[]>([]);
   const [problems, setProblems] = useState<ProblemData[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -519,22 +575,42 @@ const PageContent = () => {
 
   document.title = 'Teacher interface - AlgoPro IDE';
 
-  useEffect(() => {
-    fetchClasses(groups[group]).then(res => {
-      setClasses(res);
-    });
-    const timeout = setInterval(() => {
-      handleRefresh();
-    }, 15000);
+  const schoolNames = useMemo(() => schools.map(s => s.name), [schools]);
+  const groupNames = useMemo(() => groupsList.map(g => g.name), [groupsList]);
 
-    return () => {
-      clearTimeout(timeout);
+  const selectedSchoolID = schools[schoolInd]?.id || '';
+  const selectedGroupID = groupsList[groupInd]?.id || '';
+
+  useEffect(() => {
+    const initSchools = async () => {
+      const schools = await fetchTeacherSchools(userRole);
+      setSchools(schools);
     };
-  }, [groups, group]);
+    initSchools();
+  }, [userRole]);
 
   useEffect(() => {
+    const initialize = async () => {
+      setGroupInd(0);
+      setClassInd(0);
+      if (!selectedSchoolID) {
+        setGroupsList([]);
+        setClasses([]);
+        setStudents([]);
+        setProblems([]);
+        setData([]);
+      }
+      setGroupsList(await fetchGroupsForSchool(selectedSchoolID));
+    };
+    initialize();
+  }, [selectedSchoolID]);
+
+  useEffect(() => {
+    if (!selectedGroupID) return;
     handleRefresh();
-  }, [group, classID]);
+    const interval = setInterval(handleRefresh, 15000);
+    return () => clearInterval(interval);
+  }, [selectedGroupID]);
 
   useEffect(() => {
     const updateData = async () => {
@@ -543,13 +619,9 @@ const PageContent = () => {
           .filter(problem => problem.id && problem.platform)
           .map(problem => {
             return Promise.all(
-              students.map(student => {
-                return fetchSolutionData(
-                  problem.platform!,
-                  problem.id!,
-                  student.id
-                );
-              })
+              students.map(student =>
+                fetchSolutionData(problem.platform!, problem.id!, student.id)
+              )
             );
           })
       );
@@ -560,28 +632,33 @@ const PageContent = () => {
 
   useEffect(() => {
     const updateProblems = async () => {
-      setProblems(await fetchProblems(groups[group], classes[classID]));
+      if (!selectedGroupID) {
+        setProblems([]);
+        return;
+      }
+      setProblems(await fetchProblems(selectedGroupID, classes[classInd]));
     };
     updateProblems();
-  }, [classes]);
+  }, [classes, classInd]);
 
   const handleRefresh = async () => {
-    setClasses(await fetchClasses(groups[group]));
-    setStudents(await fetchStudents(groups[group]));
+    if (!selectedGroupID) return;
+    setClasses(await fetchClasses(selectedGroupID));
+    setStudents(await fetchStudents(selectedGroupID));
   };
+
   const transpose = (array: (SolutionData | null)[][]) => {
     return array.length > 0
       ? array[0].map((_, j) => array.map(row => row[j]))
       : [];
   };
+
   const currentTime = Date.now();
-  const problemWithID = problems.map(problem => {
-    return !!problem.id;
-  });
+  const problemWithID = problems.map(problem => !!problem.id);
   const filteredProblems = problems.filter((_, i) => problemWithID[i]);
   const transposed = transpose(data);
 
-  const fromTime = currentTime - timeInMs[time];
+  const fromTime = currentTime - timeInMs[timeInd];
   const hasSolution = transposed.map(solutions =>
     solutions.some(sol => sol !== null && sol.lastEdit >= fromTime)
   );
@@ -593,28 +670,36 @@ const PageContent = () => {
       <div className="mx-auto max-w-7xl mt-4 space-y-4">
         <div className="md:hidden">
           <ControlDropdown
-            group={group}
-            classID={classID}
-            time={time}
+            schoolInd={schoolInd}
+            groupInd={groupInd}
+            classInd={classInd}
+            timeInd={timeInd}
             classes={classes}
+            schoolNames={schoolNames}
+            groupNames={groupNames}
             highlight={highlight}
-            setGroup={index => setGroup(index)}
-            setClassID={index => setClassID(index)}
-            setTime={index => setTime(index)}
+            setSchoolInd={index => setSchoolInd(index)}
+            setGroupInd={index => setGroupInd(index)}
+            setClassInd={index => setClassInd(index)}
+            setTimeInd={index => setTimeInd(index)}
             toggleHighlight={() => setHighlight(val => !val)}
             onRefresh={handleRefresh}
           />
         </div>
         <div className="hidden md:block">
           <Controls
-            group={group}
-            classID={classID}
-            time={time}
+            schoolInd={schoolInd}
+            groupInd={groupInd}
+            classInd={classInd}
+            timeInd={timeInd}
             classes={classes}
+            schoolNames={schoolNames}
+            groupNames={groupNames}
             highlight={highlight}
-            setGroup={index => setGroup(index)}
-            setClassID={index => setClassID(index)}
-            setTime={index => setTime(index)}
+            setSchoolInd={index => setSchoolInd(index)}
+            setGroupInd={index => setGroupInd(index)}
+            setClassInd={index => setClassInd(index)}
+            setTimeInd={index => setTimeInd(index)}
             toggleHighlight={() => setHighlight(val => !val)}
             onRefresh={handleRefresh}
           />

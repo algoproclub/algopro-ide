@@ -1,22 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { Dispatch, useEffect, useState, SetStateAction } from 'react';
 import { useRouter } from 'next/router';
 import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   getFirestore,
   query,
   setDoc,
 } from 'firebase/firestore';
-import { ProblemData, URLProblem } from '../../src/types/problem';
+import { ProblemData, URLProblem } from '../../../src/types/problem';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
-import { getPlatformName } from '../../src/scripts/getPlatformName';
-import { EditInlineTextModal } from '../../src/components/EditTextModal';
-import { parseProblem } from '../../src/scripts/parseProblem';
+import { getPlatformName } from '../../../src/scripts/getPlatformName';
+import { EditInlineTextModal } from '../../../src/components/EditTextModal';
+import { parseProblem } from '../../../src/scripts/parseProblem';
 import { Disclosure } from '@headlessui/react';
-import WithTeacherLogin from '../../src/components/WithTeacherLogin';
+import WithTeacherLogin from '../../../src/components/WithTeacherLogin';
 
 const firestore = getFirestore();
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
@@ -45,7 +46,7 @@ const EditTaskModal = ({
 }: {
   isOpen: boolean;
   text: string;
-  setText: React.Dispatch<React.SetStateAction<string>>;
+  setText: Dispatch<SetStateAction<string>>;
   onSave: (text: string) => void;
   onClose: () => void;
 }) => {
@@ -54,7 +55,7 @@ const EditTaskModal = ({
       isOpen={isOpen}
       text={text}
       title="Edit task"
-      setText={setText}
+      setText={(text: string) => setText(text)}
       onSave={onSave}
       onClose={onClose}
     />
@@ -89,7 +90,7 @@ const ClassDropdown = ({
       .map((task, i) => {
         return `${prefix}.${i + 1}. ${
           task.title ? task.title : '-'
-        }\nhttps://ide.algopro.hu/solve/${task.platform}/${task.id}`;
+        }\n${process.env.NEXT_PUBLIC_BASE_URL}/solve/${task.platform}/${task.id}`;
       })
       .join('\n\n');
 
@@ -139,6 +140,7 @@ const ClassDropdown = ({
       )
         .filter(problem => problem !== null)
         .map(problem => problem as URLProblem);
+
       if (newTasks.length > 0) {
         onUpdate({
           ...data,
@@ -154,7 +156,10 @@ const ClassDropdown = ({
         isOpen={isOpen}
         text={url}
         setText={setURL}
-        onSave={onSaveTask}
+        onSave={(text: string) => {
+          onSaveTask(text);
+          setIsOpen(false);
+        }}
         onClose={() => setIsOpen(false)}
       />
       <Disclosure>
@@ -167,42 +172,42 @@ const ClassDropdown = ({
                 Class {classID}
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-                  className={`ml-2 w-3.5 h-3.5 transform duration-200 ${
+                  className={`ml-2 w-3.5 h-3.5 transform duration-200 inline ${
                     open ? 'rotate-180' : 'rotate-0'
                   }`}
                 />
               </div>
             </Disclosure.Button>
             <Disclosure.Panel className="relative border border-gray-600">
-              <div className="flex items-center justify-between bg-gray-800 px-3 py-2 border-b border-gray-600 text-sm space-x-2">
+              <div className="flex items-center justify-between bg-gray-800 px-3 py-2 border-b border-gray-600 space-x-2">
                 <div className="flex items-center space-x-2">
                   <span className="font-bold">Tasks</span>
                   <FontAwesomeIcon
                     icon={{ prefix: 'fas', iconName: 'circle' }}
-                    className={`w-[0.45rem] h-[0.45rem] ${
+                    className={`w-[0.45rem] h-[0.45rem] inline ${
                       unsaved ? 'text-yellow-500' : 'text-green-500'
                     }`}
                   />
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
-                    className="rounded-md border border-gray-600 px-2 py-1 hover:bg-gray-700 active:bg-gray-600"
+                    className="rounded-md bg-gray-600  px-3 py-1.5 hover:bg-gray-500 active:bg-gray-400 flex items-center"
                     onClick={copyContent}
                   >
                     Copy
                     <FontAwesomeIcon
                       icon={{ prefix: 'far', iconName: 'copy' }}
-                      className="ml-2"
+                      className="ml-2 w-4 h-4 inline"
                     />
                   </button>
                   <button
-                    className="rounded-md border border-gray-600 px-2 py-1 hover:bg-gray-700 active:bg-gray-600"
+                    className="rounded-md bg-green-700  px-3 py-1.5 hover:bg-green-800 active:bg-green-900 flex items-center"
                     onClick={addNewTasks}
                   >
-                    New
+                    <span>New</span>
                     <FontAwesomeIcon
                       icon={{ prefix: 'fas', iconName: 'plus' }}
-                      className="ml-2"
+                      className="ml-2 w-4 h-4 inline"
                     />
                   </button>
                 </div>
@@ -229,7 +234,7 @@ const ClassDropdown = ({
                     <div className="border-l px-3 py-2 border-gray-700 flex items-center space-x-2">
                       {platform && id && (
                         <a
-                          title="Jump to edit interface"
+                          title="Jump to class edit page"
                           className="px-2 py-1 rounded-md hover:bg-gray-700"
                           href={`/edit/${platform}/${id}`}
                           target="_blank"
@@ -237,7 +242,7 @@ const ClassDropdown = ({
                         >
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'arrow-right' }}
-                            className="w-3.5 h-3.5"
+                            className="w-3.5 h-3.5 inline"
                           />
                         </a>
                       )}
@@ -263,7 +268,7 @@ const ClassDropdown = ({
                       >
                         <FontAwesomeIcon
                           icon={{ prefix: 'fas', iconName: 'edit' }}
-                          className="w-3.5 h-3.5"
+                          className="w-3.5 h-3.5 inline"
                         />
                       </button>
                       <button
@@ -278,7 +283,7 @@ const ClassDropdown = ({
                       >
                         <FontAwesomeIcon
                           icon={{ prefix: 'fas', iconName: 'trash' }}
-                          className="w-3.5 h-3.5"
+                          className="w-3.5 h-3.5 inline"
                         />
                       </button>
                     </div>
@@ -310,6 +315,8 @@ const ClassDropdown = ({
 const PageContent = () => {
   const router = useRouter();
   const [group, setGroup] = useState<string | null>(null);
+  const [groupName, setGroupName] = useState<string | null>(null);
+  const [schoolName, setSchoolName] = useState<string | null>(null);
   const [classes, setClasses] = useState<Classes>({});
   const [newID, setNewID] = useState('');
   const [unsaved, setUnsaved] = useState(new Set<string>());
@@ -317,15 +324,24 @@ const PageContent = () => {
   document.title = `[${group}] class editor`;
 
   useEffect(() => {
-    if (typeof router.query.id === 'string') {
-      setGroup(router.query.id);
+    const initialize = async (group: string) => {
+      const groupSnap = await getDoc(doc(firestore, 'groups', group));
+      const schoolID = groupSnap.get('school');
+      const schoolSnap = await getDoc(doc(firestore, 'schools', schoolID));
+      setGroupName(groupSnap.get('name') || groupSnap.id);
+      setSchoolName(schoolSnap.get('name') || schoolSnap.id);
+    };
+    if (typeof router.query.group === 'string') {
+      setGroup(router.query.group);
+      initialize(router.query.group);
     }
   }, [router]);
 
   useEffect(() => {
     const loadData = async () => {
+      if (group === null) return;
       const results = await getDocs(
-        query(collection(firestore, `groups/${group}/classes`))
+        query(collection(firestore, 'groups', group, 'classes'))
       );
       const classes: Classes = {};
       results.forEach(doc => {
@@ -371,38 +387,52 @@ const PageContent = () => {
     <div className="px-2">
       {group && (
         <div className="mx-auto max-w-7xl mt-4 space-y-3">
-          <div className="p-4 border border-gray-600 bg-gray-800 flex items-end space-x-3 text-sm">
-            <label className="w-full">
-              Class ID
-              <input
-                type="text"
-                className="mt-1 w-full bg-gray-900 border border-gray-600 text-sm"
-                onChange={e => setNewID(e.target.value)}
-              />
-            </label>
-            <button
-              className="flex-shrink-0 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-md"
-              onClick={() => {
-                if (newID in classes) {
-                  alert('The entered ID already exists.');
-                  return;
-                }
-                if (newID === '') {
-                  alert('Please enter a non-empty ID.');
-                  return;
-                }
-                handleUpdateClass(newID, {
-                  tasks: [],
-                  creationTime: Date.now(),
-                });
-              }}
-            >
-              New class
-              <FontAwesomeIcon
-                icon={{ prefix: 'fas', iconName: 'plus' }}
-                className="ml-2"
-              />
-            </button>
+          <div className="border border-gray-600 bg-gray-800 flex-col">
+            <div className="p-4 pl-5 border-b border-gray-600 flex justify-between items-center truncate">
+              <span className="flex items-center truncate">
+                <FontAwesomeIcon
+                  className="flex-shrink-0 w-5 h-5 mr-1.5"
+                  icon={{ iconName: 'user-group', prefix: 'fas' }}
+                />
+                <span className="truncate">
+                  <span className="font-semibold">{groupName}</span>
+                  <span className="ml-1 truncate">({schoolName})</span>
+                </span>
+              </span>
+            </div>
+            <div className="p-4 flex items-end space-x-3 w-full">
+              <label className="w-full">
+                Class ID
+                <input
+                  type="text"
+                  className="mt-1 w-full bg-gray-900 border border-gray-600 text-sm"
+                  onChange={e => setNewID(e.target.value)}
+                />
+              </label>
+              <button
+                className="flex-shrink-0 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-md flex items-center"
+                onClick={() => {
+                  if (newID in classes) {
+                    alert('The entered ID already exists.');
+                    return;
+                  }
+                  if (newID === '') {
+                    alert('Please enter a non-empty ID.');
+                    return;
+                  }
+                  handleUpdateClass(newID, {
+                    tasks: [],
+                    creationTime: Date.now(),
+                  });
+                }}
+              >
+                New class
+                <FontAwesomeIcon
+                  icon={{ prefix: 'fas', iconName: 'plus' }}
+                  className="ml-2 w-4 h-4 inline"
+                />
+              </button>
+            </div>
           </div>
           <div className="space-y-3">
             {Object.entries(classes)

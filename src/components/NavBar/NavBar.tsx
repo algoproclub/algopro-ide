@@ -19,6 +19,7 @@ import {
 } from '../../atoms/workspace';
 import { yUndoManagerKeymap } from 'y-codemirror.next';
 import { SettingsMenu } from './SettingsMenu';
+import { EditorNavigationMenu } from './EditorNavigationMenu';
 
 export interface DesktopNavBarProps {
   fileMenu: JSX.Element;
@@ -95,6 +96,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
         >
           <HomeIcon className="h-5 w-5" />
         </Link>
+        <EditorNavigationMenu />
         {props.fileMenu}
         <SimpleButton
           onClick={handleUndo}

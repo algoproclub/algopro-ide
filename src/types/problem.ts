@@ -38,7 +38,9 @@ export const platforms: string[] = [
   'planets',
   'ojuz',
   'njudge',
-];
+] as const;
+
+export type Platform = (typeof platforms)[number];
 
 export type Language = 'cpp' | 'py' | 'java';
 

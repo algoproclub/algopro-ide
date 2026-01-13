@@ -4,17 +4,24 @@ import { ElementType } from 'domelementtype';
 import * as domhandler from 'domhandler';
 import * as cheerio from 'cheerio';
 import { getFirestore } from 'firebase-admin/firestore';
+import {
+  CODEFORCES_TITLE_REGEX,
+  buildCodeforcesUrl,
+  buildAtCoderUrl,
+  buildCsesUrl,
+  buildSpojUrl,
+  buildOjuzUrl,
+  buildNjudgeUrl,
+} from './problemUtils';
 
 async function fetchWithProxy(
   url: string,
   init?: RequestInit
 ): Promise<Response> {
-  const loginBotUrl =
-    process.env.NODE_ENV !== 'production'
-      ? 'http://login-bot:3100'
-      : 'https://login-bot.algopro.hu';
   return await fetch(
-    loginBotUrl + '/proxy?' + new URLSearchParams({ url }).toString(),
+    process.env.LOGIN_BOT_URL +
+      '/proxy?' +
+      new URLSearchParams({ url }).toString(),
     init
   );
 }
@@ -44,11 +51,6 @@ function getTextNode(element: cheerio.Cheerio<domhandler.Element>): string {
     .text()
     .trim();
 }
-
-const CODEFORCES_PROBLEM_REGEX = /^(\d+)([A-Z].*)$/;
-const CODEFORCES_TITLE_REGEX = /\w+\. (.*)/;
-
-const ATCODER_PROBLEM_REGEX = /(\w+)_(\w+)/;
 
 export async function fetchProblemData({
   platform,
@@ -101,12 +103,9 @@ function delimitedMathToVar(
 async function fetchProblemDataCodeforces(
   problemID: string
 ): Promise<ProblemData | null> {
-  const matches = problemID.match(CODEFORCES_PROBLEM_REGEX);
-  if (!matches) {
-    return null;
-  }
+  const url = buildCodeforcesUrl(problemID);
+  if (!url) return null;
 
-  const url = `https://codeforces.com/contest/${matches[1]}/problem/${matches[2]}`;
   const problemPage = await fetchWithProxy(url, {
     headers: {
       'User-Agent':
@@ -135,7 +134,6 @@ async function fetchProblemDataCodeforces(
   document('img').each((_, el) => {
     document(el).attr('referrerpolicy', 'no-referrer');
   });
-
   return {
     id: problemID,
     submittable: true,
@@ -161,12 +159,8 @@ async function fetchProblemDataCodeforces(
 async function fetchProblemDataAtCoder(
   problemID: string
 ): Promise<ProblemData | null> {
-  const matches = problemID.match(ATCODER_PROBLEM_REGEX);
-  if (!matches) {
-    return null;
-  }
-
-  const url = `https://atcoder.jp/contests/${matches[1]}/tasks/${problemID}`;
+  const url = buildAtCoderUrl(problemID);
+  if (!url) return null;
   const problemPage = await fetch(url);
   if (problemPage.status !== 200) {
     return null;
@@ -218,7 +212,7 @@ async function fetchProblemDataAtCoder(
 async function fetchProblemDataCSES(
   problemID: string
 ): Promise<ProblemData | null> {
-  const url = `https://cses.fi/problemset/task/${problemID}`;
+  const url = buildCsesUrl(problemID);
   const problemPage = await fetch(url);
   if (problemPage.status !== 200) {
     return null;
@@ -290,7 +284,7 @@ async function fetchProblemDataCSES(
 async function fetchProblemDataSPOJ(
   problemID: string
 ): Promise<ProblemData | null> {
-  const url = `https://www.spoj.com/problems/${problemID}/`;
+  const url = buildSpojUrl(problemID);
   const problemPage = await fetch(url);
   if (problemPage.status !== 200) {
     return null;
@@ -406,7 +400,7 @@ async function fetchProblemDataSPOJ(
 async function fetchProblemDataOjuz(
   problemID: string
 ): Promise<ProblemData | null> {
-  const url = `https://oj.uz/problem/view/${problemID}`;
+  const url = buildOjuzUrl(problemID);
   const problemPage = await fetch(url);
   if (problemPage.status !== 200) {
     return null;
@@ -442,7 +436,7 @@ async function fetchProblemDataOjuz(
 async function fetchProblemDataNjudge(
   problemID: string
 ): Promise<ProblemData | null> {
-  const url = `https://njudge.hu/problemset/main/${problemID}/`;
+  const url = buildNjudgeUrl(problemID);
   const problemPage = await fetch(url, {
     headers: { 'Accept-Language': 'hu' },
   });

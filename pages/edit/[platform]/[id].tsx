@@ -21,10 +21,10 @@ import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement'
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { LanguageSelectorDropdown } from '../../../src/components/JudgeInterface/GenericJudgeInterface';
 import {
-  EditTextModal,
+  EditModal,
   handleKeyDown,
 } from '../../../src/components/EditTextModal';
-import WithTeacherLogin from '../../../src/components/WithTeacherLogin';
+import WithAdminLogin from '../../../src/components/WithAdminLogin';
 import { Hint } from '../../../src/types/problem';
 import Dropdown from '../../../src/components/Dropdown';
 import Checkbox from '../../../src/components/Checkbox';
@@ -122,6 +122,7 @@ const HTMLEditor = ({
             onClick={() => setFullscreen(value => !value)}
           >
             <FontAwesomeIcon
+              className="w-4 h-4 inline"
               icon={{
                 prefix: 'fas',
                 iconName: `${fullscreen ? 'compress' : 'expand'}`,
@@ -224,52 +225,62 @@ const EditHintModal = ({
 
   const checked = typeof hint != 'string';
   const selectedLang = codeLangs[selected];
-  const text = checked ? (hint[selectedLang] ?? '') : hint;
 
   return (
-    <EditTextModal
+    <EditModal<Hint>
       isOpen={isOpen}
       title="Edit hint"
-      text={text}
-      onSave={(_: string) => onSave(hint)}
+      value={hint}
+      onSave={(val: Hint) => {
+        onSave(val);
+        onClose();
+      }}
       onClose={onClose}
-    >
-      <div className="space-y-2">
-        <Dropdown
-          items={codeLangs}
-          label="Language"
-          selected={selected}
-          setSelected={setSelected}
-          disabled={!checked}
-        />
-        <div className="pl-1">
-          <Checkbox
-            checked={checked}
-            label="Language-dependent hint"
-            toggleChecked={confirmedToggle}
-          />
-        </div>
-        <textarea
-          className="font-mono h-60 bg-gray-900 border-gray-700 w-full min-h-[10rem] text-sm"
-          value={text}
-          onKeyDown={handleKeyDown}
-          onChange={e =>
-            setHint(h => {
-              const val = e.target.value;
-              if (typeof h == 'string') {
-                return val;
-              } else if (val !== '') {
-                return { ...h, [selectedLang]: val };
-              } else {
-                return Object.fromEntries(
-                  Object.entries(h).filter(([key]) => key !== selectedLang)
-                ) as Hint;
-              }
-            })
-          }
-        />
-      </div>
-    </EditTextModal>
+      renderEditor={(val, setVal) => {
+        const displayText =
+          typeof val === 'string' ? val : (val[selectedLang] ?? '');
+
+        return (
+          <div className="space-y-2">
+            <Dropdown
+              items={codeLangs}
+              label="Language"
+              selected={selected}
+              setSelected={setSelected}
+              disabled={!checked}
+            />
+            <div className="pl-1">
+              <Checkbox
+                checked={checked}
+                label="Language-dependent hint"
+                toggleChecked={confirmedToggle}
+              />
+            </div>
+            <textarea
+              className="font-mono h-60 bg-gray-900 border-gray-700 w-full min-h-[10rem] text-sm"
+              value={displayText}
+              onKeyDown={handleKeyDown}
+              onChange={e => {
+                const valStr = e.target.value;
+                setVal(prev => {
+                  if (typeof prev === 'string') {
+                    return valStr;
+                  } else if (valStr !== '') {
+                    return { ...prev, [selectedLang]: valStr } as Hint;
+                  } else {
+                    return Object.fromEntries(
+                      Object.entries(prev).filter(
+                        ([key]) => key !== selectedLang
+                      )
+                    ) as Hint;
+                  }
+                });
+              }}
+            />
+          </div>
+        );
+      }}
+    />
   );
 };
 
@@ -296,7 +307,10 @@ const RemovableTag = ({
         className="px-2 py-1 rounded-md hover:bg-gray-700"
         onClick={removeTag}
       >
-        <FontAwesomeIcon icon={{ prefix: 'fas', iconName: 'trash' }} />
+        <FontAwesomeIcon
+          icon={{ prefix: 'fas', iconName: 'trash' }}
+          className="w-3.5 h-3.5 inline"
+        />
       </button>
     </div>
   );
@@ -358,20 +372,26 @@ const PageContent = () => {
                 className="space-x-1 px-3 py-2 w-[5.5rem] border-x border-gray-700"
                 rowSpan={rowCount}
               >
-                <button
-                  className="px-2 py-1 rounded-md hover:bg-gray-700"
-                  onClick={onEdit}
-                >
-                  <FontAwesomeIcon icon={{ prefix: 'fas', iconName: 'edit' }} />
-                </button>
-                <button
-                  className="px-2 py-1 rounded-md hover:bg-gray-700"
-                  onClick={onDelete}
-                >
-                  <FontAwesomeIcon
-                    icon={{ prefix: 'fas', iconName: 'trash' }}
-                  />
-                </button>
+                <div className="flex items-center">
+                  <button
+                    className="px-2 py-1 rounded-md hover:bg-gray-700"
+                    onClick={onEdit}
+                  >
+                    <FontAwesomeIcon
+                      icon={{ prefix: 'fas', iconName: 'edit' }}
+                      className="w-3.5 h-3.5 inline"
+                    />
+                  </button>
+                  <button
+                    className="px-2 py-1 rounded-md hover:bg-gray-700"
+                    onClick={onDelete}
+                  >
+                    <FontAwesomeIcon
+                      icon={{ prefix: 'fas', iconName: 'trash' }}
+                      className="w-3.5 h-3.5 inline"
+                    />
+                  </button>
+                </div>
               </td>
             )}
           </tr>
@@ -713,13 +733,13 @@ const PageContent = () => {
         <div className="border border-gray-600 flex items-center justify-between bg-gray-800 px-3 py-2 border-b text-sm space-x-2">
           <span className="font-bold">Hints</span>
           <button
-            className="rounded-md border border-gray-600 px-2 py-1 hover:bg-gray-700 active:bg-gray-600"
+            className="rounded-md border border-gray-600 px-2 py-1 hover:bg-gray-700 active:bg-gray-600 flex items-center"
             onClick={handleAddNewHint}
           >
             New
             <FontAwesomeIcon
               icon={{ prefix: 'fas', iconName: 'plus' }}
-              className="ml-2"
+              className="ml-2 w-4 h-4 inline"
             />
           </button>
         </div>
@@ -857,8 +877,8 @@ const PageContent = () => {
 
 export default function EditPage() {
   return (
-    <WithTeacherLogin>
+    <WithAdminLogin>
       <PageContent />
-    </WithTeacherLogin>
+    </WithAdminLogin>
   );
 }

@@ -10,6 +10,7 @@ import { CodeEditor } from './editor/CodeEditor';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CompilerOutput } from './CompilerOutput';
 import { mainMonacoEditorAtom } from '../atoms/workspace';
+import { StderrOutput } from './StderrOutput';
 
 type StatusHistoryEntry = StatusData & { submissionTime?: number };
 
@@ -22,14 +23,6 @@ export interface OutputProps {
 
 type OutputTab = 'stdout' | 'stderr' | 'compile_output' | 'results' | 'history';
 
-const tabs = [
-  { label: 'stdout', value: 'stdout' },
-  { label: 'stderr', value: 'stderr' },
-  { label: 'compile output', value: 'compile_output' },
-  { label: 'results', value: 'results' },
-  { label: 'history', value: 'history' },
-];
-
 export const Output = ({
   result,
   statusData,
@@ -37,16 +30,45 @@ export const Output = ({
   onMount,
 }: OutputProps): JSX.Element => {
   const [option, setOption] = useState<OutputTab>('stdout');
+  const [tabs, setTabs] = useState<
+    Array<{ label: string; value: string; highlight: boolean }>
+  >([
+    { label: 'stdout', value: 'stdout', highlight: false },
+    { label: 'stderr', value: 'stderr', highlight: false },
+    { label: 'compile output', value: 'compile_output', highlight: false },
+    { label: 'results', value: 'results', highlight: false },
+    { label: 'history', value: 'history', highlight: false },
+  ]);
 
   useEffect(() => {
+    setOption('stdout' as OutputTab);
     let option = null;
+    const updatedTabs = tabs.map(tab => ({ ...tab, highlight: false }));
+
+    if (result?.stderr) {
+      option = 'stderr';
+      const stderrTab = updatedTabs.find(tab => tab.value === 'stderr');
+      if (stderrTab) stderrTab.highlight = true;
+    }
+    if (result?.stdout) {
+      option = 'stdout';
+      const stdoutTab = updatedTabs.find(tab => tab.value === 'stdout');
+      if (stdoutTab) stdoutTab.highlight = true;
+    }
+    if (result?.compilationMessage) {
+      const compileTab = updatedTabs.find(
+        tab => tab.value === 'compile_output'
+      );
+      if (compileTab) compileTab.highlight = true;
+    }
     if (
       result?.status === 'compile_error' ||
       result?.status === 'internal_error'
-    )
+    ) {
       option = 'compile_output';
-    else if (result?.stdout) option = 'stdout';
-    else if (result?.stderr) option = 'stderr';
+    }
+
+    setTabs(updatedTabs);
     if (option) setOption(option as OutputTab);
   }, [result?.status, result?.stdout, result?.stderr]);
 
@@ -73,6 +95,7 @@ export const Output = ({
       }
     }
   }
+
   const { userData } = useUserContext();
   const lightMode = userData.lightMode;
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
@@ -99,16 +122,16 @@ export const Output = ({
           </div>
         )}
         {option === 'history' && (
-          <div className="px-4 h-full overflow-y-auto">
+          <div className="h-full overflow-y-auto w-full">
             <table
-              className={'text-gray-200 table-tasks space-x-2'}
-              style={{
-                border: '1px solid #141414',
-                marginBottom: '20px',
-                marginTop: '20px',
-              }}
+              className={
+                'text-gray-200 table-tasks space-x-2 w-full border-b border-gray-700'
+              }
             >
-              <thead style={{ backgroundColor: '#121212' }}>
+              <thead
+                className="border-b border-gray-700 text-left text-sm"
+                style={{ backgroundColor: '#121212' }}
+              >
                 <tr>
                   <th></th>
                   <th>Verdict</th>
@@ -117,7 +140,7 @@ export const Output = ({
                   <th>Testcases</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-700 text-sm">
                 {statusDataHistory
                   .slice()
                   .reverse()
@@ -135,18 +158,18 @@ export const Output = ({
                         <a
                           href={item.link || undefined}
                           target="_blank"
-                          className={item.link ? 'hover:underline' : undefined}
+                          className={`${item.link ? 'hover:underline' : undefined} flex items-center`}
                           rel="noreferrer"
                         >
                           {item.message?.toLowerCase() === 'correct answer' ? (
                             <FontAwesomeIcon
                               icon={{ prefix: 'fas', iconName: 'check' }}
-                              className="text-green-500 w-3.5 h-3.5 mr-1"
+                              className="text-green-500 w-3.5 h-3.5 mr-1.5 inline"
                             />
                           ) : (
                             <FontAwesomeIcon
                               icon={{ prefix: 'fas', iconName: 'xmark' }}
-                              className="w-3.5 h-3.5 text-red-500 mr-1"
+                              className="w-3.5 h-3.5 text-red-500 mr-1.5 inline"
                             />
                           )}
                           {item.message}
@@ -156,7 +179,7 @@ export const Output = ({
                                 prefix: 'fas',
                                 iconName: 'up-right-from-square',
                               }}
-                              className="w-3.5 h-3.5 ml-1"
+                              className="w-3.5 h-3.5 ml-1.5 inline"
                             />
                           )}
                         </a>
@@ -168,38 +191,40 @@ export const Output = ({
                         {item.memory ?? '-'}
                       </td>
                       <td>
-                        {item.testCases &&
-                          item.testCases.map((tc, index) =>
-                            tc.title == 'correct answer' ? (
-                              <FontAwesomeIcon
-                                title={tc.title}
-                                icon={{ prefix: 'fas', iconName: 'check' }}
-                                className="text-green-500 w-3.5 h-3.5 mr-0.5"
-                                key={index}
-                              />
-                            ) : (
-                              <FontAwesomeIcon
-                                title={tc.title}
-                                icon={{
-                                  prefix: (() => {
-                                    if (tc.title === 'time limit exceeded')
-                                      return 'far';
-                                    return 'fas';
-                                  })(),
+                        <div className="flex flex-wrap">
+                          {item.testCases &&
+                            item.testCases.map((tc, index) =>
+                              tc.title == 'correct answer' ? (
+                                <FontAwesomeIcon
+                                  title={tc.title}
+                                  icon={{ prefix: 'fas', iconName: 'check' }}
+                                  className="text-green-500 w-3.5 h-3.5 mr-0.5 inline"
+                                  key={index}
+                                />
+                              ) : (
+                                <FontAwesomeIcon
+                                  title={tc.title}
+                                  icon={{
+                                    prefix: (() => {
+                                      if (tc.title === 'time limit exceeded')
+                                        return 'far';
+                                      return 'fas';
+                                    })(),
 
-                                  iconName: (() => {
-                                    if (tc.title === 'time limit exceeded')
-                                      return 'clock';
-                                    if (tc.title === 'runtime error')
-                                      return 'bug';
-                                    return 'xmark';
-                                  })(),
-                                }}
-                                className="mr-0.5 w-3.5 h-3.5 text-red-500"
-                                key={index}
-                              />
-                            )
-                          )}
+                                    iconName: (() => {
+                                      if (tc.title === 'time limit exceeded')
+                                        return 'clock';
+                                      if (tc.title === 'runtime error')
+                                        return 'bug';
+                                      return 'xmark';
+                                    })(),
+                                  }}
+                                  className="mr-0.5 w-3.5 h-3.5 text-red-500 inline"
+                                  key={index}
+                                />
+                              )
+                            )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -207,7 +232,7 @@ export const Output = ({
             </table>
           </div>
         )}
-        {(option === 'stdout' || option === 'stderr') && (
+        {option === 'stdout' && (
           <CodeEditor
             theme={lightMode ? 'light' : 'dark'}
             language={'plaintext'}
@@ -220,6 +245,13 @@ export const Output = ({
               automaticLayout: false,
               insertSpaces: true,
             }}
+            onMount={onMount}
+          />
+        )}
+        {option === 'stderr' && (
+          <StderrOutput
+            output={outputText ?? ''}
+            lightMode={lightMode}
             onMount={onMount}
           />
         )}

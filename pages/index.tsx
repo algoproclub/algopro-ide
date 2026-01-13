@@ -1,18 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
 import { useSetAtom } from 'jotai';
-import { signInWithGoogleAtom } from '../src/atoms/firebaseUserAtoms';
+import {
+  signInWithGoogleAtom,
+  signInWithMicrosoftAtom,
+  signInWithGithubAtom,
+} from '../src/atoms/firebaseUserAtoms';
+import {
+  SignInButton,
+  GoogleIcon,
+  MicrosoftIcon,
+  GithubIcon,
+} from '../src/components/SignInButton';
 import Dashboard from '../src/components/Dashboard/Dashboard';
-import { useConnectionContext } from '../src/context/ConnectionContext';
 import { useNullableUserContext } from '../src/context/UserContext';
-import ProfileSettings from '../src/components/settings/ProfileSettings';
-import { SettingsMenu } from '../src/components/NavBar/SettingsMenu';
+import NoRegistrationMessage from '../src/NoRegistrationMessage';
+import { useConnectionContext } from '../src/context/ConnectionContext';
 
 export default function DashboardPage(): JSX.Element {
-  const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
+  const { userData, logged, registered } = useNullableUserContext();
   const connectionContext = useConnectionContext();
-  const { userData, logged } = useNullableUserContext();
-  const [isOpen, setIsOpen] = useState(false);
+  const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
+  const signInWithMicrosoft = useSetAtom(signInWithMicrosoftAtom);
+  const signInWithGithub = useSetAtom(signInWithGithubAtom);
 
   useEffect(() => {
     document.title = 'AlgoPro IDE';
@@ -22,14 +32,10 @@ export default function DashboardPage(): JSX.Element {
     <div className="p-4 sm:p-6 md:p-8 lg:p-12 min-h-full flex flex-col max-w-6xl mx-auto">
       <ConfirmOverrideModal />
       <div className="flex-1 relative">
-        <ProfileSettings isOpen={isOpen} onClose={() => setIsOpen(false)} />
-        <div className="absolute top-4 right-4">
-          {logged && <SettingsMenu setIsProfileSettingsOpen={setIsOpen} />}
-        </div>
         <h1 className="text-gray-100 text-2xl md:text-4xl font-black">
           AlgoPro IDE
         </h1>
-        <div className="text-gray-400 mt-6">
+        <div className="text-gray-400 mt-6 mb-2">
           Based on the{' '}
           <a
             className="underline text-gray-200"
@@ -43,20 +49,31 @@ export default function DashboardPage(): JSX.Element {
           </a>
         </div>
 
-        <div className="h-1"></div>
-
         {logged === false ? (
-          <div className="text-gray-400">
-            Not signed in.{' '}
-            <button
-              className="mt-3 block items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1E1E1E] focus:ring-indigo-500"
-              onClick={() => signInWithGoogle(connectionContext)}
-            >
-              Sign in now
-            </button>
-          </div>
+          <>
+            <div className="text-gray-400">Not signed in.</div>
+            <div className="mt-2 space-x-2">
+              <SignInButton
+                service="Google"
+                Icon={GoogleIcon}
+                onClick={() => signInWithGoogle(connectionContext)}
+              />
+              <SignInButton
+                service="Microsoft"
+                Icon={MicrosoftIcon}
+                onClick={() => signInWithMicrosoft(connectionContext)}
+              />
+              <SignInButton
+                service="GitHub"
+                Icon={GithubIcon}
+                onClick={() => signInWithGithub(connectionContext)}
+              />
+            </div>
+          </>
         ) : !userData ? (
           <div className="text-gray-400">Loading...</div>
+        ) : !registered ? (
+          <NoRegistrationMessage />
         ) : (
           <Dashboard />
         )}

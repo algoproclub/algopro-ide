@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { get, getDatabase, ref, onValue } from 'firebase/database';
 import classNames from 'classnames';
-import WithTeacherLogin from '../../src/components/WithTeacherLogin';
+import WithAdminLogin from '../../src/components/WithAdminLogin';
 import LoadingIndicator from '../../src/components/LoadingIndicator';
 
 type Participation = {
@@ -162,8 +162,8 @@ const PageContent = () => {
 
 export default function Scoreboard() {
   return (
-    <WithTeacherLogin>
+    <WithAdminLogin>
       <PageContent />
-    </WithTeacherLogin>
+    </WithAdminLogin>
   );
 }

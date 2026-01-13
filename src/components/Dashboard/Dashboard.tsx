@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Fragment } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   getDatabase,
   ref,
@@ -7,6 +7,7 @@ import {
   onValue,
   off,
   get,
+  limitToLast,
 } from 'firebase/database';
 import FilesList, { File } from './FilesList';
 import { useUserContext } from '../../context/UserContext';
@@ -29,8 +30,8 @@ const firestore = getFirestore();
 const db = getDatabase();
 
 const tabs = [
-  { label: 'Recent', value: 'recent' },
   { label: 'Classes', value: 'classes' },
+  { label: 'Recent', value: 'recent' },
 ];
 const PAGE_SIZE = 8;
 
@@ -47,7 +48,6 @@ const Pagination = ({
   maxPage: number;
   label: string;
 }) => {
-  console.log(page, minPage, maxPage);
   return (
     <div className="px-3.5 py-3 flex items-center space-x-2 text-sm bg-gray-800">
       <button
@@ -57,7 +57,7 @@ const Pagination = ({
       >
         <FontAwesomeIcon
           icon={{ prefix: 'fas', iconName: 'chevron-left' }}
-          className="mr-1.5 w-3.5 h-3.5"
+          className="mr-1.5 inline w-3.5 h-3.5"
         />
         Next
       </button>
@@ -70,7 +70,7 @@ const Pagination = ({
         Previous
         <FontAwesomeIcon
           icon={{ prefix: 'fas', iconName: 'chevron-right' }}
-          className="ml-1.5 w-3.5 h-3.5"
+          className="ml-1.5 inline w-3.5 h-3.5"
         />
       </button>
     </div>
@@ -94,7 +94,12 @@ const RecentTab = ({
     if (!firebaseUser) return;
 
     const dbRef = ref(db, `users/${firebaseUser.uid}/files`);
-    const fileQuery = query(dbRef, orderByChild('lastAccessTime'));
+    // TODO: Implement proper pagination on the query level instead of just cutting down the results to 100.
+    const fileQuery = query(
+      dbRef,
+      orderByChild('lastAccessTime'),
+      limitToLast(100)
+    );
 
     onValue(fileQuery, snap => {
       if (!snap.exists) {
@@ -168,8 +173,8 @@ const RecentTab = ({
 const ClassesTab = () => {
   const { firebaseUser } = useUserContext();
   const [groups, setGroups] = useState<string[]>([]);
-  const [group, setGroup] = useState(0);
-  const [classID, setClassID] = useState(0);
+  const [groupInd, setGroupInd] = useState(0);
+  const [classInd, setClassInd] = useState(0);
   const [classes, setClasses] = useState<string[]>([]);
   const [problems, setProblems] = useState<ProblemData[]>([]);
   const [data, setData] = useState<(SolutionData | null)[]>([]);
@@ -195,12 +200,12 @@ const ClassesTab = () => {
     if (groups.length === 0) return;
 
     handleRefresh();
-  }, [group, groups, classID]);
+  }, [groupInd, groups, classInd]);
 
   useEffect(() => {
     if (groups.length === 0) return;
 
-    fetchClasses(groups[group]).then(res => {
+    fetchClasses(groups[groupInd]).then(res => {
       setClasses(res);
     });
     const timeout = setInterval(() => {
@@ -216,7 +221,7 @@ const ClassesTab = () => {
     if (groups.length === 0) return;
 
     const updateProblems = async () => {
-      setProblems(await fetchProblems(groups[group], classes[classID]));
+      setProblems(await fetchProblems(groups[groupInd], classes[classInd]));
     };
     updateProblems();
   }, [classes]);
@@ -242,7 +247,7 @@ const ClassesTab = () => {
   }, [problems]);
 
   const handleRefresh = async () => {
-    setClasses(await fetchClasses(groups[group]));
+    setClasses(await fetchClasses(groups[groupInd]));
   };
 
   return (
@@ -251,14 +256,14 @@ const ClassesTab = () => {
         <Dropdown
           items={groups}
           label={'Group'}
-          selected={group}
-          setSelected={(index: number) => setGroup(index)}
+          selected={groupInd}
+          setSelected={(index: number) => setGroupInd(index)}
         />
         <Dropdown
           items={classes}
           label={'Class'}
-          selected={classID}
-          setSelected={(index: number) => setClassID(index)}
+          selected={classInd}
+          setSelected={(index: number) => setClassInd(index)}
         />
       </div>
       <div className="overflow-x-auto">
@@ -274,8 +279,19 @@ const ClassesTab = () => {
           </thead>
           <tbody className="divide-y divide-gray-700 text-gray-300 bg-gray-900">
             {data.map((row, index) => {
-              if (!row) {
-                return <Fragment key={index}></Fragment>;
+              const curProblem = problems[Math.min(index, problems.length - 1)];
+              let tempFileID = 'Tap to Create';
+              let tempFileIDhref = `/solve/${curProblem.platform}/${curProblem.id}`;
+              let tempVerdict = 'Untried';
+              let tempCodeSize = '';
+              if (row) {
+                tempFileID = row.fileID.slice(1);
+                tempFileIDhref = `/${row.fileID.slice(1)}`;
+                tempVerdict =
+                  row.verdict[0].toUpperCase() + row.verdict.slice(1);
+                tempCodeSize = row.codeSize
+                  ? row.codeSize.toString()
+                  : 'Unknown';
               }
               return (
                 <tr key={index}>
@@ -292,47 +308,51 @@ const ClassesTab = () => {
                   <td>
                     <a
                       className="underline text-white hover:text-indigo-200 mr-2"
-                      href={`/${row.fileID.slice(1)}`}
+                      href={tempFileIDhref}
                       target="_blank"
                       rel="noreferrer"
                     >
-                      {row.fileID.split('-')[1]}
+                      {tempFileID}
                     </a>
                   </td>
                   <td>
                     <div className="flex items-center">
-                      <span className="mr-1.5">
-                        {row.verdict[0].toUpperCase() + row.verdict.slice(1)}
-                      </span>
-                      <span>
-                        {row.verdictType === 'wrong' && (
-                          <FontAwesomeIcon
-                            icon={{ prefix: 'fas', iconName: 'xmark' }}
-                            className="text-red-500"
-                          />
-                        )}
-                        {row.verdictType === 'accepted' && (
-                          <FontAwesomeIcon
-                            icon={{ prefix: 'fas', iconName: 'check' }}
-                            className="text-green-500"
-                          />
-                        )}
-                        {row.verdictType === 'error' && (
-                          <FontAwesomeIcon
-                            icon={{
-                              prefix: 'fas',
-                              iconName: 'triangle-exclamation',
-                            }}
-                            className="text-yellow-500"
-                          />
-                        )}
-                      </span>
+                      <span className="mr-1.5">{tempVerdict}</span>
+                      {row && (
+                        <span>
+                          {row.verdictType === 'wrong' && (
+                            <FontAwesomeIcon
+                              icon={{ prefix: 'fas', iconName: 'xmark' }}
+                              className="inline w-4 h-4 text-red-500"
+                            />
+                          )}
+                          {row.verdictType === 'accepted' && (
+                            <FontAwesomeIcon
+                              icon={{ prefix: 'fas', iconName: 'check' }}
+                              className="inline w-4 h-4 text-green-500"
+                            />
+                          )}
+                          {row.verdictType === 'error' && (
+                            <FontAwesomeIcon
+                              icon={{
+                                prefix: 'fas',
+                                iconName: 'triangle-exclamation',
+                              }}
+                              className="inline w-4 h-4 text-yellow-500"
+                            />
+                          )}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td>
-                    <TimeAgoLabel date={new Date(row.lastEdit)} />
+                    {row && row.lastEdit ? (
+                      <TimeAgoLabel date={new Date(row.lastEdit)} />
+                    ) : (
+                      'Unknown'
+                    )}
                   </td>
-                  <td>{row.codeSize}</td>
+                  <td>{row && tempCodeSize}</td>
                 </tr>
               );
             })}
@@ -340,11 +360,11 @@ const ClassesTab = () => {
         </table>
       </div>
       <Pagination
-        page={classID}
-        setPage={(val: number) => setClassID(val)}
+        page={classInd}
+        setPage={(val: number) => setClassInd(val)}
         minPage={0}
         maxPage={Math.max(0, classes.length - 1)}
-        label={`Class: ${classes[classID] ?? '-'}`}
+        label={`Class: ${classes[classInd] ?? '-'}`}
       />
     </div>
   );
@@ -352,7 +372,7 @@ const ClassesTab = () => {
 
 export default function Dashboard() {
   const [showHidden, setShowHidden] = useState<boolean>(false);
-  const [tab, setTab] = useState('recent');
+  const [tab, setTab] = useState('classes');
 
   return (
     <div>
@@ -367,11 +387,11 @@ export default function Dashboard() {
 
       <div className="h-8"></div>
 
-      <h2 className="text-gray-200 text-xl font-black mb-5">
-        Your workspaces{' '}
+      <h2 className="text-gray-200 text-xl font-black mb-5 flex items-center">
+        Your workspaces
         <FontAwesomeIcon
           icon={{ prefix: 'fas', iconName: 'computer' }}
-          className="ml-1"
+          className="ml-2 inline w-6 h-6"
         />
       </h2>
       <TabBar
@@ -382,13 +402,13 @@ export default function Dashboard() {
         }}
         homepage={true}
       />
+      {tab === 'classes' && <ClassesTab />}
       {tab === 'recent' && (
         <RecentTab
           showHidden={showHidden}
           toggleShowHidden={() => setShowHidden(val => !val)}
         />
       )}
-      {tab === 'classes' && <ClassesTab />}
     </div>
   );
 }

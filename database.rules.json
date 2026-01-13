@@ -1,1 +1,94 @@
-{ "rules": { ".read": true, ".write": true } }
+{
+  "rules": {
+    "users": {
+      "$secretid": {
+        ".read": "$secretid == auth.uid",
+        ".write": "auth.uid == $secretid",
+        "files": {
+          ".indexOn": ["lastAccessTime"]
+        },
+        "schools": {
+          ".write": false
+        }
+      }
+    },
+    "files": {
+      ".read": "auth != null && auth.token.registered === true",
+      ".write": "auth != null && auth.token.registered === true",
+      ".indexOn": "teacher/editTime",
+
+      "$secretid": {
+        ".write": "auth != null && auth.token.registered === true && !root.child('files').child($secretid).exists()",
+        ".read": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ')",
+        "users": {
+          "$user": {
+            ".read": "auth != null && auth.token.registered === true && $user === auth.uid",
+            ".write": "auth != null && auth.token.registered === true && ((auth.uid === $user && !root.child('files').child($secretid).child('settings').child('users').exists()) || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || (auth.uid === $user && data.child('permission').val() === newData.child('permission').val()))"
+          }
+        },
+        "input": {
+          ".write": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE')",
+          "history": {
+            "$revision": {
+              /* Prevent overwriting existing revisions. */
+              ".validate": "data.val() === null || newData.val() === null"
+            }
+          },
+          "checkpoint": {
+            /* Ensure author of checkpoint is the same as the author of the revision they're checkpointing. */
+            ".validate": "!root.child('files').child($secretid).exists() || root.child('files').child($secretid).child('input').child('history').child(newData.child('id').val()).child('a').val() === newData.child('a').val() && newData.hasChildren(['a', 'o', 'id'])"
+          }
+        },
+        "solvedStatus": {
+          ".write": "auth != null && auth.token.registered === true && root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER'"
+        },
+        "settings": {
+          ".read": "auth != null && auth.token.registered === true",
+          /* TODO: Find out what is wrong with the rules below. For now, we will allow any writes by the OWNER.
+          "$setting": {
+            ".write": "!root.child('files').child($secretid).child('settings').child('defaultPermission').exists() || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE'"
+          },
+          "defaultPermission": {
+            ".write": "!root.child('files').child($secretid).child('settings').child('defaultPermission').exists() || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER'"
+          },
+          "creationTime": {
+            ".write": "!root.child('files').child($secretid).child('settings').child('creationTime').exists()"
+          } */
+          ".write": "auth != null && auth.token.registered === true && root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER'"
+        },
+
+        "chat": {
+          ".read": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ')",
+          ".write": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE')"
+        },
+
+        "isCodeRunning": {
+          ".read": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ')",
+          ".write": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE')"
+        },
+
+        "state": {
+          ".read": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ')",
+          ".write": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE')"
+        },
+
+        "classroom": {
+          ".read": "auth != null && auth.token.registered === true",
+          "$setting": {
+            ".write": "auth != null && auth.token.registered === true && root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER'"
+          }
+        }
+      }
+    },
+    "submissions": {
+      "$secretid": {
+        ".write": false,
+        ".read": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ')"
+      }
+    },
+    /* FIXME: Right now teachers can view all students' work */
+    /* This is apparently how you check if an array is non-empty. Don't change it! */
+    ".read": "auth.token.admin === true || (auth.token.teacher != null && auth.token.teacher['0'] != null)",
+    ".write": false
+  }
+}

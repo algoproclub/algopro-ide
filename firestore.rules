@@ -1,0 +1,74 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /schools/{school} {
+      allow read: if request.auth.token.admin == true ||
+                     school in request.auth.token.teacher ||
+                     school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
+      allow write: if request.auth.token.admin == true ||
+                      school in request.auth.token.teacher;
+    }
+
+    // TODO: update with proper rules
+    match /problemsets/{problemset}/problems/{problem} {
+      allow read: if true;
+      allow write: if request.auth.token.admin == true;
+
+      match /translations/{translation} {
+        allow read: if true;
+        allow write: if request.auth.token.admin == true;
+      }
+
+      // TODO: this is not intended this way
+      match /solutions/{language} {
+        allow read: if true;
+        allow write: if request.auth.token.admin == true;
+      }
+    }
+
+    match /groups/{group} {
+      function isValidGroup(schoolID, id) {
+        return schoolID is string && id is string && id.matches('^' + schoolID + '~[a-z0-9_-]+$');
+      }
+      allow read: if resource == null
+                  || request.auth.token.admin == true
+                  || resource.data.school in request.auth.token.teacher
+                  || resource.data.school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
+
+      allow create: if (
+                        request.auth.token.admin == true ||
+                        request.resource.data.school in request.auth.token.teacher
+                      )
+                      && isValidGroup(request.resource.data.school, request.resource.id)
+                      && request.resource.data.name.size() > 0;
+
+      allow update: if resource.data.school == request.resource.data.school
+                    && (
+                      request.auth.token.admin == true ||
+                      resource.data.school in request.auth.token.teacher
+                    )
+                    && request.resource.data.name.size() > 0;
+
+      allow delete: if request.auth.token.admin == true
+                    || resource.data.school in request.auth.token.teacher;
+
+      match /classes/{class} {
+        allow read:  if request.auth.token.admin == true
+                     || get(/databases/$(database)/documents/groups/$(group)).data.school in request.auth.token.teacher
+                     || get(/databases/$(database)/documents/groups/$(group)).data.school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
+        allow write: if request.auth.token.admin == true
+                     || get(/databases/$(database)/documents/groups/$(group)).data.school in request.auth.token.teacher;
+      }
+    }
+
+    match /userdata/{userId} {
+      allow read:  if request.auth.token.admin == true
+                   || resource.data.schools.hasAny(request.auth.token.teacher)
+                   || request.auth.uid == userId;
+      allow write: if request.auth.token.admin == true
+                   || resource.data.schools.hasAny(request.auth.token.teacher);
+    }
+  }
+}

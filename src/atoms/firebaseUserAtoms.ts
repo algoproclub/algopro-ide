@@ -1,6 +1,7 @@
 import { atom } from 'jotai';
 import {
   GoogleAuthProvider,
+  AuthProvider,
   getAuth,
   signInWithPopup,
   linkWithPopup,
@@ -8,6 +9,8 @@ import {
   UserCredential,
   signInWithCredential,
   signOut,
+  signInWithEmailAndPassword,
+  OAuthProvider,
 } from 'firebase/auth';
 import { ConnectionContextType } from '../context/ConnectionContext';
 import { SHOULD_USE_FIREBASE_EMULATOR } from '../dev_constants';
@@ -25,16 +28,22 @@ export const confirmOverrideDataCallbackAtom = atom<
   (() => Promise<UserCredential>) | null
 >(null);
 
-export const signInWithGoogleAtom = atom(
-  null,
-  (get, set, connectionContext: ConnectionContextType) => {
+const signInAtom = (provider: AuthProvider) =>
+  atom(null, (get, set, connectionContext: ConnectionContextType) => {
     const auth = getAuth();
-    const provider = new GoogleAuthProvider();
     const prevUser = auth.currentUser;
 
     // Remove user from user list before signing in
     const prevConnectionRefs = connectionContext.getConnectionRefs();
     connectionContext.clearConnectionRefs();
+
+    const useDummyAccount = false;
+    if (useDummyAccount) {
+      //const email = 'admin@example.com';
+      const email = 'algoproteacher1@example.com';
+      signInWithEmailAndPassword(auth, email, 'password123');
+      return;
+    }
 
     if (SHOULD_USE_FIREBASE_EMULATOR) {
       // Note: for some reason firebase emulator does not work with `linkWithPopup`
@@ -76,8 +85,13 @@ export const signInWithGoogleAtom = atom(
           }
         });
     }
-  }
+  });
+
+export const signInWithGoogleAtom = signInAtom(new GoogleAuthProvider());
+export const signInWithMicrosoftAtom = signInAtom(
+  new OAuthProvider('microsoft.com')
 );
+export const signInWithGithubAtom = signInAtom(new OAuthProvider('github.com'));
 
 export const signOutAtom = atom(
   null,

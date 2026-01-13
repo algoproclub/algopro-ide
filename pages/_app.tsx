@@ -19,27 +19,28 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import { far } from '@fortawesome/free-regular-svg-icons';
 import en from 'javascript-time-ago/locale/en';
 import TimeAgo from 'javascript-time-ago';
+import { TopNavBar } from '../src/components/TopNavBar';
 
 TimeAgo.addDefaultLocale(en);
 
 library.add(fas, far);
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyBYdZ07lyFBG6s8x2e06NUDCDmPh12AaX0',
-  authDomain: 'algopro-app.firebaseapp.com',
-  databaseURL:
-    'https://algopro-app-default-rtdb.europe-west1.firebasedatabase.app',
-  projectId: 'algopro-app',
-  storageBucket: 'algopro-app.firebasestorage.app',
-  messagingSenderId: '814731555768',
-  appId: '1:814731555768:web:89691aa18c84f81472154d',
-  measurementId: 'G-DW2XN13WS9',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 if (!firebase.getApps()?.length) {
   if (SHOULD_USE_FIREBASE_EMULATOR) {
     firebase.initializeApp({
-      ...firebaseConfig,
+      projectId: 'algopro-app',
+      apiKey: 'fake-api-key',
       authDomain: '127.0.0.1:9099',
       databaseURL: 'http://127.0.0.1:9000/?ns=algopro-app-default-rtdb',
       storageBucket: 'algopro-app.appspot.com',
@@ -73,6 +74,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       <Toaster position="bottom-right" />
       <UserProvider>
         <ConnectionProvider>
+          <TopNavBar />
           <Component {...pageProps} />
         </ConnectionProvider>
       </UserProvider>

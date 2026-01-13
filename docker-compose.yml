@@ -13,16 +13,22 @@ services:
       context: .
       dockerfile: firebase.Dockerfile
     ports:
-      - '9099:9099'
-      - '9000:9000'
-      - '4000:4000'
-      - '8080:8080'
-      - '5001:5001'
-      - '9199:9199'
+      - '4000:4000' # emulator suite UI
+      - '5001:5001' # functions
+      - '8080:8080' # firestore
+      - '9000:9000' # realtime database
+      - '9099:9099' # auth
+      - '9150:9150' # firestore requests (for emulator suite UI)
+      - '9199:9199' # storage
     volumes:
       - type: bind
         source: functions/
         target: /app/functions
+      - './.firebaserc:/app/.firebaserc'
+      - './firebase.json:/app/firebase.json'
+      - './firestore.rules:/app/firestore.rules'
+      - './database.rules.json:/app/database.rules.json'
+      - './storage.rules:/app/storage.rules'
     depends_on: [functions]
   yjs:
     build:
@@ -50,6 +56,11 @@ services:
       - FIREBASE_STORAGE_EMULATOR_HOST=firebase:9199
       - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
       - FIRESTORE_EMULATOR_HOST=firebase:8080
+      - NEXT_PUBLIC_BASE_URL=http://localhost:3000
+      - NEXT_PUBLIC_YJS_URL=ws://localhost:1234
+      - YJS_API_URL=http://yjs:1234
+      - EXECUTE_URL=http://execute:1235
+      - LOGIN_BOT_URL=http://login-bot:3100
     ports:
       - '3000:3000'
       - '127.0.0.1:9229:9229'
@@ -67,8 +78,6 @@ services:
         source: patches/
         target: /app/patches
     depends_on:
-      firebase:
-        condition: service_healthy
       yjs:
         condition: service_started
       execute:
