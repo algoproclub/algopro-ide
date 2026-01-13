@@ -48,10 +48,19 @@ jobs:
 
           firebase deploy --project "algopro-app-staging" --non-interactive --force
   trigger-vercel-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Create commit
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Sync master to staging and trigger deploy
         run: |
           git config user.name "AlgoPro"
           git config user.email "info@algopro.hu"
+          git checkout -B staging
           git commit -m "Trigger Vercel deployment [skip ci]" --allow-empty
-          git push origin master
+          git push origin staging --force
