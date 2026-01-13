@@ -51,7 +51,7 @@ jobs:
     steps:
       - name: Create commit
         run: |
-          git config user.name "niklaci"
-          git config user.email "laszlo.nikhazy@gmail.com"
+          git config user.name "AlgoPro"
+          git config user.email "info@algopro.hu"
           git commit -m "Trigger Vercel deployment [skip ci]" --allow-empty
           git push origin master
