@@ -49,6 +49,7 @@ jobs:
           firebase deploy --project "algopro-dev" --non-interactive --force
   trigger-vercel-deploy:
     runs-on: ubuntu-latest
+    needs: deploy-firebase
     permissions:
       contents: write
     steps:
