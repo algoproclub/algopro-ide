@@ -1,0 +1,66 @@
+name: Staging
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy-firebase:
+    runs-on: ubuntu-latest
+    env:
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/sa.json
+      FIREBASE_PROJECT_ID: ${{ secrets.STAGING_FIREBASE_PROJECT_ID }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Install dependencies
+        run: cd functions && npm install
+
+      - name: Authenticate with Firebase
+        shell: bash
+        run: |
+          echo '${{ secrets.STAGING_FIREBASE_SERVICE_ACCOUNT }}' > "$GOOGLE_APPLICATION_CREDENTIALS"
+
+      - name: Deploy
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CF_API_SECRET: ${{ secrets.CF_API_SECRET }}
+          LOGIN_BOT_URL: ${{ secrets.LOGIN_BOT_URL }}
+        run: |
+          # Create .env file for Firebase Functions params
+          echo "CF_API_KEY=$CF_API_KEY" >> functions/.env
+          echo "DEEPL_API_KEY=$DEEPL_API_KEY" >> functions/.env
+          echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> functions/.env
+          echo "CF_API_SECRET=$CF_API_SECRET" >> functions/.env
+          echo "LOGIN_BOT_URL=$LOGIN_BOT_URL" >> functions/.env
+
+          firebase deploy --project "algopro-app-staging" --non-interactive --force
+  trigger-vercel-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync master to staging and trigger deploy
+        run: |
+          git config user.name "AlgoPro"
+          git config user.email "info@algopro.hu"
+          git checkout -B staging
+          git commit -m "Trigger Vercel deployment [skip ci]" --allow-empty
+          git push origin staging --force
