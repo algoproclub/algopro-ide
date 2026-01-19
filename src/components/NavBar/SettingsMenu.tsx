@@ -11,17 +11,13 @@ import ReactDOM from 'react-dom';
 import { usePopper } from 'react-popper';
 import { useNullableUserContext } from '../../context/UserContext';
 import { useSetAtom } from 'jotai';
-import {
-  signInWithGoogleAtom,
-  signOutAtom,
-} from '../../atoms/firebaseUserAtoms';
+import { signOutAtom } from '../../atoms/firebaseUserAtoms';
 import { useConnectionContext } from '../../context/ConnectionContext';
 
 export const SettingsMenu = (props: {
   setIsProfileSettingsOpen: (isOpen: boolean) => void;
-}): JSX.Element => {
+}): JSX.Element | null => {
   const { firebaseUser } = useNullableUserContext();
-  const signInWithGoogle = useSetAtom(signInWithGoogleAtom);
   const signOut = useSetAtom(signOutAtom);
   const connectionContext = useConnectionContext();
 
@@ -37,6 +33,10 @@ export const SettingsMenu = (props: {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  if (!firebaseUser) {
+    return null;
+  }
 
   return (
     <Menu as="div" className="relative inline-block text-left">
@@ -89,79 +89,52 @@ export const SettingsMenu = (props: {
                       >
                         <div className="origin-top-right absolute z-10 right-0 w-56 shadow-lg bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none">
                           <div className="py-1">
-                            {firebaseUser ? (
-                              <>
-                                <div className="px-4 py-2 text-sm text-gray-200">
-                                  Signed in as{' '}
-                                  <strong>{firebaseUser.displayName}</strong>
-                                </div>
-                                <Menu.Item>
-                                  {({ active }) => (
-                                    <button
-                                      type="button"
-                                      className={classNames(
-                                        active
-                                          ? 'bg-gray-700 text-gray-100'
-                                          : 'text-gray-200',
-                                        'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
-                                      )}
-                                      onClick={() =>
-                                        props.setIsProfileSettingsOpen(true)
-                                      }
-                                    >
-                                      <CogIcon
-                                        className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
-                                        aria-hidden="true"
-                                      />
-                                      Profile Settings
-                                    </button>
+                            <div className="px-4 py-2 text-sm text-gray-200">
+                              Signed in as{' '}
+                              <strong>{firebaseUser.displayName}</strong>
+                            </div>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  type="button"
+                                  className={classNames(
+                                    active
+                                      ? 'bg-gray-700 text-gray-100'
+                                      : 'text-gray-200',
+                                    'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
                                   )}
-                                </Menu.Item>
-                                <Menu.Item>
-                                  {({ active }) => (
-                                    <button
-                                      type="button"
-                                      className={classNames(
-                                        active
-                                          ? 'bg-gray-700 text-gray-100'
-                                          : 'text-gray-200',
-                                        'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
-                                      )}
-                                      onClick={() => signOut(connectionContext)}
-                                    >
-                                      <ArrowRightOnRectangleIcon
-                                        className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
-                                        aria-hidden="true"
-                                      />
-                                      Sign Out
-                                    </button>
+                                  onClick={() =>
+                                    props.setIsProfileSettingsOpen(true)
+                                  }
+                                >
+                                  <CogIcon
+                                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                    aria-hidden="true"
+                                  />
+                                  Profile Settings
+                                </button>
+                              )}
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  type="button"
+                                  className={classNames(
+                                    active
+                                      ? 'bg-gray-700 text-gray-100'
+                                      : 'text-gray-200',
+                                    'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
                                   )}
-                                </Menu.Item>
-                              </>
-                            ) : (
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button
-                                    type="button"
-                                    className={classNames(
-                                      active
-                                        ? 'bg-gray-700 text-gray-100'
-                                        : 'text-gray-200',
-                                      'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
-                                    )}
-                                    onClick={() =>
-                                      signInWithGoogle(connectionContext)
-                                    }
-                                  >
-                                    <ArrowRightOnRectangleIcon
-                                      className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
-                                      aria-hidden="true"
-                                    />
-                                    Sign In
-                                  </button>
-                                )}
-                              </Menu.Item>
-                            )}
+                                  onClick={() => signOut(connectionContext)}
+                                >
+                                  <ArrowRightOnRectangleIcon
+                                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                    aria-hidden="true"
+                                  />
+                                  Sign Out
+                                </button>
+                              )}
+                            </Menu.Item>
                           </div>
                         </div>
                       </Transition.Child>
