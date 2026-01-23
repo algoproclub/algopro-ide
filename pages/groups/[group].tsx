@@ -41,6 +41,7 @@ const PageContent = () => {
     SchoolStudentDataType[]
   >([]);
   const [memberEditorOpen, setMemberEditorOpen] = useState<boolean>(false);
+  const [showAllStudents, setShowAllStudents] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -124,9 +125,25 @@ const PageContent = () => {
             </Link>
           </div>
         </div>
+        <div className="p-4 border-b border-gray-600 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-gray-300">Add student:</div>
+          <div className="flex flex-1 items-center gap-2">
+            <input
+              className="w-full px-3 py-2 rounded-md bg-gray-800 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Search by name…"
+              type="text"
+            />
+            <button
+              className="px-4 py-2.5 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 rounded-md whitespace-nowrap"
+              onClick={() => setShowAllStudents(true)}
+            >
+              List all students
+            </button>
+          </div>
+        </div>
         <div className="w-full divide-y divide-gray-700 bg-gray-900 min-h-4">
           {schoolStudentDatas
-            .filter(data => memberEditorOpen || data.isInGroup)
+            .filter(data => showAllStudents || data.isInGroup)
             .map(data => (
               <div key={data.uid} className="flex items-center justify-between">
                 <div className="p-4">{data.name}</div>
