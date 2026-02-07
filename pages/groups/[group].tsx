@@ -177,11 +177,14 @@ const PageContent = () => {
                         No matches.
                       </div>
                     ) : (
-                      filteredSuggestions.map(data => (
+                    filteredSuggestions.map(data => (
+                      <div
+                        key={data.uid}
+                        className="w-full px-3 py-2 hover:bg-gray-700 flex items-center justify-between gap-2"
+                      >
                         <button
-                          key={data.uid}
                           type="button"
-                          className="w-full text-left px-3 py-2 hover:bg-gray-700"
+                          className="text-left flex-1"
                           onClick={() => {
                             setSelectedStudentId(data.uid);
                             setSearchQuery('');
@@ -189,9 +192,17 @@ const PageContent = () => {
                         >
                           {data.name}
                         </button>
-                      ))
-                    )}
-                  </div>
+                        <button
+                          type="button"
+                          className={`${data.isInGroup ? 'bg-red-700 hover:bg-red-800 active:bg-red-900' : 'bg-green-700 hover:bg-green-800 active:bg-green-900'} rounded-md px-2 py-1 text-xs`}
+                          onClick={() => toggleInGroup(data)}
+                        >
+                          {data.isInGroup ? 'Remove' : 'Add'}
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
                 )}
               </div>
               <button
