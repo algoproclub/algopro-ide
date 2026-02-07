@@ -48,6 +48,14 @@ const PageContent = () => {
   );
 
   useEffect(() => {
+    if (!memberEditorOpen) {
+      setSearchQuery('');
+      setSelectedStudentId(null);
+      setShowAllStudents(false);
+    }
+  }, [memberEditorOpen]);
+
+  useEffect(() => {
     (async () => {
       if (group === null) return;
 
@@ -148,51 +156,53 @@ const PageContent = () => {
             </Link>
           </div>
         </div>
-        <div className="p-4 border-b border-gray-600 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm text-gray-300">Add student:</div>
-          <div className="flex flex-1 items-center gap-2">
-            <div className="relative w-full">
-              <input
-                className="w-full px-3 py-2 rounded-md bg-gray-800 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Search by name…"
-                type="text"
-                value={searchQuery}
-                onChange={event => {
-                  setSearchQuery(event.target.value);
-                }}
-              />
-              {normalizedQuery.length > 0 && (
-                <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-600 bg-gray-800 shadow-lg">
-                  {filteredSuggestions.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-gray-400">
-                      No matches.
-                    </div>
-                  ) : (
-                    filteredSuggestions.map(data => (
-                      <button
-                        key={data.uid}
-                        type="button"
-                        className="w-full text-left px-3 py-2 hover:bg-gray-700"
-                        onClick={() => {
-                          setSelectedStudentId(data.uid);
-                          setSearchQuery('');
-                        }}
-                      >
-                        {data.name}
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
+        {memberEditorOpen && (
+          <div className="p-4 border-b border-gray-600 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm text-gray-300">Add student:</div>
+            <div className="flex flex-1 items-center gap-2">
+              <div className="relative w-full">
+                <input
+                  className="w-full px-3 py-2 rounded-md bg-gray-800 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Search by name…"
+                  type="text"
+                  value={searchQuery}
+                  onChange={event => {
+                    setSearchQuery(event.target.value);
+                  }}
+                />
+                {normalizedQuery.length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-600 bg-gray-800 shadow-lg">
+                    {filteredSuggestions.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-gray-400">
+                        No matches.
+                      </div>
+                    ) : (
+                      filteredSuggestions.map(data => (
+                        <button
+                          key={data.uid}
+                          type="button"
+                          className="w-full text-left px-3 py-2 hover:bg-gray-700"
+                          onClick={() => {
+                            setSelectedStudentId(data.uid);
+                            setSearchQuery('');
+                          }}
+                        >
+                          {data.name}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+              <button
+                className="px-4 py-2.5 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 rounded-md whitespace-nowrap"
+                onClick={() => setShowAllStudents(prev => !prev)}
+              >
+                {showAllStudents ? 'List all members' : 'List all students'}
+              </button>
             </div>
-            <button
-              className="px-4 py-2.5 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 rounded-md whitespace-nowrap"
-              onClick={() => setShowAllStudents(prev => !prev)}
-            >
-              {showAllStudents ? 'List all members' : 'List all students'}
-            </button>
           </div>
-        </div>
+        )}
         <div className="w-full divide-y divide-gray-700 bg-gray-900 min-h-4">
           {listStudents.map(data => (
             <div key={data.uid} className="flex items-center justify-between">
