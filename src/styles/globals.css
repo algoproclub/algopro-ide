@@ -165,3 +165,43 @@ body {
     color: var(--terminal-blue);
   }
 }
+
+/* Emulate the indent-rainbow vscode extension by overriding internal Monaco styles. */
+div[data-mode-id='python'] .view-overlays {
+  & div:nth-child(3n of :is(.core-guide-indent, .core-guide-indent-active)) {
+    --algopro-indent-color: var(
+      --vscode-editorBracketHighlight-foreground1,
+      var(--terminal-magenta)
+    );
+  }
+
+  &
+    div:nth-child(
+      3n + 1 of :is(.core-guide-indent, .core-guide-indent-active)
+    ) {
+    --algopro-indent-color: var(
+      --vscode-editorBracketHighlight-foreground2,
+      var(--terminal-blue)
+    );
+  }
+
+  &
+    div:nth-child(
+      3n + 2 of :is(.core-guide-indent, .core-guide-indent-active)
+    ) {
+    --algopro-indent-color: var(
+      --vscode-editorBracketHighlight-foreground3,
+      var(--terminal-yellow)
+    );
+  }
+
+  .core-guide-indent {
+    box-shadow: 1px 0 0 0 rgb(from var(--algopro-indent-color) r g b / 50%)
+      inset !important;
+  }
+
+  .core-guide-indent-active {
+    box-shadow: 1.25px 0 0 0 rgb(from var(--algopro-indent-color) r g b / 80%)
+      inset !important;
+  }
+}
