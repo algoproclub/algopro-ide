@@ -58,6 +58,7 @@ export const WorkspaceSettingsModal = ({
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
   const [tabSize, setTabSize] = useState<number>(-1);
   const [lightMode, setLightMode] = useState<boolean>(false);
+  const [rainbowIndent, setRainbowIndent] = useState<boolean>(false);
   const [manualSubmission, setManualSubmission] = useState<boolean>(false);
   const [templateCode, setTemplateCode] = useState<
     Partial<Record<Language, string>>
@@ -75,6 +76,7 @@ export const WorkspaceSettingsModal = ({
       setEditorMode(userData.editorMode);
       setTabSize(userData.tabSize);
       setLightMode(userData.lightMode);
+      setRainbowIndent(userData.rainbowIndent);
       setManualSubmission(userData.manualSubmission);
       setTemplateCode(savedTemplateCode);
       dirtyRef.current = false;
@@ -137,6 +139,7 @@ export const WorkspaceSettingsModal = ({
       editorMode,
       tabSize,
       lightMode,
+      rainbowIndent,
       manualSubmission,
       templateCode,
     });

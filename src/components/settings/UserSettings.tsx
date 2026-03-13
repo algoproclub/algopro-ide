@@ -135,6 +135,8 @@ export default function UserSettings({
   onTabSizeChange,
   lightMode,
   onLightModeChange,
+  rainbowIndent,
+  onRainbowIndentChange,
   manualSubmission,
   onManualSubmissionChange,
   templateCode,
@@ -158,6 +160,8 @@ export default function UserSettings({
   onTabSizeChange: (tabSize: number) => void;
   lightMode: boolean;
   onLightModeChange: (lightMode: boolean) => void;
+  rainbowIndent: boolean;
+  onRainbowIndentChange: (rainbowIndent: boolean) => void;
   manualSubmission: boolean;
   onManualSubmissionChange: (manualSubmission: boolean) => void;
   templateCode: Partial<Record<Language, string>>;
@@ -281,6 +285,15 @@ export default function UserSettings({
               options={[
                 { label: 'Dark', value: false },
                 { label: 'Light', value: true },
+              ]}
+            />
+            <RadioGroupContents
+              title="Rainbow indent guides (not working on mobile phones)"
+              value={rainbowIndent}
+              onChange={onRainbowIndentChange}
+              options={[
+                { label: 'Off', value: false },
+                { label: 'On', value: true },
               ]}
             />
             <RadioGroupContents
