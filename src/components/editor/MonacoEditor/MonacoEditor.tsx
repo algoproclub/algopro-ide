@@ -17,20 +17,20 @@ import { MonacoBinding } from 'y-monaco';
 const RAINBOW_INDENT_STYLE_ID = 'algopro-rainbow-indent-styles';
 const RAINBOW_INDENT_COLORS = {
   dark: [
-    'rgba(255, 99, 132, 0.10)',
-    'rgba(255, 159, 64, 0.10)',
-    'rgba(255, 205, 86, 0.10)',
-    'rgba(75, 192, 192, 0.10)',
-    'rgba(54, 162, 235, 0.10)',
-    'rgba(153, 102, 255, 0.10)',
+    'rgba(150, 140, 35, 0.34)',
+    'rgba(44, 110, 52, 0.34)',
+    'rgba(20, 111, 112, 0.34)',
+    'rgba(24, 93, 150, 0.34)',
+    'rgba(91, 44, 130, 0.34)',
+    'rgba(128, 34, 92, 0.34)',
   ],
   light: [
-    'rgba(255, 99, 132, 0.14)',
-    'rgba(255, 159, 64, 0.14)',
-    'rgba(255, 205, 86, 0.14)',
-    'rgba(75, 192, 192, 0.14)',
-    'rgba(54, 162, 235, 0.14)',
-    'rgba(153, 102, 255, 0.14)',
+    'rgba(175, 164, 45, 0.22)',
+    'rgba(52, 134, 63, 0.22)',
+    'rgba(24, 138, 140, 0.22)',
+    'rgba(31, 114, 184, 0.22)',
+    'rgba(112, 56, 160, 0.22)',
+    'rgba(153, 43, 110, 0.22)',
   ],
 };
 
@@ -91,6 +91,19 @@ function ensureRainbowIndentStyles() {
           .rainbow-indent-${mode}-${index} {
             background-color: ${color};
           }
+
+          .rainbow-indent-${mode}-${index}-edge {
+            background-image:
+              linear-gradient(${color}, ${color}),
+              repeating-linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0.30) 0 3px,
+                transparent 3px 6px
+              );
+            background-size: calc(100% - 1px) 100%, 1px 100%;
+            background-position: left top, right top;
+            background-repeat: no-repeat;
+          }
         `
       )
     )
@@ -120,7 +133,8 @@ function computeRainbowIndentDecorations(
         if (ch !== ' ' && ch !== '\t') break;
 
         const level = Math.floor(visualColumn / tabSize);
-        visualColumn += ch === '\t' ? tabSize - (visualColumn % tabSize) : 1;
+        const width = ch === '\t' ? tabSize - (visualColumn % tabSize) : 1;
+        visualColumn += width;
         decorations.push({
           range: new monaco.Range(
             lineNumber,
@@ -129,7 +143,9 @@ function computeRainbowIndentDecorations(
             index + 2
           ),
           options: {
-            inlineClassName: `rainbow-indent-${themeMode}-${level % 6}`,
+            inlineClassName: `rainbow-indent-${themeMode}-${level % 6}${
+              visualColumn % tabSize === 0 ? '-edge' : ''
+            }`,
           },
         });
       }
