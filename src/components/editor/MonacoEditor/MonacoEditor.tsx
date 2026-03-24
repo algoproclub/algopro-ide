@@ -14,6 +14,26 @@ import { AlgoProMonacoEditor, EditorProps } from './monaco-editor-types';
 import useLSP from './lsp';
 import { MonacoBinding } from 'y-monaco';
 
+const RAINBOW_INDENT_STYLE_ID = 'algopro-rainbow-indent-styles';
+const RAINBOW_INDENT_COLORS = {
+  dark: [
+    'rgba(150, 140, 35, 0.34)',
+    'rgba(44, 110, 52, 0.34)',
+    'rgba(20, 111, 112, 0.34)',
+    'rgba(24, 93, 150, 0.34)',
+    'rgba(91, 44, 130, 0.34)',
+    'rgba(128, 34, 92, 0.34)',
+  ],
+  light: [
+    'rgba(175, 164, 45, 0.22)',
+    'rgba(52, 134, 63, 0.22)',
+    'rgba(24, 138, 140, 0.22)',
+    'rgba(31, 114, 184, 0.22)',
+    'rgba(112, 56, 160, 0.22)',
+    'rgba(153, 43, 110, 0.22)',
+  ],
+};
+
 buildWorkerDefinition(
   '/monaco-workers',
   new URL('', window.location.href).href,
@@ -59,6 +79,82 @@ const rebindAction = (
   }
 };
 
+function ensureRainbowIndentStyles() {
+  if (document.getElementById(RAINBOW_INDENT_STYLE_ID)) return;
+
+  const style = document.createElement('style');
+  style.id = RAINBOW_INDENT_STYLE_ID;
+  style.textContent = ['dark', 'light']
+    .flatMap(mode =>
+      RAINBOW_INDENT_COLORS[mode as 'dark' | 'light'].map(
+        (color, index) => `
+          .rainbow-indent-${mode}-${index} {
+            background-color: ${color};
+          }
+
+          .rainbow-indent-${mode}-${index}-edge {
+            background-image:
+              linear-gradient(${color}, ${color}),
+              repeating-linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0.30) 0 3px,
+                transparent 3px 6px
+              );
+            background-size: calc(100% - 1px) 100%, 1px 100%;
+            background-position: left top, right top;
+            background-repeat: no-repeat;
+          }
+        `
+      )
+    )
+    .join('\n');
+  document.head.appendChild(style);
+}
+
+function computeRainbowIndentDecorations(
+  editor: monaco.editor.IStandaloneCodeEditor,
+  themeMode: 'dark' | 'light',
+  tabSize: number
+) {
+  const model = editor.getModel();
+  if (!model) return [];
+
+  const decorations: monaco.editor.IModelDeltaDecoration[] = [];
+  for (const visibleRange of editor.getVisibleRanges()) {
+    for (
+      let lineNumber = visibleRange.startLineNumber;
+      lineNumber <= visibleRange.endLineNumber;
+      lineNumber++
+    ) {
+      let visualColumn = 0;
+      const line = model.getLineContent(lineNumber);
+      for (let index = 0; index < line.length; index++) {
+        const ch = line[index];
+        if (ch !== ' ' && ch !== '\t') break;
+
+        const level = Math.floor(visualColumn / tabSize);
+        const width = ch === '\t' ? tabSize - (visualColumn % tabSize) : 1;
+        visualColumn += width;
+        decorations.push({
+          range: new monaco.Range(
+            lineNumber,
+            index + 1,
+            lineNumber,
+            index + 2
+          ),
+          options: {
+            inlineClassName: `rainbow-indent-${themeMode}-${level % 6}${
+              visualColumn % tabSize === 0 ? '-edge' : ''
+            }`,
+          },
+        });
+      }
+    }
+  }
+
+  return decorations;
+}
+
 export default function MonacoEditor({
   path,
   theme,
@@ -71,6 +167,7 @@ export default function MonacoEditor({
   value = '',
   onBeforeDispose,
   vim = false,
+  rainbowIndent = false,
   lspOptions,
   yjsInfo,
 }: EditorProps) {
@@ -106,6 +203,7 @@ export default function MonacoEditor({
     // https://github.com/algoproclub/algopro-ide/issues/287
     editorRef.current._lineHighlight = null;
     editorRef.current._lineHighlightTimeout = null;
+    editorRef.current._rainbowIndentDecorations = [];
     editorRef.current.setLineHighlight = function (line: number) {
       const model = this.getModel();
       if (!model || line < 1 || line > model.getLineCount()) {
@@ -245,6 +343,53 @@ export default function MonacoEditor({
     // theme is global
     monaco.editor.setTheme(theme ?? 'vs-dark-sema');
   }, [theme]);
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+
+    const editor = editorRef.current;
+    const clear = () => {
+      editor._rainbowIndentDecorations = editor.deltaDecorations(
+        editor._rainbowIndentDecorations,
+        []
+      );
+    };
+
+    if (!rainbowIndent) {
+      clear();
+      return;
+    }
+
+    ensureRainbowIndentStyles();
+
+    const render = () => {
+      const tabSize =
+        editor.getOption(monaco.editor.EditorOption.tabSize) || 4;
+      editor._rainbowIndentDecorations = editor.deltaDecorations(
+        editor._rainbowIndentDecorations,
+        computeRainbowIndentDecorations(
+          editor,
+          theme === 'vs-sema' ? 'light' : 'dark',
+          tabSize
+        )
+      );
+    };
+
+    render();
+
+    const disposables = [
+      editor.onDidScrollChange(render),
+      editor.onDidChangeModelContent(render),
+      editor.onDidChangeModel(render),
+      editor.onDidChangeConfiguration(render),
+      editor.onDidLayoutChange(render),
+    ];
+
+    return () => {
+      disposables.forEach(disposable => disposable.dispose());
+      clear();
+    };
+  }, [rainbowIndent, theme, path]);
 
   useUpdate(() => {
     monaco.editor.setModelLanguage(

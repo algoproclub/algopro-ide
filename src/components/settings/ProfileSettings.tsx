@@ -23,6 +23,7 @@ const ProfileSettings = ({
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
   const [tabSize, setTabSize] = useState<number>(-1);
   const [lightMode, setLightMode] = useState<boolean>(false);
+  const [rainbowIndent, setRainbowIndent] = useState<boolean>(false);
   const [manualSubmission, setManualSubmission] = useState<boolean>(false);
   const [templateCode, setTemplateCode] = useState<
     Partial<Record<Language, string>>
@@ -48,6 +49,7 @@ const ProfileSettings = ({
       setEditorMode(userData?.editorMode ?? 'Normal');
       setTabSize(userData?.tabSize ?? -1);
       setLightMode(userData?.lightMode ?? false);
+      setRainbowIndent(userData?.rainbowIndent ?? false);
       setManualSubmission(userData?.manualSubmission ?? false);
       setTemplateCode(savedTemplateCode ?? {});
       setTemplateLanguage(userData?.defaultLanguage ?? 'cpp');
@@ -125,6 +127,7 @@ const ProfileSettings = ({
       editorMode,
       tabSize,
       lightMode,
+      rainbowIndent,
       manualSubmission,
       templateCode,
     });
@@ -218,6 +221,11 @@ const ProfileSettings = ({
                       lightMode={lightMode}
                       onLightModeChange={lightMode => {
                         setLightMode(lightMode);
+                        dirtyRef.current = true;
+                      }}
+                      rainbowIndent={rainbowIndent}
+                      onRainbowIndentChange={rainbowIndent => {
+                        setRainbowIndent(rainbowIndent);
                         dirtyRef.current = true;
                       }}
                       manualSubmission={manualSubmission}

@@ -59,7 +59,7 @@ export const CodeInterface = ({
   }, [codemirrorEditor, setMainCodemirrorEditor]);
 
   const {
-    userData: { tabSize, lightMode },
+    userData: { tabSize, lightMode, rainbowIndent },
     templateCode,
   } = useUserContext();
 
@@ -74,6 +74,7 @@ export const CodeInterface = ({
         {problem !== undefined && (
           <LazyRealtimeEditor
             theme={lightMode ? 'light' : 'dark'}
+            rainbowIndent={rainbowIndent}
             language={{ cpp: 'cpp', java: 'java', py: 'python' }[lang]}
             path={`myfile.${lang}`}
             options={

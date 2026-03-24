@@ -14,6 +14,7 @@ export interface AlgoProMonacoEditor
   extends Monaco.editor.IStandaloneCodeEditor {
   _lineHighlight: string | null;
   _lineHighlightTimeout: ReturnType<typeof setTimeout> | null;
+  _rainbowIndentDecorations: string[];
   setLineHighlight: (line: number) => void;
   clearLineHighlight: () => void;
 }
@@ -135,6 +136,8 @@ export interface EditorProps {
   onCodemirrorMount?: ReactCodeMirrorProps['onCreateEditor'];
 
   vim?: boolean;
+
+  rainbowIndent?: boolean;
 
   /**
    * Set to undefined / null to disable LSP.
