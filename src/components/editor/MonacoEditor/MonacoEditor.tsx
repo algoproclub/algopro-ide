@@ -136,12 +136,7 @@ function computeRainbowIndentDecorations(
         const width = ch === '\t' ? tabSize - (visualColumn % tabSize) : 1;
         visualColumn += width;
         decorations.push({
-          range: new monaco.Range(
-            lineNumber,
-            index + 1,
-            lineNumber,
-            index + 2
-          ),
+          range: new monaco.Range(lineNumber, index + 1, lineNumber, index + 2),
           options: {
             inlineClassName: `rainbow-indent-${themeMode}-${level % 6}${
               visualColumn % tabSize === 0 ? '-edge' : ''
@@ -363,8 +358,7 @@ export default function MonacoEditor({
     ensureRainbowIndentStyles();
 
     const render = () => {
-      const tabSize =
-        editor.getOption(monaco.editor.EditorOption.tabSize) || 4;
+      const tabSize = editor.getModel()?.getOptions().tabSize ?? 4;
       editor._rainbowIndentDecorations = editor.deltaDecorations(
         editor._rainbowIndentDecorations,
         computeRainbowIndentDecorations(
