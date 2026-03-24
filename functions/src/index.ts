@@ -405,6 +405,11 @@ const updateResultNonCF = async (submissionData: SubmissionData) => {
   await getAndUpdate(fetcher, submissionData.fileID);
 };
 
+const getContestId = (problemID: string): string => {
+  const stripped = problemID.startsWith('gym') ? problemID.slice(3) : problemID;
+  return stripped.match(/^(\d+)/)?.[1] ?? '';
+};
+
 const updateResultsCF = async (
   submissionDataList: SubmissionData[] | undefined
 ) => {
@@ -414,12 +419,15 @@ const updateResultsCF = async (
   const sorted = submissionDataList.sort(
     (a, b) => a.creationTime - b.creationTime
   );
-  const username = sorted[0].username;
+  const first = sorted[0];
+  const contestId = getContestId(first.problemID);
+  const username = first.username;
   submissionDataList = submissionDataList.filter(
-    submissionData => submissionData.username === username
+    s => getContestId(s.problemID) === contestId && s.username === username
   );
 
-  const url = getCFRequestURL('user.status', {
+  const url = getCFRequestURL('contest.status', {
+    contestId,
     handle: username,
   });
   const resp = await fetch(url);
@@ -643,7 +651,10 @@ const updateStatus = async () => {
   }
 };
 
-const region = process.env.IS_TEST_ENV ? 'us-central1' : 'europe-west1';
+const region =
+  process.env.IS_TEST_ENV || process.env.FUNCTIONS_EMULATOR
+    ? 'us-central1'
+    : 'europe-west1';
 
 exports.onlockdeleted = onValueDeleted(
   { ref: 'submissions/lock', region },
