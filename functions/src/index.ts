@@ -349,6 +349,17 @@ const updateStatusData = async (
   }
   if (statusData.message === 'correct answer') {
     updates[`files/${id}/solvedStatus/solved`] = true;
+    try {
+      const [ownerID, problem] = await Promise.all([
+        getFileOwner(id),
+        db.ref(`files/${id}/problem`).get().then(s => s.val() as { platform: string; id: string } | null),
+      ]);
+      if (ownerID && problem?.platform && problem?.id) {
+        updates[`users/${ownerID}/platform-${problem.platform}/solved/${problem.id}`] = true;
+      }
+    } catch (e) {
+      console.error('Failed to denormalize solved status for file', id, e);
+    }
   }
   await db.ref().update(updates);
 
