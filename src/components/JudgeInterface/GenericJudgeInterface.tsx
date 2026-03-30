@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ProblemData, Translation } from '../../types/problem';
 import {
   ArrowTopRightOnSquareIcon,
@@ -6,6 +6,7 @@ import {
 } from '@heroicons/react/20/solid';
 import { Listbox, Transition } from '@headlessui/react';
 import HTMLStatement from './HTMLStatement';
+import { buildGraphEditorUrlFromStatement } from '../../utils/graphEditor';
 
 // TODO: We should be getting this from some sort of library.
 const LANGUAGE_INFO: Record<string, { name: string; flag: string }> = {
@@ -121,6 +122,11 @@ export default function GenericJudgeInterface({
   const languages = Object.keys(translations);
 
   const translation = translations[language];
+  const graphUrl = useMemo(() => {
+    if (!problem.graphEditorEnabled) return null;
+    if (!translation || !('statement' in translation)) return null;
+    return buildGraphEditorUrlFromStatement(translation.statement);
+  }, [problem.graphEditorEnabled, translation]);
 
   return (
     <div className="relative h-full flex flex-col text-[0.92rem]">
@@ -157,6 +163,16 @@ export default function GenericJudgeInterface({
             ) : (
               <PDFDisplay url={translation.statementURL} />
             ))}
+          {graphUrl && (
+            <div className="mt-4">
+              <button
+                className="px-3 py-1 text-sm rounded-md border border-gray-600 hover:bg-gray-800 active:bg-gray-700"
+                onClick={() => window.open(graphUrl, '_blank', 'noopener')}
+              >
+                Graph editor
+              </button>
+            </div>
+          )}
           {(problem.timeLimit || problem.memoryLimit) && (
             <div>
               <h4 className="text-base font-semibold mt-[0.6rem] mb-[0.25rem]">

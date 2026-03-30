@@ -92,6 +92,9 @@ export type ProblemData = {
   samples: Sample[];
   hints?: Hint[];
   topicID?: string;
+  graphEditorEnabled?: boolean;
+  graphEditorPayload?: string;
+  graphInputRaw?: string;
 };
 
 export type ProblemSolution = {
