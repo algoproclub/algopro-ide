@@ -10,11 +10,13 @@ import {
 } from 'firebase/firestore';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import {
+  Hint,
   Language,
   Platform,
   ProblemData,
   ProblemTag,
   problemTags,
+  Sample,
 } from '../../../src/types/problem';
 import dynamic from 'next/dynamic';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
@@ -25,7 +27,6 @@ import {
   handleKeyDown,
 } from '../../../src/components/EditTextModal';
 import WithAdminLogin from '../../../src/components/WithAdminLogin';
-import { Hint } from '../../../src/types/problem';
 import Dropdown from '../../../src/components/Dropdown';
 import Checkbox from '../../../src/components/Checkbox';
 
@@ -53,6 +54,24 @@ const translateOpenAI = httpsCallable<
 >(getFunctions(undefined, 'europe-west1'), 'translateOpenAI');
 
 const codeLangs: Language[] = ['cpp', 'py', 'java'];
+
+function normalizeSamples(samples: unknown): Sample[] {
+  if (!Array.isArray(samples)) return [];
+
+  return samples.map(sample => {
+    const normalizedSample = sample as Partial<Sample> | null;
+    return {
+      input:
+        typeof normalizedSample?.input === 'string'
+          ? normalizedSample.input
+          : '',
+      output:
+        typeof normalizedSample?.output === 'string'
+          ? normalizedSample.output
+          : '',
+    };
+  });
+}
 
 const SaveStatusIndicator = ({ saved }: { saved: boolean }) => {
   return (
@@ -284,6 +303,59 @@ const EditHintModal = ({
   );
 };
 
+const EditSampleModal = ({
+  isOpen,
+  sample,
+  setSample,
+  onSave,
+  onClose,
+}: {
+  isOpen: boolean;
+  sample: Sample;
+  setSample: React.Dispatch<React.SetStateAction<Sample>>;
+  onSave: (sample: Sample) => void;
+  onClose: () => void;
+}) => {
+  return (
+    <EditModal<Sample>
+      isOpen={isOpen}
+      title="Edit sample"
+      value={sample}
+      onSave={(val: Sample) => {
+        onSave(val);
+        onClose();
+      }}
+      onClose={onClose}
+      renderEditor={(val, setVal) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <div className="text-sm mb-1">Input</div>
+            <textarea
+              className="font-mono h-60 bg-gray-900 border-gray-700 w-full min-h-[10rem] text-sm"
+              value={val.input}
+              onKeyDown={handleKeyDown}
+              onChange={e => {
+                setVal(prev => ({ ...prev, input: e.target.value }));
+              }}
+            />
+          </div>
+          <div>
+            <div className="text-sm mb-1">Output</div>
+            <textarea
+              className="font-mono h-60 bg-gray-900 border-gray-700 w-full min-h-[10rem] text-sm"
+              value={val.output}
+              onKeyDown={handleKeyDown}
+              onChange={e => {
+                setVal(prev => ({ ...prev, output: e.target.value }));
+              }}
+            />
+          </div>
+        </div>
+      )}
+    />
+  );
+};
+
 const RemovableTag = ({
   tag,
   idx,
@@ -409,15 +481,24 @@ const PageContent = () => {
   const [initSolution, setInitSolution] = useState<string>('');
   const [solution, setSolution] = useState<string>('');
   const [editedHint, setEditedHint] = useState<Hint>('');
+  const [editedSample, setEditedSample] = useState<Sample>({
+    input: '',
+    output: '',
+  });
   const [tags, setTags] = useState<ProblemTag[]>([]);
+  const [samples, setSamples] = useState<Sample[]>([]);
   const [addedTag, setAddedTag] = useState<string>('');
   const [onSaveHint, setOnSaveHint] = useState<() => (h: Hint) => void>(
+    () => _ => {}
+  );
+  const [onSaveSample, setOnSaveSample] = useState<() => (s: Sample) => void>(
     () => _ => {}
   );
   const [unsaved, setUnsaved] = useState(false);
   const [unsavedSol, setUnsavedSol] = useState(false);
   const [language, setLanguage] = useState('-');
   const [solutionLanguage, setSolutionLanguage] = useState(0);
+  const [isSampleModalOpen, setIsSampleModalOpen] = useState(false);
   const router = useRouter();
 
   const getTranslated = async (platform: string, id: string) => {
@@ -456,6 +537,9 @@ const PageContent = () => {
         setTranslated(data?.statement ?? '');
         setHints(data?.hints ?? []);
         setTags(data?.tags ?? []);
+        if (language === '-') {
+          setSamples(normalizeSamples(data?.samples));
+        }
       })
       .catch(error => {
         console.error(error);
@@ -506,7 +590,9 @@ const PageContent = () => {
     }
     (async () => {
       try {
-        setOriginal((await getOriginal(platform, problemID)).statement ?? '');
+        const problemData = await getOriginal(platform, problemID);
+        setOriginal(problemData.statement ?? '');
+        setSamples(normalizeSamples(problemData.samples));
         setInitSolution(await getSolution(platform, problemID));
         updateTranslated();
       } catch (error) {
@@ -581,6 +667,7 @@ const PageContent = () => {
         statement: translated,
         hints,
         tags,
+        samples: normalizeSamples(samples),
       });
     } else {
       await setDoc(problemDoc, {
@@ -614,6 +701,15 @@ const PageContent = () => {
       setHints(prev => [...prev, h]);
     });
     setIsOpen(true);
+  };
+
+  const handleAddNewSample = () => {
+    setEditedSample({ input: '', output: '' });
+    setOnSaveSample(() => (sample: Sample) => {
+      setUnsaved(true);
+      setSamples(prev => [...prev, sample]);
+    });
+    setIsSampleModalOpen(true);
   };
 
   const handleAutoTranslateDeepl = async () => {
@@ -719,6 +815,13 @@ const PageContent = () => {
         onSave={onSaveHint}
         onClose={() => setIsOpen(false)}
       />
+      <EditSampleModal
+        isOpen={isSampleModalOpen}
+        sample={editedSample}
+        setSample={setEditedSample}
+        onSave={onSaveSample}
+        onClose={() => setIsSampleModalOpen(false)}
+      />
       <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
         <HTMLEditor path="original" readonly={true} text={original} />
         <HTMLEditor
@@ -781,6 +884,100 @@ const PageContent = () => {
           </table>
         </div>
       </div>
+      {language === '-' && (
+        <div className="bg-gray-800 mt-2 flex flex-col">
+          <div className="border border-gray-600 flex items-center justify-between bg-gray-800 px-3 py-2 border-b text-sm space-x-2">
+            <span className="font-bold">Samples</span>
+            <button
+              className="rounded-md border border-gray-600 px-2 py-1 hover:bg-gray-700 active:bg-gray-600 flex items-center"
+              onClick={handleAddNewSample}
+            >
+              New
+              <FontAwesomeIcon
+                icon={{ prefix: 'fas', iconName: 'plus' }}
+                className="ml-2 w-4 h-4 inline"
+              />
+            </button>
+          </div>
+          <div className="max-h-[16rem] border-b border-gray-700 overflow-auto">
+            <table className="text-sm bg-gray-900 border-collapse w-full">
+              <tbody className="divide-y divide-gray-700">
+                {samples.map((sample, index) => (
+                  <tr key={index}>
+                    <td className="w-10 py-2 px-3 border-x border-gray-700 align-top">
+                      {index + 1}
+                    </td>
+                    <td className="w-1/2 py-2 px-3 border-x border-gray-700 align-top">
+                      <div className="text-xs text-gray-400 mb-1">Input</div>
+                      <pre className="whitespace-pre-wrap font-mono text-sm">
+                        {sample.input || (
+                          <span className="text-gray-500">No input specified</span>
+                        )}
+                      </pre>
+                    </td>
+                    <td className="w-1/2 py-2 px-3 border-x border-gray-700 align-top">
+                      <div className="text-xs text-gray-400 mb-1">Output</div>
+                      <pre className="whitespace-pre-wrap font-mono text-sm">
+                        {sample.output || (
+                          <span className="text-gray-500">
+                            No output specified
+                          </span>
+                        )}
+                      </pre>
+                    </td>
+                    <td className="space-x-1 px-3 py-2 w-[5.5rem] border-x border-gray-700 align-top">
+                      <div className="flex items-center">
+                        <button
+                          className="px-2 py-1 rounded-md hover:bg-gray-700"
+                          onClick={() => {
+                            setEditedSample(sample);
+                            setOnSaveSample(() => (nextSample: Sample) => {
+                              setUnsaved(true);
+                              setSamples(prev =>
+                                prev.map((currentSample, currentIndex) =>
+                                  currentIndex === index
+                                    ? nextSample
+                                    : currentSample
+                                )
+                              );
+                            });
+                            setIsSampleModalOpen(true);
+                          }}
+                        >
+                          <FontAwesomeIcon
+                            icon={{ prefix: 'fas', iconName: 'edit' }}
+                            className="w-3.5 h-3.5 inline"
+                          />
+                        </button>
+                        <button
+                          className="px-2 py-1 rounded-md hover:bg-gray-700"
+                          onClick={() => {
+                            if (
+                              confirm(
+                                'The sample will be deleted. Do you want to proceed?'
+                              )
+                            ) {
+                              setUnsaved(true);
+                              setSamples(prev =>
+                                prev.filter((_, sampleIndex) => sampleIndex !== index)
+                              );
+                            }
+                          }}
+                        >
+                          <FontAwesomeIcon
+                            icon={{ prefix: 'fas', iconName: 'trash' }}
+                            className="w-3.5 h-3.5 inline"
+                          />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
       <div className="mt-2 p-4 bg-gray-800 border border-gray-600">
         <div className="w-full flex justify-between mb-1.5">
           <span className="font-semibold text-sm inline-block">Solutions</span>
