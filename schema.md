@@ -28,7 +28,7 @@
     - `platform`: same as parent doc id
     - `title`: string
     - `url`: string
-    - `source`: ??
+    - `source`: string (platform + id nicely formatted)
     - `statement`: string
     - `submittable`: boolean
     - `memoryLimit`: string
