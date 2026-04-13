@@ -491,8 +491,8 @@ const PageContent = () => {
   const [onSaveHint, setOnSaveHint] = useState<() => (h: Hint) => void>(
     () => _ => {}
   );
-  const [onSaveSample, setOnSaveSample] = useState<() => (s: Sample) => void>(
-    () => _ => {}
+  const [onSaveSample, setOnSaveSample] = useState<(s: Sample) => void>(
+    () => {}
   );
   const [unsaved, setUnsaved] = useState(false);
   const [unsavedSol, setUnsavedSol] = useState(false);
