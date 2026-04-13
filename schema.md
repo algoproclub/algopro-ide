@@ -24,19 +24,19 @@
 
   - id format: upstream id format
   - fields:
-    - `id`: same as doc id
-    - `platform`: same as parent doc id
-    - `title`: string
-    - `url`: string
-    - `source`: string (platform + id nicely formatted)
-    - `statement`: string
-    - `submittable`: boolean
-    - `memoryLimit`: string
-    - `input`: string?? (stdin)
-    - `output`: string?? (stdout)
-    - `hints`: ?[]
-    - `samples`: ?[]
-    - `tags`: ?[]
+    - `id`: `string` - same as doc id
+    - `platform`: `string` - same as parent doc id
+    - `title`: `string`
+    - `url`: `string`
+    - `source`: `string` - platform + id nicely formatted
+    - `statement`: `string`
+    - `submittable`: `boolean`
+    - `memoryLimit`: `string`
+    - `input`: `string??` (stdin)
+    - `output`: `string??` (stdout)
+    - `hints`: `?[]`
+    - `samples`: `?[]`
+    - `tags`: `?[]`
 
 - `userdata/*`:
   - id format: random id
