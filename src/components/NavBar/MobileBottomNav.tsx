@@ -20,8 +20,8 @@ const MobileBottomNavButton = ({
 }) => (
   <button
     className={`${
-      isActive ? 'text-gray-200' : 'text-gray-400'
-    } flex flex-col items-center focus:outline-none py-1 transition`}
+      isActive ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
+    } flex flex-col items-center focus:outline-none py-1 transition hover:text-[var(--text-primary)]`}
     onClick={() => onClick()}
     data-testid={dataTestId}
   >
@@ -37,7 +37,8 @@ export interface MobileBottomNavProps {
 
 export const MobileBottomNav = (props: MobileBottomNavProps): JSX.Element => {
   return (
-    <div className="grid grid-cols-3 pt-2 border-t border-gray-800 bg-[#121212]">
+    <div className="grid grid-cols-3 pt-2 border-t border-[var(--border-color)] bg-[var(--panel-bg-alt)]">
+      {/* szda retheme phase one_02: mobile editor navigation follows the app shell theme. */}
       <MobileBottomNavButton
         IconComponent={CodeBracketIcon}
         label="Code"

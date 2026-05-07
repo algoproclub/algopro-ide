@@ -39,20 +39,35 @@ export const EditorNavigationMenu = (): JSX.Element => {
     return <></>;
   }
 
+  // szda retheme phase one_02: editor navigation dropdown follows the navbar theme tokens.
+  const menuButtonClass = (open: boolean) =>
+    `relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-[var(--text-primary)] focus:outline-none ${
+      open ? 'bg-[var(--hover-bg)]' : 'hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]'
+    }`;
+  const menuPanelClass =
+    'origin-top-left absolute z-10 left-0 w-56 shadow-lg bg-[var(--panel-bg)] border border-[var(--border-color)] focus:outline-none';
+  const menuItemClass = (active: boolean) =>
+    classNames(
+      active
+        ? 'bg-[var(--hover-bg)] text-[var(--text-primary)]'
+        : 'text-[var(--text-primary)]',
+      'group flex items-center px-4 py-2 text-sm'
+    );
+  const menuIconClass =
+    'mr-3 h-5 w-5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]';
+
   return (
     <Menu as="div" className="relative inline-block text-left">
       {({ open }) => (
         <>
           <div>
             <Menu.Button
-              className={`relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 focus:outline-none ${
-                open ? 'bg-gray-800' : 'hover:bg-gray-800 active:bg-gray-700'
-              }`}
+              className={menuButtonClass(open)}
               ref={setReferenceElement}
             >
               Teacher
               <ChevronDownIcon
-                className="ml-2 h-5 w-5 text-gray-400"
+                className="ml-2 h-5 w-5 text-[var(--text-secondary)]"
                 aria-hidden="true"
               />
             </Menu.Button>
@@ -77,7 +92,7 @@ export const EditorNavigationMenu = (): JSX.Element => {
                         leaveFrom="transform opacity-100 scale-100"
                         leaveTo="transform opacity-0 scale-95"
                       >
-                        <div className="origin-top-left absolute z-10 left-0 w-56 shadow-lg bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <div className={menuPanelClass}>
                           <div className="py-1">
                             {/* Teacher-only navigation */}
                             {isTeacherUser && (
@@ -86,15 +101,10 @@ export const EditorNavigationMenu = (): JSX.Element => {
                                   {({ active }) => (
                                     <Link
                                       href="/recent"
-                                      className={classNames(
-                                        active
-                                          ? 'bg-gray-700 text-gray-100'
-                                          : 'text-gray-200',
-                                        'group flex items-center px-4 py-2 text-sm'
-                                      )}
+                                      className={menuItemClass(active)}
                                     >
                                       <ClockIcon
-                                        className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                        className={menuIconClass}
                                         aria-hidden="true"
                                       />
                                       Recent Activity
@@ -105,15 +115,10 @@ export const EditorNavigationMenu = (): JSX.Element => {
                                   {({ active }) => (
                                     <Link
                                       href="/teacher"
-                                      className={classNames(
-                                        active
-                                          ? 'bg-gray-700 text-gray-100'
-                                          : 'text-gray-200',
-                                        'group flex items-center px-4 py-2 text-sm'
-                                      )}
+                                      className={menuItemClass(active)}
                                     >
                                       <AcademicCapIcon
-                                        className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                        className={menuIconClass}
                                         aria-hidden="true"
                                       />
                                       Teacher Dashboard
@@ -124,15 +129,10 @@ export const EditorNavigationMenu = (): JSX.Element => {
                                   {({ active }) => (
                                     <Link
                                       href="/groups"
-                                      className={classNames(
-                                        active
-                                          ? 'bg-gray-700 text-gray-100'
-                                          : 'text-gray-200',
-                                        'group flex items-center px-4 py-2 text-sm'
-                                      )}
+                                      className={menuItemClass(active)}
                                     >
                                       <UserGroupIcon
-                                        className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                        className={menuIconClass}
                                         aria-hidden="true"
                                       />
                                       Groups & Classes
@@ -143,15 +143,10 @@ export const EditorNavigationMenu = (): JSX.Element => {
                                   {({ active }) => (
                                     <Link
                                       href="/invite"
-                                      className={classNames(
-                                        active
-                                          ? 'bg-gray-700 text-gray-100'
-                                          : 'text-gray-200',
-                                        'group flex items-center px-4 py-2 text-sm'
-                                      )}
+                                      className={menuItemClass(active)}
                                     >
                                       <UserPlusIcon
-                                        className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                        className={menuIconClass}
                                         aria-hidden="true"
                                       />
                                       Invite Students
@@ -164,20 +159,15 @@ export const EditorNavigationMenu = (): JSX.Element => {
                             {/* Admin-only navigation */}
                             {isAdmin && (
                               <>
-                                <div className="border-t border-gray-700 my-1" />
+                                <div className="border-t border-[var(--border-color)] my-1" />
                                 <Menu.Item>
                                   {({ active }) => (
                                     <Link
                                       href="/problems"
-                                      className={classNames(
-                                        active
-                                          ? 'bg-gray-700 text-gray-100'
-                                          : 'text-gray-200',
-                                        'group flex items-center px-4 py-2 text-sm'
-                                      )}
+                                      className={menuItemClass(active)}
                                     >
                                       <FolderIcon
-                                        className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                        className={menuIconClass}
                                         aria-hidden="true"
                                       />
                                       Problems
@@ -188,15 +178,10 @@ export const EditorNavigationMenu = (): JSX.Element => {
                                   {({ active }) => (
                                     <Link
                                       href="/tournament/view"
-                                      className={classNames(
-                                        active
-                                          ? 'bg-gray-700 text-gray-100'
-                                          : 'text-gray-200',
-                                        'group flex items-center px-4 py-2 text-sm'
-                                      )}
+                                      className={menuItemClass(active)}
                                     >
                                       <TrophyIcon
-                                        className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                        className={menuIconClass}
                                         aria-hidden="true"
                                       />
                                       Tournament
@@ -207,15 +192,10 @@ export const EditorNavigationMenu = (): JSX.Element => {
                                   {({ active }) => (
                                     <Link
                                       href="/tournament/scoreboard"
-                                      className={classNames(
-                                        active
-                                          ? 'bg-gray-700 text-gray-100'
-                                          : 'text-gray-200',
-                                        'group flex items-center px-4 py-2 text-sm'
-                                      )}
+                                      className={menuItemClass(active)}
                                     >
                                       <TrophyIcon
-                                        className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                        className={menuIconClass}
                                         aria-hidden="true"
                                       />
                                       Scoreboard

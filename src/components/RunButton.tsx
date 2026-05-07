@@ -17,7 +17,8 @@ export const RunButton = ({
 }: RunButtonProps): JSX.Element => (
   <button
     type="button"
-    className="relative whitespace-nowrap inline-flex items-center px-4 py-2 min-w-[8rem] shadow-sm text-sm font-medium text-white bg-indigo-900 enabled:hover:bg-indigo-800 focus:bg-indigo-800 focus:outline-none disabled:text-indigo-300/50 disabled:bg-indigo-900/50 disabled:cursor-not-allowed"
+    // szda retheme phase one_02: primary run action uses the shared accent tokens.
+    className="relative whitespace-nowrap inline-flex items-center px-4 py-2 min-w-[8rem] shadow-sm text-sm font-medium text-white bg-[var(--accent)] enabled:hover:bg-[var(--accent-hover)] focus:bg-[var(--accent-hover)] focus:outline-none disabled:text-white/50 disabled:bg-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
     onClick={onClick}
     disabled={disabledForViewOnly || showLoading}
     title={

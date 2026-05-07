@@ -40,14 +40,18 @@ const SimpleButton = ({
   disabled: boolean;
   onClick: () => void;
 }): JSX.Element => {
+  // szda retheme phase one_02: editor navbar controls use shared shell tokens.
+  const enabledButtonClass =
+    'text-[var(--text-primary)] hover:bg-[var(--hover-bg)] focus:bg-[var(--hover-bg)] focus:outline-none';
+  const disabledButtonClass = 'text-[var(--text-secondary)] cursor-not-allowed';
+
   return (
     <button
       disabled={disabled}
       className={classNames(
         'relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium',
-        !disabled &&
-          'text-gray-200 hover:bg-gray-800 focus:bg-gray-800 focus:outline-none',
-        disabled && 'text-gray-400 cursor-not-allowed'
+        !disabled && enabledButtonClass,
+        disabled && disabledButtonClass
       )}
       onClick={onClick}
     >
@@ -87,12 +91,17 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
     }
   };
 
+  // szda retheme phase one_02: editor navbar uses shared shell theme tokens.
+  const navButtonClass =
+    'relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--hover-bg)] focus:bg-[var(--hover-bg)] focus:outline-none';
+  const secondaryIconClass = '-ml-1 mr-2 h-5 w-5 text-[var(--text-secondary)]';
+
   return (
-    <div className="flex items-center overflow-x-auto border-b border-gray-700 bg-gray-900">
-      <div className="flex w-full lg:w-auto items-center divide-x divide-gray-700">
+    <div className="flex items-center overflow-x-auto border-b border-[var(--border-color)] bg-[var(--panel-bg-alt)] text-[var(--text-primary)]">
+      <div className="flex w-full lg:w-auto items-center divide-x divide-[var(--border-color)]">
         <Link
           href="/"
-          className="relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 hover:bg-gray-800 focus:bg-gray-800 focus:outline-none"
+          className={navButtonClass}
         >
           <HomeIcon className="h-5 w-5" />
         </Link>
@@ -117,9 +126,9 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
           setStatusData={setStatusData}
         />
       )}
-      <div className="flex items-center divide-x divide-gray-700">
+      <div className="flex items-center divide-x divide-[var(--border-color)]">
         {props.showViewOnly && (
-          <span className="px-4 py-2 text-gray-400 text-sm font-medium whitespace-nowrap hidden sm:inline">
+          <span className="px-4 py-2 text-[var(--text-secondary)] text-sm font-medium whitespace-nowrap hidden sm:inline">
             View Only
           </span>
         )}
@@ -129,17 +138,17 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
         <div>
           <button
             type="button"
-            className="whitespace-nowrap relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 hover:bg-gray-800 focus:bg-gray-800 focus:outline-none"
+            className={`${navButtonClass} whitespace-nowrap`}
             onClick={() => props.onToggleSidebar()}
           >
             {props.isSidebarOpen ? (
               <ChevronRightIcon
-                className="-ml-1 mr-2 h-5 w-5 text-gray-400"
+                className={secondaryIconClass}
                 aria-hidden="true"
               />
             ) : (
               <ChevronLeftIcon
-                className="-ml-1 mr-2 h-5 w-5 text-gray-400"
+                className={secondaryIconClass}
                 aria-hidden="true"
               />
             )}

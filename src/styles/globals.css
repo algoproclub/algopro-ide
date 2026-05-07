@@ -49,6 +49,28 @@ body {
   min-width: 420px;
 }
 
+/* szda retheme phase one_02: align browser scrollbars with the active shell theme. */
+html,
+body,
+#__next {
+  scrollbar-color: var(--gutter-hover) var(--panel-bg-alt);
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--panel-bg-alt);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gutter-hover);
+  border: 3px solid var(--panel-bg-alt);
+  border-radius: 999px;
+}
+
 @keyframes spin {
   to {
     transform: rotate(1turn);

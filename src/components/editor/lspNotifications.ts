@@ -5,6 +5,7 @@ const LSP_TOAST_STYLE = {
   background: '#333',
   color: '#fff',
 };
+// átírni a retheme alapján
 
 export function notifyLsp(message: string) {
   toast(message, {
