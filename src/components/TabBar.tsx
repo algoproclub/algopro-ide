@@ -19,10 +19,19 @@ export const TabBar = ({
   homepage,
 }: TabBarProps): JSX.Element => {
   tabs.find(tab => tab.value === activeTab)!.highlight = false;
+  // szda re-theme phase1: default tabs use shell tokens instead of hardcoded dark grays.
+  const defaultTabBarClass =
+    'bg-[var(--panel-bg-alt)] border-b border-[var(--border-color)]';
+  const activeTabClass = homepage
+    ? 'bg-gray-700 text-gray-200'
+    : 'bg-[var(--panel-bg)] text-[var(--text-primary)]';
+  const inactiveTabClass =
+    'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]';
+
   return (
     <div
       className={`flex whitespace-nowrap overflow-auto ${
-        homepage ? '' : 'bg-gray-950 border-b border-[#323232]'
+        homepage ? '' : defaultTabBarClass
       }`}
     >
       <div className={`flex-1 ${homepage ? 'space-x-1' : ''}`}>
@@ -31,8 +40,8 @@ export const TabBar = ({
             key={tab.value}
             className={classNames(
               tab.value === activeTab
-                ? `${homepage ? 'bg-gray-700' : 'bg-[#323232]'} text-gray-200`
-                : `${tab.highlight ? 'text-yellow-400 font-bold' : 'text-gray-400 hover:text-gray-300'}  hover:bg-gray-800 active:bg-gray-800`,
+                ? activeTabClass
+                : `${tab.highlight ? 'text-yellow-400 font-bold' : inactiveTabClass}`,
               `px-4 py-1 ${
                 homepage ? 'rounded-t-md' : ''
               } text-sm focus:outline-none transition`

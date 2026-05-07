@@ -170,7 +170,7 @@ const ProfileSettings = ({
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
             <div
-              className="inline-block bg-gray-800 md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 w-full"
+              className="inline-block bg-[var(--panel-bg)] text-[var(--text-primary)] md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 w-full"
               style={{ maxWidth: '1100px' }}
             >
               <div className="px-4 sm:px-6 pt-4 pb-2">
@@ -184,7 +184,8 @@ const ProfileSettings = ({
               <div className="p-4 sm:p-6 space-y-3">
                 <div className="flex flex-col lg:flex-row gap-10">
                   {/* User Settings Section */}
-                  <div className="flex-1 bg-[#1e1e1e] p-6 rounded-lg border border-gray-700 shadow-md overflow-auto">
+                  {/* szda re-theme phase1: settings modal shell follows the app theme tokens. */}
+                  <div className="flex-1 bg-[var(--panel-bg-alt)] p-6 rounded-lg border border-[var(--border-color)] shadow-md overflow-auto">
                     <UserSettings
                       name={name}
                       onNameChange={name => setName(name)}
@@ -244,7 +245,7 @@ const ProfileSettings = ({
                     <div className="flex justify-end space-x-3 mt-6">
                       <button
                         type="button"
-                        className="px-4 py-2 border border-gray-600 rounded-md text-gray-300 hover:bg-gray-700 focus:ring-2 focus:ring-indigo-500"
+                        className="px-4 py-2 border border-[var(--border-color)] rounded-md text-[var(--text-primary)] hover:bg-[var(--hover-bg)] focus:ring-2 focus:ring-indigo-500"
                         onClick={closeWithoutSaving}
                       >
                         Cancel
@@ -268,7 +269,7 @@ const ProfileSettings = ({
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
-                  className="rounded-md text-gray-200 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   onClick={closeWithoutSaving}
                 >
                   <span className="sr-only">Close</span>

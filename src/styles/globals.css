@@ -1,8 +1,39 @@
+/* szda re-theme phase1: shared app theme tokens for shell-level surfaces. */
+:root,
+[data-theme='dark'] {
+  --app-bg: #1e1e1e;
+  --panel-bg: #1e1e1e;
+  --panel-bg-alt: #121212;
+  --border-color: #374151;
+  --text-primary: #f3f4f6;
+  --text-secondary: #d1d5db;
+  --hover-bg: #1f2937;
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --gutter: #374151;
+  --gutter-hover: #4b5563;
+}
+
+[data-theme='light'] {
+  --app-bg: #f8fafc;
+  --panel-bg: #ffffff;
+  --panel-bg-alt: #f1f5f9;
+  --border-color: #cbd5e1;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --hover-bg: #e2e8f0;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --gutter: #cbd5e1;
+  --gutter-hover: #94a3b8;
+}
+
 html,
 body,
 #__next {
   height: 100%;
-  background-color: #1e1e1e;
+  background-color: var(--app-bg);
+  color: var(--text-primary);
   @apply overflow-auto;
 }
 
@@ -63,7 +94,13 @@ body {
 }
 
 .text-input {
-  @apply px-1 block w-full pb-1 border-0 border-b-2 border-gray-700 focus:ring-0 focus:border-indigo-600 text-sm text-gray-100 bg-transparent;
+  @apply px-1 block w-full pb-1 border-0 border-b-2 focus:ring-0 text-sm bg-transparent;
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.text-input:focus {
+  border-color: var(--accent);
 }
 
 .table-filelist,

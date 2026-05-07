@@ -29,8 +29,9 @@ export function RadioGroupContents<T>({
       <RadioGroup.Label
         as="div"
         className={classNames(
+          // szda re-theme phase1: radio colors now come from app tokens, not per-control dark/light branches.
           lightMode ? '' : 'mb-1',
-          'text-gray-300',
+          'text-[var(--text-secondary)]',
           'text-sm',
           className
         )}
@@ -51,13 +52,13 @@ export function RadioGroupContents<T>({
             {({ checked }) => (
               <>
                 <span
-                  className="h-4 w-4 mt-0.5 cursor-pointer rounded-full flex items-center justify-center bg-gray-500"
+                  className="h-4 w-4 mt-0.5 cursor-pointer rounded-full flex items-center justify-center bg-[var(--border-color)]"
                   aria-hidden="true"
                 >
-                  <span className="flex items-center justify-center bg-gray-900 w-3.5 h-3.5 rounded-full">
+                  <span className="flex items-center justify-center bg-[var(--panel-bg)] w-3.5 h-3.5 rounded-full">
                     <span
                       className={`rounded-full ${
-                        checked ? 'bg-indigo-500 scale-100' : 'scale-0'
+                        checked ? 'bg-[var(--accent)] scale-100' : 'scale-0'
                       } transition w-2.5 h-2.5`}
                     />
                   </span>
@@ -67,12 +68,8 @@ export function RadioGroupContents<T>({
                     as="span"
                     className={classNames(
                       checked
-                        ? !lightMode
-                          ? 'text-gray-200'
-                          : 'text-gray-800'
-                        : !lightMode
-                          ? 'text-gray-400'
-                          : 'text-gray-600',
+                        ? 'text-[var(--text-primary)]'
+                        : 'text-[var(--text-secondary)]',
                       'block text-sm'
                     )}
                   >

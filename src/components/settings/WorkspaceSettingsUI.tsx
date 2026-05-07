@@ -19,7 +19,7 @@ export default function WorkspaceSettingsUI({
         <div>
           <label
             htmlFor={`workspace_name`}
-            className="block text-[0.92rem] text-gray-300"
+            className="block text-[0.92rem] text-[var(--text-secondary)]"
           >
             Workspace name
           </label>
@@ -58,13 +58,13 @@ export default function WorkspaceSettingsUI({
         }
         options={LANGUAGES}
         lightMode={false}
-        className="text-gray-200 text-[0.92rem] font-medium"
+        className="text-[var(--text-primary)] text-[0.92rem] font-medium"
       />
 
       <div>
         <label
           htmlFor={`compiler_options`}
-          className="block text-[0.92rem] text-gray-300"
+          className="block text-[0.92rem] text-[var(--text-secondary)]"
         >
           {LANGUAGES.find(x => x.value === workspaceSettings.language)!.label}{' '}
           compiler options
@@ -103,7 +103,7 @@ export default function WorkspaceSettingsUI({
         }
         lightMode={false}
         isOwner={userPermission === 'OWNER'}
-        className="text-gray-200 text-[0.92rem] font-medium"
+        className="text-[var(--text-primary)] text-[0.92rem] font-medium"
       />
     </div>
   );

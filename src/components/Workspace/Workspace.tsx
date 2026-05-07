@@ -262,7 +262,8 @@ export default function Workspace({
             )}
             {...getGutterProps('column', 1)}
           >
-            <div className="absolute h-full left-[7px] right-[7px] bg-gray-700 group-hover:bg-gray-600 group-active:bg-gray-600 pointer-events-none transition" />
+            {/* szda re-theme phase1: splitters, IO shell, and collaboration sidebar use shared app theme tokens. */}
+            <div className="absolute h-full left-[7px] right-[7px] bg-[var(--gutter)] group-hover:bg-[var(--gutter-hover)] group-active:bg-[var(--gutter-hover)] pointer-events-none transition" />
           </div>
           <div
             className={classNames(
@@ -277,7 +278,7 @@ export default function Workspace({
               activeTab={inputTab}
               onTabSelect={x => setInputTab(x.value)}
             />
-            <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden min-w-0">
+            <div className="flex-1 bg-[var(--panel-bg)] text-[var(--text-primary)] min-h-0 overflow-hidden min-w-0">
               {inputTab === 'input' && (
                 <LazyRealtimeEditor
                   theme={lightMode ? 'light' : 'dark'}
@@ -361,14 +362,14 @@ export default function Workspace({
           >
             <div
               className={classNames(
-                'absolute w-full bg-gray-700 group-hover:bg-gray-600 group-active:bg-gray-600 group-focus:bg-gray-600 pointer-events-none transition',
+                'absolute w-full bg-[var(--gutter)] group-hover:bg-[var(--gutter-hover)] group-active:bg-[var(--gutter-hover)] group-focus:bg-[var(--gutter-hover)] pointer-events-none transition',
                 isDesktop
                   ? 'top-[7px] bottom-[7px]'
-                  : 'inset-y-0 bg-gray-800 flex items-center justify-center'
+                  : 'inset-y-0 bg-[var(--gutter)] flex items-center justify-center'
               )}
             >
               {!isDesktop && (
-                <EllipsisHorizontalIcon className="h-5 w-5 text-gray-200" />
+                <EllipsisHorizontalIcon className="h-5 w-5 text-[var(--text-secondary)]" />
               )}
             </div>
           </div>
@@ -407,11 +408,11 @@ export default function Workspace({
                 )}
                 {...getGutterProps('column', 3)}
               >
-                <div className="absolute h-full left-[7px] right-[7px] bg-gray-700 group-hover:bg-gray-600 group-active:bg-gray-600 pointer-events-none transition" />
+                <div className="absolute h-full left-[7px] right-[7px] bg-[var(--gutter)] group-hover:bg-[var(--gutter-hover)] group-active:bg-[var(--gutter-hover)] pointer-events-none transition" />
               </div>
               <div
                 className={classNames(
-                  'row-span-full min-w-0 bg-[#1E1E1E] text-gray-200 flex flex-col overflow-auto',
+                  'row-span-full min-w-0 bg-[var(--panel-bg)] text-[var(--text-primary)] flex flex-col overflow-auto',
                   isDesktop ? 'col-start-5' : 'col-span-full pt-4'
                 )}
               >

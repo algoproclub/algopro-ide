@@ -10,11 +10,13 @@ export default function TemplateCodeSettings({
   onTemplateCodeChange,
   language,
   onLanguageChange,
+  lightMode,
 }: {
   templateCode: Partial<Record<Language, string>>;
   onTemplateCodeChange: (defaults: Partial<Record<Language, string>>) => void;
   language: Language;
   onLanguageChange: (language: Language) => void;
+  lightMode: boolean;
 }): JSX.Element {
   const index = LANGUAGES.findIndex(item => item.value === language);
   return (
@@ -107,9 +109,10 @@ export default function TemplateCodeSettings({
        *   still wouldn't solve the undo/redo issue, and the UI would flash when
        *   a new editor is rendered.
        */}
-      <div className="h-[18em] sm:h-50vh border border-gray-600 focus:border-black">
+      {/* szda re-theme phase1: template editor now follows the same editor theme preference. */}
+      <div className="h-[18em] sm:h-50vh border border-[var(--border-color)] focus:border-[var(--accent)]">
         <LazyCodeMirrorEditor
-          theme="dark"
+          theme={lightMode ? 'light' : 'dark'}
           language={{ cpp: 'cpp', java: 'java', py: 'python' }[language]}
           onChange={value =>
             onTemplateCodeChange({ ...templateCode, [language]: value })
