@@ -306,13 +306,11 @@ const EditHintModal = ({
 const EditSampleModal = ({
   isOpen,
   sample,
-  setSample,
   onSave,
   onClose,
 }: {
   isOpen: boolean;
   sample: Sample;
-  setSample: React.Dispatch<React.SetStateAction<Sample>>;
   onSave: (sample: Sample) => void;
   onClose: () => void;
 }) => {
@@ -818,7 +816,6 @@ const PageContent = () => {
       <EditSampleModal
         isOpen={isSampleModalOpen}
         sample={editedSample}
-        setSample={setEditedSample}
         onSave={onSaveSample}
         onClose={() => setIsSampleModalOpen(false)}
       />
