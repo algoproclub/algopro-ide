@@ -422,6 +422,7 @@ function addEnhancedThemes() {
       macro: '569cd6',
       escape: 'd7ba7d',
       hex: 'b5cea8',
+      parameter: 'ffa657',
     },
     vs: {
       function: '795e26',
@@ -431,6 +432,7 @@ function addEnhancedThemes() {
       macro: '0000ff',
       escape: 'ee0000',
       hex: '098658',
+      parameter: '953800',
     },
   };
 
@@ -445,13 +447,15 @@ function addEnhancedThemes() {
         { token: 'operator.userDefined', foreground: colors.function },
         { token: 'class', foreground: colors.type },
         { token: 'struct', foreground: colors.type },
+        { token: 'enum', foreground: colors.type },
         { token: 'type', foreground: colors.type },
         { token: 'typeParameter', foreground: colors.type },
         { token: 'namespace', foreground: colors.type },
         { token: 'variable', foreground: colors.variable },
-        { token: 'parameter', foreground: colors.variable },
+        { token: 'parameter', foreground: colors.parameter },
         { token: 'property', foreground: colors.variable },
         { token: 'variable.readonly', foreground: colors.constant },
+        { token: 'enumMember', foreground: colors.constant },
         { token: 'macro', foreground: colors.macro },
         { token: 'string.escape', foreground: colors.escape },
         { token: 'number.hex', foreground: colors.hex },
