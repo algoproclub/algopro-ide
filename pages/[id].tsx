@@ -285,8 +285,10 @@ function EditorPage() {
   };
 
   const handleKeydown = (event: KeyboardEvent) => {
-    if (event.ctrlKey && event.key === 's') event.preventDefault();
-    if (event.ctrlKey && event.key === 'Enter') handleRunCode();
+    if (event.ctrlKey || event.metaKey) {
+      if (event.key === 's') event.preventDefault();
+      if (event.key === 'Enter') handleRunCode();
+    }
   };
 
   useEffect(() => {
