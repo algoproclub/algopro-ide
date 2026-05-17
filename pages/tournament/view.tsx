@@ -19,8 +19,6 @@ import { StatusData } from '../../src/types/problem';
 import USACOResults from '../../src/components/JudgeInterface/USACOResults';
 import Split from 'react-split-grid';
 import WithAdminLogin from '../../src/components/WithAdminLogin';
-import { XMarkIcon } from '@heroicons/react/20/solid';
-import type * as monaco from 'monaco-editor';
 
 const db = getDatabase();
 
@@ -35,17 +33,12 @@ const CodeView = () => {
             theme={'dark'}
             language={{ cpp: 'cpp', java: 'java', py: 'python' }[lang]}
             path={`${fileData.id}.${lang}`}
-            options={
-              {
-                minimap: { enabled: false },
-                tabSize: 4,
-                insertSpaces: false,
-                readOnly: true,
-                'bracketPairColorization.enabled': true,
-                acceptSuggestionOnCommitCharacter: false,
-              } as monaco.editor.IEditorOptions
-            }
-            onMount={e => {
+            editorOptions={{
+              tabSize: 4,
+              insertSpaces: false,
+              readOnly: true,
+            }}
+            onReady={e => {
               setTimeout(() => {
                 e.layout();
                 e.focus();
@@ -180,13 +173,15 @@ export const SolutionView = ({
   );
 };
 
-const getDisplayName = async (
-  participant: { fileID: string }
-): Promise<string> => {
-  const fileUserSnapshot = await get(ref(db, `files/${participant.fileID}/users`));
+const getDisplayName = async (participant: {
+  fileID: string;
+}): Promise<string> => {
+  const fileUserSnapshot = await get(
+    ref(db, `files/${participant.fileID}/users`)
+  );
   const users = fileUserSnapshot.val();
   const user = Object.values(users).find(
-    (user => (user as { permission: string }).permission === 'OWNER')
+    user => (user as { permission: string }).permission === 'OWNER'
   ) as { name: string } | undefined;
   return user ? user.name : 'Unknown';
 };

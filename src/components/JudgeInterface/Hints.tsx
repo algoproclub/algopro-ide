@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Markdown from './Markdown';
 import { ChevronUpIcon } from '@heroicons/react/20/solid';
-import { Hint } from '../../types/problem';
+import { type Hint } from '../../types/problem';
 import { useEditorContext } from '../../context/EditorContext';
 
 const Hint = ({ index, content }: { index: number; content: string }) => {

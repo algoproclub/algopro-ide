@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import LazyMonacoEditor from './MonacoEditor/LazyMonacoEditor';
-import { EditorProps } from './MonacoEditor/monaco-editor-types';
+import { EditorProps } from './editor-types';
 import LazyCodemirrorEditor from './CodemirrorEditor/LazyCodemirrorEditor';
 
 export const CodeEditor = (props: EditorProps) => {

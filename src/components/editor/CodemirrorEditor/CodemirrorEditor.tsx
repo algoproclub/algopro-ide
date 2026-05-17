@@ -1,5 +1,6 @@
 // A codemirror editor, used on mobile devices
 
+import type { EditorView } from '@codemirror/view';
 import ReactCodeMirror, { Extension } from '@uiw/react-codemirror';
 import { indentUnit } from '@codemirror/language';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
@@ -8,13 +9,27 @@ import { cpp } from '@codemirror/lang-cpp';
 import { java } from '@codemirror/lang-java';
 import { python } from '@codemirror/lang-python';
 import { vim } from '@replit/codemirror-vim';
-import { EditorProps } from '../MonacoEditor/monaco-editor-types';
+import { CodemirrorEditorHandle, EditorProps } from '../editor-types';
 import * as Y from 'yjs';
 import useLspClient from './lsp';
 
 import './codemirror-styles.css';
 import { useEffect, useMemo, useState } from 'react';
 import { yCollab } from 'y-codemirror.next';
+
+function createEditorHandle(view: EditorView): CodemirrorEditorHandle {
+  return {
+    focus() {
+      view.focus();
+    },
+    getValue() {
+      return view.state.doc.toString();
+    },
+    kind: 'codemirror',
+    layout() {},
+    raw: view,
+  };
+}
 
 const CodemirrorEditor = (props: EditorProps): JSX.Element => {
   const [yCollabExtension, setYCollabExtension] = useState<Extension | null>(
@@ -51,8 +66,8 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
   }, [props.yjsInfo]);
 
   const extensions = useMemo(() => {
-    const extensions = [];
-    const tabSize = props.options?.tabSize || 4;
+    const extensions: Extension[] = [];
+    const tabSize = props.editorOptions?.tabSize || 4;
     extensions.push(indentUnit.of(' '.repeat(tabSize)));
     if (yCollabExtension) {
       extensions.push(yCollabExtension);
@@ -78,20 +93,20 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
           props.language === 'cpp' || props.language === 'python'
             ? props.language
             : undefined
-        )
+        ) as Extension
       );
     }
     return extensions;
   }, [
     props.language,
     yCollabExtension,
-    props.options?.tabSize,
+    props.editorOptions?.tabSize,
     props.vim,
     props.path,
     lspClient,
   ]);
 
-  // todo: need to deal with props.options.tabSize
+  // todo: need to deal with props.editorOptions.tabSize
   return (
     <ReactCodeMirror
       // force entire component to re-mount (and re-initialize codemirror) when yjs document ID changes
@@ -104,9 +119,9 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
       onChange={(val: string, _) => props.onChange?.(val)}
       height="100%"
       style={{ fontSize: '13px' }}
-      readOnly={props.options?.readOnly ?? false}
+      readOnly={props.editorOptions?.readOnly ?? false}
       extensions={extensions}
-      onCreateEditor={props.onCodemirrorMount}
+      onCreateEditor={view => props.onReady?.(createEditorHandle(view))}
     />
   );
 };

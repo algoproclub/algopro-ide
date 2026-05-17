@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAtom } from 'jotai';
 import { loadingAtom } from '../../atoms/workspace';
-import { EditorProps } from '../editor/MonacoEditor/monaco-editor-types';
+import { EditorProps, EditorYjsInfo } from '../editor/editor-types';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import '../../styles/yjs.css';
@@ -12,9 +12,9 @@ import colorFromUserId, {
 import { useUserContext } from '../../context/UserContext';
 import { useEditorContext } from '../../context/EditorContext';
 import { CodeEditor } from '../editor/CodeEditor';
-import type * as awarenessProtocol from 'y-protocols/awareness';
 
 export interface RealtimeEditorProps extends EditorProps {
+  defaultValue?: string;
   yjsDocumentId: string;
   useEditorWithVim?: boolean;
   dataTestId?: string;
@@ -31,10 +31,7 @@ const RealtimeEditor = ({
   const { userData, firebaseUser } = useUserContext();
   const [, setLoading] = useAtom(loadingAtom);
   const { editorMode: mode } = userData;
-  const [yjsInfo, setYjsInfo] = useState<{
-    yjsText: Y.Text;
-    yjsAwareness: awarenessProtocol.Awareness;
-  } | null>(null);
+  const [yjsInfo, setYjsInfo] = useState<EditorYjsInfo | null>(null);
 
   const [connectionStatus, setConnectionStatus] = useState<
     'disconnected' | 'connecting' | 'connected'
@@ -65,12 +62,14 @@ const RealtimeEditor = ({
     // Bind Yjs to the editor model
     const monacoText = ydocument.getText('monaco');
     setYjsInfo({
+      documentId,
+      path,
       yjsText: monacoText,
       yjsAwareness: provider.awareness,
     });
 
     // add custom color for every selector
-    provider.awareness.on('change', ({ added }: { added: Array<number> }) => {
+    const handleAwarenessChange = ({ added }: { added: Array<number> }) => {
       // We should be responsible and remove styles when someone leaves (ie. removed.length > 0)
       // but I'm lazy...
       if (added.length === 0) return;
@@ -95,15 +94,21 @@ const RealtimeEditor = ({
           `<style>${styleToAdd}</style>`
         );
       }
-    });
+    };
 
-    provider.on(
-      'status',
-      ({ status }: { status: 'disconnected' | 'connecting' | 'connected' }) => {
-        setConnectionStatus(status);
-      }
-    );
-    provider.on('sync', (isSynced: boolean) => {
+    provider.awareness.on('change', handleAwarenessChange);
+
+    const handleStatus = ({
+      status,
+    }: {
+      status: 'disconnected' | 'connecting' | 'connected';
+    }) => {
+      setConnectionStatus(status);
+    };
+
+    provider.on('status', handleStatus);
+
+    const handleSync = (isSynced: boolean) => {
       // Handle file initialization
       // We need to check for doNotInitializeTheseFileIdsRef.current here
       // to make sure we're the client that's supposed to initialize the document.
@@ -137,16 +142,23 @@ const RealtimeEditor = ({
       }
       setIsSynced(isSynced);
       setLoading(false);
-    });
+    };
+
+    provider.on('sync', handleSync);
 
     return () => {
+      provider.awareness.off('change', handleAwarenessChange);
+      provider.off('status', handleStatus);
+      provider.off('sync', handleSync);
+
+      setYjsInfo(currentYjsInfo =>
+        currentYjsInfo?.documentId === documentId ? null : currentYjsInfo
+      );
+
       setConnectionStatus('disconnected');
       setIsSynced(false);
-      // No need to destroy monacoBinding -- it is auto destroyed
-      // when monaco unmounts.
-      // monacoBinding.destroy();
-      ydocument.destroy();
       provider.destroy();
+      ydocument.destroy();
     };
     // defaultValue shouldn't change without the other values changing (and if it does, it's probably a bug)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -154,10 +166,26 @@ const RealtimeEditor = ({
 
   // make editor read only until yjs syncs with server
   const editorOptions = useMemo(() => {
-    const editorOptions = { ...(props.options || {}) };
+    const editorOptions = { ...(props.editorOptions || {}) };
     if (!isSynced) editorOptions.readOnly = true;
     return editorOptions;
-  }, [isSynced, props.options]);
+  }, [isSynced, props.editorOptions]);
+
+  const activeYjsInfo = useMemo(() => {
+    if (!yjsInfo) {
+      return null;
+    }
+
+    if (yjsInfo.documentId !== yjsDocumentId) {
+      return null;
+    }
+
+    if (yjsInfo.path !== props.path) {
+      return null;
+    }
+
+    return yjsInfo;
+  }, [props.path, yjsDocumentId, yjsInfo]);
 
   return (
     <div
@@ -171,8 +199,8 @@ const RealtimeEditor = ({
       />
       <CodeEditor
         {...props}
-        options={editorOptions}
-        yjsInfo={yjsInfo}
+        editorOptions={editorOptions}
+        yjsInfo={activeYjsInfo}
         vim={useEditorWithVim && mode === 'Vim'}
       />
     </div>

@@ -2,7 +2,7 @@ import { EllipsisHorizontalIcon } from '@heroicons/react/20/solid';
 import { useSetAtom, useAtomValue } from 'jotai';
 import classNames from 'classnames';
 import { useAtom } from 'jotai';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Split from 'react-split-grid';
 import {
   inputCodemirrorEditorAtom,
@@ -38,6 +38,7 @@ import GenericJudgeInterface from '../JudgeInterface/GenericJudgeInterface';
 import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
+import { EditorHandle, isMonacoEditorHandle } from '../editor/editor-types';
 import {
   DataSnapshot,
   getDatabase,
@@ -84,6 +85,8 @@ export default function Workspace({
   const setInputEditor = useSetAtom(inputMonacoEditorAtom);
   const setCodemirrorInputEditor = useSetAtom(inputCodemirrorEditorAtom);
   const setOutputEditor = useSetAtom(outputMonacoEditorAtom);
+  const [inputEditorHandle, setInputEditorHandle] =
+    useState<EditorHandle | null>(null);
   const [inputTab, setInputTab] = useAtom(inputTabAtom);
   const [problem, setProblem] = useAtom(problemAtom);
   const [translations, setTranslations] = useAtom(translationsAtom);
@@ -114,6 +117,29 @@ export default function Workspace({
       layoutEditors();
     }
   }, [isDesktop, mobileActiveTab, layoutEditors]);
+
+  useEffect(() => {
+    if (!inputEditorHandle) {
+      return;
+    }
+
+    if (isMonacoEditorHandle(inputEditorHandle)) {
+      setInputEditor(inputEditorHandle.raw);
+      return () => {
+        setInputEditor(null);
+      };
+    }
+
+    setCodemirrorInputEditor(inputEditorHandle.raw);
+    // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the input codemirror editor
+    window['TEST_inputCodemirrorEditor'] = inputEditorHandle.raw;
+
+    return () => {
+      setCodemirrorInputEditor(null);
+      // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the input codemirror editor
+      window['TEST_inputCodemirrorEditor'] = null;
+    };
+  }, [inputEditorHandle, setCodemirrorInputEditor, setInputEditor]);
 
   useEffect(() => {
     (async () => {
@@ -259,22 +285,18 @@ export default function Workspace({
                   saveViewState={false}
                   path="input"
                   dataTestId="input-editor"
-                  options={{
-                    minimap: { enabled: false },
+                  editorOptions={{
                     automaticLayout: false,
                     insertSpaces: false,
                     readOnly,
                   }}
-                  onMount={e => {
-                    setInputEditor(e);
-                    setTimeout(() => {
-                      e.layout();
-                    }, 0);
-                  }}
-                  onCodemirrorMount={view => {
-                    // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the input codemirror editor
-                    window['TEST_inputCodemirrorEditor'] = view;
-                    setCodemirrorInputEditor(view);
+                  onReady={handle => {
+                    setInputEditorHandle(handle);
+                    if (isMonacoEditorHandle(handle)) {
+                      setTimeout(() => {
+                        handle.layout();
+                      }, 0);
+                    }
                   }}
                   defaultValue="1 2 3"
                   yjsDocumentId={`${fileData.id}.input`}
@@ -362,10 +384,15 @@ export default function Workspace({
               result={judgeResults[inputTabIndex]}
               statusData={statusData}
               statusDataHistory={statusDataHistory}
-              onMount={e => {
-                setOutputEditor(e);
+              onReady={handle => {
+                if (!isMonacoEditorHandle(handle)) {
+                  setOutputEditor(null);
+                  return;
+                }
+
+                setOutputEditor(handle.raw);
                 setTimeout(() => {
-                  e.layout();
+                  handle.layout();
                 }, 0);
               }}
             />
