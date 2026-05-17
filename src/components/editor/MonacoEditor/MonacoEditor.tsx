@@ -46,9 +46,8 @@ const rebindAction = (
 
   if (oldBinding !== undefined) {
     rules.push({
-      command: `-${id}`,
+      command: null,
       keybinding: oldBinding,
-      when: EDITOR_TEXT_FOCUS,
     });
   }
 
