@@ -4,7 +4,7 @@ import {
   languageServerExtensions,
 } from '@codemirror/lsp-client';
 import { useEffect, useState } from 'react';
-import { EditorProps } from '../MonacoEditor/monaco-editor-types';
+import { EditorProps } from '../editor-types';
 import { notifyLsp, notifyLspClosed } from '../lspNotifications';
 
 const LSP_CONNECT_TIMEOUT_MS = 10000;

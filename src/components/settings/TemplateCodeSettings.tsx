@@ -116,8 +116,7 @@ export default function TemplateCodeSettings({
           }
           value={templateCode[language]}
           saveViewState={false}
-          options={{
-            minimap: { enabled: false },
+          editorOptions={{
             readOnly: false,
             automaticLayout: false,
             insertSpaces: true,

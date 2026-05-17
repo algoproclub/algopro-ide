@@ -1,26 +1,17 @@
-import {
-  MonacoLanguageClient,
-  CloseAction,
-  ErrorAction,
-  MessageTransports,
-} from 'monaco-languageclient';
-import {
-  toSocket,
-  WebSocketMessageReader,
-  WebSocketMessageWriter,
-} from 'vscode-ws-jsonrpc';
 import { useEffect } from 'react';
-import { notifyLsp, notifyLspClosed } from '../lspNotifications';
+import {
+  LanguageClientWrapper,
+  type LanguageClientConfig,
+} from 'monaco-languageclient/lcwrapper';
+import { notifyLsp } from '../lspNotifications';
+import { ensureMonacoServices, MONACO_WORKSPACE_URI } from './monacoServices';
 
-function createLSPConnection(
+type SupportedLanguage = 'cpp' | 'python';
+
+function createLanguageClientConfig(
   language: 'cpp' | 'python',
   compilerOptions: string | null
-) {
-  if (language !== 'cpp' && language !== 'python') {
-    throw new Error('Unsupported LSP language: ' + language);
-  }
-
-  notifyLsp('Connecting to server...');
+): LanguageClientConfig {
   const url = new URL(
     `wss://thecodingwizard--lsp-server-main.modal.run:443/${
       language === 'cpp' ? 'clangd' : 'pyright'
@@ -30,108 +21,100 @@ function createLSPConnection(
     url.searchParams.set('compiler_options', compilerOptions);
   }
 
-  let webSocket: WebSocket | null = new WebSocket(url);
-  let languageClient: MonacoLanguageClient | null;
-
-  webSocket.addEventListener('open', () => {
-    const socket = toSocket(webSocket!);
-    const reader = new WebSocketMessageReader(socket);
-    const writer = new WebSocketMessageWriter(socket);
-    languageClient = createLanguageClient({
-      reader,
-      writer,
-    });
-    languageClient.start();
-  });
-
-  webSocket.addEventListener('message', event => {
-    let message;
-    try {
-      message = JSON.parse(event.data);
-    } catch (error) {
-      console.error('Malformed message from LSP server:', event.data);
-      return;
-    }
-    if (!webSocket) return;
-    if (message.id === 0 && message.result?.capabilities) {
-      // assume this is the first message from the server
-      // and that connection is successfully established
-      notifyLsp('Connected');
-    }
-  });
-
-  webSocket.addEventListener('close', event => {
-    if (event.wasClean) {
-      console.log('Connection closed cleanly');
-    } else {
-      console.error('Connection died');
-    }
-
-    notifyLspClosed(event);
-
-    if (languageClient) {
-      languageClient.stop();
-      languageClient = null;
-    }
-  });
-
-  function createLanguageClient(
-    transports: MessageTransports
-  ): MonacoLanguageClient {
-    return new MonacoLanguageClient({
-      name: 'Sample Language Client',
-      clientOptions: {
-        // use a language id as a document selector
-        documentSelector: [language],
-        // disable the default error handler
-        errorHandler: {
-          error: (error, message, count) => {
-            console.log(
-              'Got error from monaco language client error handler',
-              error,
-              message,
-              count
-            );
-            return {
-              action: ErrorAction.Continue,
-            };
-          },
-          closed: () => ({ action: CloseAction.DoNotRestart }),
-        },
+  return {
+    languageId: language,
+    clientOptions: {
+      documentSelector: [language],
+      workspaceFolder: {
+        index: 0,
+        name: 'workspace',
+        uri: MONACO_WORKSPACE_URI,
       },
-      // create a language client connection from the JSON RPC connection on demand
-      connectionProvider: {
-        get: () => {
-          return Promise.resolve(transports);
-        },
+    },
+    connection: {
+      options: {
+        $type: 'WebSocketUrl',
+        url: url.toString(),
       },
-    });
-  }
+    },
+  };
+}
 
-  function dispose() {
-    if (!languageClient) {
-      // possibly didn't connect to websocket before exiting
-      if (webSocket && webSocket.readyState === webSocket.CONNECTING) {
-        webSocket.close();
-        webSocket = null;
-      }
-    } else {
-      languageClient
-        .stop()
-        .catch(err => console.error('Error stopping language client:', err));
-      languageClient = null;
-    }
-  }
-  return dispose;
+function isSupportedLanguage(
+  language: string | null
+): language is SupportedLanguage {
+  return language === 'cpp' || language === 'python';
+}
+
+function disposeLanguageClient(languageClientWrapper: LanguageClientWrapper) {
+  return Promise.resolve(languageClientWrapper.dispose()).catch(error => {
+    console.error('Error disposing language client:', error);
+  });
 }
 
 export default function useLSP(
   language: string | null,
-  lspOptions: { compilerOptions: string | null } | null
+  lspOptions: { compilerOptions: string | null } | null,
+  enabled: boolean
 ) {
+  const compilerOptions = lspOptions?.compilerOptions ?? null;
+  const hasLspOptions = lspOptions !== null;
+
   useEffect(() => {
-    if ((language === 'cpp' || language === 'python') && lspOptions) {
-      return createLSPConnection(language, lspOptions.compilerOptions);
+    if (!enabled || !isSupportedLanguage(language) || !hasLspOptions) {
+      return;
     }
-  }, [language, lspOptions?.compilerOptions]);
+
+    let disposed = false;
+    let languageClientWrapper: LanguageClientWrapper | null = null;
+    let disposePromise: Promise<void> | null = null;
+
+    const stopLanguageClient = (wrapper: LanguageClientWrapper) => {
+      if (!disposePromise) {
+        disposePromise = disposeLanguageClient(wrapper);
+      }
+
+      return disposePromise;
+    };
+
+    notifyLsp('Connecting to server...');
+
+    void ensureMonacoServices()
+      .then(async () => {
+        if (disposed) {
+          return;
+        }
+
+        const wrapper = new LanguageClientWrapper(
+          createLanguageClientConfig(language, compilerOptions)
+        );
+        languageClientWrapper = wrapper;
+
+        await wrapper.start();
+
+        if (disposed) {
+          await stopLanguageClient(wrapper);
+          return;
+        }
+
+        notifyLsp('Connected');
+      })
+      .catch(error => {
+        console.error('Failed to start language client:', error);
+
+        if (!disposed) {
+          notifyLsp('Failed to connect to server');
+        }
+      });
+
+    return () => {
+      disposed = true;
+
+      if (languageClientWrapper) {
+        const wrapper = languageClientWrapper;
+        languageClientWrapper = null;
+        void stopLanguageClient(wrapper);
+      }
+    };
+  }, [compilerOptions, enabled, hasLspOptions, language]);
 }

@@ -190,11 +190,9 @@ const HTMLEditor = ({
             language="html"
             theme="dark"
             path={path}
-            options={{
+            editorOptions={{
               readOnly: readonly,
-              wordWrap: 'on',
               automaticLayout: true,
-              minimap: { enabled: false },
             }}
           />
         </div>
@@ -908,7 +906,9 @@ const PageContent = () => {
                       <div className="text-xs text-gray-400 mb-1">Input</div>
                       <pre className="whitespace-pre-wrap font-mono text-sm">
                         {sample.input || (
-                          <span className="text-gray-500">No input specified</span>
+                          <span className="text-gray-500">
+                            No input specified
+                          </span>
                         )}
                       </pre>
                     </td>
@@ -956,7 +956,9 @@ const PageContent = () => {
                             ) {
                               setUnsaved(true);
                               setSamples(prev =>
-                                prev.filter((_, sampleIndex) => sampleIndex !== index)
+                                prev.filter(
+                                  (_, sampleIndex) => sampleIndex !== index
+                                )
                               );
                             }
                           }}
