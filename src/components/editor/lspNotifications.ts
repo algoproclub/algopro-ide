@@ -1,11 +1,12 @@
 import toast from 'react-hot-toast';
 
 const LSP_TOAST_STYLE = {
+  // szda retheme phase one_02: LSP toasts use the active app theme tokens.
   borderRadius: '10px',
-  background: '#333',
-  color: '#fff',
+  background: 'var(--panel-bg-alt)',
+  border: '1px solid var(--border-color)',
+  color: 'var(--text-primary)',
 };
-// átírni a retheme alapján
 
 export function notifyLsp(message: string) {
   toast(message, {

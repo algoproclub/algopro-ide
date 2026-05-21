@@ -34,8 +34,6 @@ export const SettingsMenu = (props: {
     setMounted(true);
   }, []);
 
-// task: merget átnézni
-
   if (!firebaseUser) {
     return null;
   }
@@ -106,7 +104,7 @@ export const SettingsMenu = (props: {
                       >
                         <div className={menuPanelClass}>
                           <div className="py-1">
-                            <div className="px-4 py-2 text-sm text-gray-200">
+                            <div className="px-4 py-2 text-sm text-[var(--text-primary)]">
                               Signed in as{' '}
                               <strong>{firebaseUser.displayName}</strong>
                             </div>
@@ -114,18 +112,13 @@ export const SettingsMenu = (props: {
                               {({ active }) => (
                                 <button
                                   type="button"
-                                  className={classNames(
-                                    active
-                                      ? 'bg-gray-700 text-gray-100'
-                                      : 'text-gray-200',
-                                    'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
-                                  )}
+                                  className={menuItemClass(active)}
                                   onClick={() =>
                                     props.setIsProfileSettingsOpen(true)
                                   }
                                 >
                                   <CogIcon
-                                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                    className={menuIconClass}
                                     aria-hidden="true"
                                   />
                                   Profile Settings
@@ -136,80 +129,17 @@ export const SettingsMenu = (props: {
                               {({ active }) => (
                                 <button
                                   type="button"
-                                  className={classNames(
-                                    active
-                                      ? 'bg-gray-700 text-gray-100'
-                                      : 'text-gray-200',
-                                    'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
-                                  )}
+                                  className={menuItemClass(active)}
                                   onClick={() => signOut(connectionContext)}
                                 >
                                   <ArrowRightOnRectangleIcon
-                                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                    className={menuIconClass}
                                     aria-hidden="true"
                                   />
                                   Sign Out
                                 </button>
                               )}
                             </Menu.Item>
-                            {firebaseUser ? (
-                              <>
-                                <div className="px-4 py-2 text-sm text-[var(--text-primary)]">
-                                  Signed in as{' '}
-                                  <strong>{firebaseUser.displayName}</strong>
-                                </div>
-                                <Menu.Item>
-                                  {({ active }) => (
-                                    <button
-                                      type="button"
-                                      className={menuItemClass(active)}
-                                      onClick={() =>
-                                        props.setIsProfileSettingsOpen(true)
-                                      }
-                                    >
-                                      <CogIcon
-                                        className={menuIconClass}
-                                        aria-hidden="true"
-                                      />
-                                      Profile Settings
-                                    </button>
-                                  )}
-                                </Menu.Item>
-                                <Menu.Item>
-                                  {({ active }) => (
-                                    <button
-                                      type="button"
-                                      className={menuItemClass(active)}
-                                      onClick={() => signOut(connectionContext)}
-                                    >
-                                      <ArrowRightOnRectangleIcon
-                                        className={menuIconClass}
-                                        aria-hidden="true"
-                                      />
-                                      Sign Out
-                                    </button>
-                                  )}
-                                </Menu.Item>
-                              </>
-                            ) : (
-                              <Menu.Item>
-                                {({ active }) => (
-                                  <button
-                                    type="button"
-                                    className={menuItemClass(active)}
-                                    onClick={() =>
-                                      signInWithGoogle(connectionContext)
-                                    }
-                                  >
-                                    <ArrowRightOnRectangleIcon
-                                      className={menuIconClass}
-                                      aria-hidden="true"
-                                    />
-                                    Sign In
-                                  </button>
-                                )}
-                              </Menu.Item>
-                            )}
                           </div>
                         </div>
                       </Transition.Child>
