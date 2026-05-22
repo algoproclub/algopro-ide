@@ -1,9 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 
-import '@codingame/monaco-vscode-cpp-default-extension';
-import '@codingame/monaco-vscode-python-default-extension';
-import '@codingame/monaco-vscode-java-default-extension';
-import '@codingame/monaco-vscode-html-default-extension';
 import * as monaco from 'monaco-editor';
 import {
   EditorApp,
@@ -36,6 +32,46 @@ const INSERT_LINE_AFTER_DEFAULT_BINDING =
   monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter;
 const INSERT_LINE_AFTER_REBOUND_BINDING =
   monaco.KeyMod.Alt | monaco.KeyCode.Enter;
+
+const LANGUAGE_EXTENSION_LOADERS: Record<string, () => Promise<unknown>> = {
+  cpp: () => import('@codingame/monaco-vscode-cpp-default-extension'),
+  java: () => import('@codingame/monaco-vscode-java-default-extension'),
+  python: () => import('@codingame/monaco-vscode-python-default-extension'),
+  html: () => import('@codingame/monaco-vscode-html-default-extension'),
+};
+
+const languageExtensionLoadPromises = new Map<string, Promise<void>>();
+
+function loadLanguageExtension(language?: string | null): Promise<void> {
+  const normalizedLanguage = language?.toLowerCase();
+
+  if (!normalizedLanguage) {
+    return Promise.resolve();
+  }
+
+  const loader = LANGUAGE_EXTENSION_LOADERS[normalizedLanguage];
+
+  if (!loader) {
+    return Promise.resolve();
+  }
+
+  const cachedPromise = languageExtensionLoadPromises.get(normalizedLanguage);
+  if (cachedPromise) {
+    return cachedPromise;
+  }
+
+  const loadPromise = loader()
+    .then(() => undefined)
+    .catch(error => {
+      // Allow retry if a dynamic import fails.
+      languageExtensionLoadPromises.delete(normalizedLanguage);
+      throw error;
+    });
+
+  languageExtensionLoadPromises.set(normalizedLanguage, loadPromise);
+
+  return loadPromise;
+}
 
 const rebindAction = (
   id: string,
@@ -170,6 +206,7 @@ export default function MonacoEditor({
     saveViewState,
     value,
   });
+  const latestYjsInfoRef = useRef(yjsInfo);
 
   const resolvedTheme =
     theme === 'light'
@@ -189,13 +226,17 @@ export default function MonacoEditor({
     saveViewState,
     value,
   };
+  latestYjsInfoRef.current = yjsInfo;
 
   useEffect(() => {
     let disposed = false;
     let keybindingDisposable: monaco.IDisposable | undefined;
     let createdEditorApp: EditorApp | null = null;
 
-    void ensureMonacoServices()
+    void Promise.all([
+      ensureMonacoServices(),
+      loadLanguageExtension(latestPropsRef.current.language),
+    ])
       .then(async () => {
         if (disposed || !ref.current) {
           return;
@@ -346,13 +387,19 @@ export default function MonacoEditor({
      at the same time will result in the wrong language being used */
   const previousPath = usePrevious(path);
   useUpdate(() => {
-    if (!editorRef.current || !editorAppRef.current) {
+    if (!editor || !editorRef.current || !editorAppRef.current) {
       return;
     }
 
     void (async () => {
       const currentEditor = editorRef.current;
       const editorApp = editorAppRef.current;
+      const {
+        language: currentLanguage,
+        saveViewState: shouldSaveViewState,
+        value: currentValue,
+      } = latestPropsRef.current;
+      const currentYjsInfo = latestYjsInfoRef.current;
 
       if (!currentEditor || !editorApp) {
         return;
@@ -361,24 +408,25 @@ export default function MonacoEditor({
       const modelPath = toModelPath(path);
       const previousModelPath = toModelPath(previousPath);
 
-      if (saveViewState) {
+      if (shouldSaveViewState) {
         viewStates.set(previousModelPath, currentEditor.saveViewState());
       }
 
       const collaborativeText =
-        yjsInfo && (yjsInfo.path === undefined || yjsInfo.path === path)
-          ? yjsInfo.yjsText.toString()
+        currentYjsInfo &&
+        (currentYjsInfo.path === undefined || currentYjsInfo.path === path)
+          ? currentYjsInfo.yjsText.toString()
           : null;
 
       const updated = await editorApp.updateCodeResources({
         modified: {
-          text: collaborativeText ?? value,
+          text: collaborativeText ?? currentValue,
           uri: modelPath,
-          enforceLanguageId: language ?? 'plaintext',
+          enforceLanguageId: currentLanguage ?? 'plaintext',
         },
       });
 
-      if (!updated || !saveViewState) {
+      if (!updated || !shouldSaveViewState) {
         return;
       }
 
@@ -390,10 +438,10 @@ export default function MonacoEditor({
     })().catch(error => {
       console.error('Failed to update Monaco code resources:', error);
     });
-  }, [editor, path]);
+  }, [editor, path, previousPath]);
 
   useUpdate(() => {
-    if (!editorRef.current) {
+    if (!editor || !editorRef.current) {
       return;
     }
 
@@ -416,9 +464,13 @@ export default function MonacoEditor({
         editorRef.current.pushUndoStop();
       }
     }
-  }, [editor, value]);
+  }, [editor, path, value, yjsInfo]);
 
   useUpdate(() => {
+    if (!editor) {
+      return;
+    }
+
     // theme is global
     monaco.editor.setTheme(resolvedTheme ?? MONACO_VSCODE_DARK_THEME);
   }, [editor, resolvedTheme]);
@@ -435,18 +487,41 @@ export default function MonacoEditor({
   }, [editor, path, rainbowIndent, resolvedTheme]);
 
   useUpdate(() => {
-    if (!editorRef.current) {
+    if (!editor || !editorRef.current) {
       return;
     }
 
-    monaco.editor.setModelLanguage(
-      editorRef.current.getModel()!,
-      language ?? 'plaintext'
-    );
+    const targetLanguage = language ?? 'plaintext';
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        await loadLanguageExtension(targetLanguage);
+      } catch (error) {
+        console.error('Failed to load Monaco language extension:', error);
+        return;
+      }
+
+      if (cancelled) {
+        return;
+      }
+
+      const model = editorRef.current?.getModel();
+
+      if (!model) {
+        return;
+      }
+
+      monaco.editor.setModelLanguage(model, targetLanguage);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [editor, language]);
 
   useUpdate(() => {
-    if (!editorRef.current) {
+    if (!editor || !editorRef.current) {
       return;
     }
 
