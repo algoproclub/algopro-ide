@@ -38,6 +38,11 @@ Set `EXECUTE_ALLOWED_ORIGINS` to a comma-separated list of frontend origins
 allowed by CORS. It defaults to `http://localhost:3000`. Browser requests with
 an unlisted `Origin` are rejected.
 
+C++ compilations are cached under `/tmp/execute-server/compile-cache`. The
+cache is deleted on server startup, then kept under 1 GB on disk using
+in-memory LRU metadata. Compiler output is capped at 64 KiB and compiled
+artifacts at 64 MiB.
+
 ### POST /execute
 
 request:
@@ -62,7 +67,7 @@ responses:
 - 401:
   - when: the Firebase ID token is missing or invalid
 - 413:
-  - when: input data is larger than 5000 UTF-8 bytes, or the request body is larger than 100000 bytes
+  - when: input data is larger than 5000 UTF-8 bytes, the request body is larger than 100000 bytes, or a C++ artifact is larger than 64 MiB
 - 200:
   - when: successful execution (incl. compilation error, TL, RTE etc.)
   - json body with fields:
