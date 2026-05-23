@@ -9,6 +9,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/mraron/njudge v0.5.0
 	github.com/stretchr/testify v1.9.0
+	golang.org/x/sync v0.8.0
 	google.golang.org/api v0.170.0
 )
 
@@ -45,7 +46,6 @@ require (
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/oauth2 v0.20.0 // indirect
-	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
@@ -58,4 +58,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/mraron/njudge => github.com/algoproclub/njudge v0.6.1-0.20250601095924-c6a9d0752fdb
+replace github.com/mraron/njudge => github.com/algoproclub/njudge v0.6.1-0.20260713082108-f2cd3566b785

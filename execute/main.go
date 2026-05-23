@@ -34,11 +34,17 @@ var (
 	TimeLimit   = 5 * time.Second
 	MemoryLimit = 128 * memory.MiB
 
-	StdoutLimit = 5000 * memory.Byte
-	StderrLimit = 10000 * memory.Byte
-	InputLimit  = 5000 * memory.Byte
-	BodyLimit   = 100000 * memory.Byte
-	PCHCacheDir = "/tmp/execute-server/pch"
+	StdoutLimit         = 5000 * memory.Byte
+	StderrLimit         = 10000 * memory.Byte
+	InputLimit          = 5000 * memory.Byte
+	BodyLimit           = 100000 * memory.Byte
+	PCHCacheDir         = "/tmp/execute-server/pch"
+	CompileCacheDir     = "/tmp/execute-server/compile-cache"
+	CompileCacheMaxSize = int64(memory.GB)
+
+	CompileArtifactLimit = int64(64 * memory.MiB)
+	CompilerOutputLimit  = int64(64 * memory.KiB)
+	CompileTimeout       = 30 * time.Second
 
 	CppArgs             = strings.Fields("-std=c++20 -O2 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -Wlogical-op -Wno-sign-compare -fsanitize=undefined -fsanitize=address -fno-sanitize-recover=all -g -DONLINE_JUDGE -fdiagnostics-color=always -fdiagnostics-urls=always")
 	JavaFilenamePattern = regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*\.java$`)
@@ -52,7 +58,13 @@ func mustLanguage(l language.Language, err error) language.Language {
 }
 
 var Languages = map[string]language.Language{
-	"cpp":  cpp.New("cpp20", "C++ 20", cpp.WithCompileArgs(CppArgs), cpp.WithPCHCache(PCHCacheDir, int64(256*memory.MiB))),
+	"cpp": cpp.New(
+		"cpp20",
+		"C++ 20",
+		cpp.WithCompileArgs(CppArgs),
+		cpp.WithPCHCache(PCHCacheDir, int64(256*memory.MiB)),
+		cpp.WithMaxArtifactSize(CompileArtifactLimit),
+	),
 	"java": mustLanguage(language.DefaultStore.Get("java")),
 	"py":   mustLanguage(language.DefaultStore.Get("pypy3")),
 }
@@ -100,33 +112,59 @@ func (req Request) InputWithinLimit() bool {
 	return int64(len([]byte(req.Input))) <= int64(InputLimit)
 }
 
-func (req Request) Run(ctx context.Context, sp sandbox.Provider) (*Response, error) {
-	sbox, err := sp.Get()
+func withSandbox[T any](ctx context.Context, sp sandbox.Provider, run func(sandbox.Sandbox) (T, error)) (result T, err error) {
+	sbox, err := sp.Get(ctx)
 	if err != nil {
-		return nil, err
+		return result, err
 	}
-
-	sbox.Init(ctx)
-	defer func(ctx context.Context) {
-		sbox.Cleanup(ctx)
+	if err := sbox.Init(ctx); err != nil {
 		sp.Put(sbox)
-	}(ctx)
+		return result, err
+	}
+	defer func() {
+		err = errors.Join(err, sbox.Cleanup(context.Background()))
+		sp.Put(sbox)
+	}()
+	return run(sbox)
+}
 
+func (req Request) Run(ctx context.Context, sp sandbox.Provider, compileCache *CompileCache) (*Response, error) {
 	lang := Languages[req.Language]
-	var bin *sandbox.File
-	compileError := &bytes.Buffer{}
-
-	if bin, err = lang.Compile(ctx, sbox, sandbox.File{
-		Name:   req.Filename,
-		Source: io.NopCloser(strings.NewReader(req.Source)),
-	}, compileError, nil); err != nil {
-		return &Response{
-			Compiled:       false,
-			CompilerOutput: compileError.String(),
-			Verdict:        sandbox.VerdictCE,
-		}, nil
+	if compileCache != nil && req.Language == "cpp" {
+		artifact, err := compileCache.Compile(ctx, req, sp, lang)
+		if err != nil {
+			return nil, err
+		}
+		if !artifact.Compiled {
+			return &Response{
+				Compiled:       false,
+				CompilerOutput: artifact.CompilerOutput,
+				Verdict:        sandbox.VerdictCE,
+			}, nil
+		}
+		return withSandbox(ctx, sp, func(sbox sandbox.Sandbox) (*Response, error) {
+			return req.runCompiled(ctx, sbox, lang, artifact)
+		})
 	}
 
+	return withSandbox(ctx, sp, func(sbox sandbox.Sandbox) (*Response, error) {
+		data, err := compileSource(ctx, req, sbox, lang)
+		if err != nil {
+			return nil, err
+		}
+		artifact := newCompiledArtifact(data)
+		if !artifact.Compiled {
+			return &Response{
+				Compiled:       false,
+				CompilerOutput: artifact.CompilerOutput,
+				Verdict:        sandbox.VerdictCE,
+			}, nil
+		}
+		return req.runCompiled(ctx, sbox, lang, artifact)
+	})
+}
+
+func (req Request) runCompiled(ctx context.Context, sbox sandbox.Sandbox, lang language.Language, artifact *CompiledArtifact) (*Response, error) {
 	stdout := &bytes.Buffer{}
 	stdoutLimiter := iotest.TruncateWriter(stdout, int64(StdoutLimit))
 
@@ -144,7 +182,7 @@ func (req Request) Run(ctx context.Context, sp sandbox.Provider) (*Response, err
 	status, err := lang.Run(
 		ctx,
 		runSandbox,
-		*bin,
+		*artifact.Binary,
 		strings.NewReader(req.Input),
 		stdoutLimiter, TimeLimit, MemoryLimit)
 	if err != nil {
@@ -153,7 +191,7 @@ func (req Request) Run(ctx context.Context, sp sandbox.Provider) (*Response, err
 
 	return &Response{
 		Compiled:       true,
-		CompilerOutput: compileError.String(),
+		CompilerOutput: artifact.CompilerOutput,
 
 		Verdict: status.Verdict,
 		Output:  stdout.String(),
@@ -161,7 +199,6 @@ func (req Request) Run(ctx context.Context, sp sandbox.Provider) (*Response, err
 		Memory:  int(status.Memory / memory.KB),
 		Time:    status.Time,
 	}, nil
-
 }
 
 type Response struct {
@@ -203,6 +240,7 @@ type Server struct {
 	sp             sandbox.Provider
 	tokenVerifier  TokenVerifier
 	allowedOrigins []string
+	compileCache   *CompileCache
 }
 
 func parseAllowedOrigins() []string {
@@ -345,8 +383,12 @@ func (s Server) PostExecute(w http.ResponseWriter, r *http.Request) {
 		"filename", req.Filename,
 	)
 
-	resp, err := req.Run(r.Context(), s.sp)
+	resp, err := req.Run(r.Context(), s.sp, s.compileCache)
 	if err != nil {
+		if errors.Is(err, sandbox.ErrFileTooLarge) {
+			http.Error(w, "compiled artifact is too large", http.StatusRequestEntityTooLarge)
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -361,6 +403,13 @@ func (s Server) PostExecute(w http.ResponseWriter, r *http.Request) {
 func main() {
 	ctx := context.Background()
 	if err := os.MkdirAll(PCHCacheDir, 0o755); err != nil {
+		panic(err)
+	}
+	compileCache, err := NewCompileCache(
+		CompileCacheDir,
+		CompileCacheMaxSize,
+	)
+	if err != nil {
 		panic(err)
 	}
 
@@ -393,6 +442,7 @@ func main() {
 		sp:             sp,
 		tokenVerifier:  tokenVerifier,
 		allowedOrigins: parseAllowedOrigins(),
+		compileCache:   compileCache,
 	}
 
 	r := chi.NewRouter()

@@ -346,7 +346,7 @@ print("error", file=sys.stderr)`,
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			assert.True(t, test.req.Valid())
-			resp, err := test.req.Run(context.TODO(), sp)
+			resp, err := test.req.Run(context.TODO(), sp, nil)
 			if test.wantErr {
 				assert.NotNil(t, err)
 			} else {
