@@ -108,8 +108,6 @@ $ sudo cp systemd/isolate.service /etc/systemd/system
 $ sudo systemctl start isolate && sudo systemctl enable isolate
 ```
 
-Create the `/tmp/pch` directory
-
 Disable "High Entropy mmap randomization" to fix intermittent memory allocation failures with ASan shadow memory enabled (https://github.com/google/sanitizers/issues/1614#issuecomment-2010316781):
 
 ```
