@@ -1,6 +1,7 @@
 # execute
 
-Communicates with the frontend through the `/api/execute/` NextJS api route.
+Communicates with the frontend directly from the browser. Requests must include
+a Firebase ID token in the `Authorization: Bearer <token>` header.
 
 Requirements:
 
@@ -25,15 +26,30 @@ Use `go test . -verbose` to view the request and response objects.
 
 listens on `:1235`
 
+Set `FIREBASE_PROJECT_IDS` to the comma-separated Firebase project IDs whose
+users may run code, for example the Algo Pro and MATFIZ projects. The legacy
+single-project `FIREBASE_PROJECT_ID` is still accepted when
+`FIREBASE_PROJECT_IDS` is not set. For local development against the Firebase
+emulator, also set `FIREBASE_AUTH_EMULATOR_HOST`. Token verification uses
+Google's public keys, so the execute service does not need Firebase
+service-account credentials.
+
+Set `EXECUTE_ALLOWED_ORIGINS` to a comma-separated list of frontend origins
+allowed by CORS. It defaults to `http://localhost:3000`. Browser requests with
+an unlisted `Origin` are rejected.
+
 ### POST /execute
 
 request:
 
+- headers:
+  - `Authorization: Bearer <Firebase ID token>`
+  - `Content-Type: application/json`
 - json body with fields:
   - language: string, `"cpp"`, `"java"` or `"py"`
   - filename: string, filename from algopro ide (e.g. `main.cpp`)
-  - source: string, base64 of the utf-8 encoded source code
-  - input: string, base64 of the utf-8 encoded input data
+  - source: string, source code as UTF-8 JSON text
+  - input: string, input data as UTF-8 JSON text
 
 responses:
 
@@ -43,6 +59,10 @@ responses:
 - 400:
   - when: request is malformed
   - response body is undefined
+- 401:
+  - when: the Firebase ID token is missing or invalid
+- 413:
+  - when: input data is larger than 5000 UTF-8 bytes, or the request body is larger than 100000 bytes
 - 200:
   - when: successful execution (incl. compilation error, TL, RTE etc.)
   - json body with fields:
