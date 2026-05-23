@@ -46,12 +46,18 @@ services:
       context: execute
     environment:
       - EXECUTE_DUMMY=true
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
+      - FIREBASE_PROJECT_IDS=algopro-app
+      - EXECUTE_ALLOWED_ORIGINS=http://localhost:3000
     ports:
-      - '1235'
+      - '127.0.0.1:1235:1235'
     volumes:
       - type: bind
         source: execute/
         target: /app
+    depends_on:
+      firebase:
+        condition: service_started
   login-bot:
     build:
       context: login-bot
@@ -66,9 +72,9 @@ services:
       - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
       - FIRESTORE_EMULATOR_HOST=firebase:8080
       - NEXT_PUBLIC_BASE_URL=http://localhost:3000
+      - NEXT_PUBLIC_EXECUTE_URL=http://localhost:1235
       - NEXT_PUBLIC_YJS_URL=ws://localhost:1234
       - YJS_API_URL=http://yjs:1234
-      - EXECUTE_URL=http://execute:1235
       - LOGIN_BOT_URL=http://login-bot:3100
     ports:
       - '3000:3000'

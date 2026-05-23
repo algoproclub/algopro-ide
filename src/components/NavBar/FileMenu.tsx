@@ -21,7 +21,7 @@ import {
 import { useAtomValue } from 'jotai';
 import { useEditorContext } from '../../context/EditorContext';
 import download from '../../scripts/download';
-import { extractJavaFilename } from '../../scripts/judge';
+import { extractJavaFilename } from '../../scripts/runCode';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
 import { problemAtom } from '../../atoms/workspaceUI';

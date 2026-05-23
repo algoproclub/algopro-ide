@@ -80,9 +80,11 @@ export const Output = ({
   if (option !== 'results' && option !== 'history') {
     if (result?.status === 'internal_error') {
       outputText =
-        'Internal Error: ' +
-        result.message +
-        '\n\nPlease report this as a Github issue.';
+        result.debugData?.source === 'run_code'
+          ? 'Run Code Error: ' + result.message
+          : 'Internal Error: ' +
+            result.message +
+            '\n\nPlease report this as a GitHub issue.';
     } else {
       if (option === 'compile_output') {
         if (result?.status === 'compile_error') {

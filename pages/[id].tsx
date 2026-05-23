@@ -4,7 +4,7 @@ import { FileMenu } from '../src/components/NavBar/FileMenu';
 import { NavBar } from '../src/components/NavBar/NavBar';
 import { EditorProvider, useEditorContext } from '../src/context/EditorContext';
 import { RunButton } from '../src/components/RunButton';
-import { submitToJudge } from '../src/scripts/judge';
+import { RunCodeError, runCode, runCodeBatch } from '../src/scripts/runCode';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
   inputEditorValueAtom,
@@ -41,6 +41,29 @@ import { fetchProblemFromDb } from '../src/scripts/fetchProblemFromDb';
 import Link from 'next/link';
 import ProfileSettings from '../src/components/settings/ProfileSettings';
 import WithRegistration from '../src/components/WithRegistration';
+
+function runCodeErrorToResult(error: unknown): JudgeResult {
+  const runCodeError = error instanceof RunCodeError ? error : undefined;
+  const status = runCodeError?.status ? `${runCodeError.status} ` : '';
+  const debugData: JudgeResult['debugData'] = {
+    source: 'run_code',
+    kind: runCodeError?.kind ?? 'unexpected',
+  };
+  if (runCodeError?.status !== undefined)
+    debugData.status = runCodeError.status;
+
+  return {
+    status: 'internal_error',
+    statusDescription: 'Run Code Error',
+    message:
+      `${status}${error instanceof Error ? error.message : String(error)}`.trim(),
+    stdout: '',
+    stderr: '',
+    time: '',
+    memory: '',
+    debugData,
+  };
+}
 
 function EditorPage() {
   const { fileData, updateFileData } = useEditorContext();
@@ -104,16 +127,12 @@ function EditorPage() {
         isCodeRunning: isRunning,
       });
     };
-    const fetchJudge = (code: string, input: string): Promise<Response> => {
-      return submitToJudge(
-        fileData.settings.language,
+    const executeCode = (code: string, input: string): Promise<JudgeResult> => {
+      return runCode({
+        language: fileData.settings.language,
         code,
         input,
-        fileData.settings.compilerOptions[fileData.settings.language],
-        problem?.input?.endsWith('.in')
-          ? problem.input.substring(0, problem.input.length - 3)
-          : undefined
-      );
+      });
     };
 
     const setResultAt = (index: number, data: JudgeResult | null) => {
@@ -137,28 +156,13 @@ function EditorPage() {
       setResultAt(inputTabIndex, null);
 
       const code = getMainEditorValue();
-      fetchJudge(code, input)
-        .then(async resp => {
-          const data: JudgeResult = await resp.json();
-          if (!resp.ok) {
-            if (data.debugData?.errorType === 'Function.ResponseSizeTooLarge') {
-              alert(
-                'Error: Your program printed too much data to stdout/stderr.'
-              );
-            } else {
-              alert('Error: ' + (resp.status + ' - ' + JSON.stringify(data)));
-            }
-          } else {
-            cleanJudgeResult(data, expectedOutput, prefix);
-            setResultAt(inputTabIndex, data);
-          }
+      executeCode(code, input)
+        .then(data => {
+          cleanJudgeResult(data, expectedOutput, prefix);
+          setResultAt(inputTabIndex, data);
         })
         .catch(e => {
-          alert(
-            'Error: ' +
-              e.message +
-              '. Perhaps the server is down, or your input is too large.'
-          );
+          setResultAt(inputTabIndex, runCodeErrorToResult(e));
           console.error(e);
         })
         .finally(() => setIsRunning(false));
@@ -178,11 +182,11 @@ function EditorPage() {
 
       const code = getMainEditorValue();
       try {
-        const promises = [];
-        for (let index = 0; index < samples.length; ++index) {
-          const sample = samples[index];
-          promises.push(fetchJudge(code, sample.input));
-        }
+        const sampleResults = await runCodeBatch({
+          language: fileData.settings.language,
+          code,
+          inputs: samples.map(sample => sample.input),
+        });
 
         const newJudgeResults = judgeResults;
         const results: JudgeResult[] = [];
@@ -190,15 +194,10 @@ function EditorPage() {
         let lastIndex = 0;
         for (let index = 0; index < samples.length; ++index) {
           const sample = samples[index];
-          const resp = await promises[index];
-          const data: JudgeResult = await resp.json();
-          if (!resp.ok || data.status === 'internal_error') {
-            alert(
-              'Error: ' +
-                (data.message || resp.status + ' - ' + JSON.stringify(data))
-            );
+          const data = sampleResults[index];
+          if (data.status === 'internal_error') {
             console.error(data);
-            throw new Error('bad judge result');
+            throw new Error(data.message || JSON.stringify(data));
           }
           let prefix = 'Sample';
           if (samples.length > 1) prefix += ` ${index + 1}`;
@@ -261,6 +260,14 @@ function EditorPage() {
         }
         setJudgeResults(newJudgeResults);
       } catch (e) {
+        const errorResult = runCodeErrorToResult(e);
+        const newJudgeResults = judgeResults;
+        runAllList.forEach((item, index) => {
+          let tabIndex = tabsList.findIndex(tab => tab.value === item);
+          if (tabIndex === -1) tabIndex = tabsList.length + index;
+          newJudgeResults[tabIndex] = errorResult;
+        });
+        setJudgeResults(newJudgeResults);
         console.error(e);
       }
       setIsRunning(false);
