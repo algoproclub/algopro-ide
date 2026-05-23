@@ -38,6 +38,7 @@ var (
 	StderrLimit = 10000 * memory.Byte
 	InputLimit  = 5000 * memory.Byte
 	BodyLimit   = 100000 * memory.Byte
+	PCHCacheDir = "/tmp/execute-server/pch"
 
 	CppArgs             = strings.Fields("-std=c++20 -O2 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -Wlogical-op -Wno-sign-compare -fsanitize=undefined -fsanitize=address -fno-sanitize-recover=all -g -DONLINE_JUDGE -fdiagnostics-color=always -fdiagnostics-urls=always")
 	JavaFilenamePattern = regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*\.java$`)
@@ -51,7 +52,7 @@ func mustLanguage(l language.Language, err error) language.Language {
 }
 
 var Languages = map[string]language.Language{
-	"cpp":  cpp.New("cpp17", "C++ 17", cpp.WithCompileArgs(CppArgs), cpp.WithPCHCache("/tmp/pch", int64(256*memory.MiB))),
+	"cpp":  cpp.New("cpp20", "C++ 20", cpp.WithCompileArgs(CppArgs), cpp.WithPCHCache(PCHCacheDir, int64(256*memory.MiB))),
 	"java": mustLanguage(language.DefaultStore.Get("java")),
 	"py":   mustLanguage(language.DefaultStore.Get("pypy3")),
 }
@@ -359,6 +360,10 @@ func (s Server) PostExecute(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	ctx := context.Background()
+	if err := os.MkdirAll(PCHCacheDir, 0o755); err != nil {
+		panic(err)
+	}
+
 	sp := sandbox.NewProvider()
 	if os.Getenv("EXECUTE_DUMMY") != "" {
 		for i := 0; i < 10; i++ {
