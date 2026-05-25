@@ -86,7 +86,9 @@ async function fetchTestcasesCSES(
     const kind = matchArray[2] === 'in' ? 'input' : 'output';
     const saveFilename = `${basePath}/${kind}${num}.txt`;
     const data = await getEntryDataAsync(entry);
-    await bucket.file(saveFilename).save(data);
+    await bucket
+      .file(saveFilename)
+      .save(data, { metadata: { cacheControl: 'public, max-age=7200' } });
   }
 }
 
