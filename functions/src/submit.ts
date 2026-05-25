@@ -492,11 +492,17 @@ export class PlanetsSubmitter extends Submitter {
       }
     );
     if (res.status !== 200) {
+      let errorMessage: string;
+
+      const response = await res.text();
+      try {
+        errorMessage = JSON.parse(response).error.message;
+      } catch (e) {
+        errorMessage = response;
+      }
+
       throw new Error(
-        'planets submission failed, status: ' +
-          res.status +
-          ' ' +
-          (await res.json()).error.message
+        'planets submission failed, status: ' + res.status + ' ' + errorMessage
       );
     }
     const data = await res.json();
