@@ -80,12 +80,12 @@ const TestCaseInfoModal = ({
   const [outputPreviewText, setOutputPreviewText] = useState<string>('');
 
   useEffect(() => {
+    if (!isOpen || problem === null) return;
+
     setInputDownloadURL(null);
     setOutputDownloadURL(null);
     setInputPreviewText('');
     setOutputPreviewText('');
-
-    if (problem === null) return;
 
     const inputRef = makeTestcaseStorageRef(
       problem,
@@ -104,8 +104,10 @@ const TestCaseInfoModal = ({
       setPreviewText: (text: string) => void
     ) {
       try {
-        const meta = await getMetadata(ref);
-        const url = await getDownloadURL(ref);
+        const [meta, url] = await Promise.all([
+          getMetadata(ref),
+          getDownloadURL(ref),
+        ]);
         setDownloadURL(url);
         const sizeInBytes = meta.size;
         const sizeInMiBs = sizeInBytes / 1024 / 1024;
@@ -133,7 +135,7 @@ const TestCaseInfoModal = ({
     // we don't await so that they can run parallelly
     startTestcaseSetup(inputRef, setInputDownloadURL, setInputPreviewText);
     startTestcaseSetup(outputRef, setOutputDownloadURL, setOutputPreviewText);
-  }, [testCase, problem]);
+  }, [testCase, problem, isOpen]);
 
   const closeWithoutSaving = () => {
     onClose();
