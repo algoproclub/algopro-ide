@@ -66,6 +66,14 @@ export const submitproblemsolution = onCall<
   { region: 'europe-west1', maxInstances: 1, concurrency: 1 },
   async request => {
     const problemSolution = request.data;
+    const userID = request.auth?.uid;
+    if (!(await canRegisterSubmissionForFile(problemSolution.fileID, userID))) {
+      throw new HttpsError(
+        'permission-denied',
+        'You do not have permission to submit from this file.'
+      );
+    }
+
     const { platform, language } = problemSolution;
     const comment = {
       cpp: '//',
@@ -109,7 +117,13 @@ export const submitproblemsolution = onCall<
         );
     }
     await submitter.login(db);
-    return await submitter.submit(problemSolution, uuid);
+    const submissionData = await submitter.submit(problemSolution, uuid);
+    await registerSubmission(
+      problemSolution.fileID,
+      submissionData.id,
+      submissionData.username
+    );
+    return submissionData;
   }
 );
 
@@ -529,6 +543,22 @@ const updateResults = async (pending: PendingSubmissions | null) => {
   await Promise.all(promises);
 };
 
+const canRegisterSubmissionForFile = async (
+  fileID: string,
+  userID: string | undefined
+): Promise<boolean> => {
+  if (!userID) return false;
+
+  const userSnapshot = await db.ref(`files/${fileID}/users/${userID}`).get();
+  if (!userSnapshot.exists()) return false;
+
+  const permission =
+    userSnapshot.val()?.permission ??
+    (await db.ref(`files/${fileID}/settings/defaultPermission`).get()).val();
+
+  return ['OWNER', 'READ_WRITE'].includes(permission);
+};
+
 const registerSubmission = async (
   fileID: string,
   submissionID: string,
@@ -544,31 +574,33 @@ const registerSubmission = async (
     output: null,
     testCases: null,
   };
-  await db.ref(`files/${fileID}/submission`).update({
-    id: submissionID,
-    username: username,
-  });
   const submissionTime = Date.now();
-  await db.ref(`submissions/${fileID}`).update({
-    statusData: defaultStatusData,
-    submissionTime: submissionTime,
-  });
+
+  await Promise.all([
+    db.ref(`files/${fileID}/submission`).set({ id: submissionID, username }),
+    db.ref(`submissions/${fileID}`).update({
+      statusData: defaultStatusData,
+      submissionTime,
+    }),
+  ]);
+
   await db.ref('submissions/pending').update({
     [fileID]: {
-      creationTime: Date.now(),
+      creationTime: admin.database.ServerValue.TIMESTAMP,
     },
   });
 
-  const tournamentID = (
-    await db.ref(`files/${fileID}/tournamentID`).get()
-  ).val();
-  if (tournamentID) {
+  void (async () => {
+    const tournamentID = (
+      await db.ref(`files/${fileID}/tournamentID`).get()
+    ).val();
+    if (!tournamentID) return;
     await updateTournamentResult(tournamentID, fileID, {
       message: defaultStatusData.message,
       statusCode: defaultStatusData.statusCode,
       submissionTime: submissionTime,
     });
-  }
+  })();
 };
 
 exports.registersubmission = onCall(
@@ -576,20 +608,7 @@ exports.registersubmission = onCall(
   async request => {
     const fileID = request.data.fileID;
     const userID = request.auth?.uid;
-    const fileData = (await db.ref(`files/${fileID}`).get()).val();
-    if (
-      !userID ||
-      !fileData ||
-      !fileData.users ||
-      !fileData.users.hasOwnProperty(userID)
-    ) {
-      return { success: false };
-    }
-    const permission =
-      fileData.users[userID].permission ??
-      fileData?.settings?.defaultPermission;
-
-    if (!['OWNER', 'READ_WRITE'].includes(permission)) {
+    if (!(await canRegisterSubmissionForFile(fileID, userID))) {
       return { success: false };
     }
     await registerSubmission(
