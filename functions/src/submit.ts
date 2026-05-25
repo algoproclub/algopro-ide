@@ -465,6 +465,11 @@ export class PlanetsSubmitter extends Submitter {
     this.authorization = authorization;
   }
 
+  // We do not store any credentials for planets, so login is a no-op.
+  async login(_: object): Promise<void> {
+    return;
+  }
+
   async loginWith(_: object): Promise<boolean> {
     return true;
   }
