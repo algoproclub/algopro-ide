@@ -19,6 +19,7 @@ import { StatusData } from '../../src/types/problem';
 import USACOResults from '../../src/components/JudgeInterface/USACOResults';
 import Split from 'react-split-grid';
 import WithAdminLogin from '../../src/components/WithAdminLogin';
+import { HocuspocusProviderWebsocketComponent } from '@hocuspocus/provider-react';
 
 const db = getDatabase();
 
@@ -241,32 +242,36 @@ const SpectatePage = () => {
 
   return (
     <WithAdminLogin>
-      <div className="h-full w-full flex divide-x divide-gray-700">
-        <SolutionView
-          fileID={files?.[0]}
-          startTime={startTime}
-          participants={participants}
-          onFileChange={newFileID =>
-            setFiles(prev => [newFileID, prev[1], prev[2]])
-          }
-        />
-        <SolutionView
-          fileID={files?.[1]}
-          startTime={startTime}
-          participants={participants}
-          onFileChange={newFileID =>
-            setFiles(prev => [prev[0], newFileID, prev[2]])
-          }
-        />
-        <SolutionView
-          fileID={files?.[2]}
-          startTime={startTime}
-          participants={participants}
-          onFileChange={newFileID =>
-            setFiles(prev => [prev[0], prev[1], newFileID])
-          }
-        />
-      </div>
+      <HocuspocusProviderWebsocketComponent
+        url={process.env.NEXT_PUBLIC_YJS_URL!}
+      >
+        <div className="h-full w-full flex divide-x divide-gray-700">
+          <SolutionView
+            fileID={files?.[0]}
+            startTime={startTime}
+            participants={participants}
+            onFileChange={newFileID =>
+              setFiles(prev => [newFileID, prev[1], prev[2]])
+            }
+          />
+          <SolutionView
+            fileID={files?.[1]}
+            startTime={startTime}
+            participants={participants}
+            onFileChange={newFileID =>
+              setFiles(prev => [prev[0], newFileID, prev[2]])
+            }
+          />
+          <SolutionView
+            fileID={files?.[2]}
+            startTime={startTime}
+            participants={participants}
+            onFileChange={newFileID =>
+              setFiles(prev => [prev[0], prev[1], newFileID])
+            }
+          />
+        </div>
+      </HocuspocusProviderWebsocketComponent>
     </WithAdminLogin>
   );
 };

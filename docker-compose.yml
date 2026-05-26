@@ -38,9 +38,14 @@ services:
     ports:
       - '1234:1234'
     environment:
-      - YPERSISTENCE=../data/yjs
+      - FIREBASE_STORAGE_EMULATOR_HOST=firebase:9199
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
+      - DATABASE_PATH=/data/db.sqlite
     volumes:
-      - data:/app/yjs/data
+      - data:/data
+    depends_on:
+      firebase:
+        condition: service_started
   execute:
     build:
       context: execute

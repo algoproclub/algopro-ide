@@ -39,6 +39,8 @@
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@headlessui/react": "^1.6.4",
     "@heroicons/react": "^2.0.13",
+    "@hocuspocus/provider": "^4.1.0",
+    "@hocuspocus/provider-react": "^4.1.0",
     "@popperjs/core": "^2.11.5",
     "@replit/codemirror-vim": "^6.3.0",
     "@tailwindcss/aspect-ratio": "^0.4.0",
