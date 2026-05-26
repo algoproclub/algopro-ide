@@ -43,6 +43,7 @@ import WithRegistration from '../src/components/WithRegistration';
 import { beginCodeRun, endCodeRun } from '../src/scripts/codeRun';
 import useCodeRunActive from '../src/hooks/useCodeRunActive';
 import useServerTimeOffset from '../src/hooks/useServerTimeOffset';
+import { HocuspocusProviderWebsocketComponent } from '@hocuspocus/provider-react';
 
 function runCodeErrorToResult(error: unknown): JudgeResult {
   const runCodeError = error instanceof RunCodeError ? error : undefined;
@@ -338,7 +339,11 @@ function EditorPage() {
           />
         </div>
         <div className="flex-1 min-h-0">
-          <Workspace handleRunCode={handleRunCode} tabsList={tabsList} />
+          <HocuspocusProviderWebsocketComponent
+            url={process.env.NEXT_PUBLIC_YJS_URL!}
+          >
+            <Workspace handleRunCode={handleRunCode} tabsList={tabsList} />
+          </HocuspocusProviderWebsocketComponent>
         </div>
         {!isDesktop && (
           <MobileBottomNav
