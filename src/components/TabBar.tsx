@@ -23,7 +23,7 @@ export const TabBar = ({
   const defaultTabBarClass =
     'bg-[var(--panel-bg-alt)] border-b border-[var(--border-color)]';
   const activeTabClass = homepage
-    ? 'bg-gray-700 text-gray-200'
+    ? 'bg-[var(--surface-active)] text-[var(--text-primary)]'
     : 'bg-[var(--panel-bg)] text-[var(--text-primary)]';
   const inactiveTabClass =
     'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]';

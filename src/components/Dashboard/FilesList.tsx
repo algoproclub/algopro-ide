@@ -64,23 +64,24 @@ export default function FilesList(props: FilesListProps): JSX.Element {
 
   return (
     <div className="flex flex-col overflow-x-auto">
-      <table className="table-filelist divide-y divide-gray-700">
-        <thead className="z-20 bg-gray-800">
+      {/* szda re-theme phase2: workspace file table uses shared table and text tokens. */}
+      <table className="table-filelist divide-y divide-[color:var(--border-muted)] theme-table">
+        <thead className="z-20 theme-table-header">
           <tr className="truncate">
-            <th className="text-left text-sm font-bold text-gray-100 max-w-60 truncate">
+            <th className="text-left text-sm font-bold theme-text max-w-60 truncate">
               Name
             </th>
-            <th className="text-left text-sm font-bold text-gray-100">
+            <th className="text-left text-sm font-bold theme-text">
               Last Accessed
             </th>
-            <th className="text-left text-sm font-bold text-gray-100">
+            <th className="text-left text-sm font-bold theme-text">
               Created
             </th>
-            <th className="text-left text-sm font-bold text-gray-100">
+            <th className="text-left text-sm font-bold theme-text">
               Language
             </th>
-            <th className="text-left text-sm font-bold text-gray-100">Owner</th>
-            <th className="text-left text-sm font-bold text-gray-100">
+            <th className="text-left text-sm font-bold theme-text">Owner</th>
+            <th className="text-left text-sm font-bold theme-text">
               Permissions
             </th>
             <th className="relative">
@@ -88,13 +89,15 @@ export default function FilesList(props: FilesListProps): JSX.Element {
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-700 bg-gray-900">
+        <tbody className="divide-y divide-[color:var(--border-muted)] theme-surface-muted">
           {props.files.map(file => (
             <tr key={file.id}>
               {file.hidden ? (
                 <td
                   className={`text-sm font-medium truncate ${
-                    file.hidden ? 'text-gray-400' : 'text-white'
+                    file.hidden
+                      ? 'text-[color:var(--text-muted)]'
+                      : 'text-[color:var(--text-primary)]'
                   }`}
                 >
                   <span>(Hidden) {file.title || '(Unnamed File)'}</span>
@@ -108,7 +111,7 @@ export default function FilesList(props: FilesListProps): JSX.Element {
                   </span>
                   <Link
                     href={`/${file.id.substring(1)}`}
-                    className="absolute inset-0 flex items-center text-sm font-medium text-gray-100 hover:bg-gray-800 transition whitespace-normal break-words px-4 py-2"
+                    className="absolute inset-0 flex items-center text-sm font-medium theme-text hover:bg-[color:var(--surface-hover)] transition whitespace-normal break-words px-4 py-2"
                     aria-label={
                       file.title && file.title.trim() !== ''
                         ? file.title
@@ -123,30 +126,30 @@ export default function FilesList(props: FilesListProps): JSX.Element {
                   </Link>
                 </td>
               )}
-              <td className="whitespace-nowrap text-sm text-gray-400">
+              <td className="whitespace-nowrap text-sm theme-text-muted">
                 {dayjs(file.lastAccessTime).fromNow()}
               </td>
-              <td className="whitespace-nowrap text-sm text-gray-400">
+              <td className="whitespace-nowrap text-sm theme-text-muted">
                 {formatCreationTime(file.creationTime)}
               </td>
-              <td className="whitespace-nowrap text-sm text-gray-400">
+              <td className="whitespace-nowrap text-sm theme-text-muted">
                 {formatLanguage(file.language)}
               </td>
-              <td className="whitespace-nowrap text-sm text-gray-400">
+              <td className="whitespace-nowrap text-sm theme-text-muted">
                 {file.owner
                   ? file.owner.id === firebaseUser.uid
                     ? 'Me'
                     : file.owner.name
                   : ''}
               </td>
-              <td className="whitespace-nowrap text-sm text-gray-400">
+              <td className="whitespace-nowrap text-sm theme-text-muted">
                 {file.lastPermission && file.lastPermission in permissionLabels
                   ? permissionLabels[file.lastPermission]
                   : 'Unknown'}
               </td>
               <td className="relative whitespace-nowrap text-right text-sm font-medium">
                 <button
-                  className="text-indigo-400 hover:text-indigo-100"
+                  className="text-[color:var(--accent-hover)] hover:text-[color:var(--accent)]"
                   onClick={() => handleToggleHideFile(file)}
                 >
                   {file.hidden ? 'Unhide' : 'Hide'}

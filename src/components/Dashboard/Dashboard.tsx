@@ -49,9 +49,9 @@ const Pagination = ({
   label: string;
 }) => {
   return (
-    <div className="px-3.5 py-3 flex items-center space-x-2 text-sm bg-gray-800">
+    <div className="px-3.5 py-3 flex items-center space-x-2 text-sm theme-surface-raised">
       <button
-        className="flex items-center px-2.5 py-1.5 rounded-md border border-gray-600 bg-gray-800 enabled:hover:border-gray-500 enabled:active:bg-gray-700 disabled:text-gray-400"
+        className="flex items-center px-2.5 py-1.5 rounded-md border theme-button-secondary enabled:hover:border-[color:var(--border-strong)] enabled:active:bg-[color:var(--surface-active)] disabled:text-[color:var(--text-disabled)]"
         disabled={page === minPage}
         onClick={() => setPage(Math.max(minPage, page - 1))}
       >
@@ -61,9 +61,9 @@ const Pagination = ({
         />
         Next
       </button>
-      <span className="px-2 text-gray-300">{label}</span>
+      <span className="px-2 theme-text-muted">{label}</span>
       <button
-        className="flex items-center px-2.5 py-1.5 rounded-md border border-gray-600 bg-gray-800 enabled:hover:border-gray-500 enabled:active:bg-gray-700 disabled:text-gray-400"
+        className="flex items-center px-2.5 py-1.5 rounded-md border theme-button-secondary enabled:hover:border-[color:var(--border-strong)] enabled:active:bg-[color:var(--surface-active)] disabled:text-[color:var(--text-disabled)]"
         disabled={page === maxPage}
         onClick={() => setPage(Math.min(page + 1, maxPage))}
       >
@@ -150,8 +150,8 @@ const RecentTab = ({
   }, [showHidden]);
 
   return (
-    <div className="border border-gray-700 divide-y divide-gray-600">
-      <div className="text-gray-100 px-3.5 py-3">
+    <div className="border theme-border divide-y divide-[color:var(--border-muted)] theme-surface">
+      <div className="theme-text px-3.5 py-3">
         <Checkbox
           label="Show hidden files"
           checked={showHidden}
@@ -251,7 +251,7 @@ const ClassesTab = () => {
   };
 
   return (
-    <div className="divide-y divide-gray-600 border border-gray-700">
+    <div className="divide-y divide-[color:var(--border-muted)] border theme-border theme-surface">
       <div className="flex items-center px-3.5 py-3 space-x-3">
         <Dropdown
           items={groups}
@@ -267,8 +267,8 @@ const ClassesTab = () => {
         />
       </div>
       <div className="overflow-x-auto">
-        <table className="table-tasks table-fixed w-full text-sm divide-y divide-gray-700 truncate">
-          <thead className="bg-gray-800">
+        <table className="table-tasks table-fixed w-full text-sm divide-y divide-[color:var(--border-muted)] truncate theme-table">
+          <thead className="theme-table-header">
             <tr>
               <th className="text-left">Problem</th>
               <th className="text-left">File</th>
@@ -277,7 +277,7 @@ const ClassesTab = () => {
               <th className="text-left">Code size</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-700 text-gray-300 bg-gray-900">
+          <tbody className="divide-y divide-[color:var(--border-muted)] theme-surface-muted">
             {data.map((row, index) => {
               const curProblem = problems[Math.min(index, problems.length - 1)];
               let tempFileID = 'Tap to Create';
@@ -299,7 +299,7 @@ const ClassesTab = () => {
                     <a
                       href={problems[Math.min(index, problems.length - 1)].url}
                       target="_blank"
-                      className="underline text-white hover:text-indigo-200"
+                      className="underline theme-text hover:text-[color:var(--accent-hover)]"
                       rel="noreferrer"
                     >
                       {problems[Math.min(index, problems.length - 1)].source}
@@ -307,7 +307,7 @@ const ClassesTab = () => {
                   </td>
                   <td>
                     <a
-                      className="underline text-white hover:text-indigo-200 mr-2"
+                      className="underline theme-text hover:text-[color:var(--accent-hover)] mr-2"
                       href={tempFileIDhref}
                       target="_blank"
                       rel="noreferrer"
@@ -375,11 +375,12 @@ export default function Dashboard() {
   const [tab, setTab] = useState('classes');
 
   return (
-    <div>
+    <div className="theme-page">
       <div className="flex items-center space-x-4">
         <Link
           href="/new"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1E1E1E] focus:ring-indigo-500"
+          // szda re-theme phase2: dashboard primary action uses shared button tokens.
+          className="inline-flex items-center px-4 py-2 border text-base font-medium rounded-md shadow-sm theme-button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--app-bg)] focus:ring-[color:var(--accent)]"
         >
           Create New File
         </Link>
@@ -387,7 +388,7 @@ export default function Dashboard() {
 
       <div className="h-8"></div>
 
-      <h2 className="text-gray-200 text-xl font-black mb-5 flex items-center">
+      <h2 className="theme-text text-xl font-black mb-5 flex items-center">
         Your workspaces
         <FontAwesomeIcon
           icon={{ prefix: 'fas', iconName: 'computer' }}
