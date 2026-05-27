@@ -17,6 +17,7 @@ import React, {
 } from 'react';
 import { ChatMessage } from '../components/Chat';
 import { FileSubmission, PlatformProblem, ProblemData } from '../types/problem';
+import type { CodeRun } from '../scripts/codeRun';
 
 export type Language = 'cpp' | 'java' | 'py';
 
@@ -41,7 +42,7 @@ export type FileData = {
   problem: ProblemData | PlatformProblem | null;
   tournamentID: string;
   settings: FileSettings;
-  isCodeRunning: boolean;
+  codeRun?: CodeRun | null;
   submission: FileSubmission;
   state: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

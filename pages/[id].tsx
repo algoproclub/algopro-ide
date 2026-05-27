@@ -40,6 +40,9 @@ import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
 import Link from 'next/link';
 import ProfileSettings from '../src/components/settings/ProfileSettings';
 import WithRegistration from '../src/components/WithRegistration';
+import { beginCodeRun, endCodeRun } from '../src/scripts/codeRun';
+import useCodeRunActive from '../src/hooks/useCodeRunActive';
+import useServerTimeOffset from '../src/hooks/useServerTimeOffset';
 
 function runCodeErrorToResult(error: unknown): JudgeResult {
   const runCodeError = error instanceof RunCodeError ? error : undefined;
@@ -65,7 +68,7 @@ function runCodeErrorToResult(error: unknown): JudgeResult {
 }
 
 function EditorPage() {
-  const { fileData, updateFileData } = useEditorContext();
+  const { fileData } = useEditorContext();
   const permission = useUserPermission();
   const loading = useAtomValue(loadingAtom);
   const [showSidebar, setShowSidebar] = useAtom(showSidebarAtom);
@@ -89,6 +92,8 @@ function EditorPage() {
       loadedProblem?.id !== fileData.problem.id
     : loadedProblem !== null;
   const problem = problemDataIsStale ? undefined : (loadedProblem ?? undefined);
+  const serverTimeOffset = useServerTimeOffset();
+  const isCodeRunActive = useCodeRunActive(fileData.codeRun);
 
   useUserFileConnection();
   useUpdateUserDashboard();
@@ -119,13 +124,10 @@ function EditorPage() {
   };
 
   const handleRunCode = () => {
-    if (problemDataIsStale) return;
+    if (readOnly || isCodeRunActive || problemDataIsStale) {
+      return;
+    }
 
-    const setIsRunning = (isRunning: boolean) => {
-      updateFileData({
-        isCodeRunning: isRunning,
-      });
-    };
     const executeCode = (code: string, input: string): Promise<JudgeResult> => {
       return runCode({
         language: fileData.settings.language,
@@ -141,7 +143,7 @@ function EditorPage() {
       setJudgeResults(newJudgeResults);
     };
 
-    const runWithInput = (
+    const runWithInput = async (
       input: string,
       expectedOutput?: string,
       prefix?: string
@@ -151,20 +153,24 @@ function EditorPage() {
         return;
       }
 
-      setIsRunning(true);
+      const runID = await beginCodeRun(fileData.id, serverTimeOffset);
+      // There is already a run in progress, we shouldn't start another one.
+      if (!runID) {
+        return;
+      }
       setResultAt(inputTabIndex, null);
 
-      const code = getMainEditorValue();
-      executeCode(code, input)
-        .then(data => {
-          cleanJudgeResult(data, expectedOutput, prefix);
-          setResultAt(inputTabIndex, data);
-        })
-        .catch(e => {
-          setResultAt(inputTabIndex, runCodeErrorToResult(e));
-          console.error(e);
-        })
-        .finally(() => setIsRunning(false));
+      try {
+        const code = getMainEditorValue();
+        const data = await executeCode(code, input);
+        cleanJudgeResult(data, expectedOutput, prefix);
+        setResultAt(inputTabIndex, data);
+      } catch (e) {
+        setResultAt(inputTabIndex, runCodeErrorToResult(e));
+        console.error(e);
+      } finally {
+        await endCodeRun(fileData.id, runID);
+      }
     };
 
     const runAllList = ['judge', 'hints', 'solutions'];
@@ -176,11 +182,15 @@ function EditorPage() {
       }
       const samples = problem.samples;
 
-      setIsRunning(true);
+      const runID = await beginCodeRun(fileData.id, serverTimeOffset);
+      // There is already a run in progress, we shouldn't start another one.
+      if (!runID) {
+        return;
+      }
       setResultAt(1, null);
 
-      const code = getMainEditorValue();
       try {
+        const code = getMainEditorValue();
         const sampleResults = await runCodeBatch({
           language: fileData.settings.language,
           code,
@@ -268,8 +278,9 @@ function EditorPage() {
         });
         setJudgeResults(newJudgeResults);
         console.error(e);
+      } finally {
+        await endCodeRun(fileData.id, runID);
       }
-      setIsRunning(false);
     };
 
     setSavedEditorValue(getMainEditorValue ? getMainEditorValue() : null);
@@ -315,9 +326,7 @@ function EditorPage() {
             runButton={
               <RunButton
                 onClick={handleRunCode}
-                showLoading={
-                  fileData.isCodeRunning || loading || problemDataIsStale
-                }
+                showLoading={isCodeRunActive || loading || problemDataIsStale}
                 disabledForViewOnly={readOnly}
               />
             }
