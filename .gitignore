@@ -42,3 +42,5 @@ serviceAccountKey.json
 
 .env
 accounts.json
+
+tsconfig.tsbuildinfo
