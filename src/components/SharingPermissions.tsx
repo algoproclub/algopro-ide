@@ -34,6 +34,7 @@ export const SharingPermissions = ({
 }): JSX.Element => {
   return (
     <RadioGroupContents
+      // szda re-theme phase2: sharing permission colors are centralized in RadioGroupContents.
       title="Sharing permissions"
       value={value}
       onChange={onChange}

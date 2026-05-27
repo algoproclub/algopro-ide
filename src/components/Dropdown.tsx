@@ -24,16 +24,17 @@ const Dropdown = ({
         {({ open }) => (
           <>
             {label && (
-              <Listbox.Label className="text-sm block mb-1 px-1 text-gray-300">
+              <Listbox.Label className="text-sm block mb-1 px-1 theme-text-muted">
                 {label}
               </Listbox.Label>
             )}
             <div className="w-full flex flex-col">
               <Listbox.Button
-                className={`relative w-full px-3 py-2 text-left rounded-md border truncate text-sm bg-gray-900 ${
+                // szda re-theme phase2: shared dropdown controls use semantic theme tokens.
+                className={`relative w-full px-3 py-2 text-left rounded-md border truncate text-sm theme-input disabled:text-[color:var(--text-disabled)] ${
                   open
-                    ? 'ring-2 ring-indigo-500 border-transparent'
-                    : 'enabled:hover:bg-gray-800 enabled:active:bg-gray-700 border-gray-600 enabled:hover:border-gray-500'
+                    ? 'ring-2 ring-[color:var(--accent)] border-transparent'
+                    : 'enabled:hover:bg-[var(--surface-hover)] enabled:active:bg-[var(--surface-active)] enabled:hover:border-[var(--border-strong)]'
                 }`}
               >
                 {!disabled ? (items[selected] ?? '-') : '-'}
@@ -47,10 +48,10 @@ const Dropdown = ({
                   leaveFrom="transform scale-100 opacity-100"
                   leaveTo="transform scale-95 opacity-0"
                 >
-                  <Listbox.Options className="border border-gray-700 rounded-md bg-gray-900 divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden min-h-[2rem] max-h-60 overflow-y-auto">
+                  <Listbox.Options className="border theme-border rounded-md theme-surface divide-y divide-[var(--border-muted)] absolute top-2 w-full cursor-pointer overflow-hidden min-h-[2rem] max-h-60 overflow-y-auto">
                     {items.map((val, ind) => (
                       <Listbox.Option
-                        className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700"
+                        className="px-3 py-2 hover:bg-[var(--surface-hover)] active:bg-[var(--surface-active)]"
                         key={ind}
                         value={ind}
                       >
