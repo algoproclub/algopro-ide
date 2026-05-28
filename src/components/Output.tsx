@@ -41,7 +41,7 @@ export const Output = ({
   ]);
 
   useEffect(() => {
-    setOption('stdout' as OutputTab);
+    setOption('stdout');
     let option = null;
     const updatedTabs = tabs.map(tab => ({ ...tab, highlight: false }));
 

@@ -202,7 +202,7 @@ export default function MonacoEditor({
     onBeforeDispose,
     onReady,
     path,
-    resolvedTheme: MONACO_VSCODE_DARK_THEME as string,
+    resolvedTheme: MONACO_VSCODE_DARK_THEME,
     saveViewState,
     value,
   });
@@ -415,7 +415,7 @@ export default function MonacoEditor({
       const collaborativeText =
         currentYjsInfo &&
         (currentYjsInfo.path === undefined || currentYjsInfo.path === path)
-          ? currentYjsInfo.yjsText.toString()
+          ? currentYjsInfo.yjsText.toString() // eslint-disable-line @typescript-eslint/no-base-to-string -- False positive:Y.Text overrides toString().
           : null;
 
       const updated = await editorApp.updateCodeResources({

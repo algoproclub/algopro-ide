@@ -69,7 +69,7 @@ export interface SharedEditorProps {
   onChange?: (val: string) => void;
   onReady?: (handle: EditorHandle) => void;
   path?: string;
-  theme?: EditorTheme | string;
+  theme?: EditorTheme;
   value?: string;
   vim?: boolean;
   yjsInfo?: EditorYjsInfo | null;

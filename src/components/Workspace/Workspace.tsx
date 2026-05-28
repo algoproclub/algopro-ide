@@ -47,7 +47,7 @@ import {
   ref,
   get,
 } from 'firebase/database';
-import { PlatformProblem, Translation } from '../../types/problem';
+import { Translation } from '../../types/problem';
 import {
   fetchProblemFromDb,
   fetchSolutionsFromDb,
@@ -151,16 +151,12 @@ export default function Workspace({
         return;
       }
 
-      const problemData = await fetchProblemFromDb(
-        fileData.problem as PlatformProblem
-      );
+      const problemData = await fetchProblemFromDb(fileData.problem);
 
       setProblem(problemData);
       if (problemData) {
         setInputTab('judge');
-        const translations = await fetchTranslationsFromDb(
-          fileData.problem as PlatformProblem
-        );
+        const translations = await fetchTranslationsFromDb(fileData.problem);
 
         translations['en'] ??= {
           hints: problemData.hints ?? [],
@@ -170,9 +166,7 @@ export default function Workspace({
         };
 
         setTranslations(translations);
-        setSolutions(
-          await fetchSolutionsFromDb(fileData.problem as PlatformProblem)
-        );
+        setSolutions(await fetchSolutionsFromDb(fileData.problem));
         setLanguage('hu' in translations ? 'hu' : 'en');
       }
     })();

@@ -346,7 +346,7 @@ function EditorPage() {
 function PageContent() {
   const router = useRouter();
   const queryId = router.query.id;
-  const firebaseFileID = '-' + queryId;
+  const firebaseFileID = '-' + (queryId as string);
   const { userData, logged } = useNullableUserContext();
 
   const loginUI = (

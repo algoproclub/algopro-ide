@@ -500,27 +500,27 @@ const GroupData = ({
                           <div className="truncate w-full px-4 py-1.5">
                             <a
                               className="underline hover:text-indigo-200 mr-2"
-                              href={`/${data[i][j]!.fileID.slice(1)}`}
+                              href={`/${data[i][j].fileID.slice(1)}`}
                               target="_blank"
                               rel="noreferrer"
                             >
-                              {data[i][j]!.verdict[0].toUpperCase() +
-                                data[i][j]!.verdict.slice(1)}
+                              {data[i][j].verdict[0].toUpperCase() +
+                                data[i][j].verdict.slice(1)}
                             </a>
                             <span>
-                              {data[i][j]!.verdictType === 'wrong' && (
+                              {data[i][j].verdictType === 'wrong' && (
                                 <FontAwesomeIcon
                                   icon={{ prefix: 'fas', iconName: 'xmark' }}
                                   className="inline w-4 h-4 text-red-500"
                                 />
                               )}
-                              {data[i][j]!.verdictType === 'accepted' && (
+                              {data[i][j].verdictType === 'accepted' && (
                                 <FontAwesomeIcon
                                   icon={{ prefix: 'fas', iconName: 'check' }}
                                   className="inline w-4 h-4 text-green-500"
                                 />
                               )}
-                              {data[i][j]!.verdictType === 'error' && (
+                              {data[i][j].verdictType === 'error' && (
                                 <FontAwesomeIcon
                                   icon={{
                                     prefix: 'fas',
@@ -532,11 +532,11 @@ const GroupData = ({
                             </span>
                           </div>
                           <div className="truncate w-full px-4 py-1.5 bg-[#202020]">
-                            {data[i][j]!.codeSize} char
+                            {data[i][j].codeSize} char
                           </div>
                           <div className="truncate w-full px-4 py-1.5">
                             <TimeAgoLabel
-                              date={new Date(data[i][j]!.lastEdit)}
+                              date={new Date(data[i][j].lastEdit)}
                             />
                           </div>
                         </div>

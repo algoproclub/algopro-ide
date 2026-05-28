@@ -581,7 +581,8 @@ async function fetchProblemDataNjudge(
         samples.push({ input: inputContents, output: outputContents });
       } catch (e) {
         console.warn(
-          `Failed to fetch sample test files ${filename} and ${outputFilename} for njudge ${problemID}: ${e}`
+          `Failed to fetch sample test files ${filename} and ${outputFilename} for njudge ${problemID}`,
+          e
         );
       }
     }
