@@ -203,12 +203,21 @@ const SpectatePage = () => {
     if (files.length > 0) return;
 
     const fetchFiles = async () => {
+      const latestIDSnapshot = await get(ref(db, 'tournaments/latestID'));
+      const tournamentID = latestIDSnapshot.val();
+
       const participantsSnapshot = await get(
-        ref(db, 'tournaments/latestID/participants')
+        ref(db, `tournaments/${tournamentID}/participants`)
       );
       const participantsData = participantsSnapshot.val() as {
         [userName: string]: { fileID: string };
       };
+
+      setStartTime(
+        Date.parse(
+          (await get(ref(db, `tournaments/${tournamentID}/info/start`))).val()
+        )
+      );
 
       const participantList = await Promise.all(
         Object.entries(participantsData).map(async ([, data]) => {
