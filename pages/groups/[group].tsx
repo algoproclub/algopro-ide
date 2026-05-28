@@ -116,7 +116,10 @@ const PageContent = () => {
     const base = schoolStudentDatas.filter(
       data => showAllStudents || data.isInGroup
     );
-    if (selectedStudent && !base.some(data => data.uid === selectedStudent.uid)) {
+    if (
+      selectedStudent &&
+      !base.some(data => data.uid === selectedStudent.uid)
+    ) {
       return [selectedStudent, ...base];
     }
     return base;
@@ -177,32 +180,32 @@ const PageContent = () => {
                         No matches.
                       </div>
                     ) : (
-                    filteredSuggestions.map(data => (
-                      <div
-                        key={data.uid}
-                        className="w-full px-3 py-2 hover:bg-gray-700 flex items-center justify-between gap-2"
-                      >
-                        <button
-                          type="button"
-                          className="text-left flex-1"
-                          onClick={() => {
-                            setSelectedStudentId(data.uid);
-                            setSearchQuery('');
-                          }}
+                      filteredSuggestions.map(data => (
+                        <div
+                          key={data.uid}
+                          className="w-full px-3 py-2 hover:bg-gray-700 flex items-center justify-between gap-2"
                         >
-                          {data.name}
-                        </button>
-                        <button
-                          type="button"
-                          className={`${data.isInGroup ? 'bg-red-700 hover:bg-red-800 active:bg-red-900' : 'bg-green-700 hover:bg-green-800 active:bg-green-900'} rounded-md px-2 py-1 text-xs`}
-                          onClick={() => toggleInGroup(data)}
-                        >
-                          {data.isInGroup ? 'Remove' : 'Add'}
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
+                          <button
+                            type="button"
+                            className="text-left flex-1"
+                            onClick={() => {
+                              setSelectedStudentId(data.uid);
+                              setSearchQuery('');
+                            }}
+                          >
+                            {data.name}
+                          </button>
+                          <button
+                            type="button"
+                            className={`${data.isInGroup ? 'bg-red-700 hover:bg-red-800 active:bg-red-900' : 'bg-green-700 hover:bg-green-800 active:bg-green-900'} rounded-md px-2 py-1 text-xs`}
+                            onClick={() => toggleInGroup(data)}
+                          >
+                            {data.isInGroup ? 'Remove' : 'Add'}
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 )}
               </div>
               <button
