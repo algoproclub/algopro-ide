@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: ESLint
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Add ESLint problem matcher
+        run: echo "::add-matcher::.github/eslint-problem-matcher.json"
+
+      - name: Run ESLint
+        run: yarn lint:ci
+
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    env:
+      NEXT_PUBLIC_BASE_URL: 'http://localhost:3000'
+      NEXT_PUBLIC_FIREBASE_DATABASE_URL: 'http://127.0.0.1:9000/?ns=algopro-app-default-rtdb'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build

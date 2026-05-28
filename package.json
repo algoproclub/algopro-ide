@@ -9,6 +9,7 @@
     "start": "next start",
     "prepare": "husky install",
     "lint": "eslint --ext js,jsx,ts,tsx --fix src/ pages/",
+    "lint:ci": "eslint --ext js,jsx,ts,tsx --format visualstudio src/ pages/",
     "postinstall": "patch-package"
   },
   "engines": {
