@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -27,11 +29,21 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Add ESLint problem matcher
-        run: echo "::add-matcher::.github/eslint-problem-matcher.json"
-
       - name: Run ESLint
-        run: yarn lint:ci
+        env:
+          DIFF_BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          DIFF_HEAD: ${{ github.sha }}
+        shell: bash
+        run: |
+          set +e
+          yarn -s lint:ci --format json --output-file eslint-report.json
+          eslint_status=$?
+
+          if [[ ! -f eslint-report.json ]]; then
+            exit "$eslint_status"
+          fi
+
+          node .github/scripts/filter-eslint-results.js eslint-report.json
 
   build:
     name: Build
