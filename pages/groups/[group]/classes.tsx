@@ -139,7 +139,7 @@ const ClassDropdown = ({
         )
       )
         .filter(problem => problem !== null)
-        .map(problem => problem as URLProblem);
+        .map(problem => problem);
 
       if (newTasks.length > 0) {
         onUpdate({

@@ -93,7 +93,7 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
           props.language === 'cpp' || props.language === 'python'
             ? props.language
             : undefined
-        ) as Extension
+        )
       );
     }
     return extensions;
@@ -114,6 +114,7 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
       // we need to pass in props.yjsInfo.yjsText as a possible value here, since
       // the yCollab() extension expects the value to be initialized to yText.toString()
       // I don't think this needs to be re-computed every time though (only when extensions changes), but whatever
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string -- False positive:Y.Text overrides toString().
       value={props.value || props.yjsInfo?.yjsText.toString() || undefined}
       theme={props.theme === 'light' ? githubLight : vscodeDark}
       onChange={(val: string, _) => props.onChange?.(val)}

@@ -93,7 +93,7 @@ async function fetchTestcasesCSES(
 function getEntryDataAsync(entry: AdmZip.IZipEntry): Promise<Buffer> {
   return new Promise<Buffer>((res, rej) =>
     entry.getDataAsync((buf, err) => {
-      if (err) rej(err);
+      if (err) rej(new Error(err));
       else res(buf);
     })
   );
