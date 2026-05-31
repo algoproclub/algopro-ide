@@ -43,6 +43,10 @@ services:
       - EXECUTE_DUMMY=true
     ports:
       - '1235'
+    volumes:
+      - type: bind
+        source: execute/
+        target: /app
   login-bot:
     build:
       context: login-bot
