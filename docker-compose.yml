@@ -66,17 +66,9 @@ services:
       - '127.0.0.1:9229:9229'
     volumes:
       - type: bind
-        source: src/
-        target: /app/src
-      - type: bind
-        source: public/
-        target: /app/public
-      - type: bind
-        source: pages/
-        target: /app/pages
-      - type: bind
-        source: patches/
-        target: /app/patches
+        source: .
+        target: /app
+      - /app/node_modules
     depends_on:
       yjs:
         condition: service_started

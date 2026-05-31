@@ -1,13 +1,9 @@
 FROM node:22-trixie-slim
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json ./
 COPY yarn.lock ./
-RUN yarn install
-COPY tsconfig.json ./
-COPY index.html ./
-COPY *.js ./
-COPY *.ts ./
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn yarn install --frozen-lockfile
 
 
 EXPOSE 3000
