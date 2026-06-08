@@ -24,8 +24,8 @@ type ResponseData =
       message: string; // error
     };
 
-const FILE_INIT_WAIT_ATTEMPTS = 25;
-const FILE_INIT_WAIT_DELAY_MS = 100;
+const FILE_INIT_WAIT_ATTEMPTS = 80;
+const FILE_INIT_WAIT_DELAY_MS = 250;
 
 export default async (
   req: NextApiRequest,
@@ -105,6 +105,11 @@ export default async (
 
   const mappedFileID = txResult.snapshot.val();
 
+  if (typeof mappedFileID !== 'string' || mappedFileID.length === 0) {
+    res.status(500).json({ message: 'Invalid file mapping in database.' });
+    return;
+  }
+
   if (mappedFileID !== fileID) {
     // This file already exists, or a concurrent createNewPlatformFile request is
     // in the process of creating it. Wait until file metadata is filled by the
@@ -156,7 +161,9 @@ export default async (
     userName = userRecord.displayName || userRecord.email || userID;
   } catch (error) {
     await rollbackClaim();
-    throw error;
+    console.error(error);
+    res.status(500).json({ message: 'Failed to initialize platform file.' });
+    return;
   }
 
   if (problem === null) {
@@ -202,7 +209,9 @@ export default async (
     }
   } catch (error) {
     await Promise.allSettled([rollbackClaim(), newFileRef.remove()]);
-    throw error;
+    console.error(error);
+    res.status(500).json({ message: 'Failed to create platform file.' });
+    return;
   }
 
   res.status(200).json({ fileID });
