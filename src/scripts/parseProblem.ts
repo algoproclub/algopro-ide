@@ -7,6 +7,7 @@ import {
   buildPlanetsUrl,
   buildOjuzUrl,
   buildNjudgeUrl,
+  buildYosupoUrl,
 } from './problemUtils';
 
 const IDE_HOST = new URL(process.env.NEXT_PUBLIC_BASE_URL!).host;
@@ -43,6 +44,9 @@ export const parseProblem = (url: string): URLProblem => {
         break;
       case 'njudge':
         constructedUrl = buildNjudgeUrl(id);
+        break;
+      case 'yosupo':
+        constructedUrl = buildYosupoUrl(id);
         break;
       case 'codeforces':
         constructedUrl = buildCodeforcesUrl(id) ?? url;
@@ -88,6 +92,10 @@ export const parseProblem = (url: string): URLProblem => {
     },
     { platform: 'cses', regex: /cses.fi\/problemset\/task\/([0-9]+)/ },
     { platform: 'spoj', regex: /spoj.com\/problems\/([A-Z0-9_]+)/ },
+    {
+      platform: 'yosupo',
+      regex: /judge\.yosupo\.jp\/problem\/([A-Za-z0-9_]+)/,
+    },
     {
       platform: 'planets',
       regex: /planets.algopro.hu\/taskoverview\/([0-9a-z_-]+)/,

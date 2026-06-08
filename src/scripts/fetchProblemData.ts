@@ -14,6 +14,7 @@ import {
   buildNjudgeUrl,
 } from './problemUtils';
 import AdmZip from 'adm-zip';
+import { fetchProblemDataYosupo } from './fetchProblemDataYosupo';
 
 async function fetchWithProxy(
   url: string,
@@ -72,6 +73,8 @@ export async function fetchProblemData({
       return fetchProblemDataOjuz(id);
     case 'njudge':
       return fetchProblemDataNjudge(id);
+    case 'yosupo':
+      return fetchProblemDataYosupo(id);
     default:
       throw new Error(`platform '${platform}' is unimplemented`);
   }
