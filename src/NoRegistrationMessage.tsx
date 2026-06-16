@@ -48,7 +48,7 @@ export default function NoRegistrationMessage() {
       </p>
       <div className="mt-3 sm:mt-6 mx-auto w-60">
         <a href="https://algopro.hu" target="_blank" rel="noreferrer">
-          <button className="block items-center w-full px-6 py-2 border text-base font-medium rounded-md shadow-sm theme-button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--app-bg)] focus:ring-[color:var(--accent)]">
+          <button className="block items-center w-full px-6 py-2 border text-base font-medium rounded-md shadow-sm theme-button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[color:var(--app-bg)] focus:ring-[color:var(--accent)]">
             Jump to website
           </button>
         </a>

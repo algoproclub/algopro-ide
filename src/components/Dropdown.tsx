@@ -34,7 +34,7 @@ const Dropdown = ({
                 className={`relative w-full px-3 py-2 text-left rounded-md border truncate text-sm theme-input disabled:text-[color:var(--text-disabled)] ${
                   open
                     ? 'ring-2 ring-[color:var(--accent)] border-transparent'
-                    : 'enabled:hover:bg-[var(--surface-hover)] enabled:active:bg-[var(--surface-active)] enabled:hover:border-[var(--border-strong)]'
+                    : 'enabled:hover:bg-[var(--surface-hover)] enabled:active:bg-[var(--surface-active)] enabled:hover:border-[color:var(--border-strong)]'
                 }`}
               >
                 {!disabled ? (items[selected] ?? '-') : '-'}
@@ -48,7 +48,7 @@ const Dropdown = ({
                   leaveFrom="transform scale-100 opacity-100"
                   leaveTo="transform scale-95 opacity-0"
                 >
-                  <Listbox.Options className="border theme-border rounded-md theme-surface divide-y divide-[var(--border-muted)] absolute top-2 w-full cursor-pointer overflow-hidden min-h-[2rem] max-h-60 overflow-y-auto">
+                  <Listbox.Options className="border theme-border rounded-md theme-surface divide-y divide-[color:var(--border-muted)] absolute top-2 w-full cursor-pointer overflow-hidden min-h-[2rem] max-h-60 overflow-y-auto">
                     {items.map((val, ind) => (
                       <Listbox.Option
                         className="px-3 py-2 hover:bg-[var(--surface-hover)] active:bg-[var(--surface-active)]"
