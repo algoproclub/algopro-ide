@@ -171,6 +171,19 @@ function createEditorHandle(editor: AlgoProMonacoEditor): MonacoEditorHandle {
   };
 }
 
+function enforceLfEolForYMonaco(editor: AlgoProMonacoEditor | null): void {
+  const model = editor?.getModel();
+
+  if (!model) {
+    return;
+  }
+
+  // On Windows hosts, Monaco would try to use CRLF line endings, which breaks y-monaco. See: https://github.com/yjs/y-monaco/issues/27
+  if (model.getEOL() !== '\n') {
+    model.setEOL(monaco.editor.EndOfLineSequence.LF);
+  }
+}
+
 export default function MonacoEditor({
   path,
   theme,
@@ -300,6 +313,8 @@ export default function MonacoEditor({
           }
         }
 
+        enforceLfEolForYMonaco(enhancements.editor);
+
         setEditor(enhancements.editor);
         initialOnReady?.(createEditorHandle(enhancements.editor));
       })
@@ -425,6 +440,8 @@ export default function MonacoEditor({
           enforceLanguageId: currentLanguage ?? 'plaintext',
         },
       });
+
+      enforceLfEolForYMonaco(currentEditor);
 
       if (!updated || !shouldSaveViewState) {
         return;
