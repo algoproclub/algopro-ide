@@ -109,7 +109,6 @@ export default function TemplateCodeSettings({
        *   still wouldn't solve the undo/redo issue, and the UI would flash when
        *   a new editor is rendered.
        */}
-      {/* szda re-theme phase1: template editor now follows the same editor theme preference. */}
       <div className="h-[18em] sm:h-50vh border border-[var(--border-color)] focus:border-[var(--accent)]">
         <LazyCodeMirrorEditor
           theme={lightMode ? 'light' : 'dark'}

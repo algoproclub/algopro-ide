@@ -379,7 +379,6 @@ export default function Dashboard() {
       <div className="flex items-center space-x-4">
         <Link
           href="/new"
-          // szda re-theme phase2: dashboard primary action uses shared button tokens.
           className="inline-flex items-center px-4 py-2 border text-base font-medium rounded-md shadow-sm theme-button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--app-bg)] focus:ring-[color:var(--accent)]"
         >
           Create New File

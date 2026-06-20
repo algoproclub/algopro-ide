@@ -299,8 +299,7 @@ function EditorPage() {
   return (
     <div className="h-full">
       <div className="h-full flex flex-col">
-        {/* szda re-theme phase1: the workspace page shell follows the root theme tokens. */}
-        <div className="flex-shrink-0 bg-[var(--panel-bg)] text-[var(--text-primary)]">
+        <div className="flex-shrink-0 bg-[var(--panel-bg)] text-[color:var(--text-primary)]">
           <NavBar
             fileMenu={
               <FileMenu

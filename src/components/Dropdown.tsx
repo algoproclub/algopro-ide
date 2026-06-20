@@ -30,7 +30,6 @@ const Dropdown = ({
             )}
             <div className="w-full flex flex-col">
               <Listbox.Button
-                // szda re-theme phase2: shared dropdown controls use semantic theme tokens.
                 className={`relative w-full px-3 py-2 text-left rounded-md border truncate text-sm theme-input disabled:text-[color:var(--text-disabled)] ${
                   open
                     ? 'ring-2 ring-[color:var(--accent)] border-transparent'

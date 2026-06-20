@@ -29,9 +29,8 @@ export function RadioGroupContents<T>({
       <RadioGroup.Label
         as="div"
         className={classNames(
-          // szda re-theme phase1: radio colors now come from app tokens, not per-control dark/light branches.
           lightMode ? '' : 'mb-1',
-          'text-[var(--text-secondary)]',
+          'text-[color:var(--text-secondary)]',
           'text-sm',
           className
         )}
@@ -68,8 +67,8 @@ export function RadioGroupContents<T>({
                     as="span"
                     className={classNames(
                       checked
-                        ? 'text-[var(--text-primary)]'
-                        : 'text-[var(--text-secondary)]',
+                        ? 'text-[color:var(--text-primary)]'
+                        : 'text-[color:var(--text-secondary)]',
                       'block text-sm'
                     )}
                   >

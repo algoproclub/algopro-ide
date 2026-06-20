@@ -38,9 +38,8 @@ export const SettingsMenu = (props: {
     return null;
   }
 
-  // szda retheme phase one_02: editor settings dropdown follows the navbar theme tokens.
   const menuButtonClass = (open: boolean) =>
-    `relative inline-flex items-center px-4 py-1.5 shadow-sm text-sm font-medium text-[var(--text-primary)] focus:outline-none ${
+    `relative inline-flex items-center px-4 py-1.5 shadow-sm text-sm font-medium text-[color:var(--text-primary)] focus:outline-none ${
       open ? 'bg-[var(--hover-bg)]' : 'hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]'
     }`;
   const menuPanelClass =
@@ -48,12 +47,12 @@ export const SettingsMenu = (props: {
   const menuItemClass = (active: boolean) =>
     classNames(
       active
-        ? 'bg-[var(--hover-bg)] text-[var(--text-primary)]'
-        : 'text-[var(--text-primary)]',
+        ? 'bg-[var(--hover-bg)] text-[color:var(--text-primary)]'
+        : 'text-[color:var(--text-primary)]',
       'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
     );
   const menuIconClass =
-    'mr-3 h-5 w-5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]';
+    'mr-3 h-5 w-5 text-[color:var(--text-secondary)] group-hover:text-[color:var(--text-primary)]';
 
   return (
     <Menu as="div" className="relative inline-block text-left">
@@ -72,12 +71,12 @@ export const SettingsMenu = (props: {
                 />
               ) : (
                 <UserCircleIcon
-                  className="h-6 w-6 text-[var(--text-secondary)]"
+                  className="h-6 w-6 text-[color:var(--text-secondary)]"
                   aria-hidden="true"
                 />
               )}
               <ChevronDownIcon
-                className="h-5 w-5 text-[var(--text-secondary)] ml-2"
+                className="h-5 w-5 text-[color:var(--text-secondary)] ml-2"
                 aria-hidden="true"
               />
             </Menu.Button>
@@ -104,7 +103,7 @@ export const SettingsMenu = (props: {
                       >
                         <div className={menuPanelClass}>
                           <div className="py-1">
-                            <div className="px-4 py-2 text-sm text-[var(--text-primary)]">
+                            <div className="px-4 py-2 text-sm text-[color:var(--text-primary)]">
                               Signed in as{' '}
                               <strong>{firebaseUser.displayName}</strong>
                             </div>

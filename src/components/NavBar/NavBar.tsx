@@ -40,10 +40,9 @@ const SimpleButton = ({
   disabled: boolean;
   onClick: () => void;
 }): JSX.Element => {
-  // szda retheme phase one_02: editor navbar controls use shared shell tokens.
   const enabledButtonClass =
-    'text-[var(--text-primary)] hover:bg-[var(--hover-bg)] focus:bg-[var(--hover-bg)] focus:outline-none';
-  const disabledButtonClass = 'text-[var(--text-secondary)] cursor-not-allowed';
+    'text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] focus:bg-[var(--hover-bg)] focus:outline-none';
+  const disabledButtonClass = 'text-[color:var(--text-secondary)] cursor-not-allowed';
 
   return (
     <button
@@ -91,13 +90,12 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
     }
   };
 
-  // szda retheme phase one_02: editor navbar uses shared shell theme tokens.
   const navButtonClass =
-    'relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--hover-bg)] focus:bg-[var(--hover-bg)] focus:outline-none';
-  const secondaryIconClass = '-ml-1 mr-2 h-5 w-5 text-[var(--text-secondary)]';
+    'relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] focus:bg-[var(--hover-bg)] focus:outline-none';
+  const secondaryIconClass = '-ml-1 mr-2 h-5 w-5 text-[color:var(--text-secondary)]';
 
   return (
-    <div className="flex items-center overflow-x-auto border-b border-[var(--border-color)] bg-[var(--panel-bg-alt)] text-[var(--text-primary)]">
+    <div className="flex items-center overflow-x-auto border-b border-[var(--border-color)] bg-[var(--panel-bg-alt)] text-[color:var(--text-primary)]">
       <div className="flex w-full lg:w-auto items-center divide-x divide-[var(--border-color)]">
         <Link
           href="/"
@@ -128,7 +126,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
       )}
       <div className="flex items-center divide-x divide-[var(--border-color)]">
         {props.showViewOnly && (
-          <span className="px-4 py-2 text-[var(--text-secondary)] text-sm font-medium whitespace-nowrap hidden sm:inline">
+          <span className="px-4 py-2 text-[color:var(--text-secondary)] text-sm font-medium whitespace-nowrap hidden sm:inline">
             View Only
           </span>
         )}

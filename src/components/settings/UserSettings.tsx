@@ -40,7 +40,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`name`}
-          className="block text-[0.92rem] text-[var(--text-secondary)]"
+          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
         >
           Username
         </label>
@@ -60,7 +60,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`cf-username`}
-          className="block text-[0.92rem] text-[var(--text-secondary)]"
+          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
         >
           Codeforces username
         </label>
@@ -80,7 +80,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`atcoder-username`}
-          className="block text-[0.92rem] text-[var(--text-secondary)]"
+          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
         >
           AtCoder username
         </label>
@@ -100,7 +100,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`discord-username`}
-          className="block text-[0.92rem] text-[var(--text-secondary)]"
+          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
         >
           Discord user ID
         </label>
@@ -173,11 +173,10 @@ export default function UserSettings({
   onLanguageChange: (language: Language) => void;
 }): JSX.Element {
   const [submenu, setSubmenu] = useState<Submenu>('userdata');
-  // szda re-theme phase1: settings sections use shared theme colors instead of dark-only classes.
   const sectionButtonClass =
-    'flex items-center justify-between bg-[var(--panel-bg)] py-2 px-3 border border-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--hover-bg)] text-sm';
+    'flex items-center justify-between bg-[var(--panel-bg)] py-2 px-3 border border-[var(--border-color)] text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] text-sm';
   const joinedSectionButtonClass =
-    'flex items-center justify-between bg-[var(--panel-bg)] py-2 px-3 border border-t-0 border-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--hover-bg)] text-sm';
+    'flex items-center justify-between bg-[var(--panel-bg)] py-2 px-3 border border-t-0 border-[var(--border-color)] text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] text-sm';
   const sectionContentClass =
     'p-4 border border-t-0 border-[var(--border-color)]';
   const spacedSectionContentClass =
@@ -185,7 +184,7 @@ export default function UserSettings({
 
   return (
     <div>
-      <div className="flex flex-col text-sm text-[var(--text-primary)] bg-[var(--panel-bg-alt)]">
+      <div className="flex flex-col text-sm text-[color:var(--text-primary)] bg-[var(--panel-bg-alt)]">
         <button
           className={sectionButtonClass}
           onClick={() =>

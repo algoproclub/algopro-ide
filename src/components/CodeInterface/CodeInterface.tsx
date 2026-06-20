@@ -61,8 +61,7 @@ export const CodeInterface = ({
   return (
     <div
       className={classNames(
-        // szda re-theme phase1: keep the editor theme prop, but let the surrounding shell follow app tokens.
-        'flex flex-col bg-[var(--panel-bg)] text-[var(--text-primary)]',
+        'flex flex-col bg-[var(--panel-bg)] text-[color:var(--text-primary)]',
         className
       )}
     >
@@ -98,7 +97,7 @@ export const CodeInterface = ({
           />
         )}
       </div>
-      <p className="text-sm font-mono text-[var(--text-secondary)] pl-4 status-node" />
+      <p className="text-sm font-mono text-[color:var(--text-secondary)] pl-4 status-node" />
     </div>
   );
 };

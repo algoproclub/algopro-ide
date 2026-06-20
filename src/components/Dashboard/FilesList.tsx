@@ -64,7 +64,6 @@ export default function FilesList(props: FilesListProps): JSX.Element {
 
   return (
     <div className="flex flex-col overflow-x-auto">
-      {/* szda re-theme phase2: workspace file table uses shared table and text tokens. */}
       <table className="table-filelist divide-y divide-[color:var(--border-muted)] theme-table">
         <thead className="z-20 theme-table-header">
           <tr className="truncate">

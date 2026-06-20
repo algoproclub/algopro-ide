@@ -32,7 +32,6 @@ export default function DashboardPage(): JSX.Element {
     <div className="p-4 sm:p-6 md:p-8 lg:p-12 min-h-full flex flex-col max-w-6xl mx-auto theme-page">
       <ConfirmOverrideModal />
       <div className="flex-1 relative">
-        {/* szda re-theme phase2: landing/dashboard page text and links use shared tokens. */}
         <h1 className="theme-text text-2xl md:text-4xl font-black">
           AlgoPro IDE
         </h1>

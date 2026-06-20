@@ -185,7 +185,6 @@ export const TopNavBar = (): JSX.Element => {
           <div className="flex items-center space-x-2 flex-1 min-w-0">
             <Link
               href="/"
-              // szda re-theme phase2: top-level nav shell follows semantic theme tokens.
               className="flex items-center px-3 py-2 text-base font-semibold theme-text hover:text-[color:var(--accent-hover)] whitespace-nowrap"
             >
               AlgoPro IDE

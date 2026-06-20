@@ -59,7 +59,6 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
 
   return (
     <div className={classNames(className, 'flex flex-col mx-3 my-3')}>
-      {/* szda re-theme phase2: chat surfaces use shared panel and input tokens. */}
       <div className="font-bold text-sm theme-text py-2.5 px-4 rounded-t-md border theme-border theme-surface-raised">
         Chat
       </div>

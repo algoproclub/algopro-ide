@@ -21,7 +21,6 @@ export default function ProfileStatus({
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* szda re-theme phase2: profile status uses shared surface and status tokens. */}
       <div className="theme-surface rounded-md shadow-md p-4 border theme-border">
         <div className="flex items-start gap-4">
           {/* Progress Circle */}

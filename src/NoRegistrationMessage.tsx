@@ -8,7 +8,6 @@ export default function NoRegistrationMessage() {
         in educational institutions. Your account is not linked to any school.
         Join one using an invitation link, or apply to the Algo Pro Club on our{' '}
         <a
-          // szda re-theme phase2: no-registration links and action follow shared tokens.
           className="text-[color:var(--accent-hover)] hover:text-[color:var(--accent)] font-medium"
           href="https://algopro.hu"
           target="_blank"

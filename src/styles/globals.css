@@ -1,4 +1,3 @@
-/* szda re-theme phase1: shared app theme tokens for shell-level surfaces. */
 :root,
 [data-theme='dark'] {
   --app-bg: #1e1e1e;
@@ -13,7 +12,6 @@
   --gutter: #374151;
   --gutter-hover: #4b5563;
 
-  /* szda re-theme phase2: expand shared semantic tokens for app-wide surfaces. */
   --surface-bg: var(--panel-bg);
   --surface-bg-muted: var(--panel-bg-alt);
   --surface-bg-raised: #27272a;
@@ -92,7 +90,6 @@ body {
   min-width: 420px;
 }
 
-/* szda retheme phase one_02: align browser scrollbars with the active shell theme. */
 html,
 body,
 #__next {

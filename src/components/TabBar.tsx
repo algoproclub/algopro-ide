@@ -19,14 +19,13 @@ export const TabBar = ({
   homepage,
 }: TabBarProps): JSX.Element => {
   tabs.find(tab => tab.value === activeTab)!.highlight = false;
-  // szda re-theme phase1: default tabs use shell tokens instead of hardcoded dark grays.
   const defaultTabBarClass =
     'bg-[var(--panel-bg-alt)] border-b border-[var(--border-color)]';
   const activeTabClass = homepage
-    ? 'bg-[var(--surface-active)] text-[var(--text-primary)]'
-    : 'bg-[var(--panel-bg)] text-[var(--text-primary)]';
+    ? 'bg-[var(--surface-active)] text-[color:var(--text-primary)]'
+    : 'bg-[var(--panel-bg)] text-[color:var(--text-primary)]';
   const inactiveTabClass =
-    'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]';
+    'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]';
 
   return (
     <div

@@ -115,8 +115,7 @@ export const Output = ({
           setOption(tab.value as OutputTab);
         }}
       />
-      {/* szda re-theme phase1: history and status surfaces follow the app shell theme. */}
-      <div className="flex-1 bg-[var(--panel-bg)] text-[var(--text-primary)] min-h-0 overflow-hidden tw-forms-disable tw-forms-disable-all-descendants">
+      <div className="flex-1 bg-[var(--panel-bg)] text-[color:var(--text-primary)] min-h-0 overflow-hidden tw-forms-disable tw-forms-disable-all-descendants">
         {option === 'results' && (
           <div className="px-4 h-full overflow-y-auto">
             {statusData && <USACOResults data={statusData} />}
@@ -126,7 +125,7 @@ export const Output = ({
           <div className="h-full overflow-y-auto w-full">
             <table
               className={
-                'text-[var(--text-primary)] table-tasks space-x-2 w-full border-b border-[var(--border-color)]'
+                'text-[color:var(--text-primary)] table-tasks space-x-2 w-full border-b border-[var(--border-color)]'
               }
             >
               <thead
@@ -268,7 +267,7 @@ export const Output = ({
       </div>
       {option !== 'results' && option !== 'history' && result && (
         <div
-          className="text-sm font-mono text-right px-4 py-1 text-[var(--text-secondary)]"
+          className="text-sm font-mono text-right px-4 py-1 text-[color:var(--text-secondary)]"
           data-test-id="code-execution-output-status"
         >
           {result.statusDescription}, {result.time ?? '-'}s,{' '}

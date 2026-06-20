@@ -59,7 +59,6 @@ const FileSearch = ({
           type="search"
           name={`problem-select`}
           id={`problem-select`}
-          // szda re-theme phase2: problem search input and results use shared theme tokens.
           className="mt-0 block w-full px-0 pt-0 pb-1 theme-input border-0 border-b-2 focus:ring-0 text-sm"
           value={currentRefinement}
           placeholder={'e.g. Train Scheduling'}

@@ -262,7 +262,6 @@ export default function Workspace({
             )}
             {...getGutterProps('column', 1)}
           >
-            {/* szda re-theme phase1: splitters, IO shell, and collaboration sidebar use shared app theme tokens. */}
             <div className="absolute h-full left-[7px] right-[7px] bg-[var(--gutter)] group-hover:bg-[var(--gutter-hover)] group-active:bg-[var(--gutter-hover)] pointer-events-none transition" />
           </div>
           <div
@@ -278,7 +277,7 @@ export default function Workspace({
               activeTab={inputTab}
               onTabSelect={x => setInputTab(x.value)}
             />
-            <div className="flex-1 bg-[var(--panel-bg)] text-[var(--text-primary)] min-h-0 overflow-hidden min-w-0">
+            <div className="flex-1 bg-[var(--panel-bg)] text-[color:var(--text-primary)] min-h-0 overflow-hidden min-w-0">
               {inputTab === 'input' && (
                 <LazyRealtimeEditor
                   theme={lightMode ? 'light' : 'dark'}
@@ -369,7 +368,7 @@ export default function Workspace({
               )}
             >
               {!isDesktop && (
-                <EllipsisHorizontalIcon className="h-5 w-5 text-[var(--text-secondary)]" />
+                <EllipsisHorizontalIcon className="h-5 w-5 text-[color:var(--text-secondary)]" />
               )}
             </div>
           </div>
@@ -412,7 +411,7 @@ export default function Workspace({
               </div>
               <div
                 className={classNames(
-                  'row-span-full min-w-0 bg-[var(--panel-bg)] text-[var(--text-primary)] flex flex-col overflow-auto',
+                  'row-span-full min-w-0 bg-[var(--panel-bg)] text-[color:var(--text-primary)] flex flex-col overflow-auto',
                   isDesktop ? 'col-start-5' : 'col-span-full pt-4'
                 )}
               >

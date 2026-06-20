@@ -39,9 +39,8 @@ export const EditorNavigationMenu = (): JSX.Element => {
     return <></>;
   }
 
-  // szda retheme phase one_02: editor navigation dropdown follows the navbar theme tokens.
   const menuButtonClass = (open: boolean) =>
-    `relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-[var(--text-primary)] focus:outline-none ${
+    `relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-[color:var(--text-primary)] focus:outline-none ${
       open ? 'bg-[var(--hover-bg)]' : 'hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]'
     }`;
   const menuPanelClass =
@@ -49,12 +48,12 @@ export const EditorNavigationMenu = (): JSX.Element => {
   const menuItemClass = (active: boolean) =>
     classNames(
       active
-        ? 'bg-[var(--hover-bg)] text-[var(--text-primary)]'
-        : 'text-[var(--text-primary)]',
+        ? 'bg-[var(--hover-bg)] text-[color:var(--text-primary)]'
+        : 'text-[color:var(--text-primary)]',
       'group flex items-center px-4 py-2 text-sm'
     );
   const menuIconClass =
-    'mr-3 h-5 w-5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]';
+    'mr-3 h-5 w-5 text-[color:var(--text-secondary)] group-hover:text-[color:var(--text-primary)]';
 
   return (
     <Menu as="div" className="relative inline-block text-left">
@@ -67,7 +66,7 @@ export const EditorNavigationMenu = (): JSX.Element => {
             >
               Teacher
               <ChevronDownIcon
-                className="ml-2 h-5 w-5 text-[var(--text-secondary)]"
+                className="ml-2 h-5 w-5 text-[color:var(--text-secondary)]"
                 aria-hidden="true"
               />
             </Menu.Button>

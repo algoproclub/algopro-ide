@@ -11,7 +11,6 @@ export const SignInButton = ({
 }) => {
   return (
     <button
-      // szda re-theme phase2: sign-in buttons use shared secondary button tokens.
       className="inline-flex items-center px-4 py-2 border shadow-sm text-[0.92rem] font-medium rounded-md theme-button-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
       onClick={onClick}
     >

@@ -51,9 +51,8 @@ export const FileMenu = (props: {
     setMounted(true);
   }, []);
 
-  // szda retheme phase one_02: editor file dropdown follows the navbar theme tokens.
   const menuButtonClass = (open: boolean) =>
-    `w-full relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-[var(--text-primary)] focus:outline-none ${
+    `w-full relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-[color:var(--text-primary)] focus:outline-none ${
       open ? 'bg-[var(--hover-bg)]' : 'hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]'
     }`;
   const menuPanelClass =
@@ -61,12 +60,12 @@ export const FileMenu = (props: {
   const menuItemClass = (active: boolean) =>
     classNames(
       active
-        ? 'bg-[var(--hover-bg)] text-[var(--text-primary)]'
-        : 'text-[var(--text-primary)]',
+        ? 'bg-[var(--hover-bg)] text-[color:var(--text-primary)]'
+        : 'text-[color:var(--text-primary)]',
       'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
     );
   const menuIconClass =
-    'mr-3 h-5 w-5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]';
+    'mr-3 h-5 w-5 text-[color:var(--text-secondary)] group-hover:text-[color:var(--text-primary)]';
 
   /* ======= BEGIN DROPDOWN ACTIONS ======= */
   const handleDownloadFile = () => {

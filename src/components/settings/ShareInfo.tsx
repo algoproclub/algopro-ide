@@ -24,7 +24,6 @@ export const ShareInfo = ({
 
   return (
     <div
-      // szda re-theme phase2: share info copy affordance follows shared text and surface tokens.
       className="px-4 py-1 text-sm group theme-text focus:outline-none max-w-max cursor-pointer flex items-center"
       onClick={() => handleCopy()}
     >

@@ -185,8 +185,7 @@ export const WorkspaceSettingsModal = ({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            {/* szda re-theme phase1: workspace settings modal follows the shared app theme. */}
-            <div className="inline-block bg-[var(--panel-bg)] border border-[var(--border-color)] text-[var(--text-primary)] md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
+            <div className="inline-block bg-[var(--panel-bg)] border border-[var(--border-color)] text-[color:var(--text-primary)] md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
               <div className="px-4 sm:px-6 pt-4 pb-2">
                 <Dialog.Title
                   as="h3"
@@ -204,7 +203,7 @@ export const WorkspaceSettingsModal = ({
                 <div className="flex items-center space-x-2.5">
                   <button
                     type="button"
-                    className="inline-flex items-center px-4 py-2 border border-[var(--border-color)] shadow-sm text-[0.92rem] font-medium rounded-md text-[var(--text-primary)] hover:bg-[var(--hover-bg)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="inline-flex items-center px-4 py-2 border border-[var(--border-color)] shadow-sm text-[0.92rem] font-medium rounded-md text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     onClick={closeWithoutSaving}
                   >
                     Cancel
@@ -221,7 +220,7 @@ export const WorkspaceSettingsModal = ({
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
-                  className="rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="rounded-md text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   onClick={closeWithoutSaving}
                 >
                   <span className="sr-only">Close</span>

@@ -7,7 +7,6 @@ export const ForkButton = (): JSX.Element => {
 
   return (
     <a
-      // szda re-theme phase2: clone link follows shared text hover tokens.
       className="relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] focus:outline-none"
       href={`/${fileData.id.substring(1)}/copy`}
       target="_blank"
