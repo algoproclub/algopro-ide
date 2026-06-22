@@ -95,7 +95,7 @@ const Solutions = ({
           language={
             { cpp: 'cpp', py: 'python', java: 'java' }[languages[selected]]
           }
-          options={{
+          editorOptions={{
             readOnly: true,
           }}
         />

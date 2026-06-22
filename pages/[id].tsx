@@ -285,8 +285,10 @@ function EditorPage() {
   };
 
   const handleKeydown = (event: KeyboardEvent) => {
-    if (event.ctrlKey && event.key === 's') event.preventDefault();
-    if (event.ctrlKey && event.key === 'Enter') handleRunCode();
+    if (event.ctrlKey || event.metaKey) {
+      if (event.key === 's') event.preventDefault();
+      if (event.key === 'Enter') handleRunCode();
+    }
   };
 
   useEffect(() => {
@@ -344,7 +346,7 @@ function EditorPage() {
 function PageContent() {
   const router = useRouter();
   const queryId = router.query.id;
-  const firebaseFileID = '-' + queryId;
+  const firebaseFileID = '-' + (queryId as string);
   const { userData, logged } = useNullableUserContext();
 
   const loginUI = (

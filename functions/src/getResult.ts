@@ -746,8 +746,9 @@ export class CFResultFetcher extends ResultFetcher {
   }
 
   getLink(): string {
-    const { submissionID } = this.submissionData;
-    return `https://codeforces.com/contest/${this.submission!.contestId}/submission/${submissionID}`;
+    const { submissionID, problemID } = this.submissionData;
+    const path = problemID.startsWith('gym') ? 'gym' : 'contest';
+    return `https://codeforces.com/${path}/${this.submission!.contestId}/submission/${submissionID}`;
   }
 
   getMemory(): string | null {
@@ -783,7 +784,10 @@ export class CFResultFetcher extends ResultFetcher {
       this.submission.problem!.contestId!.toString() +
       this.submission.problem.index;
 
-    if (problemID !== respProblemID) {
+    const normalizedProblemID = problemID.startsWith('gym')
+      ? problemID.slice(3)
+      : problemID;
+    if (normalizedProblemID !== respProblemID) {
       throw new IncorrectDataError(
         `CF: problem IDs don't match (${problemID} - ${respProblemID})`
       );

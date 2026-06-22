@@ -1,324 +1,571 @@
 import { useEffect, useRef, useState } from 'react';
 
-import 'monaco-editor/esm/vs/editor/editor.all.js';
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
-import 'monaco-editor/esm/vs/basic-languages/cpp/cpp.contribution.js';
-import 'monaco-editor/esm/vs/basic-languages/java/java.contribution.js';
-import 'monaco-editor/esm/vs/basic-languages/python/python.contribution.js';
-import 'monaco-editor/esm/vs/basic-languages/html/html.contribution.js';
-import { buildWorkerDefinition } from 'monaco-editor-workers';
+import * as monaco from 'monaco-editor';
+import {
+  EditorApp,
+  type EditorAppConfig,
+} from 'monaco-languageclient/editorApp';
 import { initVimMode } from 'monaco-vim';
-import { MonacoServices } from 'monaco-languageclient';
-import { getOrCreateModel, usePrevious, useUpdate } from './utils';
-import { AlgoProMonacoEditor, EditorProps } from './monaco-editor-types';
+import { usePrevious, useUpdate } from './utils';
+import {
+  AlgoProMonacoEditor,
+  EditorProps,
+  MonacoEditorHandle,
+} from '../editor-types';
 import useLSP from './lsp';
 import { MonacoBinding } from 'y-monaco';
+import { createEditorEnhancements } from './editorEnhancements';
+import {
+  ensureMonacoServices,
+  MONACO_VSCODE_DARK_THEME,
+  MONACO_VSCODE_LIGHT_THEME,
+  MONACO_WORKSPACE_URI,
+} from './monacoServices';
 
-buildWorkerDefinition(
-  '/monaco-workers',
-  new URL('', window.location.href).href,
-  false
-);
-
-monaco.languages.register({
-  id: 'cpp',
-  extensions: ['.cpp'],
-  aliases: ['cpp'],
-});
-
-MonacoServices.install(); // todo disposable here...
-
-addEnhancedThemes();
-
-const viewStates = new Map();
+const viewStates = new Map<string, monaco.editor.ICodeEditorViewState | null>();
 
 // @ts-expect-error todo find a better way to do this
 window.monaco = monaco;
 
-// HACK: This uses a private API, as addKeybindingRules requires Monaco 0.34.1.
-// https://github.com/microsoft/monaco-editor/issues/102#issuecomment-1282897640
+const EDITOR_TEXT_FOCUS = 'editorTextFocus';
+const INSERT_LINE_AFTER_DEFAULT_BINDING =
+  monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter;
+const INSERT_LINE_AFTER_REBOUND_BINDING =
+  monaco.KeyMod.Alt | monaco.KeyCode.Enter;
+
+const LANGUAGE_EXTENSION_LOADERS: Record<string, () => Promise<unknown>> = {
+  cpp: () => import('@codingame/monaco-vscode-cpp-default-extension'),
+  java: () => import('@codingame/monaco-vscode-java-default-extension'),
+  python: () => import('@codingame/monaco-vscode-python-default-extension'),
+  html: () => import('@codingame/monaco-vscode-html-default-extension'),
+};
+
+const languageExtensionLoadPromises = new Map<string, Promise<void>>();
+
+function loadLanguageExtension(language?: string | null): Promise<void> {
+  const normalizedLanguage = language?.toLowerCase();
+
+  if (!normalizedLanguage) {
+    return Promise.resolve();
+  }
+
+  const loader = LANGUAGE_EXTENSION_LOADERS[normalizedLanguage];
+
+  if (!loader) {
+    return Promise.resolve();
+  }
+
+  const cachedPromise = languageExtensionLoadPromises.get(normalizedLanguage);
+  if (cachedPromise) {
+    return cachedPromise;
+  }
+
+  const loadPromise = loader()
+    .then(() => undefined)
+    .catch(error => {
+      // Allow retry if a dynamic import fails.
+      languageExtensionLoadPromises.delete(normalizedLanguage);
+      throw error;
+    });
+
+  languageExtensionLoadPromises.set(normalizedLanguage, loadPromise);
+
+  return loadPromise;
+}
+
 const rebindAction = (
-  editor: monaco.editor.IStandaloneCodeEditor,
   id: string,
+  oldBinding: number | undefined,
   newBinding?: number
 ) => {
-  // @ts-expect-error: this is a private API until Monaco 0.34.1
-  editor._standaloneKeybindingService.addDynamicKeybinding(
-    `-${id}`,
-    undefined,
-    () => {}
-  );
-  if (newBinding) {
-    const action = editor.getAction(id);
-    // @ts-expect-error: this is a private API until Monaco 0.34.1
-    editor._standaloneKeybindingService.addDynamicKeybinding(
-      id,
-      newBinding,
-      () => action.run()
-    );
+  const rules: monaco.editor.IKeybindingRule[] = [];
+
+  if (oldBinding !== undefined) {
+    rules.push({
+      command: null,
+      keybinding: oldBinding,
+    });
   }
+
+  if (newBinding !== undefined) {
+    rules.push({
+      command: id,
+      keybinding: newBinding,
+      when: EDITOR_TEXT_FOCUS,
+    });
+  }
+
+  return monaco.editor.addKeybindingRules(rules);
 };
+
+function toModelPath(path?: string) {
+  if (!path) {
+    return `${MONACO_WORKSPACE_URI.toString()}/default`;
+  }
+
+  if (/^[a-zA-Z][\w+.-]*:/.test(path)) {
+    return path;
+  }
+
+  return `${MONACO_WORKSPACE_URI.toString()}/${path.replace(/^\/+/, '')}`;
+}
+
+function createEditorAppConfig(
+  props: Pick<
+    EditorProps,
+    'editorOptions' | 'language' | 'monacoOptions' | 'path' | 'value'
+  > & {
+    resolvedTheme: string;
+  }
+): EditorAppConfig {
+  return {
+    codeResources: {
+      modified: {
+        text: props.value ?? '',
+        uri: toModelPath(props.path),
+        enforceLanguageId: props.language ?? 'plaintext',
+      },
+    },
+    editorOptions: {
+      insertSpaces: props.editorOptions?.insertSpaces,
+      readOnly: props.editorOptions?.readOnly,
+      lightbulb: {
+        enabled: monaco.editor.ShowLightbulbIconMode.On,
+      },
+      inlayHints: {
+        enabled: 'off',
+      },
+      minimap: { enabled: false },
+      bracketPairColorization: {
+        enabled: true,
+      },
+      links: false,
+      'semanticHighlighting.enabled': true,
+      tabSize: props.editorOptions?.tabSize,
+      theme: props.resolvedTheme,
+      ...props.monacoOptions,
+    },
+    overrideAutomaticLayout: props.editorOptions?.automaticLayout ?? true,
+  };
+}
+
+function createEditorHandle(editor: AlgoProMonacoEditor): MonacoEditorHandle {
+  return {
+    clearLineHighlight() {
+      editor.clearLineHighlight();
+    },
+    focus() {
+      editor.focus();
+    },
+    getValue() {
+      return editor.getValue();
+    },
+    kind: 'monaco',
+    layout() {
+      editor.layout();
+    },
+    raw: editor,
+    setLineHighlight(line: number) {
+      editor.setLineHighlight(line);
+    },
+  };
+}
+
+function enforceLfEolForYMonaco(editor: AlgoProMonacoEditor | null): void {
+  const model = editor?.getModel();
+
+  if (!model) {
+    return;
+  }
+
+  // On Windows hosts, Monaco would try to use CRLF line endings, which breaks y-monaco. See: https://github.com/yjs/y-monaco/issues/27
+  if (model.getEOL() !== '\n') {
+    model.setEOL(monaco.editor.EndOfLineSequence.LF);
+  }
+}
 
 export default function MonacoEditor({
   path,
   theme,
-  options,
+  editorOptions,
+  monacoOptions,
   saveViewState = true,
-  onMount,
+  onReady,
   onChange,
   language,
   className,
   value = '',
   onBeforeDispose,
   vim = false,
+  rainbowIndent = false,
   lspOptions,
   yjsInfo,
 }: EditorProps) {
   const ref = useRef<HTMLDivElement | null>(null);
+  const editorAppRef = useRef<EditorApp | null>(null);
   const editorRef = useRef<AlgoProMonacoEditor | null>(null);
+  const enhancementsRef = useRef<ReturnType<
+    typeof createEditorEnhancements
+  > | null>(null);
   const [editor, setEditor] = useState<AlgoProMonacoEditor | null>(null);
+  const latestPropsRef = useRef({
+    editorOptions,
+    language,
+    monacoOptions,
+    onBeforeDispose,
+    onReady,
+    path,
+    resolvedTheme: MONACO_VSCODE_DARK_THEME,
+    saveViewState,
+    value,
+  });
+  const latestYjsInfoRef = useRef(yjsInfo);
 
-  theme = { dark: 'vs-dark-sema', light: 'vs-sema' }[theme ?? 'dark'];
+  const resolvedTheme =
+    theme === 'light'
+      ? MONACO_VSCODE_LIGHT_THEME
+      : theme === 'dark' || theme == null
+        ? MONACO_VSCODE_DARK_THEME
+        : theme;
+
+  latestPropsRef.current = {
+    editorOptions,
+    language,
+    monacoOptions,
+    onBeforeDispose,
+    onReady,
+    path,
+    resolvedTheme,
+    saveViewState,
+    value,
+  };
+  latestYjsInfoRef.current = yjsInfo;
 
   useEffect(() => {
-    const modelPath = `file:///root/${path ?? 'default'}`;
+    let disposed = false;
+    let keybindingDisposable: monaco.IDisposable | undefined;
+    let createdEditorApp: EditorApp | null = null;
 
-    editorRef.current = monaco.editor.create(
-      ref.current!,
-      {
-        model: getOrCreateModel(monaco, value, language, modelPath),
-        automaticLayout: true,
-        theme: theme,
-        lightbulb: {
-          enabled: true,
-        },
-        language: language,
-        inlayHints: {
-          enabled: false,
-        },
-        'semanticHighlighting.enabled': true,
-        ...options,
-      },
-      {}
-    ) as AlgoProMonacoEditor;
+    void Promise.all([
+      ensureMonacoServices(),
+      loadLanguageExtension(latestPropsRef.current.language),
+    ])
+      .then(async () => {
+        if (disposed || !ref.current) {
+          return;
+        }
 
-    // TODO: Refactor to inherit from the monaco editor instead of injecting properties
-    // https://github.com/algoproclub/algopro-ide/issues/287
-    editorRef.current._lineHighlight = null;
-    editorRef.current._lineHighlightTimeout = null;
-    editorRef.current.setLineHighlight = function (line: number) {
-      const model = this.getModel();
-      if (!model || line < 1 || line > model.getLineCount()) {
-        return;
-      }
+        const {
+          editorOptions: initialEditorOptions,
+          language: initialLanguage,
+          monacoOptions: initialMonacoOptions,
+          onReady: initialOnReady,
+          path: initialPath,
+          resolvedTheme: initialResolvedTheme,
+          saveViewState: initialSaveViewState,
+          value: initialValue,
+        } = latestPropsRef.current;
 
-      if (this._lineHighlightTimeout) {
-        clearTimeout(this._lineHighlightTimeout);
-      }
-
-      this._lineHighlight = this.deltaDecorations(
-        this._lineHighlight ? [this._lineHighlight] : [],
-        [
-          {
-            range: new monaco.Range(line, 1, line, 1),
-            options: {
-              isWholeLine: true,
-              className: 'linked-line-highlight',
-            },
-          },
-        ]
-      )[0];
-    };
-    editorRef.current.clearLineHighlight = function () {
-      if (this._lineHighlight === null) return;
-
-      this._lineHighlightTimeout = setTimeout(() => {
-        if (!editorRef.current) return;
-        editorRef.current.deltaDecorations(
-          [editorRef.current._lineHighlight!],
-          []
+        const editorApp = new EditorApp(
+          createEditorAppConfig({
+            editorOptions: initialEditorOptions,
+            language: initialLanguage,
+            monacoOptions: initialMonacoOptions,
+            path: initialPath,
+            resolvedTheme: initialResolvedTheme,
+            value: initialValue,
+          })
         );
-        editorRef.current._lineHighlight = null;
-      }, 100);
-    };
-    editorRef.current.onDidFocusEditorWidget(() => {
-      if (editorRef.current?._lineHighlight) {
-        editorRef.current?.deltaDecorations(
-          [editorRef.current._lineHighlight],
-          []
+        createdEditorApp = editorApp;
+        editorAppRef.current = editorApp;
+
+        await editorApp.start(ref.current);
+
+        const editorInstance = editorApp.getEditor();
+
+        if (!editorInstance) {
+          throw new Error('EditorApp did not create a Monaco editor instance');
+        }
+
+        const enhancements = createEditorEnhancements(editorInstance);
+
+        if (disposed) {
+          enhancements.dispose();
+          await editorApp.dispose();
+          return;
+        }
+
+        editorRef.current = enhancements.editor;
+        enhancementsRef.current = enhancements;
+
+        // Ctrl+Enter for "Insert Line Below" conflicts with our shortcut for running code.
+        keybindingDisposable = rebindAction(
+          'editor.action.insertLineAfter',
+          INSERT_LINE_AFTER_DEFAULT_BINDING,
+          INSERT_LINE_AFTER_REBOUND_BINDING
         );
-        editorRef.current._lineHighlight = null;
-      }
-    });
 
-    // Ctrl+Enter for "Insert Line Below" conflicts with our shortcut for running code.
-    rebindAction(
-      editorRef.current,
-      'editor.action.insertLineAfter',
-      monaco.KeyMod.Alt | monaco.KeyCode.Enter
-    );
+        if (initialSaveViewState) {
+          const savedViewState = viewStates.get(toModelPath(initialPath));
 
-    setEditor(editorRef.current);
+          if (savedViewState) {
+            enhancements.editor.restoreViewState(savedViewState);
+          }
+        }
 
-    if (saveViewState) {
-      editorRef.current.restoreViewState(viewStates.get(modelPath));
-    }
+        enforceLfEolForYMonaco(enhancements.editor);
 
-    if (onMount) {
-      onMount(editorRef.current, monaco);
-    }
+        setEditor(enhancements.editor);
+        initialOnReady?.(createEditorHandle(enhancements.editor));
+      })
+      .catch(error => {
+        console.error('Failed to initialize Monaco editor:', error);
+      });
 
     return () => {
-      if (editorRef.current) {
-        if (onBeforeDispose) onBeforeDispose();
+      disposed = true;
+      keybindingDisposable?.dispose();
+      keybindingDisposable = undefined;
 
-        editorRef.current.getModel()?.dispose();
-        // this throws some model is already disposed error? so ig just don't?
-        editorRef.current.dispose();
-        editorRef.current = null;
-      } else {
-        console.error("Shouldn't happen??");
+      const currentEditorApp = editorAppRef.current ?? createdEditorApp;
+
+      if (editorRef.current) {
+        latestPropsRef.current.onBeforeDispose?.();
       }
+
+      enhancementsRef.current?.dispose();
+      enhancementsRef.current = null;
+      editorRef.current = null;
+      editorAppRef.current = null;
+
+      if (currentEditorApp) {
+        void currentEditorApp.dispose().catch(error => {
+          console.error('Failed to dispose Monaco editor app:', error);
+        });
+      }
+
       setEditor(null);
     };
   }, []);
 
   useEffect(() => {
     if (!yjsInfo || !editor) return;
+
+    if (yjsInfo.path !== undefined && yjsInfo.path !== path) {
+      return;
+    }
+
+    const model = editor.getModel();
+
+    if (!model) {
+      return;
+    }
+
     const monacoBinding = new MonacoBinding(
       yjsInfo.yjsText,
-      editor.getModel()!,
+      model,
       new Set([editor]),
       yjsInfo.yjsAwareness
     );
-    return () => {
-      // if editorRef.current is null, then the editor was probably already destroyed
-      if (editorRef.current) monacoBinding.destroy();
-    };
-  }, [editor, yjsInfo]);
 
-  useLSP(language ?? null, lspOptions ?? null);
+    let bindingDestroyed = false;
+    const markBindingDestroyed = model.onWillDispose(() => {
+      bindingDestroyed = true;
+      markBindingDestroyed.dispose();
+    });
+
+    return () => {
+      markBindingDestroyed.dispose();
+
+      // y-monaco destroys the binding when the model is disposed.
+      // Avoid calling destroy twice during unmounts or hot reload.
+      if (!bindingDestroyed) {
+        bindingDestroyed = true;
+        monacoBinding.destroy();
+      }
+    };
+  }, [editor, path, yjsInfo]);
+
+  useLSP(language ?? null, lspOptions ?? null, editor !== null);
 
   useEffect(() => {
-    if (vim) {
-      const statusNode = document.querySelector('.status-node');
-      const editorMode = initVimMode(editorRef.current, statusNode);
-      return () => editorMode.dispose();
+    if (!vim || !editor) {
+      return;
     }
-  }, [vim]);
+
+    const statusNode = document.querySelector('.status-node');
+    const editorMode = initVimMode(editor, statusNode);
+    return () => editorMode.dispose();
+  }, [editor, vim]);
 
   /* Note: path update handler needs to run first. Otherwise, changing both path and language
      at the same time will result in the wrong language being used */
   const previousPath = usePrevious(path);
   useUpdate(() => {
-    const model = getOrCreateModel(monaco, value, language, path ?? 'default');
-
-    if (model !== editorRef.current!.getModel()) {
-      if (saveViewState)
-        viewStates.set(previousPath, editorRef.current!.saveViewState());
-      editorRef.current!.setModel(model);
-
-      if (saveViewState)
-        editorRef.current!.restoreViewState(viewStates.get(path));
+    if (!editor || !editorRef.current || !editorAppRef.current) {
+      return;
     }
-  }, [path]);
+
+    void (async () => {
+      const currentEditor = editorRef.current;
+      const editorApp = editorAppRef.current;
+      const {
+        language: currentLanguage,
+        saveViewState: shouldSaveViewState,
+        value: currentValue,
+      } = latestPropsRef.current;
+      const currentYjsInfo = latestYjsInfoRef.current;
+
+      if (!currentEditor || !editorApp) {
+        return;
+      }
+
+      const modelPath = toModelPath(path);
+      const previousModelPath = toModelPath(previousPath);
+
+      if (shouldSaveViewState) {
+        viewStates.set(previousModelPath, currentEditor.saveViewState());
+      }
+
+      const collaborativeText =
+        currentYjsInfo &&
+        (currentYjsInfo.path === undefined || currentYjsInfo.path === path)
+          ? currentYjsInfo.yjsText.toString() // eslint-disable-line @typescript-eslint/no-base-to-string -- False positive:Y.Text overrides toString().
+          : null;
+
+      const updated = await editorApp.updateCodeResources({
+        modified: {
+          text: collaborativeText ?? currentValue,
+          uri: modelPath,
+          enforceLanguageId: currentLanguage ?? 'plaintext',
+        },
+      });
+
+      enforceLfEolForYMonaco(currentEditor);
+
+      if (!updated || !shouldSaveViewState) {
+        return;
+      }
+
+      const savedViewState = viewStates.get(modelPath);
+
+      if (savedViewState) {
+        currentEditor.restoreViewState(savedViewState);
+      }
+    })().catch(error => {
+      console.error('Failed to update Monaco code resources:', error);
+    });
+  }, [editor, path, previousPath]);
 
   useUpdate(() => {
-    if (editorRef.current!.getOption(monaco.editor.EditorOption.readOnly)) {
-      editorRef.current!.setValue(value);
+    if (!editor || !editorRef.current) {
+      return;
+    }
+
+    if (yjsInfo && (yjsInfo.path === undefined || yjsInfo.path === path)) {
+      return;
+    }
+
+    if (editorRef.current.getOption(monaco.editor.EditorOption.readOnly)) {
+      editorRef.current.setValue(value);
     } else {
-      if (value !== editorRef.current!.getValue()) {
-        editorRef.current!.executeEdits('', [
+      if (value !== editorRef.current.getValue()) {
+        editorRef.current.executeEdits('', [
           {
-            range: editorRef.current!.getModel()!.getFullModelRange(),
+            range: editorRef.current.getModel()!.getFullModelRange(),
             text: value,
             forceMoveMarkers: true,
           },
         ]);
 
-        editorRef.current!.pushUndoStop();
+        editorRef.current.pushUndoStop();
       }
     }
-  }, [value]);
+  }, [editor, path, value, yjsInfo]);
 
   useUpdate(() => {
+    if (!editor) {
+      return;
+    }
+
     // theme is global
-    monaco.editor.setTheme(theme ?? 'vs-dark-sema');
-  }, [theme]);
-
-  useUpdate(() => {
-    monaco.editor.setModelLanguage(
-      editorRef.current!.getModel()!,
-      language ?? 'plaintext'
-    );
-  }, [language]);
-
-  useUpdate(() => {
-    // console.log('updating options'); // todo this runs way too often
-    editorRef.current!.updateOptions(options ?? {});
-  }, [options]);
+    monaco.editor.setTheme(resolvedTheme ?? MONACO_VSCODE_DARK_THEME);
+  }, [editor, resolvedTheme]);
 
   useEffect(() => {
-    editorRef.current!.onDidChangeModelContent(() =>
-      onChange?.(editorRef.current!.getValue())
+    if (!enhancementsRef.current) {
+      return;
+    }
+
+    enhancementsRef.current.updateRainbowIndent(
+      rainbowIndent,
+      resolvedTheme === MONACO_VSCODE_LIGHT_THEME ? 'light' : 'dark'
     );
-  }, [onChange]);
+  }, [editor, path, rainbowIndent, resolvedTheme]);
+
+  useUpdate(() => {
+    if (!editor || !editorRef.current) {
+      return;
+    }
+
+    const targetLanguage = language ?? 'plaintext';
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        await loadLanguageExtension(targetLanguage);
+      } catch (error) {
+        console.error('Failed to load Monaco language extension:', error);
+        return;
+      }
+
+      if (cancelled) {
+        return;
+      }
+
+      const model = editorRef.current?.getModel();
+
+      if (!model) {
+        return;
+      }
+
+      monaco.editor.setModelLanguage(model, targetLanguage);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [editor, language]);
+
+  useUpdate(() => {
+    if (!editor || !editorRef.current) {
+      return;
+    }
+
+    editorRef.current.updateOptions({
+      automaticLayout: editorOptions?.automaticLayout,
+      insertSpaces: editorOptions?.insertSpaces,
+      readOnly: editorOptions?.readOnly,
+      tabSize: editorOptions?.tabSize,
+      ...monacoOptions,
+    });
+  }, [editor, editorOptions, monacoOptions]);
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const disposable = editor.onDidChangeModelContent(() =>
+      onChange?.(editor.getValue())
+    );
+
+    return () => disposable.dispose();
+  }, [editor, onChange]);
 
   return (
     <div className="flex relative h-full">
       <div className={className} ref={ref} style={{ width: '100%' }}></div>
     </div>
   );
-}
-
-// Adds special syntax highlighting for semantic tokens similarly
-// to the default "Dark Modern" and "Light Modern" VSCode themes.
-function addEnhancedThemes() {
-  const COLORS = {
-    'vs-dark': {
-      function: 'dcdcaa',
-      type: '4ec9b0',
-      variable: '9cdcfe',
-      constant: '4fc1ff',
-      macro: '569cd6',
-      escape: 'd7ba7d',
-      hex: 'b5cea8',
-    },
-    vs: {
-      function: '795e26',
-      type: '267f99',
-      variable: '001080',
-      constant: '0070c1',
-      macro: '0000ff',
-      escape: 'ee0000',
-      hex: '098658',
-    },
-  };
-
-  for (const [theme, colors] of Object.entries(COLORS)) {
-    monaco.editor.defineTheme(theme + '-sema', {
-      // @ts-expect-error: extending built-in themes by name is a private API
-      base: theme,
-      inherit: true,
-      rules: [
-        { token: 'function', foreground: colors.function },
-        { token: 'method', foreground: colors.function },
-        { token: 'operator.userDefined', foreground: colors.function },
-        { token: 'class', foreground: colors.type },
-        { token: 'struct', foreground: colors.type },
-        { token: 'type', foreground: colors.type },
-        { token: 'typeParameter', foreground: colors.type },
-        { token: 'namespace', foreground: colors.type },
-        { token: 'variable', foreground: colors.variable },
-        { token: 'parameter', foreground: colors.variable },
-        { token: 'property', foreground: colors.variable },
-        { token: 'variable.readonly', foreground: colors.constant },
-        { token: 'macro', foreground: colors.macro },
-        { token: 'string.escape', foreground: colors.escape },
-        { token: 'number.hex', foreground: colors.hex },
-      ],
-      encodedTokensColors: [],
-      colors: {},
-    });
-  }
 }

@@ -42,13 +42,12 @@ function PageContent(): JSX.Element {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${await firebaseUser.getIdToken()}`,
         },
         body: JSON.stringify({
-          platform: platform,
-          problemID: problemID,
+          platform,
+          problemID,
           tournamentID,
-          userID: firebaseUser.uid,
-          userName: firebaseUser.displayName,
           language: userData.defaultLanguage,
           defaultPermission: userData.defaultPermission,
         }),

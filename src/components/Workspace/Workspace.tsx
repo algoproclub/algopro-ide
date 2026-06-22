@@ -2,7 +2,7 @@ import { EllipsisHorizontalIcon } from '@heroicons/react/20/solid';
 import { useSetAtom, useAtomValue } from 'jotai';
 import classNames from 'classnames';
 import { useAtom } from 'jotai';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Split from 'react-split-grid';
 import {
   inputCodemirrorEditorAtom,
@@ -38,6 +38,7 @@ import GenericJudgeInterface from '../JudgeInterface/GenericJudgeInterface';
 import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
+import { EditorHandle, isMonacoEditorHandle } from '../editor/editor-types';
 import {
   DataSnapshot,
   getDatabase,
@@ -46,7 +47,7 @@ import {
   ref,
   get,
 } from 'firebase/database';
-import { PlatformProblem, Translation } from '../../types/problem';
+import { Translation } from '../../types/problem';
 import {
   fetchProblemFromDb,
   fetchSolutionsFromDb,
@@ -84,6 +85,8 @@ export default function Workspace({
   const setInputEditor = useSetAtom(inputMonacoEditorAtom);
   const setCodemirrorInputEditor = useSetAtom(inputCodemirrorEditorAtom);
   const setOutputEditor = useSetAtom(outputMonacoEditorAtom);
+  const [inputEditorHandle, setInputEditorHandle] =
+    useState<EditorHandle | null>(null);
   const [inputTab, setInputTab] = useAtom(inputTabAtom);
   const [problem, setProblem] = useAtom(problemAtom);
   const [translations, setTranslations] = useAtom(translationsAtom);
@@ -116,6 +119,29 @@ export default function Workspace({
   }, [isDesktop, mobileActiveTab, layoutEditors]);
 
   useEffect(() => {
+    if (!inputEditorHandle) {
+      return;
+    }
+
+    if (isMonacoEditorHandle(inputEditorHandle)) {
+      setInputEditor(inputEditorHandle.raw);
+      return () => {
+        setInputEditor(null);
+      };
+    }
+
+    setCodemirrorInputEditor(inputEditorHandle.raw);
+    // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the input codemirror editor
+    window['TEST_inputCodemirrorEditor'] = inputEditorHandle.raw;
+
+    return () => {
+      setCodemirrorInputEditor(null);
+      // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the input codemirror editor
+      window['TEST_inputCodemirrorEditor'] = null;
+    };
+  }, [inputEditorHandle, setCodemirrorInputEditor, setInputEditor]);
+
+  useEffect(() => {
     (async () => {
       setStatusData(null);
 
@@ -125,16 +151,12 @@ export default function Workspace({
         return;
       }
 
-      const problemData = await fetchProblemFromDb(
-        fileData.problem as PlatformProblem
-      );
+      const problemData = await fetchProblemFromDb(fileData.problem);
 
       setProblem(problemData);
       if (problemData) {
         setInputTab('judge');
-        const translations = await fetchTranslationsFromDb(
-          fileData.problem as PlatformProblem
-        );
+        const translations = await fetchTranslationsFromDb(fileData.problem);
 
         translations['en'] ??= {
           hints: problemData.hints ?? [],
@@ -144,9 +166,7 @@ export default function Workspace({
         };
 
         setTranslations(translations);
-        setSolutions(
-          await fetchSolutionsFromDb(fileData.problem as PlatformProblem)
-        );
+        setSolutions(await fetchSolutionsFromDb(fileData.problem));
         setLanguage('hu' in translations ? 'hu' : 'en');
       }
     })();
@@ -206,12 +226,20 @@ export default function Workspace({
     setLanguage('hu' in translations ? 'hu' : 'en');
   }, [translations]);
 
+  const gridColumns =
+    isDesktop && !showSidebar
+      ? 'grid-cols-[3fr,3px,2fr,0px,0px]'
+      : 'grid-cols-[3fr,3px,2fr,3px,1fr]';
+
   return (
     <Split
+      // Allow panes to shrink almost completely without breaking split-grid math.
+      columnMinSize={1}
+      rowMinSize={1}
       onDragEnd={() => layoutEditors()}
       render={({ getGridProps, getGutterProps }) => (
         <div
-          className={`grid grid-cols-[3fr,3px,2fr,3px,1fr] grid-rows-[2fr,3px,1fr] h-full overflow-hidden`}
+          className={`grid ${gridColumns} grid-rows-[2fr,3px,1fr] h-full overflow-hidden`}
           {...getGridProps()}
         >
           <CodeInterface
@@ -232,7 +260,7 @@ export default function Workspace({
           </div>
           <div
             className={classNames(
-              'flex flex-col min-h-0 overflow-hidden',
+              'flex flex-col min-h-0 overflow-hidden min-w-0',
               !isDesktop && 'col-span-full mb-[6px]',
               !isDesktop && mobileActiveTab !== 'io' && 'hidden',
               isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
@@ -243,7 +271,7 @@ export default function Workspace({
               activeTab={inputTab}
               onTabSelect={x => setInputTab(x.value)}
             />
-            <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden min-w-[24rem]">
+            <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden min-w-0">
               {inputTab === 'input' && (
                 <LazyRealtimeEditor
                   theme={lightMode ? 'light' : 'dark'}
@@ -251,22 +279,18 @@ export default function Workspace({
                   saveViewState={false}
                   path="input"
                   dataTestId="input-editor"
-                  options={{
-                    minimap: { enabled: false },
+                  editorOptions={{
                     automaticLayout: false,
                     insertSpaces: false,
                     readOnly,
                   }}
-                  onMount={e => {
-                    setInputEditor(e);
-                    setTimeout(() => {
-                      e.layout();
-                    }, 0);
-                  }}
-                  onCodemirrorMount={view => {
-                    // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the input codemirror editor
-                    window['TEST_inputCodemirrorEditor'] = view;
-                    setCodemirrorInputEditor(view);
+                  onReady={handle => {
+                    setInputEditorHandle(handle);
+                    if (isMonacoEditorHandle(handle)) {
+                      setTimeout(() => {
+                        handle.layout();
+                      }, 0);
+                    }
                   }}
                   defaultValue="1 2 3"
                   yjsDocumentId={`${fileData.id}.input`}
@@ -344,7 +368,7 @@ export default function Workspace({
           </div>
           <div
             className={classNames(
-              'flex flex-col min-h-0 overflow-hidden min-w-[24rem]',
+              'flex flex-col min-h-0 overflow-hidden min-w-0',
               !isDesktop && 'col-span-full mt-[6px]',
               !isDesktop && mobileActiveTab !== 'io' && 'hidden',
               isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
@@ -354,10 +378,15 @@ export default function Workspace({
               result={judgeResults[inputTabIndex]}
               statusData={statusData}
               statusDataHistory={statusDataHistory}
-              onMount={e => {
-                setOutputEditor(e);
+              onReady={handle => {
+                if (!isMonacoEditorHandle(handle)) {
+                  setOutputEditor(null);
+                  return;
+                }
+
+                setOutputEditor(handle.raw);
                 setTimeout(() => {
-                  e.layout();
+                  handle.layout();
                 }, 0);
               }}
             />
@@ -376,7 +405,7 @@ export default function Workspace({
               </div>
               <div
                 className={classNames(
-                  'row-span-full min-w-[24rem] bg-[#1E1E1E] text-gray-200 flex flex-col overflow-auto',
+                  'row-span-full min-w-0 bg-[#1E1E1E] text-gray-200 flex flex-col overflow-auto',
                   isDesktop ? 'col-start-5' : 'col-span-full pt-4'
                 )}
               >

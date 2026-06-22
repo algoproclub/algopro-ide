@@ -86,14 +86,16 @@ async function fetchTestcasesCSES(
     const kind = matchArray[2] === 'in' ? 'input' : 'output';
     const saveFilename = `${basePath}/${kind}${num}.txt`;
     const data = await getEntryDataAsync(entry);
-    await bucket.file(saveFilename).save(data);
+    await bucket
+      .file(saveFilename)
+      .save(data, { metadata: { cacheControl: 'public, max-age=7200' } });
   }
 }
 
 function getEntryDataAsync(entry: AdmZip.IZipEntry): Promise<Buffer> {
   return new Promise<Buffer>((res, rej) =>
     entry.getDataAsync((buf, err) => {
-      if (err) rej(err);
+      if (err) rej(new Error(err));
       else res(buf);
     })
   );

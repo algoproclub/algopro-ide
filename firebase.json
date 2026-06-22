@@ -46,7 +46,7 @@
   "functions": [
     {
       "source": "functions",
-      "codebase": "default",
+      "codebase": "ide",
       "ignore": [
         "node_modules",
         ".git",

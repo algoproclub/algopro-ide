@@ -5,7 +5,7 @@ import {
   savedEditorValue as savedEditorValueAtom,
 } from '../atoms/workspace';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { OnMount } from './editor/MonacoEditor/monaco-editor-types';
+import type { SharedEditorProps } from './editor/editor-types';
 import { CodeEditor } from './editor/CodeEditor';
 import { editor } from 'monaco-editor';
 
@@ -128,11 +128,11 @@ function validateLine(
 export const StderrOutput = ({
   output,
   lightMode,
-  onMount,
+  onReady,
 }: {
   output: string;
   lightMode: boolean;
-  onMount: OnMount | undefined;
+  onReady?: SharedEditorProps['onReady'];
 }): JSX.Element => {
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
   const isLineHighlightSet = useAtomValue(isLineHighlightSetAtom);
@@ -144,7 +144,9 @@ export const StderrOutput = ({
     ? savedEditorValue.split('\n')
     : null;
   const getLineContent = (lineNumber: number) => {
-    return editorValueLines == null || lineNumber <= 0 || lineNumber > editorValueLines.length
+    return editorValueLines == null ||
+      lineNumber <= 0 ||
+      lineNumber > editorValueLines.length
       ? '\t<not available, run the code again to see>'
       : editorValueLines[lineNumber - 1];
   };
@@ -207,13 +209,12 @@ export const StderrOutput = ({
         value={decodedOutput}
         saveViewState={false}
         path="output"
-        options={{
-          minimap: { enabled: false },
+        editorOptions={{
           readOnly: true,
           automaticLayout: false,
           insertSpaces: true,
         }}
-        onMount={onMount}
+        onReady={onReady}
       />
     </div>
   );

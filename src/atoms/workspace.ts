@@ -1,6 +1,6 @@
-import { EditorView } from '@uiw/react-codemirror';
+import type { EditorView } from '@codemirror/view';
 import { atom } from 'jotai';
-import { AlgoProMonacoEditor } from '../components/editor/MonacoEditor/monaco-editor-types';
+import { AlgoProMonacoEditor } from '../components/editor/editor-types';
 
 // Loading
 export const loadingAtom = atom(true);

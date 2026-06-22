@@ -8,7 +8,6 @@ import { useEditorContext } from '../../context/EditorContext';
 import { ProblemSolution, SubmissionData } from '../../types/problem';
 import { useUserContext } from '../../context/UserContext';
 import LoadResultsModal from './LoadResultsModal';
-import { registerSubmission } from '../../scripts/updateStatus';
 import 'katex/dist/katex.min.css';
 import { problemAtom } from '../../atoms/workspaceUI';
 
@@ -88,17 +87,12 @@ export const GenericSubmitButton = ({
       while (true) {
         try {
           const submissionData = await submitProblemSolution({
+            fileID: fileData.id,
             platform: problem.platform,
             problemID: problem.id,
             language: fileData.settings.language,
             sourceCode: getMainEditorValue(),
           });
-          registerSubmission(
-            fileData.id,
-            submissionData.data.id,
-            submissionData.data.username,
-            setStatusData
-          );
           console.log('submission success', submissionData);
           break;
         } catch (error) {

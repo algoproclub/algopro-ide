@@ -40,7 +40,7 @@ function PageContent() {
     }
   }, [isPageLoading]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isPageLoading) {
       alert('Page is still loading, please try again later');
