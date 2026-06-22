@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: ESLint
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run ESLint
+        env:
+          DIFF_BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          DIFF_HEAD: ${{ github.sha }}
+        shell: bash
+        run: |
+          set +e
+          yarn -s lint:ci --format json --output-file eslint-report.json
+          eslint_status=$?
+
+          if [[ ! -f eslint-report.json ]]; then
+            exit "$eslint_status"
+          fi
+
+          node .github/scripts/filter-eslint-results.js eslint-report.json
+
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    env:
+      NEXT_PUBLIC_BASE_URL: 'http://localhost:3000'
+      NEXT_PUBLIC_FIREBASE_DATABASE_URL: 'http://127.0.0.1:9000/?ns=algopro-app-default-rtdb'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build

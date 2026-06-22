@@ -9,6 +9,7 @@ export const updateUserSettings = async ({
   editorMode,
   tabSize,
   lightMode,
+  rainbowIndent,
   manualSubmission,
   defaultLanguage,
   templateCode,
@@ -20,6 +21,7 @@ export const updateUserSettings = async ({
   editorMode: EditorMode;
   tabSize: number;
   lightMode: boolean;
+  rainbowIndent: boolean;
   manualSubmission: boolean;
   defaultLanguage: Language;
   templateCode: Partial<Record<Language, string>>;
@@ -29,6 +31,7 @@ export const updateUserSettings = async ({
       editorMode,
       tabSize,
       lightMode,
+      rainbowIndent,
       manualSubmission,
       defaultLanguage,
       discordID,

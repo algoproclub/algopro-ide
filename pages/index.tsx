@@ -52,7 +52,7 @@ export default function DashboardPage(): JSX.Element {
         {logged === false ? (
           <>
             <div className="text-gray-400">Not signed in.</div>
-            <div className="mt-2 space-x-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               <SignInButton
                 service="Google"
                 Icon={GoogleIcon}

@@ -95,6 +95,7 @@ export type ProblemData = {
 };
 
 export type ProblemSolution = {
+  fileID: string;
   problemID: string;
   platform: Platform;
   sourceCode: string;

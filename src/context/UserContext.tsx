@@ -49,6 +49,7 @@ export type UserData = {
   editorMode: EditorMode;
   tabSize: number;
   lightMode: boolean;
+  rainbowIndent: boolean;
   defaultPermission: 'READ_WRITE' | 'READ' | 'PRIVATE';
   defaultLanguage: Language;
   manualSubmission: boolean;
@@ -139,6 +140,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         editorMode: data.editorMode ?? 'Normal',
         tabSize: data.tabSize ?? 4,
         lightMode: data.lightMode ?? false,
+        rainbowIndent: data.rainbowIndent ?? false,
         defaultPermission: data.defaultPermission ?? 'READ_WRITE',
         defaultLanguage: data.defaultLanguage ?? 'cpp',
         manualSubmission: data.manualSubmission ?? false,

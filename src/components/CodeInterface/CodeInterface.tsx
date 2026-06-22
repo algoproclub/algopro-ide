@@ -6,13 +6,11 @@ import {
   mainMonacoEditorAtom,
 } from '../../atoms/workspace';
 import { LazyRealtimeEditor } from '../RealtimeEditor/LazyRealtimeEditor';
-import type * as monaco from 'monaco-editor';
 import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
-import { EditorView } from '@uiw/react-codemirror';
 import { problemAtom } from '../../atoms/workspaceUI';
-import { AlgoProMonacoEditor } from '../editor/MonacoEditor/monaco-editor-types';
+import { EditorHandle, isMonacoEditorHandle } from '../editor/editor-types';
 
 export const CodeInterface = ({
   className,
@@ -24,10 +22,7 @@ export const CodeInterface = ({
   const lang = fileData.settings.language;
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
-  const [editor, setEditor] = useState<AlgoProMonacoEditor | null>(null);
-  const [codemirrorEditor, setCodemirrorEditor] = useState<EditorView | null>(
-    null
-  );
+  const [editorHandle, setEditorHandle] = useState<EditorHandle | null>(null);
   const [, setMainMonacoEditor] = useAtom(mainMonacoEditorAtom);
   const [, setMainCodemirrorEditor] = useAtom(mainCodemirrorEditorAtom);
 
@@ -35,31 +30,31 @@ export const CodeInterface = ({
   // is unmounted, the mainMonacoEditorAtom/mainCodemirrorEditorAtom will still
   // be set
   useEffect(() => {
-    if (editor) {
-      setMainMonacoEditor(editor);
+    if (!editorHandle) {
+      return;
+    }
+
+    if (isMonacoEditorHandle(editorHandle)) {
+      setMainMonacoEditor(editorHandle.raw);
       return () => {
         setMainMonacoEditor(null);
       };
     }
-  }, [editor, setMainMonacoEditor]);
 
-  useEffect(() => {
-    if (codemirrorEditor) {
-      setMainCodemirrorEditor(codemirrorEditor);
+    setMainCodemirrorEditor(editorHandle.raw);
 
+    // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the main codemirror editor
+    window['TEST_mainCodemirrorEditor'] = editorHandle.raw;
+
+    return () => {
+      setMainCodemirrorEditor(null);
       // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the main codemirror editor
-      window['TEST_mainCodemirrorEditor'] = codemirrorEditor;
-
-      return () => {
-        setMainCodemirrorEditor(null);
-        // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the main codemirror editor
-        window['TEST_mainCodemirrorEditor'] = null;
-      };
-    }
-  }, [codemirrorEditor, setMainCodemirrorEditor]);
+      window['TEST_mainCodemirrorEditor'] = null;
+    };
+  }, [editorHandle, setMainCodemirrorEditor, setMainMonacoEditor]);
 
   const {
-    userData: { tabSize, lightMode },
+    userData: { tabSize, lightMode, rainbowIndent },
     templateCode,
   } = useUserContext();
 
@@ -74,32 +69,24 @@ export const CodeInterface = ({
         {problem !== undefined && (
           <LazyRealtimeEditor
             theme={lightMode ? 'light' : 'dark'}
+            rainbowIndent={rainbowIndent}
             language={{ cpp: 'cpp', java: 'java', py: 'python' }[lang]}
             path={`myfile.${lang}`}
-            options={
-              {
-                minimap: { enabled: false },
-                automaticLayout: false,
-                tabSize: tabSize,
-                insertSpaces: false,
-                readOnly,
-                'bracketPairColorization.enabled': true, // monaco doesn't expect an IBracketPairColorizationOptions
-
-                // this next option is to prevent annoying autocompletes
-                // ex. type return space and it adds two spaces + semicolon
-                // ex. type vecto< and it autocompletes weirdly
-                acceptSuggestionOnCommitCharacter: false,
-                // suggestOnTriggerCharacters: false,
-              } as monaco.editor.IEditorOptions
-            }
-            onMount={e => {
-              setEditor(e);
-              setTimeout(() => {
-                e.layout();
-                e.focus();
-              }, 0);
+            editorOptions={{
+              automaticLayout: false,
+              insertSpaces: false,
+              readOnly,
+              tabSize,
             }}
-            onCodemirrorMount={(view, _) => setCodemirrorEditor(view)}
+            onReady={handle => {
+              setEditorHandle(handle);
+              if (isMonacoEditorHandle(handle)) {
+                setTimeout(() => {
+                  handle.layout();
+                  handle.focus();
+                }, 0);
+              }
+            }}
             defaultValue={problem?.templateCode?.[lang] ?? templateCode[lang]}
             yjsDocumentId={`${fileData.id}.${lang}`}
             useEditorWithVim={true}

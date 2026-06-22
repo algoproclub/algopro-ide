@@ -13,6 +13,7 @@ import {
   buildOjuzUrl,
   buildNjudgeUrl,
 } from './problemUtils';
+import AdmZip from 'adm-zip';
 
 async function fetchWithProxy(
   url: string,
@@ -433,6 +434,38 @@ async function fetchProblemDataOjuz(
   };
 }
 
+const MAX_TOTAL_SAMPLE_SIZE = 768 * 1024; // 768 KiB, as total Firestore doc max size is 1 MiB.
+const MAX_SAMPLE_STDOUT_SIZE = 5000; // The execute server truncates stdout to 5000 bytes
+
+const compareFilenames = (a: string, b: string): number => {
+  const aMatch = a.match(/^(.*?)(\d+)?(\.[^.]*)?$/);
+  const bMatch = b.match(/^(.*?)(\d+)?(\.[^.]*)?$/);
+
+  const aPrefix = aMatch?.[1] ?? a;
+  const bPrefix = bMatch?.[1] ?? b;
+
+  const prefixResult = aPrefix.localeCompare(bPrefix);
+  if (prefixResult !== 0) return prefixResult;
+
+  const aNumber = aMatch?.[2] === undefined ? null : Number(aMatch[2]);
+  const bNumber = bMatch?.[2] === undefined ? null : Number(bMatch[2]);
+
+  if (aNumber !== bNumber) {
+    if (aNumber === null) return -1;
+    if (bNumber === null) return 1;
+    return aNumber - bNumber;
+  }
+
+  const aExt = aMatch?.[3] ?? '';
+  const bExt = bMatch?.[3] ?? '';
+
+  const extResult = aExt.localeCompare(bExt);
+  if (extResult !== 0) return extResult;
+
+  return a.localeCompare(b);
+};
+
+// TODO: Add an API endpoint in njudge instead of scraping the HTML.
 async function fetchProblemDataNjudge(
   problemID: string
 ): Promise<ProblemData | null> {
@@ -446,7 +479,7 @@ async function fetchProblemDataNjudge(
 
   const document = cheerio.load(await problemPage.text());
 
-  const titleHeading = document('div:Contains("Cím:")');
+  const titleHeading = document('div:contains("Cím:")');
   const title = titleHeading.next().text().trim();
 
   let statementURL = null;
@@ -466,6 +499,122 @@ async function fetchProblemDataNjudge(
     return null;
   }
 
+  let samples: Sample[] = [];
+
+  const attachmentURL = (filename: string) =>
+    `https://njudge.hu/problemset/main/${problemID}/attachment/${filename}/`;
+
+  const fetchAttachmentText = async (filename: string): Promise<string> => {
+    const response = await fetch(attachmentURL(filename));
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch ${filename}: ${response.status} ${response.statusText}`
+      );
+    }
+
+    return response.text();
+  };
+
+  // Biro/Mester tasks have their sample tests in a file called minta.zip.
+  const sampleResponse = await fetch(attachmentURL('minta.zip'));
+  if (sampleResponse.ok) {
+    const zip = new AdmZip(Buffer.from(await sampleResponse.arrayBuffer()));
+    for (const zipEntry of zip
+      .getEntries()
+      .sort((a, b) => compareFilenames(a.name, b.name))) {
+      const match = zipEntry.name.match(/^be(\d+)\.txt$/);
+      if (!match) continue;
+
+      const outputEntry = zip.getEntry(`ki${match[1]}.txt`);
+      if (!outputEntry) {
+        console.warn(
+          `Output file ki${match[1]}.txt not found in minta.zip for njudge ${problemID}`
+        );
+        continue;
+      }
+
+      samples.push({
+        input: zipEntry.getData().toString('utf-8'),
+        output: outputEntry.getData().toString('utf-8'),
+      });
+    }
+  } else {
+    // Some other tasks have separate attachments for each sample test.
+    const attachmentFiles = document('div.card-header:contains("Mellékletek")')
+      .next()
+      .find('a')
+      .map((_, el) => {
+        const href = document(el).attr('href');
+        return href ? (href.split('/').filter(Boolean).pop() ?? null) : null;
+      })
+      .filter((_, filename): filename is string => filename !== null)
+      .toArray()
+      .sort(compareFilenames);
+
+    const attachmentSet = new Set(attachmentFiles);
+
+    for (const filename of attachmentFiles) {
+      const match = filename.match(/^(input|in|be)(\d+)\.txt$/);
+      if (!match) continue;
+
+      const sampleIndex = match[2];
+
+      const outputFilename = [
+        `output${sampleIndex}.txt`,
+        `out${sampleIndex}.txt`,
+        `ki${sampleIndex}.txt`,
+      ].find(filename => attachmentSet.has(filename));
+
+      if (!outputFilename) {
+        console.warn(
+          `No matching output file found for attachment ${filename} for njudge ${problemID}`
+        );
+        continue;
+      }
+
+      try {
+        const [inputContents, outputContents] = await Promise.all([
+          fetchAttachmentText(filename),
+          fetchAttachmentText(outputFilename),
+        ]);
+
+        samples.push({ input: inputContents, output: outputContents });
+      } catch (e) {
+        console.warn(
+          `Failed to fetch sample test files ${filename} and ${outputFilename} for njudge ${problemID}`,
+          e
+        );
+      }
+    }
+  }
+
+  samples = samples.filter(
+    sample =>
+      Buffer.byteLength(sample.output, 'utf-8') <= MAX_SAMPLE_STDOUT_SIZE
+  );
+
+  const sampleSize = (sample: Sample) =>
+    Buffer.byteLength(sample.input, 'utf8') +
+    Buffer.byteLength(sample.output, 'utf8');
+
+  let totalSize = samples.reduce((sum, sample) => sum + sampleSize(sample), 0);
+
+  while (totalSize > MAX_TOTAL_SAMPLE_SIZE && samples.length > 0) {
+    let largestIndex = 0;
+    let maxSampleSize = sampleSize(samples[0]);
+
+    for (let i = 1; i < samples.length; i++) {
+      const currentSize = sampleSize(samples[i]);
+      if (currentSize > maxSampleSize) {
+        largestIndex = i;
+        maxSampleSize = currentSize;
+      }
+    }
+
+    totalSize -= maxSampleSize;
+    samples.splice(largestIndex, 1);
+  }
+
   return {
     id: problemID,
     submittable: true,
@@ -475,7 +624,7 @@ async function fetchProblemDataNjudge(
     statement: null,
     statementURL,
     templateCode: null,
-    samples: [],
+    samples,
     input: 'stdin',
     output: 'stdout',
     source: `njudge ${problemID}`,

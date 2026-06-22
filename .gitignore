@@ -14,6 +14,7 @@
 # misc
 .DS_Store
 *.pem
+*.swp
 
 # debug
 npm-debug.log*
@@ -41,3 +42,5 @@ serviceAccountKey.json
 
 .env
 accounts.json
+
+tsconfig.tsbuildinfo

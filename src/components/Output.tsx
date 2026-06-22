@@ -2,7 +2,7 @@ import { TabBar } from './TabBar';
 import React, { useState, useEffect } from 'react';
 import { useAtomValue } from 'jotai';
 import JudgeResult from '../types/judge';
-import { EditorProps } from './editor/MonacoEditor/monaco-editor-types';
+import type { SharedEditorProps } from './editor/editor-types';
 import USACOResults from './JudgeInterface/USACOResults';
 import { StatusData } from '../types/problem';
 import { useUserContext } from '../context/UserContext';
@@ -18,7 +18,7 @@ export interface OutputProps {
   result: JudgeResult | null;
   statusData: StatusData | null;
   statusDataHistory: StatusHistoryEntry[];
-  onMount: EditorProps['onMount'];
+  onReady?: SharedEditorProps['onReady'];
 }
 
 type OutputTab = 'stdout' | 'stderr' | 'compile_output' | 'results' | 'history';
@@ -27,7 +27,7 @@ export const Output = ({
   result,
   statusData,
   statusDataHistory,
-  onMount,
+  onReady,
 }: OutputProps): JSX.Element => {
   const [option, setOption] = useState<OutputTab>('stdout');
   const [tabs, setTabs] = useState<
@@ -41,7 +41,7 @@ export const Output = ({
   ]);
 
   useEffect(() => {
-    setOption('stdout' as OutputTab);
+    setOption('stdout');
     let option = null;
     const updatedTabs = tabs.map(tab => ({ ...tab, highlight: false }));
 
@@ -239,20 +239,19 @@ export const Output = ({
             value={outputText}
             saveViewState={false}
             path="output"
-            options={{
-              minimap: { enabled: false },
+            editorOptions={{
               readOnly: true,
               automaticLayout: false,
               insertSpaces: true,
             }}
-            onMount={onMount}
+            onReady={onReady}
           />
         )}
         {option === 'stderr' && (
           <StderrOutput
             output={outputText ?? ''}
             lightMode={lightMode}
-            onMount={onMount}
+            onReady={onReady}
           />
         )}
         {option === 'compile_output' && (

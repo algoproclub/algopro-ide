@@ -88,23 +88,6 @@ async function getGroups(schoolID: string): Promise<Option[]> {
   }));
 }
 
-type UserProblemMap = Record<Platform, Record<string, string>>;
-
-async function getUserProblemMap(id: string): Promise<UserProblemMap> {
-  return Object.fromEntries(
-    await Promise.all(
-      platforms.map(platform =>
-        get(
-          ref(
-            database,
-            `users/${id}/platform-${platform}/problem-id-to-file-id`
-          )
-        ).then(u => [platform, u.val() ?? {}])
-      )
-    )
-  );
-}
-
 type ProblemKey = `${Platform}:${string}`;
 type SolvedAggregated = {
   studentCount: number;
@@ -126,31 +109,19 @@ async function getSolvedCounts(
     .filter(doc => doc.get('groups')?.includes(groupId) === true)
     .map(doc => doc.id);
 
-  const userProblemMaps: Record<string, UserProblemMap> = Object.fromEntries(
-    await Promise.all(
-      groupStudentIds.map(id => getUserProblemMap(id).then(u => [id, u]))
-    )
+  const userSnaps = await Promise.all(
+    groupStudentIds.map(id => get(ref(database, `users/${id}`)))
   );
 
   const solvedCounts: Record<ProblemKey, number> = {};
-
-  for (const userProblemMap of Object.values(userProblemMaps)) {
+  for (const snap of userSnaps) {
+    const userData = snap.val() ?? {};
     for (const platform of platforms) {
-      const problemIdToFileId = userProblemMap[platform];
-
-      const solvedResults = await Promise.all(
-        Object.entries(problemIdToFileId).map(([problemId, fileId]) =>
-          get(ref(database, `files/${fileId}/solvedStatus/solved`)).then(
-            snap => ({ problemId, solved: !!snap.val() })
-          )
-        )
-      );
-
-      for (const { problemId, solved } of solvedResults) {
-        if (solved) {
-          solvedCounts[`${platform}:${problemId}`] =
-            (solvedCounts[`${platform}:${problemId}`] ?? 0) + 1;
-        }
+      const solved: Record<string, true> =
+        userData[`platform-${platform}`]?.['solved'] ?? {};
+      for (const problemId of Object.keys(solved)) {
+        const key: ProblemKey = `${platform}:${problemId}`;
+        solvedCounts[key] = (solvedCounts[key] ?? 0) + 1;
       }
     }
   }
@@ -198,9 +169,17 @@ const PageContent = () => {
   }, [selectedSchoolId]);
 
   useEffect(() => {
-    if (selectedGroupId && selectedSchoolId) {
-      getSolvedCounts(selectedSchoolId, selectedGroupId).then(setSolvedCounts);
+    if (!selectedGroupId || !selectedSchoolId) {
+      setSolvedCounts({ studentCount: 0, problems: {} });
+      return;
     }
+    let cancelled = false;
+    getSolvedCounts(selectedSchoolId, selectedGroupId).then(result => {
+      if (!cancelled) setSolvedCounts(result);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [selectedGroupId, selectedSchoolId]);
 
   const togglePlatformFilter = (label: string) => {
@@ -212,23 +191,17 @@ const PageContent = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      const problems: TagProblem[] = [];
-
-      for (const platform of platforms) {
-        const results = await getDocs(
-          query(collection(firestore, `problemsets/${platform}/problems`))
-        );
-        results.forEach(doc => {
-          const problem = doc.data() as TagProblem;
-          problems.push(problem);
-        });
-      }
-
+      const snaps = await Promise.all(
+        platforms.map(platform =>
+          getDocs(collection(firestore, `problemsets/${platform}/problems`))
+        )
+      );
+      const problems = snaps.flatMap(snap =>
+        snap.docs.map(doc => doc.data() as TagProblem)
+      );
       setProblemset(problems);
     };
-    loadData().then(() => {
-      console.log('done');
-    });
+    loadData();
   }, []);
 
   const tagFilterInputOptions = problemTags.filter(option =>

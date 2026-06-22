@@ -89,7 +89,7 @@ export default function Register({ handlerURL }: { handlerURL: string }) {
             <div className="font-semibold block text-center py-4 px-6 border-b border-gray-700">
               Registration
             </div>
-            <div className="py-4 px-6 space-x-2">
+            <div className="py-4 px-6 flex flex-wrap gap-2">
               <SignInButton
                 service="Google"
                 Icon={GoogleIcon}

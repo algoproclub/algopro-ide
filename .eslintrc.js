@@ -16,8 +16,8 @@ module.exports = {
     // Legacy USACO code
     'src/components/JudgeInterface/USACOJudgeInterface.tsx',
     'src/components/settings/ProblemSearchInterface.tsx',
-    'src/hooks/useJudgeResults.ts',
     'src/types/judge.d.ts',
+    'src/types/react-split-grid.d.ts',
   ], // We don't want to lint generated files nor node_modules, but we want to lint .prettierrc.js (ignored by default by eslint)
   extends: [
     'eslint:recommended',
@@ -34,6 +34,10 @@ module.exports = {
     {
       files: ['**/*.ts', '**/*.tsx'],
       parser: '@typescript-eslint/parser',
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: __dirname,
+      },
       settings: { react: { version: 'detect' } },
       env: {
         browser: true,
@@ -42,7 +46,7 @@ module.exports = {
       },
       extends: [
         'eslint:recommended',
-        'plugin:@typescript-eslint/recommended', // TypeScript rules
+        'plugin:@typescript-eslint/recommended-type-checked', // TypeScript rules
         'plugin:react/recommended', // React rules
         'plugin:react-hooks/recommended', // React hooks rules
       ],
@@ -82,6 +86,32 @@ module.exports = {
         'no-prototype-builtins': 'warn',
 
         'prefer-const': ['error', { destructuring: 'all' }],
+
+        // FIXME: Transitional; these should be errors
+        'react-hooks/set-state-in-effect': 'warn',
+        'react-hooks/refs': 'warn',
+        'react-hooks/purity': 'warn',
+        'react-hooks/immutability': 'warn',
+        'react-hooks/preserve-manual-memoization': 'warn',
+        'react-hooks/static-components': 'warn',
+
+        // Too noisy
+        '@typescript-eslint/no-unsafe-argument': 'off',
+        '@typescript-eslint/no-unsafe-assignment': 'off',
+        '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/no-unsafe-enum-comparison': 'off',
+        '@typescript-eslint/no-unsafe-member-access': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
+        '@typescript-eslint/no-floating-promises': 'off',
+        '@typescript-eslint/no-misused-promises': [
+          'error',
+          {
+            checksVoidReturn: {
+              arguments: false,
+              attributes: false,
+            },
+          },
+        ],
       },
     },
   ],
