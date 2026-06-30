@@ -73,12 +73,8 @@ export default function FilesList(props: FilesListProps): JSX.Element {
             <th className="text-left text-sm font-bold theme-text">
               Last Accessed
             </th>
-            <th className="text-left text-sm font-bold theme-text">
-              Created
-            </th>
-            <th className="text-left text-sm font-bold theme-text">
-              Language
-            </th>
+            <th className="text-left text-sm font-bold theme-text">Created</th>
+            <th className="text-left text-sm font-bold theme-text">Language</th>
             <th className="text-left text-sm font-bold theme-text">Owner</th>
             <th className="text-left text-sm font-bold theme-text">
               Permissions

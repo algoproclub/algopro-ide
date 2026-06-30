@@ -10,9 +10,7 @@ export const MessagePage = ({
 }): JSX.Element => {
   return (
     <div className="p-8 sm:p-16 text-center theme-page">
-      <div className="text-3xl sm:text-4xl theme-text font-bold">
-        {message}
-      </div>
+      <div className="text-3xl sm:text-4xl theme-text font-bold">{message}</div>
       {showHomeButton && (
         <Link
           href="/"

@@ -42,7 +42,8 @@ const SimpleButton = ({
 }): JSX.Element => {
   const enabledButtonClass =
     'text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] focus:bg-[var(--hover-bg)] focus:outline-none';
-  const disabledButtonClass = 'text-[color:var(--text-secondary)] cursor-not-allowed';
+  const disabledButtonClass =
+    'text-[color:var(--text-secondary)] cursor-not-allowed';
 
   return (
     <button
@@ -92,15 +93,13 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
 
   const navButtonClass =
     'relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] focus:bg-[var(--hover-bg)] focus:outline-none';
-  const secondaryIconClass = '-ml-1 mr-2 h-5 w-5 text-[color:var(--text-secondary)]';
+  const secondaryIconClass =
+    '-ml-1 mr-2 h-5 w-5 text-[color:var(--text-secondary)]';
 
   return (
     <div className="flex items-center overflow-x-auto border-b border-[var(--border-color)] bg-[var(--panel-bg-alt)] text-[color:var(--text-primary)]">
       <div className="flex w-full lg:w-auto items-center divide-x divide-[var(--border-color)]">
-        <Link
-          href="/"
-          className={navButtonClass}
-        >
+        <Link href="/" className={navButtonClass}>
           <HomeIcon className="h-5 w-5" />
         </Link>
         <EditorNavigationMenu />

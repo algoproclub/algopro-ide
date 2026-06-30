@@ -53,7 +53,9 @@ export const FileMenu = (props: {
 
   const menuButtonClass = (open: boolean) =>
     `w-full relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-[color:var(--text-primary)] focus:outline-none ${
-      open ? 'bg-[var(--hover-bg)]' : 'hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]'
+      open
+        ? 'bg-[var(--hover-bg)]'
+        : 'hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]'
     }`;
   const menuPanelClass =
     'origin-top-left absolute z-10 left-0 w-56 shadow-lg bg-[var(--panel-bg)] border border-[var(--border-color)] focus:outline-none';
@@ -92,7 +94,7 @@ export const FileMenu = (props: {
     }
 
     const code = getMainEditorValue();
-    navigator.clipboard.writeText(code).catch((err) => {
+    navigator.clipboard.writeText(code).catch(err => {
       console.error('Failed to copy text to clipboard:', err);
       alert('Failed to copy text to clipboard. Please try again.');
     });

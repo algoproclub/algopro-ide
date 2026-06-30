@@ -148,9 +148,7 @@ export const Output = ({
                     <tr
                       style={{
                         backgroundColor:
-                          index % 2
-                            ? 'var(--panel-bg-alt)'
-                            : 'var(--panel-bg)',
+                          index % 2 ? 'var(--panel-bg-alt)' : 'var(--panel-bg)',
                       }}
                       key={
                         item.submissionTime ?? statusDataHistory.length - index

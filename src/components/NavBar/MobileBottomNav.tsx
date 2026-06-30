@@ -20,7 +20,9 @@ const MobileBottomNavButton = ({
 }) => (
   <button
     className={`${
-      isActive ? 'text-[color:var(--text-primary)]' : 'text-[color:var(--text-secondary)]'
+      isActive
+        ? 'text-[color:var(--text-primary)]'
+        : 'text-[color:var(--text-secondary)]'
     } flex flex-col items-center focus:outline-none py-1 transition hover:text-[color:var(--text-primary)]`}
     onClick={() => onClick()}
     data-testid={dataTestId}
