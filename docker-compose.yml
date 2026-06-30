@@ -61,6 +61,18 @@ services:
       - YJS_API_URL=http://yjs:1234
       - EXECUTE_URL=http://execute:1235
       - LOGIN_BOT_URL=http://login-bot:3100
+      # AI "Debug" feature (/api/debug shells out to the `claude` CLI). The
+      # OAuth token is substituted from the host environment at `up` time — make
+      # sure CLAUDE_CODE_OAUTH_TOKEN is exported in the shell running compose.
+      # CLAUDE_CONFIG_DIR points at a writable in-container path. DEBUG_* knobs
+      # are documented in docs/DEBUG_FEATURE.md.
+      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN:-}
+      - CLAUDE_CONFIG_DIR=/tmp/claude-config
+      - DEBUG_CLAUDE_MODEL=${DEBUG_CLAUDE_MODEL:-sonnet}
+      # The CLI refuses --dangerously-skip-permissions as root unless it knows
+      # it is sandboxed. The container is an isolated sandbox (same as the host
+      # setup), so opt in. Without this, /api/debug fails with a root warning.
+      - IS_SANDBOX=1
     ports:
       - '3000:3000'
       - '127.0.0.1:9229:9229'

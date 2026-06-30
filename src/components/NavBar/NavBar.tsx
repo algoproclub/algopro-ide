@@ -24,6 +24,7 @@ import { EditorNavigationMenu } from './EditorNavigationMenu';
 export interface DesktopNavBarProps {
   fileMenu: JSX.Element;
   runButton: JSX.Element;
+  debugButton?: JSX.Element;
   showViewOnly: boolean;
   isSidebarOpen: boolean;
   onToggleSidebar: () => void;
@@ -116,6 +117,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
         />
       </div>
       {props.runButton}
+      {props.debugButton}
       {problem?.submittable && problem.id === fileData.problem?.id && (
         <PlatformSubmitButton
           platform={problem?.platform}

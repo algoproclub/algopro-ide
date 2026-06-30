@@ -1,5 +1,5 @@
 import * as monaco from 'monaco-editor';
-import { AlgoProMonacoEditor } from '../editor-types';
+import { AlgoProMonacoEditor, BugHighlightMark } from '../editor-types';
 
 type ThemeMode = 'dark' | 'light';
 
@@ -104,6 +104,7 @@ export function createEditorEnhancements(
   editor: monaco.editor.IStandaloneCodeEditor
 ): EditorEnhancements {
   const lineHighlightDecorations = editor.createDecorationsCollection();
+  const bugHighlightDecorations = editor.createDecorationsCollection();
   let lineHighlightTimeout: ReturnType<typeof setTimeout> | null = null;
   const rainbowIndentDecorations = editor.createDecorationsCollection();
   let rainbowIndentDisposables: monaco.IDisposable[] = [];
@@ -175,6 +176,53 @@ export function createEditorEnhancements(
     }, 100);
   };
 
+  // AI Debug feature: a persistent set of "suspected bug" line highlights.
+  // Kept separate from the transient single-line linked highlight above so the
+  // two never clobber each other. Cleared on a new debug run, on Run Code, and
+  // on dispose.
+  enhancedEditor.setBugHighlights = (marks: BugHighlightMark[]) => {
+    const model = editor.getModel();
+    if (!model) {
+      return;
+    }
+
+    const lineCount = model.getLineCount();
+    const decorations: monaco.editor.IModelDeltaDecoration[] = marks
+      .filter(mark => mark.line >= 1 && mark.line <= lineCount)
+      .map(mark => ({
+        // Span the whole line so the hover tooltip (the reason) triggers when
+        // hovering anywhere on the line, not only column 1. isWholeLine still
+        // drives the red background; glyphMarginHoverMessage covers the red dot.
+        range: new monaco.Range(
+          mark.line,
+          1,
+          mark.line,
+          model.getLineMaxColumn(mark.line)
+        ),
+        options: {
+          isWholeLine: true,
+          className: 'debug-bug-highlight',
+          glyphMarginClassName: 'debug-bug-glyph',
+          overviewRuler: {
+            color: 'rgba(248, 87, 87, 0.7)',
+            position: monaco.editor.OverviewRulerLane.Right,
+          },
+          ...(mark.hoverMessage
+            ? {
+                hoverMessage: { value: mark.hoverMessage },
+                glyphMarginHoverMessage: { value: mark.hoverMessage },
+              }
+            : {}),
+        },
+      }));
+
+    bugHighlightDecorations.set(decorations);
+  };
+
+  enhancedEditor.clearBugHighlights = () => {
+    bugHighlightDecorations.clear();
+  };
+
   const focusDisposable = editor.onDidFocusEditorWidget(() => {
     if (lineHighlightTimeout) {
       clearTimeout(lineHighlightTimeout);
@@ -219,6 +267,7 @@ export function createEditorEnhancements(
       clearLineHighlightImmediately();
       disposeRainbowIndent();
       lineHighlightDecorations.clear();
+      bugHighlightDecorations.clear();
       rainbowIndentDecorations.clear();
     },
   };

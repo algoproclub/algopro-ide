@@ -4,7 +4,12 @@ import { FileMenu } from '../src/components/NavBar/FileMenu';
 import { NavBar } from '../src/components/NavBar/NavBar';
 import { EditorProvider, useEditorContext } from '../src/context/EditorContext';
 import { RunButton } from '../src/components/RunButton';
+import { DebugButton } from '../src/components/DebugButton';
 import { submitToJudge } from '../src/scripts/judge';
+import { requestDebug } from '../src/scripts/requestDebug';
+import toast from 'react-hot-toast';
+import { showDebugNote, dismissDebugNote } from '../src/debug/showDebugNote';
+import { debugClientConfig } from '../src/debug/debugClientConfig';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
   inputEditorValueAtom,
@@ -45,6 +50,7 @@ import WithRegistration from '../src/components/WithRegistration';
 function EditorPage() {
   const { fileData, updateFileData } = useEditorContext();
   const permission = useUserPermission();
+  const { firebaseUser } = useNullableUserContext();
   const loading = useAtomValue(loadingAtom);
   const [showSidebar, setShowSidebar] = useAtom(showSidebarAtom);
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
@@ -53,6 +59,7 @@ function EditorPage() {
   const [isProfileSettingsModalOpen, setIsProfileSettingsModalOpen] =
     useState(false);
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
+  const [isDebugging, setIsDebugging] = useState(false);
   const layoutEditors = useSetAtom(layoutEditorsAtom);
   const [mobileActiveTab, setMobileActiveTab] = useAtom(mobileActiveTabAtom);
   const getMainEditorValue = useAtomValue(mainEditorValueAtom);
@@ -282,6 +289,76 @@ function EditorPage() {
     }
     setIsLineHighlightSet(false);
     mainMonacoEditor?.clearLineHighlight();
+    // A new run invalidates any stale AI bug highlights + note.
+    mainMonacoEditor?.clearBugHighlights();
+    dismissDebugNote();
+  };
+
+  // AI "Debug": send the current code + problem to /api/debug (which asks the
+  // `claude` CLI to locate bugs) and highlight the returned lines. By design the
+  // v1 UX only highlights — it does not reveal the reason (see debugClientConfig).
+  const handleDebugCode = async () => {
+    if (!getMainEditorValue) {
+      // editor is still loading
+      return;
+    }
+    const code = getMainEditorValue();
+
+    let problemTitle: string | undefined = undefined;
+    let problemStatement: string | undefined = undefined;
+    if (fileData.problem) {
+      const problem =
+        fileData.problem.platform === 'usaco'
+          ? (fileData.problem as ProblemData)
+          : await fetchProblemFromDb(fileData.problem);
+      problemTitle = problem?.title ?? undefined;
+      problemStatement = problem?.statement ?? undefined;
+    }
+
+    // The callable is auth-gated (onCall + `registered` claim); a logged-out
+    // user can't carry auth, so fail early with a clear message.
+    if (!firebaseUser) {
+      toast.error('A hibakereséshez be kell jelentkezni.');
+      return;
+    }
+
+    setIsDebugging(true);
+    mainMonacoEditor?.clearBugHighlights();
+    dismissDebugNote();
+    try {
+      // onCall carries the signed-in user's auth automatically — no idToken
+      // plumbing. On failure it throws (caught below). The PDF-statement URL
+      // path lives only in the legacy /api/debug route, not the callable.
+      const result = await requestDebug({
+        language: fileData.settings.language,
+        code,
+        problemTitle,
+        problemStatement,
+      });
+      mainMonacoEditor?.setBugHighlights(
+        result.findings.map(finding => ({
+          line: finding.line,
+          hoverMessage: debugClientConfig.showReasons
+            ? finding.reason
+            : debugClientConfig.genericHoverMessage,
+        }))
+      );
+      // Global note: the AI's summary is the channel for issues that aren't tied
+      // to a single line (systemic / missing case / wrong approach). Shown as a
+      // dismissible note, flagged "overall" when there are no specific lines.
+      const note = (result.summary ?? '').trim();
+      if (note) {
+        showDebugNote(note, result.findings.length === 0);
+      } else if (result.findings.length === 0) {
+        toast(debugClientConfig.noIssuesMessage);
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      toast.error('Hibakeresési hiba: ' + message);
+      console.error(e);
+    } finally {
+      setIsDebugging(false);
+    }
   };
 
   const handleKeydown = (event: KeyboardEvent) => {
@@ -310,6 +387,13 @@ function EditorPage() {
               <RunButton
                 onClick={handleRunCode}
                 showLoading={fileData.isCodeRunning || loading}
+                disabledForViewOnly={readOnly}
+              />
+            }
+            debugButton={
+              <DebugButton
+                onClick={handleDebugCode}
+                showLoading={isDebugging}
                 disabledForViewOnly={readOnly}
               />
             }

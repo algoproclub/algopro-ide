@@ -56,6 +56,10 @@ export const cfAPISecret = defineString('CF_API_SECRET');
 
 export const loginBotUrl = defineString('LOGIN_BOT_URL');
 
+// AI "Debug" callable (2nd-gen, Cloud Run) — ported from pages/api/debug.ts so
+// it can bundle + spawn the `claude` CLI. See functions/src/debug.ts.
+export { debugCode } from './debug';
+
 const PENDING_TIME_LIMIT_MS = 300000;
 const INCORRECT_DATA_RETRY_LIMIT_MS = 20000;
 

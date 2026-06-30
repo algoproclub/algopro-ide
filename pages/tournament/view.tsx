@@ -194,7 +194,7 @@ const SpectatePage = () => {
   const [files, setFiles] = useState<string[]>(
     [left, middle, right].filter(x => x) as string[]
   );
-  const [startTime] = useState(0);
+  const [startTime, setStartTime] = useState(0); // drive-by fix: restore setter used at setStartTime(...) below
   const [participants, setParticipants] = useState<
     { name: string; fileID: string }[]
   >([]);

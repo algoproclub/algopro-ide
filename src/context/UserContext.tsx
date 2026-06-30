@@ -23,6 +23,7 @@ import {
 import animals from '../scripts/animals';
 import { Platform } from '../types/problem';
 import defaultCode from '../scripts/defaultCode';
+import { SHOULD_USE_FIREBASE_EMULATOR } from '../dev_constants';
 
 export type Language = 'cpp' | 'java' | 'py';
 export const LANGUAGES: { label: string; value: Language }[] = [
@@ -93,14 +94,30 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     string
   > | null>(null);
 
-  const updateClaims = useCallback(() => {
-    user?.getIdTokenResult().then(res => {
-      setUserRole({
-        teacher: res.claims?.teacher,
-        admin: res.claims?.admin,
-      } as UserRole);
-      setRegistered(!!res.claims.registered);
-    });
+  const updateClaims = useCallback(async () => {
+    if (!user) return;
+    let res = await user.getIdTokenResult();
+    // DEV-ONLY: against the Firebase emulator, auto-grant the `registered` claim
+    // so the RTDB security rules (which require auth.token.registered === true)
+    // pass — otherwise every workspace shows "this file is private". The endpoint
+    // 403s outside the emulator, so production is never affected.
+    if (SHOULD_USE_FIREBASE_EMULATOR && !res.claims.registered) {
+      try {
+        await fetch('/api/devRegister', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uid: user.uid }),
+        });
+        res = await user.getIdTokenResult(true); // refresh to pick up the new claim
+      } catch (e) {
+        console.error('dev auto-register failed', e);
+      }
+    }
+    setUserRole({
+      teacher: res.claims?.teacher,
+      admin: res.claims?.admin,
+    } as UserRole);
+    setRegistered(!!res.claims.registered);
   }, [user]);
 
   useEffect(() => {
@@ -129,6 +146,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       unsubscribe();
     };
   }, [updateClaims]);
+
+  // Re-read claims (and, in the emulator, auto-register) once the signed-in user
+  // object is available — onAuthStateChanged fires before `user` state is set.
+  useEffect(() => {
+    if (user) void updateClaims();
+  }, [user, updateClaims]);
 
   useEffect(() => {
     if (!user) return;

@@ -346,6 +346,21 @@ body,
   background-color: rgba(255, 255, 0, 0.1);
 }
 
+/* AI Debug feature: a suspected-bug line highlight + glyph-margin dot.
+   Tweak these to restyle the highlight (see docs/DEBUG_FEATURE.md). */
+.debug-bug-highlight {
+  background-color: rgba(248, 87, 87, 0.18);
+}
+
+.debug-bug-glyph {
+  background-color: #f85757;
+  border-radius: 9999px;
+  width: 8px !important;
+  height: 8px !important;
+  margin-left: 5px;
+  margin-top: 0.55em;
+}
+
 body {
   --terminal-black: #4f5666;
   --terminal-red: #f85757;
