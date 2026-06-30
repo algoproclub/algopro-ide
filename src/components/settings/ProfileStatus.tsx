@@ -21,8 +21,7 @@ export default function ProfileStatus({
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* Profile card with a more compact and subtle style */}
-      <div className="bg-[#1e1e1e] rounded-md shadow-md p-4 text-gray-300 border border-gray-700">
+      <div className="theme-surface rounded-md shadow-md p-4 border theme-border">
         <div className="flex items-start gap-4">
           {/* Progress Circle */}
           <div className="relative flex-shrink-0">
@@ -34,7 +33,7 @@ export default function ProfileStatus({
                   cy="50"
                   r="40"
                   fill="none"
-                  stroke="#2a2a2a"
+                  stroke="var(--border-muted)"
                   strokeWidth="8"
                 />
                 {/* Progress circle */}
@@ -43,7 +42,7 @@ export default function ProfileStatus({
                   cy="50"
                   r="40"
                   fill="none"
-                  stroke="#3b82f6"
+                  stroke="var(--accent)"
                   strokeWidth="8"
                   strokeLinecap="round"
                   strokeDasharray={`${percentage * 2.51} ${
@@ -54,7 +53,7 @@ export default function ProfileStatus({
               </svg>
               {/* Percentage Text */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-medium text-gray-200">
+                <span className="text-sm font-medium theme-text">
                   {percentage}%
                 </span>
               </div>
@@ -63,21 +62,21 @@ export default function ProfileStatus({
 
           {/* Settings List */}
           <div className="flex-grow">
-            <h3 className="text-md font-medium mb-3 text-gray-200">
+            <h3 className="text-md font-medium mb-3 theme-text">
               Profile Recommendations
             </h3>
             <ul className="">
               {Object.values(settings).map((setting, index) => (
                 <li
                   key={index}
-                  className={`flex items-center rounded-md bg-gray-900 hover:bg-gray-800 border gap-2 border-gray-700 transition-all duration-300 ${
+                  className={`flex items-center rounded-md theme-surface-muted hover:bg-[color:var(--surface-hover)] border gap-2 theme-border transition-all duration-300 ${
                     setting.filled
                       ? 'opacity-0 max-h-0 overflow-hidden pt-0 pb-0 '
                       : 'opacity-100 max-h-10 mb-2'
                   } p-2`}
                 >
-                  <div className="h-2 w-2 rounded-full bg-indigo-500 flex-shrink-0" />
-                  <span className="text-gray-400 text-sm">
+                  <div className="h-2 w-2 rounded-full bg-[color:var(--accent)] flex-shrink-0" />
+                  <span className="theme-text-muted text-sm">
                     {setting.suggestion}
                   </span>
                 </li>

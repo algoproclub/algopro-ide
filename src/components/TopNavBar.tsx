@@ -42,8 +42,8 @@ const NavLink = ({
     href={href}
     className={`${className} ${
       isActive
-        ? 'bg-gray-800 text-white'
-        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+        ? 'bg-[color:var(--surface-active)] text-[color:var(--text-primary)]'
+        : 'text-[color:var(--text-secondary)] hover:bg-[color:var(--surface-hover)] hover:text-[color:var(--text-primary)]'
     }`}
     onClick={onNavigate}
   >
@@ -179,13 +179,13 @@ export const TopNavBar = (): JSX.Element => {
     'block px-3 py-2 text-base font-medium rounded-md transition-colors';
 
   return (
-    <nav className="bg-gray-900 border-b border-gray-700">
+    <nav className="theme-surface-muted border-b theme-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-2 flex-1 min-w-0">
             <Link
               href="/"
-              className="flex items-center px-3 py-2 text-base font-semibold text-gray-200 hover:text-white whitespace-nowrap"
+              className="flex items-center px-3 py-2 text-base font-semibold theme-text hover:text-[color:var(--accent-hover)] whitespace-nowrap"
             >
               AlgoPro IDE
             </Link>
@@ -208,7 +208,7 @@ export const TopNavBar = (): JSX.Element => {
             {/* Mobile menu button */}
             <button
               type="button"
-              className="xl:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+              className="xl:hidden inline-flex items-center justify-center p-2 rounded-md text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[color:var(--surface-hover)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[color:var(--accent)]"
               aria-controls="mobile-menu"
               aria-expanded={isMobileMenuOpen}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -226,7 +226,7 @@ export const TopNavBar = (): JSX.Element => {
 
       {/* Mobile menu */}
       {isMobileMenuOpen && (
-        <div className="xl:hidden border-t border-gray-700">
+        <div className="xl:hidden border-t theme-border theme-surface">
           <div className="px-2 pt-2 pb-3 space-y-1">
             <NavLinks
               router={router}

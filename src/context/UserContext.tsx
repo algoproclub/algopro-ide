@@ -159,6 +159,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       );
   }, [user]);
 
+  useEffect(() => {
+    const activeTheme = userData?.lightMode ? 'light' : 'dark';
+    const root = document.documentElement;
+
+    root.dataset.theme = activeTheme;
+    root.style.colorScheme = activeTheme;
+
+    if (document.body) {
+      document.body.dataset.theme = activeTheme;
+      document.body.style.colorScheme = activeTheme;
+    }
+  }, [userData?.lightMode]);
+
   const updateUsername = useCallback(
     (newName: string) => {
       if (!user) throw new Error('Tried to update username but user is null');

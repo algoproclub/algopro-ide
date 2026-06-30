@@ -38,7 +38,10 @@ const UserDataSettings = ({
   return (
     <div className="space-y-4">
       <div>
-        <label htmlFor={`name`} className="block text-[0.92rem] text-gray-300">
+        <label
+          htmlFor={`name`}
+          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
+        >
           Username
         </label>
         <div>
@@ -57,7 +60,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`cf-username`}
-          className="block text-[0.92rem] text-gray-300"
+          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
         >
           Codeforces username
         </label>
@@ -77,7 +80,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`atcoder-username`}
-          className="block text-[0.92rem] text-gray-300"
+          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
         >
           AtCoder username
         </label>
@@ -97,7 +100,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`discord-username`}
-          className="block text-[0.92rem] text-gray-300"
+          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
         >
           Discord user ID
         </label>
@@ -170,11 +173,20 @@ export default function UserSettings({
   onLanguageChange: (language: Language) => void;
 }): JSX.Element {
   const [submenu, setSubmenu] = useState<Submenu>('userdata');
+  const sectionButtonClass =
+    'flex items-center justify-between bg-[var(--panel-bg)] py-2 px-3 border border-[var(--border-color)] text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] text-sm';
+  const joinedSectionButtonClass =
+    'flex items-center justify-between bg-[var(--panel-bg)] py-2 px-3 border border-t-0 border-[var(--border-color)] text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] text-sm';
+  const sectionContentClass =
+    'p-4 border border-t-0 border-[var(--border-color)]';
+  const spacedSectionContentClass =
+    'space-y-4 p-4 border border-t-0 border-[var(--border-color)]';
+
   return (
     <div>
-      <div className="flex flex-col text-sm text-gray-300 bg-[#222222]">
+      <div className="flex flex-col text-sm text-[color:var(--text-primary)] bg-[var(--panel-bg-alt)]">
         <button
-          className="flex items-center justify-between bg-gray-900 py-2 px-3 border border-gray-700 text-gray-300 hover:text-indigo-200 text-sm"
+          className={sectionButtonClass}
           onClick={() =>
             setSubmenu(val => (val === 'userdata' ? '' : 'userdata'))
           }
@@ -194,7 +206,7 @@ export default function UserSettings({
           />
         </button>
         {submenu === 'userdata' && (
-          <div className="p-4 border border-t-0 border-gray-700">
+          <div className={sectionContentClass}>
             <UserDataSettings
               name={name}
               onNameChange={onNameChange}
@@ -208,7 +220,7 @@ export default function UserSettings({
           </div>
         )}
         <button
-          className="flex items-center justify-between bg-gray-900 py-2 px-3 border border-t-0 border-gray-700 text-gray-300 hover:text-indigo-200 text-sm"
+          className={joinedSectionButtonClass}
           onClick={() =>
             setSubmenu(val => (val === 'codesettings' ? '' : 'codesettings'))
           }
@@ -228,7 +240,7 @@ export default function UserSettings({
           />
         </button>
         {submenu === 'codesettings' && (
-          <div className="space-y-4 p-4 border border-t-0 border-gray-700">
+          <div className={spacedSectionContentClass}>
             <RadioGroupContents
               title="Preferred language"
               value={defaultLanguage}
@@ -247,7 +259,7 @@ export default function UserSettings({
           </div>
         )}
         <button
-          className="flex items-center justify-between bg-gray-900 py-2 px-3 border border-t-0 border-gray-700 text-gray-300 hover:text-indigo-200 text-sm"
+          className={joinedSectionButtonClass}
           onClick={() =>
             setSubmenu(val =>
               val === 'visualsettings' ? '' : 'visualsettings'
@@ -269,7 +281,7 @@ export default function UserSettings({
           />
         </button>
         {submenu === 'visualsettings' && (
-          <div className="space-y-4 p-4 border border-t-0 border-gray-700">
+          <div className={spacedSectionContentClass}>
             <RadioGroupContents
               title="Editor mode"
               value={editorMode}
@@ -307,7 +319,7 @@ export default function UserSettings({
           </div>
         )}
         <button
-          className="flex items-center justify-between bg-gray-900 py-2 px-3 border border-t-0 border-gray-700 text-gray-300 hover:text-indigo-200 text-sm"
+          className={joinedSectionButtonClass}
           onClick={() =>
             setSubmenu(val => (val === 'templates' ? '' : 'templates'))
           }
@@ -327,12 +339,13 @@ export default function UserSettings({
           />
         </button>
         {submenu === 'templates' && (
-          <div className="p-4 border border-t-0 border-gray-700">
+          <div className={sectionContentClass}>
             <TemplateCodeSettings
               templateCode={templateCode}
               onTemplateCodeChange={onTemplateCodeChange}
               language={language}
               onLanguageChange={onLanguageChange}
+              lightMode={lightMode}
             />
           </div>
         )}

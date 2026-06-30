@@ -61,7 +61,7 @@ export const CodeInterface = ({
   return (
     <div
       className={classNames(
-        'bg-[#1E1E1E] text-gray-200 flex flex-col',
+        'flex flex-col bg-[var(--panel-bg)] text-[color:var(--text-primary)]',
         className
       )}
     >
@@ -97,7 +97,7 @@ export const CodeInterface = ({
           />
         )}
       </div>
-      <p className="text-sm font-mono text-gray-200 pl-4 status-node" />
+      <p className="text-sm font-mono text-[color:var(--text-secondary)] pl-4 status-node" />
     </div>
   );
 };
