@@ -1,6 +1,6 @@
 import Dropdown from '../src/components/Dropdown';
 import dynamic from 'next/dynamic';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import { Platform, StatusCode, URLProblem } from '../src/types/problem';
 import {
@@ -31,6 +31,7 @@ const timeInMs = [
   1000 * 60 * 60 * 24 * 7,
   Infinity,
 ];
+const solutionRefreshMs = 15_000;
 
 export type School = { id: string; name: string };
 export type GroupInfo = { id: string; name: string; schoolID: string };
@@ -211,7 +212,8 @@ const fetchStudents = async (groupID: string): Promise<Student[]> => {
   );
   return usersSnap.docs
     .filter(doc => ((doc.get('groups') ?? []) as string[]).includes(groupID))
-    .map(doc => ({ id: doc.id, name: doc.data().user_full_name }));
+    .map(doc => ({ id: doc.id, name: doc.data().user_full_name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 };
 
 export const fetchClasses = async (groupID: string) => {
@@ -338,15 +340,6 @@ const ControlDropdown = ({
   toggleHighlight: () => void;
   onRefresh: () => void;
 }) => {
-  useEffect(() => {
-    setGroupInd(0);
-    setClassInd(0);
-  }, [schoolInd]);
-
-  useEffect(() => {
-    setClassInd(0);
-  }, [groupInd]);
-
   return (
     <Disclosure>
       {({ open }) => (
@@ -572,14 +565,50 @@ const PageContent = () => {
   const [problems, setProblems] = useState<ProblemData[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [data, setData] = useState<(SolutionData | null)[][]>([]);
+  const [fromTime, setFromTime] = useState(0);
 
-  document.title = 'Teacher interface - AlgoPro IDE';
+  useEffect(() => {
+    document.title = 'Teacher interface - AlgoPro IDE';
+  }, []);
 
   const schoolNames = useMemo(() => schools.map(s => s.name), [schools]);
   const groupNames = useMemo(() => groupsList.map(g => g.name), [groupsList]);
 
   const selectedSchoolID = schools[schoolInd]?.id || '';
   const selectedGroupID = groupsList[groupInd]?.id || '';
+
+  const refreshGroups = useCallback(async () => {
+    if (!selectedSchoolID) {
+      setGroupsList([]);
+      return;
+    }
+
+    const nextGroups = await fetchGroupsForSchool(selectedSchoolID);
+    setGroupsList(nextGroups);
+    setGroupInd(index => Math.min(index, Math.max(nextGroups.length - 1, 0)));
+  }, [selectedSchoolID]);
+
+  const refreshClassesAndStudents = useCallback(async () => {
+    if (!selectedGroupID) {
+      setClasses([]);
+      setStudents([]);
+      setProblems([]);
+      setData([]);
+      return;
+    }
+
+    const [nextClasses, nextStudents] = await Promise.all([
+      fetchClasses(selectedGroupID),
+      fetchStudents(selectedGroupID),
+    ]);
+    setClasses(nextClasses);
+    setStudents(nextStudents);
+    setClassInd(index => Math.min(index, Math.max(nextClasses.length - 1, 0)));
+  }, [selectedGroupID]);
+
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([refreshGroups(), refreshClassesAndStudents()]);
+  }, [refreshGroups, refreshClassesAndStudents]);
 
   useEffect(() => {
     const initSchools = async () => {
@@ -590,27 +619,18 @@ const PageContent = () => {
   }, [userRole]);
 
   useEffect(() => {
-    const initialize = async () => {
-      setGroupInd(0);
-      setClassInd(0);
-      if (!selectedSchoolID) {
-        setGroupsList([]);
-        setClasses([]);
-        setStudents([]);
-        setProblems([]);
-        setData([]);
-      }
-      setGroupsList(await fetchGroupsForSchool(selectedSchoolID));
-    };
-    initialize();
-  }, [selectedSchoolID]);
+    setGroupInd(0);
+    setClassInd(0);
+    setClasses([]);
+    setStudents([]);
+    setProblems([]);
+    setData([]);
+    refreshGroups();
+  }, [selectedSchoolID, refreshGroups]);
 
   useEffect(() => {
-    if (!selectedGroupID) return;
-    handleRefresh();
-    const interval = setInterval(handleRefresh, 15000);
-    return () => clearInterval(interval);
-  }, [selectedGroupID]);
+    refreshClassesAndStudents();
+  }, [refreshClassesAndStudents]);
 
   useEffect(() => {
     const updateData = async () => {
@@ -625,10 +645,18 @@ const PageContent = () => {
             );
           })
       );
+
+      setFromTime(Date.now() - timeInMs[timeInd]);
       setData(await problemsPromise);
     };
+
     updateData();
-  }, [problems, students]);
+    const interval = setInterval(updateData, solutionRefreshMs);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [problems, students, timeInd]);
 
   useEffect(() => {
     const updateProblems = async () => {
@@ -639,13 +667,7 @@ const PageContent = () => {
       setProblems(await fetchProblems(selectedGroupID, classes[classInd]));
     };
     updateProblems();
-  }, [classes, classInd]);
-
-  const handleRefresh = async () => {
-    if (!selectedGroupID) return;
-    setClasses(await fetchClasses(selectedGroupID));
-    setStudents(await fetchStudents(selectedGroupID));
-  };
+  }, [classes, classInd, selectedGroupID]);
 
   const transpose = (array: (SolutionData | null)[][]) => {
     return array.length > 0
@@ -653,12 +675,15 @@ const PageContent = () => {
       : [];
   };
 
-  const currentTime = Date.now();
+  const updateTimeInd = (index: number) => {
+    setFromTime(Date.now() - timeInMs[index]);
+    setTimeInd(index);
+  };
+
   const problemWithID = problems.map(problem => !!problem.id);
   const filteredProblems = problems.filter((_, i) => problemWithID[i]);
   const transposed = transpose(data);
 
-  const fromTime = currentTime - timeInMs[timeInd];
   const hasSolution = transposed.map(solutions =>
     solutions.some(sol => sol !== null && sol.lastEdit >= fromTime)
   );
@@ -681,7 +706,7 @@ const PageContent = () => {
             setSchoolInd={index => setSchoolInd(index)}
             setGroupInd={index => setGroupInd(index)}
             setClassInd={index => setClassInd(index)}
-            setTimeInd={index => setTimeInd(index)}
+            setTimeInd={index => updateTimeInd(index)}
             toggleHighlight={() => setHighlight(val => !val)}
             onRefresh={handleRefresh}
           />
@@ -699,7 +724,7 @@ const PageContent = () => {
             setSchoolInd={index => setSchoolInd(index)}
             setGroupInd={index => setGroupInd(index)}
             setClassInd={index => setClassInd(index)}
-            setTimeInd={index => setTimeInd(index)}
+            setTimeInd={index => updateTimeInd(index)}
             toggleHighlight={() => setHighlight(val => !val)}
             onRefresh={handleRefresh}
           />
