@@ -16,9 +16,6 @@ export default function HTMLStatement({
             // For Codeforces
             { left: '$$$$$$', right: '$$$$$$', display: true },
             { left: '$$$', right: '$$$', display: false },
-            // For markdown-based statements like Yosupo Library Checker
-            { left: '$$', right: '$$', display: true },
-            { left: '$', right: '$', display: false },
           ],
           ignoredTags: [
             'script',
