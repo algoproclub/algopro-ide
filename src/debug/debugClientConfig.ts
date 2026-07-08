@@ -5,7 +5,7 @@
  */
 export const debugClientConfig = {
   /** Label shown on the Debug button. */
-  buttonLabel: 'Hibakeresés',
+  buttonLabel: 'Debug',
   /**
    * When true, hovering a highlighted line — or its red glyph-margin dot — shows
    * the AI's per-line reason. Lines are always highlighted red; the reason only
@@ -13,7 +13,7 @@ export const debugClientConfig = {
    */
   showReasons: true,
   /** Hover tooltip shown on highlighted lines when showReasons is false. */
-  genericHoverMessage: 'Az AI szerint ezen a soron hiba lehet.',
+  genericHoverMessage: 'The AI thinks this line may contain a bug.',
   /** Shown when the AI reports no issues at all (no lines and no overall note). */
-  noIssuesMessage: 'Az AI nem talált megjelölendő hibát a kódban.',
+  noIssuesMessage: 'The AI found no issues to flag in the code.',
 } as const;

@@ -54,7 +54,7 @@ const SYSTEM_PROMPT = [
   'ESPECIALLY for problems not tied to a single line (wrong approach, missing',
   'case, missing output). If the code looks correct, return empty buggyLines and',
   'say so in summary.',
-  `The student is Hungarian-speaking: write every "reason" and the "summary" in`,
+  `The student is ${OUTPUT_LANGUAGE}-speaking: write every "reason" and the "summary" in`,
   `${OUTPUT_LANGUAGE} — natural, fluent ${OUTPUT_LANGUAGE} — regardless of the`,
   'language of the problem statement or code. Keep the JSON keys, code',
   'identifiers and line numbers unchanged. Report line numbers exactly as shown.',

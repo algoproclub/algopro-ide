@@ -143,7 +143,7 @@ const SYSTEM_PROMPT = [
   'spread across the code, etc. In that case return an EMPTY buggyLines array and',
   'put the full explanation in summary. If the code looks correct, return empty',
   'buggyLines and say so in summary.',
-  `The student is Hungarian-speaking: write every "reason" value and the`,
+  `The student is ${OUTPUT_LANGUAGE}-speaking: write every "reason" value and the`,
   `"summary" value in ${OUTPUT_LANGUAGE} — natural, fluent ${OUTPUT_LANGUAGE} —`,
   'no matter what language the problem statement, code, or comments are in. Keep',
   'the JSON keys, code identifiers, quoted snippets and line numbers unchanged.',

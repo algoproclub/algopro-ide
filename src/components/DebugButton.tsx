@@ -24,8 +24,8 @@ export const DebugButton = ({
     disabled={disabledForViewOnly || showLoading}
     title={
       disabledForViewOnly
-        ? 'Csak megtekintésre megnyitott dokumentumban nem futtatható a hibakeresés.'
-        : 'Gyanús sorok megjelölése az AI segítségével'
+        ? 'Debug cannot be run in a view-only document'
+        : 'Flag suspicious lines using AI'
     }
   >
     {showLoading ? (

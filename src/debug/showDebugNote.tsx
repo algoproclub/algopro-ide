@@ -39,14 +39,12 @@ export function showDebugNote(text: string, systemic: boolean): void {
           }}
         >
           <span style={{ fontWeight: 650 }}>
-            {systemic
-              ? '🐞 AI hibakeresés — összegzés'
-              : '🐞 AI hibakeresés — megjegyzés'}
+            {systemic ? '🐞 AI Debug — summary' : '🐞 AI Debug — note'}
           </span>
           <button
             type="button"
             onClick={() => toast.dismiss(t.id)}
-            aria-label="Megjegyzés bezárása"
+            aria-label="Close note"
             style={{
               background: 'transparent',
               color: '#9aa0aa',

@@ -47,6 +47,3 @@ tsconfig.tsbuildinfo
 
 # AI Debug benchmark data (captured submissions; not source)
 benchmark/data/
-
-# local tooling state
-.openclaw/

@@ -318,7 +318,7 @@ function EditorPage() {
     // The callable is auth-gated (onCall + `registered` claim); a logged-out
     // user can't carry auth, so fail early with a clear message.
     if (!firebaseUser) {
-      toast.error('A hibakereséshez be kell jelentkezni.');
+      toast.error('You must be signed in to use Debug.');
       return;
     }
 
@@ -354,7 +354,7 @@ function EditorPage() {
       }
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      toast.error('Hibakeresési hiba: ' + message);
+      toast.error('Debug error: ' + message);
       console.error(e);
     } finally {
       setIsDebugging(false);
