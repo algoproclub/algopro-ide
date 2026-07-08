@@ -9,11 +9,12 @@ import type { Language } from '../../src/context/EditorContext';
 /**
  * AI "Debug" endpoint.
  *
- * Sends the student's current code + the problem statement to the `claude` CLI
- * (Claude Code, authenticated at runtime via the CLAUDE_CODE_OAUTH_TOKEN env
- * var) and asks it to locate the lines that contain bugs. It returns ONLY line
- * numbers (plus a per-line reason the client may choose to show or hide) so the
- * editor can highlight the suspect lines without necessarily explaining them.
+ * Sends the student's current code + the problem statement to the OpenRouter
+ * chat-completions API (Anthropic models; authenticated via the
+ * OPENROUTER_API_KEY env var) and asks it to locate the lines that contain
+ * bugs. It returns ONLY line numbers (plus a per-line reason the client may
+ * choose to show or hide) so the editor can highlight the suspect lines
+ * without necessarily explaining them.
  *
  * The rationale for every design decision lives in docs/DEBUG_FEATURE.md. The
  * knobs below are env-overridable so behaviour can be customised without code
@@ -21,12 +22,27 @@ import type { Language } from '../../src/context/EditorContext';
  */
 
 // ---- Customisable configuration (env-overridable) ---------------------------
-/** The Claude Code binary. Baked into the web image via the Dockerfile. */
-const CLAUDE_BIN = process.env.DEBUG_CLAUDE_BIN ?? 'claude';
-/** Model alias or id. `sonnet` is fast and accurate enough for bug location. */
-const CLAUDE_MODEL = process.env.DEBUG_CLAUDE_MODEL ?? 'sonnet';
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY ?? '';
+/**
+ * Short aliases (kept from the CLI era so env/request overrides stay stable)
+ * mapped to OpenRouter model slugs. Anything else is passed through verbatim,
+ * so a full slug like `anthropic/claude-haiku-4.5` also works.
+ */
+const MODEL_ALIASES: Record<string, string> = {
+  sonnet: 'anthropic/claude-sonnet-5',
+  opus: 'anthropic/claude-opus-4.8',
+  haiku: 'anthropic/claude-haiku-4.5',
+};
+/** Model alias or slug. `sonnet` is fast and accurate enough for bug location. */
+const DEFAULT_MODEL =
+  process.env.DEBUG_MODEL ?? process.env.DEBUG_CLAUDE_MODEL ?? 'sonnet';
 /** Hard timeout for a single analysis (ms). */
-const CLAUDE_TIMEOUT_MS = Number(process.env.DEBUG_CLAUDE_TIMEOUT_MS ?? 90_000);
+const DEBUG_TIMEOUT_MS = Number(
+  process.env.DEBUG_TIMEOUT_MS ?? process.env.DEBUG_CLAUDE_TIMEOUT_MS ?? 90_000
+);
+/** Output is a small JSON object; bounded so a runaway reply can't balloon cost. */
+const MAX_OUTPUT_TOKENS = Number(process.env.DEBUG_MAX_OUTPUT_TOKENS ?? 4_096);
 /**
  * Language the AI must write its student-facing text (`reason` + `summary`) in.
  * The instructions themselves stay in English — models follow English system
@@ -54,14 +70,6 @@ const PDF_HOST_ALLOWLIST = (process.env.DEBUG_PDF_HOST_ALLOWLIST ?? '')
   .split(',')
   .map(h => h.trim().toLowerCase())
   .filter(Boolean);
-/**
- * Tools are disabled: the prompt is fully self-contained, so Claude should
- * answer in a single turn without touching the filesystem or network (faster,
- * and safe inside the container).
- */
-const DISALLOWED_TOOLS =
-  process.env.DEBUG_DISALLOWED_TOOLS ??
-  'Bash,Read,Edit,Write,WebFetch,WebSearch,Glob,Grep,Task,TodoWrite,NotebookEdit';
 
 /**
  * Each AI call is logged as one structured line to the server console (stdout on
@@ -97,17 +105,17 @@ type DebugRequest = {
 
 export type DebugFinding = { line: number; reason: string };
 
-/** Token / timing / cost stats surfaced from the `claude --output-format json` envelope. */
+/** Token / timing / cost stats surfaced from the OpenRouter `usage` object. */
 export type DebugUsage = {
   model: string;
   durationMs: number;
-  inputTokens: number; // fresh (non-cached) input tokens
+  inputTokens: number; // fresh (non-cached) prompt tokens
   cacheReadTokens: number;
   cacheCreationTokens: number;
   outputTokens: number;
-  totalTokens: number; // input + cacheRead + cacheCreation + output
-  numTurns: number;
-  costUsd: number; // Anthropic-billed cost for this call, per the CLI
+  totalTokens: number; // prompt + completion, per OpenRouter
+  numTurns: number; // always 1 (single-turn chat completion)
+  costUsd: number; // OpenRouter-billed cost for this call (credits ≈ USD)
 };
 
 type DebugResponse =
@@ -148,8 +156,8 @@ const SYSTEM_PROMPT = [
   'no matter what language the problem statement, code, or comments are in. Keep',
   'the JSON keys, code identifiers, quoted snippets and line numbers unchanged.',
   'Report line numbers exactly as shown in the numbered listing.',
-  'Do NOT use any tools. Do NOT read or write files. Analyse only the provided',
-  'text. Respond with ONLY a single JSON object, no markdown fences, no prose,',
+  'Analyse only the provided text.',
+  'Respond with ONLY a single JSON object, no markdown fences, no prose,',
   'of the form:',
   '{"buggyLines":[{"line":<int>,"reason":"<short>"}],"summary":"<text>"}',
 ].join(' ');
@@ -179,138 +187,114 @@ function buildUserPrompt(req: DebugRequest): string {
   return parts.join('\n');
 }
 
-// ---- Claude invocation ------------------------------------------------------
-type ClaudeRun =
-  | { kind: 'ok'; stdout: string }
-  | { kind: 'spawn-error'; detail: string }
+// ---- Model invocation (OpenRouter) -------------------------------------------
+type ModelRun =
+  | { kind: 'ok'; content: string; usage: DebugUsage }
+  | { kind: 'network-error'; detail: string }
   | { kind: 'timeout' }
-  | { kind: 'exit-error'; code: number; stderr: string; stdout: string };
+  | { kind: 'http-error'; status: number; body: string }
+  | { kind: 'bad-response'; detail: string };
 
-function runClaude(
+/** Shape of the OpenRouter chat-completions response we consume. */
+type OpenRouterResponse = {
+  choices?: { message?: { content?: unknown } }[];
+  usage?: {
+    prompt_tokens?: unknown;
+    completion_tokens?: unknown;
+    total_tokens?: unknown;
+    cost?: unknown;
+    prompt_tokens_details?: {
+      cached_tokens?: unknown;
+      cache_write_tokens?: unknown;
+    };
+  };
+  error?: { message?: unknown };
+};
+
+/**
+ * One OpenRouter chat-completions call: system prompt + user prompt, bounded
+ * output, hard timeout. `model` is an alias (sonnet/opus/haiku) or a full
+ * OpenRouter slug. Every failure mode stays a distinct `kind` so the handler
+ * and logs can tell a pipeline failure from a model one.
+ */
+async function runModel(
   userPrompt: string,
   model: string,
   timeoutMs: number
-): Promise<ClaudeRun> {
-  return new Promise(resolve => {
-    const args = [
-      '--print',
-      '--output-format',
-      'json',
-      '--model',
-      // `model` is regex-validated by the caller to NOT start with `-`, so it
-      // can't be mistaken for a CLI flag even though it's a separate token.
-      model,
-      '--dangerously-skip-permissions',
-      '--disallowed-tools',
-      DISALLOWED_TOOLS,
-      '--append-system-prompt',
-      SYSTEM_PROMPT,
-    ];
-
-    // The Next.js dev server runs with NODE_OPTIONS=--inspect (see the `dev`
-    // script). `claude` is itself a Node CLI, so if it inherited that, its Node
-    // would try to bind the already-in-use inspector port and die instantly
-    // (exit 1, no output). Strip it for the child. IS_SANDBOX (which lets the CLI
-    // allow --dangerously-skip-permissions as root) is taken from the environment
-    // — set in docker-compose.yml, NOT defaulted here, so a non-sandboxed host
-    // doesn't silently get permission-skipping.
-    const childEnv: NodeJS.ProcessEnv = { ...process.env };
-    delete childEnv.NODE_OPTIONS;
-
-    const child = spawn(CLAUDE_BIN, args, {
-      env: childEnv,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-
-    let stdout = '';
-    let stderr = '';
-    let settled = false;
-    const finish = (result: ClaudeRun) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve(result);
-    };
-
-    const timer = setTimeout(() => {
-      child.kill('SIGKILL');
-      finish({ kind: 'timeout' });
-    }, timeoutMs);
-
-    child.stdout.on('data', chunk => (stdout += chunk));
-    child.stderr.on('data', chunk => (stderr += chunk));
-    child.on('error', err =>
-      finish({ kind: 'spawn-error', detail: err.message })
-    );
-    child.on('close', code => {
-      if (code === 0) {
-        finish({ kind: 'ok', stdout });
-      } else {
-        finish({ kind: 'exit-error', code: code ?? -1, stderr, stdout });
-      }
-    });
-
-    child.stdin.write(userPrompt);
-    child.stdin.end();
-  });
-}
-
-/**
- * `--output-format json` prints one JSON envelope. Tolerate leading/trailing
- * noise (e.g. a first-run banner) by scanning for the JSON object, mirroring
- * the todoist-claude daemon's parser.
- */
-function resultToString(value: unknown): string {
-  if (typeof value === 'string') return value;
-  if (value == null) return '';
-  return JSON.stringify(value);
-}
-
-function parseEnvelope(stdout: string): Record<string, unknown> | null {
-  const text = stdout.trim();
-  try {
-    return JSON.parse(text) as Record<string, unknown>;
-  } catch {
-    const lines = text.split('\n');
-    for (let i = lines.length - 1; i >= 0; i--) {
-      const line = lines[i].trim();
-      if (line.startsWith('{') && line.endsWith('}')) {
-        try {
-          return JSON.parse(line) as Record<string, unknown>;
-        } catch {
-          // keep scanning
-        }
-      }
-    }
-    return null;
+): Promise<ModelRun> {
+  if (!OPENROUTER_API_KEY) {
+    return { kind: 'network-error', detail: 'missing OPENROUTER_API_KEY' };
   }
-}
-
-function parseUsage(
-  envelope: Record<string, unknown>,
-  model: string
-): DebugUsage {
-  const u =
-    typeof envelope.usage === 'object' && envelope.usage !== null
-      ? (envelope.usage as Record<string, unknown>)
-      : {};
+  const startedAt = Date.now();
+  let resp: globalThis.Response;
+  try {
+    resp = await fetch(OPENROUTER_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: MODEL_ALIASES[model] ?? model,
+        max_tokens: MAX_OUTPUT_TOKENS,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt },
+        ],
+      }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (e) {
+    const err = e as Error;
+    if (err.name === 'TimeoutError' || err.name === 'AbortError') {
+      return { kind: 'timeout' };
+    }
+    return { kind: 'network-error', detail: err.message };
+  }
+  const bodyText = await resp.text();
+  if (!resp.ok) {
+    return { kind: 'http-error', status: resp.status, body: bodyText };
+  }
+  let body: OpenRouterResponse;
+  try {
+    body = JSON.parse(bodyText) as OpenRouterResponse;
+  } catch {
+    return { kind: 'bad-response', detail: `unparseable body: ${bodyText}` };
+  }
+  if (body.error) {
+    return {
+      kind: 'bad-response',
+      detail: `api error: ${String(body.error.message)}`,
+    };
+  }
+  const content = body.choices?.[0]?.message?.content;
+  if (typeof content !== 'string' || content.trim() === '') {
+    return {
+      kind: 'bad-response',
+      detail: `no completion content: ${bodyText}`,
+    };
+  }
   const n = (v: unknown): number =>
     typeof v === 'number' ? v : Number(v) || 0;
-  const inputTokens = n(u.input_tokens);
-  const cacheReadTokens = n(u.cache_read_input_tokens);
-  const cacheCreationTokens = n(u.cache_creation_input_tokens);
-  const outputTokens = n(u.output_tokens);
+  const u = body.usage ?? {};
+  const cacheReadTokens = n(u.prompt_tokens_details?.cached_tokens);
+  const cacheCreationTokens = n(u.prompt_tokens_details?.cache_write_tokens);
   return {
-    model,
-    durationMs: n(envelope.duration_ms),
-    inputTokens,
-    cacheReadTokens,
-    cacheCreationTokens,
-    outputTokens,
-    totalTokens:
-      inputTokens + cacheReadTokens + cacheCreationTokens + outputTokens,
-    numTurns: n(envelope.num_turns),
-    costUsd: n(envelope.total_cost_usd),
+    kind: 'ok',
+    content,
+    usage: {
+      model,
+      durationMs: Date.now() - startedAt,
+      // OpenRouter's prompt_tokens INCLUDES cached tokens; report the fresh
+      // remainder to keep the field's original "non-cached input" meaning.
+      inputTokens: Math.max(0, n(u.prompt_tokens) - cacheReadTokens),
+      cacheReadTokens,
+      cacheCreationTokens,
+      outputTokens: n(u.completion_tokens),
+      totalTokens: n(u.total_tokens),
+      numTurns: 1,
+      costUsd: n(u.cost),
+    },
   };
 }
 
@@ -491,7 +475,7 @@ export default async (
 
   const body = req.body as Partial<DebugRequest>;
 
-  // Auth gate: the `claude` OAuth token is a shared, paid resource, so only an
+  // Auth gate: the OpenRouter API key is a shared, paid resource, so only an
   // authenticated + registered user may spend it. Verify the Firebase ID token
   // (mirrors copyFile.tsx) and require the same `registered` claim the RTDB rules
   // demand. Rejects anonymous/invalid (401) and signed-in-but-unregistered (403).
@@ -547,22 +531,21 @@ export default async (
       statementSource = 'pdf';
     }
   }
-  // Optional per-request model override (alias/id); validated to avoid passing
-  // anything weird as a CLI arg. Defaults to the env-configured model.
-  // Validate the per-request override: must NOT start with `-` (so it can never
-  // be mistaken for a CLI flag — see runClaude) and only safe chars otherwise.
+  // Optional per-request model override (alias like sonnet/opus/haiku, or a
+  // full OpenRouter slug such as anthropic/claude-haiku-4.5). Validated to a
+  // safe charset; anything else falls back to the env-configured default.
   const model =
     typeof body.model === 'string' &&
-    /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(body.model)
+    /^[A-Za-z0-9][A-Za-z0-9._/:-]*$/.test(body.model)
       ? body.model
-      : CLAUDE_MODEL;
+      : DEFAULT_MODEL;
   // Per-request timeout override, clamped to [5s, 300s]; defaults to the
   // production value. Lets the evaluation harness allow slower hard problems
   // without raising the user-facing default (fast-fail is better UX in the IDE).
   const timeoutMs =
     typeof body.timeoutMs === 'number' && Number.isFinite(body.timeoutMs)
       ? Math.min(300_000, Math.max(5_000, body.timeoutMs))
-      : CLAUDE_TIMEOUT_MS;
+      : DEBUG_TIMEOUT_MS;
   const lineCount = request.code.slice(0, MAX_CODE_CHARS).split('\n').length;
 
   // Shared (metadata-only) fields for the debug log; per-outcome fields are
@@ -602,73 +585,50 @@ export default async (
     res.status(status).json({ ok: false, error: payload.error });
   };
 
-  const run = await runClaude(buildUserPrompt(request), model, timeoutMs);
+  const run = await runModel(buildUserPrompt(request), model, timeoutMs);
 
   // Keep every failure mode distinct (never collapse "no output" with "wrong
   // output"): the caller and logs can tell a pipeline failure from a model one.
-  if (run.kind === 'spawn-error') {
+  if (run.kind === 'network-error') {
     respondError(
       500,
-      { ok: false, error: 'claude-unavailable', detail: run.detail },
-      'spawn-error'
+      { ok: false, error: 'model-unavailable', detail: run.detail },
+      'network-error'
     );
     return;
   }
   if (run.kind === 'timeout') {
-    respondError(504, { ok: false, error: 'claude-timeout' }, 'timeout');
+    respondError(504, { ok: false, error: 'model-timeout' }, 'timeout');
     return;
   }
-  if (run.kind === 'exit-error') {
-    const diag =
-      run.stderr.trim() || run.stdout.trim() || '(no output on either stream)';
+  if (run.kind === 'http-error') {
     respondError(
       502,
       {
         ok: false,
-        error: 'claude-failed',
-        detail: `exit ${run.code} [IS_SANDBOX=${
-          process.env.IS_SANDBOX ?? 'unset'
-        }]: ${diag.slice(-600)}`,
+        error: 'model-failed',
+        detail: `http ${run.status}: ${run.body.slice(0, 600)}`,
       },
-      'exit-error',
-      {
-        exitCode: run.code,
-        stderr: capForLog(run.stderr),
-        stdout: capForLog(run.stdout),
-      }
+      'http-error',
+      { httpStatus: run.status, body: capForLog(run.body) }
     );
     return;
   }
-
-  const envelope = parseEnvelope(run.stdout);
-  if (!envelope) {
-    respondError(
-      502,
-      {
-        ok: false,
-        error: 'unparseable-envelope',
-        detail: run.stdout.slice(0, 300),
-      },
-      'unparseable-envelope',
-      { stdout: capForLog(run.stdout) }
-    );
-    return;
-  }
-  if (envelope.is_error) {
+  if (run.kind === 'bad-response') {
     respondError(
       502,
       {
         ok: false,
         error: 'model-error',
-        detail: resultToString(envelope.result).slice(0, 500),
+        detail: run.detail.slice(0, 500),
       },
-      'model-error',
-      { resultText: capForLog(resultToString(envelope.result)) }
+      'bad-response',
+      { detailFull: capForLog(run.detail) }
     );
     return;
   }
 
-  const resultText = resultToString(envelope.result);
+  const resultText = run.content;
   const extracted = extractFindings(resultText, lineCount);
   if (!extracted) {
     respondError(
@@ -684,7 +644,7 @@ export default async (
     return;
   }
 
-  const usage = parseUsage(envelope, model);
+  const usage = run.usage;
   logDebugCall({
     ...logBase,
     durationMs: Date.now() - startedAt,

@@ -1,7 +1,7 @@
 # AI "Debug" feature
 
 A **Debug** button next to **Run Code** sends the student's current code and the
-problem statement to an AI (the `claude` CLI / Claude Code) and **highlights the
+problem statement to an AI (Anthropic models via the OpenRouter API) and **highlights the
 lines the AI thinks contain bugs** — without, by default, telling the student
 what the bug is. It is a nudge ("look here"), not a solution.
 
@@ -34,11 +34,10 @@ DebugButton (NavBar)
                                                                               │
                             pages/api/debug.ts  (server, in the `web` container)
                               ├─ build a prompt: problem + line-numbered code
-                              ├─ spawn `claude --print --output-format json --model sonnet
-                              │         --dangerously-skip-permissions --disallowed-tools …
-                              │         --append-system-prompt <JSON contract>
-                              │   (prompt on stdin; CLAUDE_CODE_OAUTH_TOKEN from env)
-                              └─ parse envelope → extract {buggyLines:[{line,reason}], summary}
+                              ├─ POST https://openrouter.ai/api/v1/chat/completions
+                              │   (system prompt = JSON contract, user prompt = problem+code;
+                              │    OPENROUTER_API_KEY from env; model default `sonnet`)
+                              └─ parse reply → extract {buggyLines:[{line,reason}], summary}
                                                                               │
   setBugHighlights(lines)  ◄───────────────────────────────────────────────┘
   editorEnhancements.ts → Monaco decorations collection (class `debug-bug-highlight`)
@@ -47,7 +46,7 @@ DebugButton (NavBar)
 ## Files
 
 **Added**
-- `pages/api/debug.ts` — the backend endpoint; shells out to the `claude` CLI.
+- `pages/api/debug.ts` — the backend endpoint; calls the OpenRouter API.
 - `src/scripts/requestDebug.ts` — typed `fetch` client for `/api/debug`.
 - `src/debug/debugClientConfig.ts` — client-side knobs (label, showReasons, …).
 - `src/components/DebugButton.tsx` — the button (mirrors `RunButton`).
@@ -59,29 +58,29 @@ DebugButton (NavBar)
 - `src/components/editor/editor-types.ts` — `setBugHighlights`/`clearBugHighlights` on `AlgoProMonacoEditor`.
 - `src/components/editor/MonacoEditor/editorEnhancements.ts` — the decoration implementation.
 - `src/styles/globals.css` — `.debug-bug-highlight` and `.debug-bug-glyph`.
-- `Dockerfile` — `npm install -g @anthropic-ai/claude-code` in the `web` image.
-- `docker-compose.yml` — pass `CLAUDE_CODE_OAUTH_TOKEN`, `CLAUDE_CONFIG_DIR`, `DEBUG_CLAUDE_MODEL` to `web`.
+- `docker-compose.yml` — pass `OPENROUTER_API_KEY` and `DEBUG_MODEL` to `web`.
 
 ## How the AI is invoked
 
-- **Why the CLI and not the Anthropic API?** The available credential is a
-  Claude Code OAuth token (`CLAUDE_CODE_OAUTH_TOKEN`), which is **not** an API
-  key — it only works through the `claude` binary. So the binary is baked into
-  the `web` image and invoked as a subprocess.
-- **Single-shot, no tools.** The prompt is fully self-contained, and all tools
-  are disabled (`--disallowed-tools`), so Claude answers in one turn (~5 s) and
-  never touches the filesystem/network inside the container.
+- **Direct API, no CLI.** The analysis is a single-turn prompt→JSON call, so it
+  goes straight to the OpenRouter chat-completions API (Anthropic models under
+  the hood, `anthropic/claude-sonnet-5` by default). Compared to the earlier
+  `claude` CLI approach this removes the binary from the image, cuts per-call
+  latency (no process spawn) and cost (no agent system-prompt overhead), and
+  swaps the subscription OAuth token for a proper metered API key.
+- **Single-shot.** The prompt is fully self-contained; the model answers in one
+  turn (~3–10 s) and nothing runs inside the container beyond one HTTPS call.
 - **Line-numbered code.** The code is sent with `N | ` prefixes and the model is
   told to report those exact numbers. This is the single biggest accuracy win
   for getting correct line references.
-- **Strict JSON contract** (enforced via `--append-system-prompt`):
+- **Strict JSON contract** (enforced via the system prompt):
   `{"buggyLines":[{"line":<int>,"reason":"<short>"}],"summary":"<short>"}`.
   The server tolerates fenced/dirty output and validates line numbers against
   the actual line count.
-- **Distinct failure modes.** `claude-unavailable` (spawn failed),
-  `claude-timeout`, `claude-failed` (non-zero exit), `unparseable-envelope`,
-  `model-error`, `unparseable-findings` are never collapsed together — a
-  pipeline failure is always distinguishable from "the model found nothing".
+- **Distinct failure modes.** `model-unavailable` (network/key), `model-timeout`,
+  `model-failed` (HTTP error from OpenRouter), `model-error` (malformed/empty
+  API reply), `unparseable-findings` are never collapsed together — a pipeline
+  failure is always distinguishable from "the model found nothing".
 
 ## Logging (so AI calls can be debugged)
 
@@ -108,15 +107,13 @@ Logging is pure — it never touches the response.
 ### Server (env vars, set in `docker-compose.yml` → `web.environment`)
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `DEBUG_CLAUDE_MODEL` | `sonnet` | Model alias/id (`opus`, `haiku`, full id, …). |
-| `DEBUG_CLAUDE_BIN` | `claude` | Path/name of the CLI binary. |
-| `DEBUG_CLAUDE_TIMEOUT_MS` | `90000` | Hard timeout for one analysis. |
+| `DEBUG_MODEL` | `sonnet` | Model alias (`sonnet`/`opus`/`haiku`) or a full OpenRouter slug. Legacy `DEBUG_CLAUDE_MODEL` still read. |
+| `DEBUG_TIMEOUT_MS` | `90000` | Hard timeout for one analysis. Legacy `DEBUG_CLAUDE_TIMEOUT_MS` still read. |
+| `DEBUG_MAX_OUTPUT_TOKENS` | `4096` | Cap on the model's reply size. |
 | `DEBUG_OUTPUT_LANGUAGE` | `Hungarian` | Language the AI writes `reason` + `summary` in (instructions stay English). |
 | `DEBUG_MAX_CODE_CHARS` | `60000` | Truncate very large code pastes. |
 | `DEBUG_MAX_STATEMENT_CHARS` | `20000` | Truncate very large statements. |
-| `DEBUG_DISALLOWED_TOOLS` | `Bash,Read,…` | Tools to deny to the model. |
-| `CLAUDE_CODE_OAUTH_TOKEN` | — | **Required.** Substituted from the host shell at `up` time. |
-| `CLAUDE_CONFIG_DIR` | `/tmp/claude-config` | Writable config dir for the CLI in-container. |
+| `OPENROUTER_API_KEY` | — | **Required.** Substituted from the host shell at `up` time. |
 | `DEBUG_LOG_MAX_FIELD_CHARS` | `4000` | Cap on each long diagnostic field in a log line (failure artefacts). |
 
 The **prompt / JSON contract** itself lives in `SYSTEM_PROMPT` and
@@ -138,11 +135,10 @@ The overview-ruler colour is set in `editorEnhancements.ts`.
 
 ## Running / requirements
 
-- The `web` image must be **rebuilt** after the Dockerfile change so the `claude`
-  CLI is present: `docker compose up -d --build web`.
-- `CLAUDE_CODE_OAUTH_TOKEN` must be exported in the shell that runs
+- `OPENROUTER_API_KEY` must be exported in the shell that runs
   `docker compose up` (it is substituted into the container env). On this box it
-  is exported from `/workspace/.claude/.bashrc`.
+  is exported from `/workspace/.claude/.bashrc`. For the functions emulator the
+  same key lives in `functions/.env.local` (gitignored).
 - The frontend (`pages/`, `src/`) hot-reloads; the API route hot-reloads too.
   Only Dockerfile/dependency changes need a rebuild.
 
@@ -154,7 +150,7 @@ The overview-ruler colour is set in `editorEnhancements.ts`.
   is the natural follow-up.
 - **Problem statement is sent as HTML.** It is truncated but not stripped; the
   model handles HTML fine, but a HTML→text pass would tighten the prompt.
-- **No caching / rate-limiting.** Every click spawns a `claude` process. For a
+- **No caching / rate-limiting.** Every click is one paid API call. For a
   classroom, consider debouncing, a cache keyed on (code, problem), or a queue.
-- **Auth/abuse.** The endpoint is unauthenticated and runs the AI on behalf of
-  the server's token. Fine for local/dev; add auth + quotas before production.
+- **Auth/abuse.** Both endpoints require a signed-in user with the `registered`
+  claim; there is no per-user quota yet — add one before wide production use.
