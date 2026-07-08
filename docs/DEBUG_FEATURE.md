@@ -63,11 +63,20 @@ DebugButton (NavBar)
 ## How the AI is invoked
 
 - **Direct API, no CLI.** The analysis is a single-turn prompt→JSON call, so it
-  goes straight to the OpenRouter chat-completions API (Anthropic models under
-  the hood, `anthropic/claude-sonnet-5` by default). Compared to the earlier
-  `claude` CLI approach this removes the binary from the image, cuts per-call
-  latency (no process spawn) and cost (no agent system-prompt overhead), and
-  swaps the subscription OAuth token for a proper metered API key.
+  goes straight to a provider API (default: OpenRouter chat-completions with
+  `anthropic/claude-sonnet-5`). Compared to the earlier `claude` CLI approach
+  this removes the binary from the image, cuts per-call latency (no process
+  spawn) and cost (no agent system-prompt overhead), and swaps the
+  subscription OAuth token for a proper metered API key.
+- **Swappable provider.** `DEBUG_PROVIDER=openrouter|anthropic|openai` (or,
+  unset, the first of those with an API key configured). OpenRouter and OpenAI
+  use the OpenAI chat-completions wire format; Anthropic uses its native
+  Messages API. The `sonnet`/`opus`/`haiku` tier aliases map per provider
+  (Anthropic: `claude-sonnet-5`/`claude-opus-4-8`/`claude-haiku-4-5`; OpenAI:
+  `gpt-5.1`/`gpt-5.1`/`gpt-5-mini`); a full provider-specific model id in
+  `DEBUG_MODEL` (or the per-request `model` override) passes through verbatim.
+  Note: `usage.costUsd` is reported by OpenRouter only — 0 elsewhere means
+  "not reported", not free.
 - **Single-shot.** The prompt is fully self-contained; the model answers in one
   turn (~3–10 s) and nothing runs inside the container beyond one HTTPS call.
 - **Line-numbered code.** The code is sent with `N | ` prefixes and the model is
@@ -113,7 +122,8 @@ Logging is pure — it never touches the response.
 | `DEBUG_OUTPUT_LANGUAGE` | `Hungarian` | Language the AI writes `reason` + `summary` in (instructions stay English). |
 | `DEBUG_MAX_CODE_CHARS` | `60000` | Truncate very large code pastes. |
 | `DEBUG_MAX_STATEMENT_CHARS` | `20000` | Truncate very large statements. |
-| `OPENROUTER_API_KEY` | — | **Required.** Substituted from the host shell at `up` time. |
+| `DEBUG_PROVIDER` | *(auto)* | `openrouter` \| `anthropic` \| `openai`; unset = first provider with a key. |
+| `OPENROUTER_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | — | At least one **required**; substituted from the host shell at `up` time. |
 | `DEBUG_LOG_MAX_FIELD_CHARS` | `4000` | Cap on each long diagnostic field in a log line (failure artefacts). |
 
 The **prompt / JSON contract** itself lives in `SYSTEM_PROMPT` and
