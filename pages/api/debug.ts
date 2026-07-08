@@ -22,18 +22,63 @@ import type { Language } from '../../src/context/EditorContext';
  */
 
 // ---- Customisable configuration (env-overridable) ---------------------------
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY ?? '';
 /**
- * Short aliases (kept from the CLI era so env/request overrides stay stable)
- * mapped to OpenRouter model slugs. Anything else is passed through verbatim,
- * so a full slug like `anthropic/claude-haiku-4.5` also works.
+ * Swappable model providers. OpenRouter and OpenAI share the OpenAI
+ * chat-completions wire format; Anthropic uses its native Messages API.
+ * DEBUG_PROVIDER (openrouter | anthropic | openai) forces one; otherwise the
+ * first provider with a configured key wins, in that order. Tier aliases
+ * (sonnet/opus/haiku, kept from the CLI era) map per provider; anything else
+ * passes through verbatim as a provider-specific model id.
  */
-const MODEL_ALIASES: Record<string, string> = {
-  sonnet: 'anthropic/claude-sonnet-5',
-  opus: 'anthropic/claude-opus-4.8',
-  haiku: 'anthropic/claude-haiku-4.5',
+type ProviderName = 'openrouter' | 'anthropic' | 'openai';
+type Provider = {
+  url: string;
+  key: () => string;
+  aliases: Record<string, string>;
+  format: 'chat-completions' | 'anthropic-messages';
 };
+const PROVIDERS: Record<ProviderName, Provider> = {
+  openrouter: {
+    url: 'https://openrouter.ai/api/v1/chat/completions',
+    key: () => process.env.OPENROUTER_API_KEY ?? '',
+    aliases: {
+      sonnet: 'anthropic/claude-sonnet-5',
+      opus: 'anthropic/claude-opus-4.8',
+      haiku: 'anthropic/claude-haiku-4.5',
+    },
+    format: 'chat-completions',
+  },
+  anthropic: {
+    url: 'https://api.anthropic.com/v1/messages',
+    key: () => process.env.ANTHROPIC_API_KEY ?? '',
+    aliases: {
+      sonnet: 'claude-sonnet-5',
+      opus: 'claude-opus-4-8',
+      haiku: 'claude-haiku-4-5',
+    },
+    format: 'anthropic-messages',
+  },
+  openai: {
+    url: 'https://api.openai.com/v1/chat/completions',
+    key: () => process.env.OPENAI_API_KEY ?? '',
+    aliases: {
+      sonnet: 'gpt-5.1',
+      opus: 'gpt-5.1',
+      haiku: 'gpt-5-mini',
+    },
+    format: 'chat-completions',
+  },
+};
+function pickProvider(): ProviderName {
+  const forced = (process.env.DEBUG_PROVIDER ?? '').toLowerCase();
+  if (forced === 'openrouter' || forced === 'anthropic' || forced === 'openai') {
+    return forced;
+  }
+  for (const name of ['openrouter', 'anthropic', 'openai'] as ProviderName[]) {
+    if (PROVIDERS[name].key()) return name;
+  }
+  return 'openrouter';
+}
 /** Model alias or slug. `sonnet` is fast and accurate enough for bug location. */
 const DEFAULT_MODEL =
   process.env.DEBUG_MODEL ?? process.env.DEBUG_CLAUDE_MODEL ?? 'sonnet';
@@ -195,8 +240,9 @@ type ModelRun =
   | { kind: 'http-error'; status: number; body: string }
   | { kind: 'bad-response'; detail: string };
 
-/** Shape of the OpenRouter chat-completions response we consume. */
-type OpenRouterResponse = {
+/** Union of the response shapes we consume (chat-completions + Anthropic). */
+type ProviderResponse = {
+  // chat-completions (OpenRouter / OpenAI)
   choices?: { message?: { content?: unknown } }[];
   usage?: {
     prompt_tokens?: unknown;
@@ -207,41 +253,65 @@ type OpenRouterResponse = {
       cached_tokens?: unknown;
       cache_write_tokens?: unknown;
     };
+    // anthropic-messages usage
+    input_tokens?: unknown;
+    output_tokens?: unknown;
+    cache_read_input_tokens?: unknown;
+    cache_creation_input_tokens?: unknown;
   };
   error?: { message?: unknown };
+  // anthropic-messages content blocks
+  content?: { type?: unknown; text?: unknown }[];
 };
 
 /**
- * One OpenRouter chat-completions call: system prompt + user prompt, bounded
- * output, hard timeout. `model` is an alias (sonnet/opus/haiku) or a full
- * OpenRouter slug. Every failure mode stays a distinct `kind` so the handler
- * and logs can tell a pipeline failure from a model one.
+ * One provider call: system prompt + user prompt, bounded output, hard
+ * timeout. `model` is a tier alias (sonnet/opus/haiku) or a full
+ * provider-specific model id. Every failure mode stays a distinct `kind` so
+ * the handler and logs can tell a pipeline failure from a model one.
+ * `costUsd` is reported only by OpenRouter; 0 means "not reported".
  */
 async function runModel(
   userPrompt: string,
   model: string,
-  timeoutMs: number
+  timeoutMs: number,
+  providerName: ProviderName
 ): Promise<ModelRun> {
-  if (!OPENROUTER_API_KEY) {
-    return { kind: 'network-error', detail: 'missing OPENROUTER_API_KEY' };
+  const provider = PROVIDERS[providerName];
+  const key = provider.key();
+  if (!key) {
+    return { kind: 'network-error', detail: `missing API key for ${providerName}` };
   }
+  const anthropic = provider.format === 'anthropic-messages';
   const startedAt = Date.now();
   let resp: globalThis.Response;
   try {
-    resp = await fetch(OPENROUTER_URL, {
+    resp = await fetch(provider.url, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: MODEL_ALIASES[model] ?? model,
-        max_tokens: MAX_OUTPUT_TOKENS,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userPrompt },
-        ],
-      }),
+      headers: anthropic
+        ? {
+            'x-api-key': key,
+            'anthropic-version': '2023-06-01',
+            'Content-Type': 'application/json',
+          }
+        : { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(
+        anthropic
+          ? {
+              model: provider.aliases[model] ?? model,
+              max_tokens: MAX_OUTPUT_TOKENS,
+              system: SYSTEM_PROMPT,
+              messages: [{ role: 'user', content: userPrompt }],
+            }
+          : {
+              model: provider.aliases[model] ?? model,
+              max_tokens: MAX_OUTPUT_TOKENS,
+              messages: [
+                { role: 'system', content: SYSTEM_PROMPT },
+                { role: 'user', content: userPrompt },
+              ],
+            }
+      ),
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (e) {
@@ -255,9 +325,9 @@ async function runModel(
   if (!resp.ok) {
     return { kind: 'http-error', status: resp.status, body: bodyText };
   }
-  let body: OpenRouterResponse;
+  let body: ProviderResponse;
   try {
-    body = JSON.parse(bodyText) as OpenRouterResponse;
+    body = JSON.parse(bodyText) as ProviderResponse;
   } catch {
     return { kind: 'bad-response', detail: `unparseable body: ${bodyText}` };
   }
@@ -267,7 +337,11 @@ async function runModel(
       detail: `api error: ${String(body.error.message)}`,
     };
   }
-  const content = body.choices?.[0]?.message?.content;
+  // Anthropic content is a block array (a thinking block may precede the
+  // text block on adaptive-thinking models); chat-completions is a string.
+  const content = anthropic
+    ? body.content?.find(b => b.type === 'text')?.text
+    : body.choices?.[0]?.message?.content;
   if (typeof content !== 'string' || content.trim() === '') {
     return {
       kind: 'bad-response',
@@ -277,21 +351,31 @@ async function runModel(
   const n = (v: unknown): number =>
     typeof v === 'number' ? v : Number(v) || 0;
   const u = body.usage ?? {};
-  const cacheReadTokens = n(u.prompt_tokens_details?.cached_tokens);
-  const cacheCreationTokens = n(u.prompt_tokens_details?.cache_write_tokens);
+  const cacheReadTokens = anthropic
+    ? n(u.cache_read_input_tokens)
+    : n(u.prompt_tokens_details?.cached_tokens);
+  const cacheCreationTokens = anthropic
+    ? n(u.cache_creation_input_tokens)
+    : n(u.prompt_tokens_details?.cache_write_tokens);
+  const inputTokens = anthropic
+    ? n(u.input_tokens)
+    : // chat-completions prompt_tokens INCLUDES cached tokens; report the
+      // fresh remainder to keep the field's "non-cached input" meaning.
+      Math.max(0, n(u.prompt_tokens) - cacheReadTokens);
+  const outputTokens = anthropic ? n(u.output_tokens) : n(u.completion_tokens);
   return {
     kind: 'ok',
     content,
     usage: {
       model,
       durationMs: Date.now() - startedAt,
-      // OpenRouter's prompt_tokens INCLUDES cached tokens; report the fresh
-      // remainder to keep the field's original "non-cached input" meaning.
-      inputTokens: Math.max(0, n(u.prompt_tokens) - cacheReadTokens),
+      inputTokens,
       cacheReadTokens,
       cacheCreationTokens,
-      outputTokens: n(u.completion_tokens),
-      totalTokens: n(u.total_tokens),
+      outputTokens,
+      totalTokens: anthropic
+        ? inputTokens + cacheReadTokens + cacheCreationTokens + outputTokens
+        : n(u.total_tokens),
       numTurns: 1,
       costUsd: n(u.cost),
     },
@@ -552,9 +636,11 @@ export default async (
   // merged in below. We log sizes, not the code/statement text — enough to debug
   // a call from the server logs without dumping student code on every request.
   const startedAt = Date.now();
+  const provider = pickProvider();
   const logBase = {
     ts: new Date().toISOString(),
     event: 'debug_call',
+    provider,
     model,
     language: request.language,
     problemTitle: request.problemTitle,
@@ -585,7 +671,7 @@ export default async (
     res.status(status).json({ ok: false, error: payload.error });
   };
 
-  const run = await runModel(buildUserPrompt(request), model, timeoutMs);
+  const run = await runModel(buildUserPrompt(request), model, timeoutMs, provider);
 
   // Keep every failure mode distinct (never collapse "no output" with "wrong
   // output"): the caller and logs can tell a pipeline failure from a model one.

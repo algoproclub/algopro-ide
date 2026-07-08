@@ -61,11 +61,16 @@ services:
       - YJS_API_URL=http://yjs:1234
       - EXECUTE_URL=http://execute:1235
       - LOGIN_BOT_URL=http://login-bot:3100
-      # AI "Debug" feature (/api/debug calls the OpenRouter API). The key is
-      # substituted from the host environment at `up` time — make sure
-      # OPENROUTER_API_KEY is exported in the shell running compose. DEBUG_*
-      # knobs are documented in docs/DEBUG_FEATURE.md.
+      # AI "Debug" feature (/api/debug calls a model provider API). Keys are
+      # substituted from the host environment at `up` time — export the one(s)
+      # you use in the shell running compose. Provider is picked by
+      # DEBUG_PROVIDER (openrouter|anthropic|openai) or, unset, the first
+      # provider with a key, in that order. DEBUG_* knobs are documented in
+      # docs/DEBUG_FEATURE.md.
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - DEBUG_PROVIDER=${DEBUG_PROVIDER:-}
       - DEBUG_MODEL=${DEBUG_MODEL:-sonnet}
     ports:
       - '3000:3000'
