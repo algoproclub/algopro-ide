@@ -32,7 +32,8 @@ DebugButton (NavBar)
        ├─ fetchProblemFromDb()             problem statement (if a problem is attached)
        └─ requestDebug()                   src/scripts/requestDebug.ts  ── POST /api/debug
                                                                               │
-                            pages/api/debug.ts  (server, in the `web` container)
+                            pages/api/debug.ts  (server: `web` container in dev,
+                                                 a Vercel function in production)
                               ├─ build a prompt: problem + line-numbered code
                               ├─ POST https://openrouter.ai/api/v1/chat/completions
                               │   (system prompt = JSON contract, user prompt = problem+code;
@@ -111,6 +112,22 @@ Each line carries enough to debug the call without dumping student code:
 Grep the logs for `[ai-debug]`; pipe a line through `jq` if you want it expanded.
 Logging is pure — it never touches the response.
 
+### Durable audit log (Firestore)
+
+Console logs are ephemeral in production — Vercel retains runtime logs for only
+**1 hour on Hobby / 1 day on Pro** (30 days needs Observability Plus). So every
+call is *also* persisted as one document in the **`debugLogs` Firestore
+collection** (`DEBUG_AUDIT_COLLECTION` to rename) via the admin SDK. The audit
+record carries everything the console line has **plus the capped student code,
+the statement text, the findings and the summary** — enough to fully reconstruct
+any call later. The collection has no client rules (default-deny), so only the
+server can read/write it. The write is awaited before the HTTP response is sent
+(a serverless instance can be frozen right after responding); if the write
+fails, the request still succeeds and the failure is `console.error`'d as
+`[ai-debug] audit-write-failed`. There is no TTL — prune or export the
+collection if volume ever becomes a concern (at one document per button click it
+won't be soon).
+
 ## Customisation knobs
 
 ### Server (env vars, set in `docker-compose.yml` → `web.environment`)
@@ -125,6 +142,8 @@ Logging is pure — it never touches the response.
 | `DEBUG_PROVIDER` | *(auto)* | `openrouter` \| `anthropic` \| `openai`; unset = first provider with a key. |
 | `OPENROUTER_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | — | At least one **required**; substituted from the host shell at `up` time. |
 | `DEBUG_LOG_MAX_FIELD_CHARS` | `4000` | Cap on each long diagnostic field in a log line (failure artefacts). |
+| `DEBUG_AUDIT_COLLECTION` | `debugLogs` | Firestore collection for the durable per-call audit records. |
+| `DEBUG_PDF_FETCH_TIMEOUT_MS` / `DEBUG_PDF_MAX_BYTES` / `DEBUG_PDF_HOST_ALLOWLIST` | `20000` / `10 MB` / *(any public host)* | Knobs for the PDF-statement fetch (SSRF-guarded, parsed by `pdf-parse`). |
 
 The **prompt / JSON contract** itself lives in `SYSTEM_PROMPT` and
 `buildUserPrompt()` in `pages/api/debug.ts` — edit there to change what the AI is
@@ -143,12 +162,33 @@ output schema).
 `.debug-bug-highlight` (line background) and `.debug-bug-glyph` (margin dot).
 The overview-ruler colour is set in `editorEnhancements.ts`.
 
+## Production deployment (Vercel)
+
+`/api/debug` deploys with the Next.js app as a normal Vercel function — there is
+no separate backend for this feature. (An earlier iteration ran a `debugCode`
+Firebase 2nd-gen callable, needed only because the analysis spawned the `claude`
+CLI, which Vercel functions can't; direct provider-API calls removed that
+constraint and the callable was deleted.) Notes:
+
+- **Timeout**: Vercel functions default to a 300 s max duration on every plan —
+  comfortably above the 90 s `DEBUG_TIMEOUT_MS`. No `maxDuration` config needed.
+- **PDF statements** are parsed in-process by `pdf-parse` (pure JS) — no binary
+  dependency, works on Vercel. (`pdftotext` was Docker-only.)
+- **Env vars**: set the provider key(s) (`OPENROUTER_API_KEY` / …) and any
+  `DEBUG_*` overrides in the Vercel project settings.
+- **Region**: Vercel functions default to `iad1` (US East). Consider setting the
+  project's function region to Europe (e.g. `fra1`) to sit closer to the
+  Hungarian users and the Firebase project (`europe-west1`).
+- **Hindsight**: the Firestore audit log (above) is the durable record; Vercel's
+  own log retention is short (1 h Hobby / 1 d Pro).
+
 ## Running / requirements
 
 - `OPENROUTER_API_KEY` must be exported in the shell that runs
   `docker compose up` (it is substituted into the container env). On this box it
-  is exported from `/workspace/.claude/.bashrc`. For the functions emulator the
-  same key lives in `functions/.env.local` (gitignored).
+  is exported from `/workspace/.claude/.bashrc`. (The copy in
+  `functions/.env.local` was only for the now-removed `debugCode` callable;
+  it is harmless but no longer read by the Debug feature.)
 - The frontend (`pages/`, `src/`) hot-reloads; the API route hot-reloads too.
   Only Dockerfile/dependency changes need a rebuild.
 

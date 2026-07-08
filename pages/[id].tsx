@@ -306,6 +306,7 @@ function EditorPage() {
 
     let problemTitle: string | undefined = undefined;
     let problemStatement: string | undefined = undefined;
+    let problemStatementUrl: string | undefined = undefined;
     if (fileData.problem) {
       const problem =
         fileData.problem.platform === 'usaco'
@@ -313,10 +314,13 @@ function EditorPage() {
           : await fetchProblemFromDb(fileData.problem);
       problemTitle = problem?.title ?? undefined;
       problemStatement = problem?.statement ?? undefined;
+      // Some platforms (njudge, oj.uz) have PDF-only statements; the server
+      // fetches + extracts the PDF when no inline statement is available.
+      problemStatementUrl = problem?.statementURL ?? undefined;
     }
 
-    // The callable is auth-gated (onCall + `registered` claim); a logged-out
-    // user can't carry auth, so fail early with a clear message.
+    // /api/debug is auth-gated (ID token + `registered` claim); a logged-out
+    // user can't mint a token, so fail early with a clear message.
     if (!firebaseUser) {
       toast.error('You must be signed in to use Debug.');
       return;
@@ -326,14 +330,14 @@ function EditorPage() {
     mainMonacoEditor?.clearBugHighlights();
     dismissDebugNote();
     try {
-      // onCall carries the signed-in user's auth automatically — no idToken
-      // plumbing. On failure it throws (caught below). The PDF-statement URL
-      // path lives only in the legacy /api/debug route, not the callable.
+      // requestDebug mints a fresh ID token and POSTs to /api/debug; on
+      // failure it throws with the server's stable error code (caught below).
       const result = await requestDebug({
         language: fileData.settings.language,
         code,
         problemTitle,
         problemStatement,
+        problemStatementUrl,
       });
       mainMonacoEditor?.setBugHighlights(
         result.findings.map(finding => ({

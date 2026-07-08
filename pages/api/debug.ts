@@ -1,8 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { spawn } from 'child_process';
 import { lookup } from 'dns/promises';
 import { isIP } from 'net';
 import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
+import { PDFParse } from 'pdf-parse';
 import firebaseApp from '../../src/firebaseAdmin';
 import type { Language } from '../../src/context/EditorContext';
 
@@ -71,7 +72,11 @@ const PROVIDERS: Record<ProviderName, Provider> = {
 };
 function pickProvider(): ProviderName {
   const forced = (process.env.DEBUG_PROVIDER ?? '').toLowerCase();
-  if (forced === 'openrouter' || forced === 'anthropic' || forced === 'openai') {
+  if (
+    forced === 'openrouter' ||
+    forced === 'anthropic' ||
+    forced === 'openai'
+  ) {
     return forced;
   }
   for (const name of ['openrouter', 'anthropic', 'openai'] as ProviderName[]) {
@@ -100,11 +105,12 @@ const MAX_CODE_CHARS = Number(process.env.DEBUG_MAX_CODE_CHARS ?? 60_000);
 const MAX_STATEMENT_CHARS = Number(
   process.env.DEBUG_MAX_STATEMENT_CHARS ?? 20_000
 );
-/** `pdftotext` (poppler-utils) reads PDF-only statements (njudge, oj.uz). */
-const PDF_BIN = process.env.DEBUG_PDF_BIN ?? 'pdftotext';
+/** PDF-only statements (njudge, oj.uz) are parsed in-process via `pdf-parse`. */
 const PDF_FETCH_TIMEOUT_MS = Number(
   process.env.DEBUG_PDF_FETCH_TIMEOUT_MS ?? 20_000
 );
+/** A statement PDF is small; anything bigger is not a statement — skip it. */
+const PDF_MAX_BYTES = Number(process.env.DEBUG_PDF_MAX_BYTES ?? 10_000_000);
 /**
  * SSRF guard for the server-side PDF fetch (the URL is caller-supplied). Always
  * reject hosts that resolve to a private/loopback/link-local/metadata address.
@@ -280,7 +286,10 @@ async function runModel(
   const provider = PROVIDERS[providerName];
   const key = provider.key();
   if (!key) {
-    return { kind: 'network-error', detail: `missing API key for ${providerName}` };
+    return {
+      kind: 'network-error',
+      detail: `missing API key for ${providerName}`,
+    };
   }
   const anthropic = provider.format === 'anthropic-messages';
   const startedAt = Date.now();
@@ -294,7 +303,10 @@ async function runModel(
             'anthropic-version': '2023-06-01',
             'Content-Type': 'application/json',
           }
-        : { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+        : {
+            Authorization: `Bearer ${key}`,
+            'Content-Type': 'application/json',
+          },
       body: JSON.stringify(
         anthropic
           ? {
@@ -484,10 +496,12 @@ async function isFetchableStatementUrl(url: string): Promise<boolean> {
 }
 
 /**
- * Fetch a PDF problem statement and extract its text via `pdftotext`. Used for
- * platforms whose statement is a PDF (njudge, oj.uz) rather than HTML, so the AI
- * gets the real problem text. Returns null (and the caller proceeds without a
- * statement) on any failure — never blocks the debug request.
+ * Fetch a PDF problem statement and extract its text via `pdf-parse` (pure-JS
+ * pdf.js — no binary, so it also runs on Vercel; the earlier `pdftotext`
+ * subprocess only existed in the Docker image). Used for platforms whose
+ * statement is a PDF (njudge, oj.uz) rather than HTML, so the AI gets the real
+ * problem text. Returns null (and the caller proceeds without a statement) on
+ * any failure — never blocks the debug request.
  */
 async function extractPdfText(url: string): Promise<string | null> {
   if (!(await isFetchableStatementUrl(url))) return null;
@@ -501,30 +515,18 @@ async function extractPdfText(url: string): Promise<string | null> {
   } catch {
     return null;
   }
-  if (buf.length === 0) return null;
-  return new Promise<string | null>(resolve => {
-    const child = spawn(PDF_BIN, ['-q', '-', '-'], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    let out = '';
-    let settled = false;
-    const done = (v: string | null) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve(v);
-    };
-    const timer = setTimeout(() => {
-      child.kill('SIGKILL');
-      done(null);
-    }, 15_000);
-    child.stdout.on('data', chunk => (out += chunk));
-    child.stdin.on('error', () => {}); // ignore EPIPE if pdftotext exits early
-    child.on('error', () => done(null)); // e.g. pdftotext not installed
-    child.on('close', code => done(code === 0 && out.trim() ? out : null));
-    child.stdin.write(buf);
-    child.stdin.end();
+  if (buf.length === 0 || buf.length > PDF_MAX_BYTES) return null;
+  const parser = new PDFParse({
+    data: new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength),
   });
+  try {
+    const result = await parser.getText();
+    return result.text.trim() ? result.text : null;
+  } catch {
+    return null; // corrupt / non-PDF content — proceed without a statement
+  } finally {
+    await parser.destroy().catch(() => undefined);
+  }
 }
 
 // ---- Logging ----------------------------------------------------------------
@@ -545,6 +547,27 @@ function logDebugCall(entry: Record<string, unknown>): void {
   const line = `[ai-debug] ${JSON.stringify(entry)}`;
   if (entry.outcome === 'success') console.log(line);
   else console.error(line);
+}
+
+/**
+ * Durable audit trail: every call is also persisted as one Firestore document,
+ * because Vercel's runtime-log retention is short (1 h on Hobby, 1 day on Pro)
+ * and we want full hindsight on what the feature did. Unlike the console line,
+ * the audit record includes the (capped) student code and statement, plus the
+ * findings — enough to replay any call. The collection has no client rules, so
+ * only the admin SDK (server) can touch it. A failed write must never fail the
+ * debug request itself, but it is loudly console.error'd (fail-open here only
+ * affects the audit copy — the console log line above has already happened).
+ */
+const AUDIT_COLLECTION = process.env.DEBUG_AUDIT_COLLECTION ?? 'debugLogs';
+async function persistAuditRecord(
+  record: Record<string, unknown>
+): Promise<void> {
+  try {
+    await getFirestore(firebaseApp).collection(AUDIT_COLLECTION).add(record);
+  } catch (e) {
+    console.error('[ai-debug] audit-write-failed:', e);
+  }
 }
 
 // ---- Handler ----------------------------------------------------------------
@@ -640,6 +663,7 @@ export default async (
   const logBase = {
     ts: new Date().toISOString(),
     event: 'debug_call',
+    uid: auth.uid,
     provider,
     model,
     language: request.language,
@@ -650,33 +674,57 @@ export default async (
     statementChars: request.problemStatement?.length ?? 0,
     timeoutMs,
   };
-  // Log + respond together so no exit path can answer without a log record.
-  const respondError = (
+  // The audit copy additionally carries the actual (capped) inputs, so a call
+  // can be fully reconstructed later; the console line stays metadata-only.
+  const auditBase = {
+    ...logBase,
+    code: request.code.slice(0, MAX_CODE_CHARS),
+    statement: request.problemStatement?.slice(0, MAX_STATEMENT_CHARS) ?? null,
+  };
+  // Log + persist + respond together so no exit path can answer without both a
+  // console record and a durable audit record. The audit write is awaited
+  // BEFORE the response is sent: on serverless the instance may be frozen right
+  // after res.json, so responding first could lose the record.
+  const respondError = async (
     status: number,
     payload: Extract<DebugResponse, { ok: false }>,
     outcome: string,
     extra?: Record<string, unknown>
-  ): void => {
+  ): Promise<void> => {
+    const detail = payload.detail ? capForLog(payload.detail) : undefined;
     logDebugCall({
       ...logBase,
       durationMs: Date.now() - startedAt,
       outcome,
       error: payload.error,
-      detail: payload.detail ? capForLog(payload.detail) : undefined,
+      detail,
       ...extra,
     });
-    // Send ONLY the error code to the client; the raw CLI stderr/stdout/result
+    await persistAuditRecord({
+      ...auditBase,
+      durationMs: Date.now() - startedAt,
+      outcome,
+      error: payload.error,
+      detail: detail ?? null,
+      ...extra,
+    });
+    // Send ONLY the error code to the client; the raw model/provider output
     // (payload.detail + extra) stays in the server log above, never in the HTTP
     // response, to avoid leaking internal diagnostics.
     res.status(status).json({ ok: false, error: payload.error });
   };
 
-  const run = await runModel(buildUserPrompt(request), model, timeoutMs, provider);
+  const run = await runModel(
+    buildUserPrompt(request),
+    model,
+    timeoutMs,
+    provider
+  );
 
   // Keep every failure mode distinct (never collapse "no output" with "wrong
   // output"): the caller and logs can tell a pipeline failure from a model one.
   if (run.kind === 'network-error') {
-    respondError(
+    await respondError(
       500,
       { ok: false, error: 'model-unavailable', detail: run.detail },
       'network-error'
@@ -684,11 +732,11 @@ export default async (
     return;
   }
   if (run.kind === 'timeout') {
-    respondError(504, { ok: false, error: 'model-timeout' }, 'timeout');
+    await respondError(504, { ok: false, error: 'model-timeout' }, 'timeout');
     return;
   }
   if (run.kind === 'http-error') {
-    respondError(
+    await respondError(
       502,
       {
         ok: false,
@@ -701,7 +749,7 @@ export default async (
     return;
   }
   if (run.kind === 'bad-response') {
-    respondError(
+    await respondError(
       502,
       {
         ok: false,
@@ -717,7 +765,7 @@ export default async (
   const resultText = run.content;
   const extracted = extractFindings(resultText, lineCount);
   if (!extracted) {
-    respondError(
+    await respondError(
       502,
       {
         ok: false,
@@ -738,6 +786,14 @@ export default async (
     findingsCount: extracted.findings.length,
     findingLines: extracted.findings.map(f => f.line),
     summaryChars: extracted.summary.length,
+    usage,
+  });
+  await persistAuditRecord({
+    ...auditBase,
+    durationMs: Date.now() - startedAt,
+    outcome: 'success',
+    findings: extracted.findings,
+    summary: extracted.summary,
     usage,
   });
   res.status(200).json({
