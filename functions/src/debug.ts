@@ -1,18 +1,18 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { defineString } from 'firebase-functions/params';
 import { logger } from 'firebase-functions';
-import { spawn } from 'child_process';
-import { createRequire } from 'module';
-import * as path from 'path';
 
 /**
- * AI "Debug" as a 2nd-gen callable (Cloud Run under the hood), so it can bundle
- * and spawn the `claude` CLI — which Vercel's ephemeral functions cannot. The
- * client calls it with httpsCallable(getFunctions(undefined,'europe-west1'),
- * 'debugCode'); onCall verifies the Firebase ID token for us (request.auth), so
- * the auth gating is native. Ported from pages/api/debug.ts.
+ * AI "Debug" as a 2nd-gen callable. The bug analysis is a single-turn
+ * prompt → JSON call, so it goes straight to the OpenRouter chat-completions
+ * API (Anthropic models under the hood) — no CLI to spawn, no extra memory,
+ * and much cheaper per request than the previous claude-CLI approach (no
+ * agent system-prompt overhead). The client calls it with
+ * httpsCallable(getFunctions(undefined,'europe-west1'), 'debugCode'); onCall
+ * verifies the Firebase ID token for us (request.auth), so the auth gating is
+ * native.
  */
-export const claudeOAuthToken = defineString('CLAUDE_CODE_OAUTH_TOKEN');
+export const openRouterApiKey = defineString('OPENROUTER_API_KEY');
 
 type Language = 'cpp' | 'java' | 'py';
 type DebugFinding = { line: number; reason: string };
@@ -34,13 +34,27 @@ const LANG_LABEL: Record<Language, string> = {
   java: 'Java',
   py: 'Python',
 };
-const MODEL = process.env.DEBUG_CLAUDE_MODEL ?? 'sonnet';
+/**
+ * Short aliases (kept from the CLI era so env overrides stay stable) mapped to
+ * OpenRouter model slugs. Anything not in the map is passed through verbatim,
+ * so DEBUG_MODEL can also be a full slug like `anthropic/claude-haiku-4.5`.
+ */
+const MODEL_ALIASES: Record<string, string> = {
+  sonnet: 'anthropic/claude-sonnet-5',
+  opus: 'anthropic/claude-opus-4.8',
+  haiku: 'anthropic/claude-haiku-4.5',
+};
+const MODEL =
+  process.env.DEBUG_MODEL ?? process.env.DEBUG_CLAUDE_MODEL ?? 'sonnet';
 const OUTPUT_LANGUAGE = process.env.DEBUG_OUTPUT_LANGUAGE ?? 'Hungarian';
-const TIMEOUT_MS = Number(process.env.DEBUG_CLAUDE_TIMEOUT_MS ?? 120_000);
+const TIMEOUT_MS = Number(
+  process.env.DEBUG_TIMEOUT_MS ?? process.env.DEBUG_CLAUDE_TIMEOUT_MS ?? 120_000
+);
 const MAX_CODE = 60_000;
 const MAX_STATEMENT = 20_000;
-const DISALLOWED_TOOLS =
-  'Bash,Read,Edit,Write,WebFetch,WebSearch,Glob,Grep,Task,TodoWrite,NotebookEdit';
+/** Output is a small JSON object; bounded so a runaway reply can't balloon cost. */
+const MAX_OUTPUT_TOKENS = Number(process.env.DEBUG_MAX_OUTPUT_TOKENS ?? 4_096);
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 const SYSTEM_PROMPT = [
   'You are a bug locator embedded in a competitive-programming IDE.',
@@ -58,8 +72,7 @@ const SYSTEM_PROMPT = [
   `${OUTPUT_LANGUAGE} — natural, fluent ${OUTPUT_LANGUAGE} — regardless of the`,
   'language of the problem statement or code. Keep the JSON keys, code',
   'identifiers and line numbers unchanged. Report line numbers exactly as shown.',
-  'Do NOT use any tools. Respond with ONLY a single JSON object, no markdown',
-  'fences, of the form:',
+  'Respond with ONLY a single JSON object, no markdown fences, of the form:',
   '{"buggyLines":[{"line":<int>,"reason":"<short>"}],"summary":"<text>"}',
 ].join(' ');
 
@@ -88,121 +101,80 @@ function buildPrompt(req: DebugRequest): string {
   return parts.join('\n');
 }
 
+type Run =
+  | { ok: true; content: string; costUsd: number; totalTokens: number }
+  | { ok: false; detail: string };
+
 /**
- * Resolve the CLI entry of the bundled `@anthropic-ai/claude-code` package.
- * Since v2.x the package ships a NATIVE per-platform binary (its `bin.claude`
- * points to an executable launcher, e.g. `bin/claude.exe`), not a JS file, so it
- * must be spawned directly — NOT via `node <path>`. Older versions shipped a
- * `cli.js`, which has to run under Node. We return both the path and how to run
- * it so callers don't have to guess. Works in Cloud Run / the emulator without a
- * globally-installed `claude` on PATH.
+ * One OpenRouter chat-completions call: system prompt + user prompt, bounded
+ * output, hard timeout. Every failure mode stays distinct in `detail` (timeout
+ * vs network vs HTTP status vs malformed body) so server logs can tell a
+ * pipeline failure from a model one.
  */
-function resolveClaudeCli(): { path: string; viaNode: boolean } {
-  const requireFn = createRequire(__filename);
-  const pkgJsonPath = requireFn.resolve('@anthropic-ai/claude-code/package.json');
-  const pkg = requireFn('@anthropic-ai/claude-code/package.json') as {
-    bin?: string | Record<string, string>;
-  };
-  const bin = typeof pkg.bin === 'string' ? pkg.bin : pkg.bin?.claude;
-  if (!bin) throw new Error('claude bin not found in @anthropic-ai/claude-code');
-  const resolved = path.join(path.dirname(pkgJsonPath), bin);
-  // A `.js`/`.cjs`/`.mjs` entry is a Node script; anything else (the native
-  // `.exe` launcher) is a standalone executable run directly.
-  const viaNode = /\.(c|m)?js$/.test(resolved);
-  return { path: resolved, viaNode };
-}
-
-type Run = { ok: true; stdout: string } | { ok: false; detail: string };
-
-function runClaude(prompt: string): Promise<Run> {
-  return new Promise(resolve => {
-    let cli: { path: string; viaNode: boolean };
-    try {
-      cli = resolveClaudeCli();
-    } catch (e) {
-      resolve({ ok: false, detail: (e as Error).message });
-      return;
-    }
-    const env: NodeJS.ProcessEnv = {
-      ...process.env,
-      CLAUDE_CODE_OAUTH_TOKEN:
-        claudeOAuthToken.value() || process.env.CLAUDE_CODE_OAUTH_TOKEN,
-      CLAUDE_CONFIG_DIR: process.env.CLAUDE_CONFIG_DIR ?? '/tmp/claude-config',
-      IS_SANDBOX: process.env.IS_SANDBOX ?? '1',
-    };
-    delete env.NODE_OPTIONS;
-    const cliArgs = [
-      '--print',
-      '--output-format',
-      'json',
-      '--model',
-      MODEL,
-      '--dangerously-skip-permissions',
-      '--disallowed-tools',
-      DISALLOWED_TOOLS,
-      '--append-system-prompt',
-      SYSTEM_PROMPT,
-    ];
-    // Native binary → exec directly; legacy JS entry → run under this Node.
-    const [command, args] = cli.viaNode
-      ? [process.execPath, [cli.path, ...cliArgs]]
-      : [cli.path, cliArgs];
-    const child = spawn(command, args, {
-      env,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    let out = '';
-    let err = '';
-    let done = false;
-    const finish = (r: Run) => {
-      if (done) return;
-      done = true;
-      clearTimeout(timer);
-      resolve(r);
-    };
-    const timer = setTimeout(() => {
-      child.kill('SIGKILL');
-      finish({ ok: false, detail: 'timeout' });
-    }, TIMEOUT_MS);
-    child.stdout.on('data', d => (out += d));
-    child.stderr.on('data', d => (err += d));
-    child.on('error', e => finish({ ok: false, detail: e.message }));
-    child.on('close', c =>
-      finish(
-        c === 0
-          ? { ok: true, stdout: out }
-          : { ok: false, detail: `exit ${c}: ${(err || out).slice(-400)}` }
-      )
-    );
-    child.stdin.write(prompt);
-    child.stdin.end();
-  });
-}
-
-function resultToString(value: unknown): string {
-  if (typeof value === 'string') return value;
-  if (value == null) return '';
-  return JSON.stringify(value);
-}
-
-function parseEnvelope(stdout: string): Record<string, unknown> | null {
-  const t = stdout.trim();
+async function runModel(prompt: string): Promise<Run> {
+  const key = openRouterApiKey.value() || process.env.OPENROUTER_API_KEY;
+  if (!key) return { ok: false, detail: 'missing OPENROUTER_API_KEY' };
+  let resp: Response;
   try {
-    return JSON.parse(t) as Record<string, unknown>;
-  } catch {
-    const lines = t.split('\n');
-    for (let i = lines.length - 1; i >= 0; i--) {
-      const l = lines[i].trim();
-      if (l.startsWith('{') && l.endsWith('}')) {
-        try {
-          return JSON.parse(l) as Record<string, unknown>;
-        } catch {
-          // keep scanning
-        }
-      }
-    }
-    return null;
+    resp = await fetch(OPENROUTER_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: MODEL_ALIASES[MODEL] ?? MODEL,
+        max_tokens: MAX_OUTPUT_TOKENS,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: prompt },
+        ],
+      }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+  } catch (e) {
+    const err = e as Error;
+    return {
+      ok: false,
+      detail: err.name === 'TimeoutError' ? 'timeout' : `fetch: ${err.message}`,
+    };
   }
+  const bodyText = await resp.text();
+  if (!resp.ok) {
+    return {
+      ok: false,
+      detail: `http ${resp.status}: ${bodyText.slice(0, 400)}`,
+    };
+  }
+  let body: {
+    choices?: { message?: { content?: unknown } }[];
+    usage?: { cost?: unknown; total_tokens?: unknown };
+    error?: { message?: unknown };
+  };
+  try {
+    body = JSON.parse(bodyText) as typeof body;
+  } catch {
+    return { ok: false, detail: `unparseable body: ${bodyText.slice(0, 400)}` };
+  }
+  if (body.error) {
+    return {
+      ok: false,
+      detail: `api error: ${String(body.error.message).slice(0, 400)}`,
+    };
+  }
+  const content = body.choices?.[0]?.message?.content;
+  if (typeof content !== 'string' || content.trim() === '') {
+    return {
+      ok: false,
+      detail: `no completion content: ${bodyText.slice(0, 400)}`,
+    };
+  }
+  return {
+    ok: true,
+    content,
+    costUsd: Number(body.usage?.cost) || 0,
+    totalTokens: Number(body.usage?.total_tokens) || 0,
+  };
 }
 
 function extractFindings(
@@ -235,7 +207,12 @@ function extractFindings(
 }
 
 export const debugCode = onCall<DebugRequest, Promise<DebugResult>>(
-  { region: 'europe-west1', timeoutSeconds: 300, memory: '1GiB', maxInstances: 3 },
+  {
+    region: 'europe-west1',
+    timeoutSeconds: 300,
+    memory: '256MiB',
+    maxInstances: 3,
+  },
   async (request): Promise<DebugResult> => {
     // Native auth: onCall verifies the Firebase ID token; require a registered user.
     if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in required.');
@@ -251,28 +228,24 @@ export const debugCode = onCall<DebugRequest, Promise<DebugResult>>(
     }
 
     const lineCount = data.code.slice(0, MAX_CODE).split('\n').length;
-    const run = await runClaude(buildPrompt(data));
+    const run = await runModel(buildPrompt(data));
     if (!run.ok) {
-      // Log the raw detail server-side only; never leak CLI diagnostics to the client.
-      logger.error('[ai-debug] claude failed', run.detail);
-      throw new HttpsError('internal', 'claude-failed');
+      // Log the raw detail server-side only; never leak API diagnostics to the client.
+      logger.error('[ai-debug] model call failed', run.detail);
+      throw new HttpsError('internal', 'model-failed');
     }
-    const env = parseEnvelope(run.stdout);
-    if (!env || env.is_error) {
-      logger.error('[ai-debug] model error', { stdout: run.stdout.slice(0, 400) });
-      throw new HttpsError('internal', 'model-error');
-    }
-    const extracted = extractFindings(resultToString(env.result), lineCount);
+    const extracted = extractFindings(run.content, lineCount);
     if (!extracted) {
       logger.error('[ai-debug] unparseable findings', {
-        result: resultToString(env.result).slice(0, 400),
+        result: run.content.slice(0, 400),
       });
       throw new HttpsError('internal', 'unparseable-findings');
     }
     logger.info('[ai-debug] success', {
       model: MODEL,
       findings: extracted.findings.length,
-      costUsd: env.total_cost_usd,
+      costUsd: run.costUsd,
+      totalTokens: run.totalTokens,
     });
     return {
       findings: extracted.findings,

@@ -295,7 +295,7 @@ function EditorPage() {
   };
 
   // AI "Debug": send the current code + problem to /api/debug (which asks the
-  // `claude` CLI to locate bugs) and highlight the returned lines. By design the
+  // OpenRouter API to locate bugs) and highlight the returned lines. By design the
   // v1 UX only highlights — it does not reveal the reason (see debugClientConfig).
   const handleDebugCode = async () => {
     if (!getMainEditorValue) {

@@ -19,8 +19,8 @@ export type DebugRequestParams = {
 
 /**
  * Ask the backend AI debugger which lines look buggy. This calls the
- * `debugCode` Firebase 2nd-gen callable (europe-west1), which spawns the bundled
- * `claude` CLI. Auth is carried natively by onCall (the signed-in Firebase user),
+ * `debugCode` Firebase 2nd-gen callable (europe-west1), which calls the
+ * OpenRouter API. Auth is carried natively by onCall (the signed-in Firebase user),
  * so no idToken plumbing is needed. On failure the callable throws an
  * HttpsError, which httpsCallable surfaces as a thrown FunctionsError — callers
  * catch it and show a toast.
