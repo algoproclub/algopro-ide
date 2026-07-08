@@ -1,10 +1,8 @@
 FROM node:22-trixie-slim
 WORKDIR /app
 
-# poppler-utils provides `pdftotext`, used by /api/debug to read PDF-only problem
-# statements (njudge, oj.uz) so the AI gets the real problem text, not just the title.
-RUN apt-get update && apt-get install -y --no-install-recommends poppler-utils \
-  && rm -rf /var/lib/apt/lists/*
+# (PDF-only problem statements are parsed in-process by `pdf-parse`; no
+# system packages needed — the earlier poppler-utils/pdftotext layer is gone.)
 
 COPY package*.json ./
 COPY yarn.lock ./
@@ -13,6 +11,9 @@ COPY tsconfig.json ./
 COPY index.html ./
 COPY *.js ./
 COPY *.ts ./
+# Prettier config so in-container `eslint` matches CI (plugin:prettier reads it
+# relative to the linted file; without it prettier's defaults contradict ours).
+COPY .prettierrc .prettierignore ./
 
 
 EXPOSE 3000
