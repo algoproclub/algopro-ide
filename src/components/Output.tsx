@@ -115,7 +115,7 @@ export const Output = ({
           setOption(tab.value as OutputTab);
         }}
       />
-      <div className="flex-1 bg-[#1E1E1E] text-white min-h-0 overflow-hidden tw-forms-disable tw-forms-disable-all-descendants">
+      <div className="flex-1 bg-[var(--panel-bg)] text-[color:var(--text-primary)] min-h-0 overflow-hidden tw-forms-disable tw-forms-disable-all-descendants">
         {option === 'results' && (
           <div className="px-4 h-full overflow-y-auto">
             {statusData && <USACOResults data={statusData} />}
@@ -125,12 +125,12 @@ export const Output = ({
           <div className="h-full overflow-y-auto w-full">
             <table
               className={
-                'text-gray-200 table-tasks space-x-2 w-full border-b border-gray-700'
+                'text-[color:var(--text-primary)] table-tasks space-x-2 w-full border-b border-[var(--border-color)]'
               }
             >
               <thead
-                className="border-b border-gray-700 text-left text-sm"
-                style={{ backgroundColor: '#121212' }}
+                className="border-b border-[var(--border-color)] text-left text-sm"
+                style={{ backgroundColor: 'var(--panel-bg-alt)' }}
               >
                 <tr>
                   <th></th>
@@ -140,14 +140,15 @@ export const Output = ({
                   <th>Testcases</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-700 text-sm">
+              <tbody className="divide-y divide-[var(--border-color)] text-sm">
                 {statusDataHistory
                   .slice()
                   .reverse()
                   .map((item, index) => (
                     <tr
                       style={{
-                        backgroundColor: index % 2 ? '#121212' : '#1e1e1e',
+                        backgroundColor:
+                          index % 2 ? 'var(--panel-bg-alt)' : 'var(--panel-bg)',
                       }}
                       key={
                         item.submissionTime ?? statusDataHistory.length - index
@@ -264,7 +265,7 @@ export const Output = ({
       </div>
       {option !== 'results' && option !== 'history' && result && (
         <div
-          className="text-sm font-mono text-right px-4 py-1 text-gray-300"
+          className="text-sm font-mono text-right px-4 py-1 text-[color:var(--text-secondary)]"
           data-test-id="code-execution-output-status"
         >
           {result.statusDescription}, {result.time ?? '-'}s,{' '}

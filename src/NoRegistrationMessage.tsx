@@ -2,13 +2,13 @@ import React from 'react';
 
 export default function NoRegistrationMessage() {
   return (
-    <div className="mt-2">
+    <div className="mt-2 theme-text-muted">
       <p>
         This application is available for students attending programming classes
         in educational institutions. Your account is not linked to any school.
         Join one using an invitation link, or apply to the Algo Pro Club on our{' '}
         <a
-          className="text-indigo-300 font-medium"
+          className="text-[color:var(--accent-hover)] hover:text-[color:var(--accent)] font-medium"
           href="https://algopro.hu"
           target="_blank"
           rel="noreferrer"
@@ -17,7 +17,7 @@ export default function NoRegistrationMessage() {
         </a>
         . Need help? Message us on Discord or email us at{' '}
         <a
-          className="text-indigo-300 font-medium"
+          className="text-[color:var(--accent-hover)] hover:text-[color:var(--accent)] font-medium"
           href="mailto:info@algopro.hu"
         >
           info@algopro.hu
@@ -29,7 +29,7 @@ export default function NoRegistrationMessage() {
         számára elérhető. A fiókod nincs iskolához kapcsolva. Csatlakozz meghívó
         linkkel, vagy jelentkezz az Algo Pro Clubba a{' '}
         <a
-          className="text-indigo-300 font-medium"
+          className="text-[color:var(--accent-hover)] hover:text-[color:var(--accent)] font-medium"
           href="https://algopro.hu"
           target="_blank"
           rel="noreferrer"
@@ -38,7 +38,7 @@ export default function NoRegistrationMessage() {
         </a>
         . Segítség kell? Írj nekünk bátran Discordon vagy emailben:{' '}
         <a
-          className="text-indigo-300 font-medium"
+          className="text-[color:var(--accent-hover)] hover:text-[color:var(--accent)] font-medium"
           href="mailto:info@algopro.hu"
         >
           info@algopro.hu
@@ -47,7 +47,7 @@ export default function NoRegistrationMessage() {
       </p>
       <div className="mt-3 sm:mt-6 mx-auto w-60">
         <a href="https://algopro.hu" target="_blank" rel="noreferrer">
-          <button className="block items-center w-full px-6 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1E1E1E] focus:ring-indigo-500">
+          <button className="block items-center w-full px-6 py-2 border text-base font-medium rounded-md shadow-sm theme-button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[color:var(--app-bg)] focus:ring-[color:var(--accent)]">
             Jump to website
           </button>
         </a>

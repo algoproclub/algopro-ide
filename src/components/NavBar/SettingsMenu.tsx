@@ -38,15 +38,31 @@ export const SettingsMenu = (props: {
     return null;
   }
 
+  const menuButtonClass = (open: boolean) =>
+    `relative inline-flex items-center px-4 py-1.5 shadow-sm text-sm font-medium text-[color:var(--text-primary)] focus:outline-none ${
+      open
+        ? 'bg-[var(--hover-bg)]'
+        : 'hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]'
+    }`;
+  const menuPanelClass =
+    'origin-top-right absolute z-10 right-0 w-56 shadow-lg bg-[var(--panel-bg)] border border-[var(--border-color)] focus:outline-none';
+  const menuItemClass = (active: boolean) =>
+    classNames(
+      active
+        ? 'bg-[var(--hover-bg)] text-[color:var(--text-primary)]'
+        : 'text-[color:var(--text-primary)]',
+      'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
+    );
+  const menuIconClass =
+    'mr-3 h-5 w-5 text-[color:var(--text-secondary)] group-hover:text-[color:var(--text-primary)]';
+
   return (
     <Menu as="div" className="relative inline-block text-left">
       {({ open }) => (
         <>
           <div data-testid="settings-menu-button">
             <Menu.Button
-              className={`relative inline-flex items-center px-4 py-1.5 shadow-sm text-sm font-medium text-gray-200 focus:outline-none ${
-                open ? 'bg-gray-800' : 'hover:bg-gray-800 active:bg-gray-700'
-              }`}
+              className={menuButtonClass(open)}
               ref={setReferenceElement}
             >
               {firebaseUser?.photoURL ? (
@@ -57,12 +73,12 @@ export const SettingsMenu = (props: {
                 />
               ) : (
                 <UserCircleIcon
-                  className="h-6 w-6 text-gray-400"
+                  className="h-6 w-6 text-[color:var(--text-secondary)]"
                   aria-hidden="true"
                 />
               )}
               <ChevronDownIcon
-                className="h-5 w-5 text-gray-400 ml-2"
+                className="h-5 w-5 text-[color:var(--text-secondary)] ml-2"
                 aria-hidden="true"
               />
             </Menu.Button>
@@ -87,9 +103,9 @@ export const SettingsMenu = (props: {
                         leaveFrom="transform opacity-100 scale-100"
                         leaveTo="transform opacity-0 scale-95"
                       >
-                        <div className="origin-top-right absolute z-10 right-0 w-56 shadow-lg bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <div className={menuPanelClass}>
                           <div className="py-1">
-                            <div className="px-4 py-2 text-sm text-gray-200">
+                            <div className="px-4 py-2 text-sm text-[color:var(--text-primary)]">
                               Signed in as{' '}
                               <strong>{firebaseUser.displayName}</strong>
                             </div>
@@ -97,18 +113,13 @@ export const SettingsMenu = (props: {
                               {({ active }) => (
                                 <button
                                   type="button"
-                                  className={classNames(
-                                    active
-                                      ? 'bg-gray-700 text-gray-100'
-                                      : 'text-gray-200',
-                                    'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
-                                  )}
+                                  className={menuItemClass(active)}
                                   onClick={() =>
                                     props.setIsProfileSettingsOpen(true)
                                   }
                                 >
                                   <CogIcon
-                                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                    className={menuIconClass}
                                     aria-hidden="true"
                                   />
                                   Profile Settings
@@ -119,16 +130,11 @@ export const SettingsMenu = (props: {
                               {({ active }) => (
                                 <button
                                   type="button"
-                                  className={classNames(
-                                    active
-                                      ? 'bg-gray-700 text-gray-100'
-                                      : 'text-gray-200',
-                                    'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
-                                  )}
+                                  className={menuItemClass(active)}
                                   onClick={() => signOut(connectionContext)}
                                 >
                                   <ArrowRightOnRectangleIcon
-                                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                    className={menuIconClass}
                                     aria-hidden="true"
                                   />
                                   Sign Out

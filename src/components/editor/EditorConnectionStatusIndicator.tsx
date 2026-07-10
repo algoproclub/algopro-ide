@@ -26,7 +26,7 @@ export default function EditorConnectionStatusIndicator({
   }
 
   return (
-    <div className="absolute z-10 bg-black rounded-md py-1.5 px-2 right-[1.25rem] top-[0.25rem] flex items-center opacity-80 hover:opacity-0 transition">
+    <div className="absolute z-10 bg-[var(--panel-bg-alt)] text-[color:var(--text-primary)] border border-[var(--border-color)] rounded-md py-1.5 px-2 right-[1.25rem] top-[0.25rem] flex items-center opacity-90 hover:opacity-0 transition">
       <span
         className={`inline-block h-1.5 w-1.5 rounded-full mr-1 ${statusIndicatorClass}`}
       ></span>
