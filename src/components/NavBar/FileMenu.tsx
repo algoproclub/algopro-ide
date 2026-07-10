@@ -51,6 +51,24 @@ export const FileMenu = (props: {
     setMounted(true);
   }, []);
 
+  const menuButtonClass = (open: boolean) =>
+    `w-full relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-[color:var(--text-primary)] focus:outline-none ${
+      open
+        ? 'bg-[var(--hover-bg)]'
+        : 'hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]'
+    }`;
+  const menuPanelClass =
+    'origin-top-left absolute z-10 left-0 w-56 shadow-lg bg-[var(--panel-bg)] border border-[var(--border-color)] focus:outline-none';
+  const menuItemClass = (active: boolean) =>
+    classNames(
+      active
+        ? 'bg-[var(--hover-bg)] text-[color:var(--text-primary)]'
+        : 'text-[color:var(--text-primary)]',
+      'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
+    );
+  const menuIconClass =
+    'mr-3 h-5 w-5 text-[color:var(--text-secondary)] group-hover:text-[color:var(--text-primary)]';
+
   /* ======= BEGIN DROPDOWN ACTIONS ======= */
   const handleDownloadFile = () => {
     if (!getMainEditorValue) {
@@ -119,9 +137,7 @@ export const FileMenu = (props: {
         <>
           <div>
             <Menu.Button
-              className={`w-full relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 focus:outline-none ${
-                open ? 'bg-gray-800' : 'hover:bg-gray-800 active:bg-gray-700'
-              }`}
+              className={menuButtonClass(open)}
               ref={setReferenceElement}
             >
               File
@@ -151,22 +167,17 @@ export const FileMenu = (props: {
                         leaveFrom="transform opacity-100 scale-100"
                         leaveTo="transform opacity-0 scale-95"
                       >
-                        <div className="origin-top-left absolute z-10 left-0 w-56 shadow-lg bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <div className={menuPanelClass}>
                           <div className="py-1">
                             <Menu.Item>
                               {({ active }) => (
                                 <a
                                   href="/new"
                                   target="_blank"
-                                  className={classNames(
-                                    active
-                                      ? 'bg-gray-700 text-gray-100'
-                                      : 'text-gray-200',
-                                    'group flex items-center px-4 py-2 text-sm'
-                                  )}
+                                  className={menuItemClass(active)}
                                 >
                                   <PlusIcon
-                                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                    className={menuIconClass}
                                     aria-hidden="true"
                                   />
                                   New File
@@ -177,16 +188,11 @@ export const FileMenu = (props: {
                               {({ active }) => (
                                 <button
                                   type="button"
-                                  className={classNames(
-                                    active
-                                      ? 'bg-gray-700 text-gray-100'
-                                      : 'text-gray-200',
-                                    'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
-                                  )}
+                                  className={menuItemClass(active)}
                                   onClick={handleDownloadFile}
                                 >
                                   <ArrowDownTrayIcon
-                                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                    className={menuIconClass}
                                     aria-hidden="true"
                                   />
                                   Download File
@@ -197,16 +203,11 @@ export const FileMenu = (props: {
                               {({ active }) => (
                                 <button
                                   type="button"
-                                  className={classNames(
-                                    active
-                                      ? 'bg-gray-700 text-gray-100'
-                                      : 'text-gray-200',
-                                    'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
-                                  )}
+                                  className={menuItemClass(active)}
                                   onClick={handleCopyCode}
                                 >
                                   <ClipboardIcon
-                                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                    className={menuIconClass}
                                     aria-hidden="true"
                                   />
                                   Copy Code
@@ -219,15 +220,10 @@ export const FileMenu = (props: {
                                   href={forkButtonURL}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className={classNames(
-                                    active
-                                      ? 'bg-gray-700 text-gray-100'
-                                      : 'text-gray-200',
-                                    'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
-                                  )}
+                                  className={menuItemClass(active)}
                                 >
                                   <DocumentDuplicateIcon
-                                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                    className={menuIconClass}
                                     aria-hidden="true"
                                   />
                                   Clone File
@@ -239,16 +235,11 @@ export const FileMenu = (props: {
                                 {({ active }) => (
                                   <button
                                     type="button"
-                                    className={classNames(
-                                      active
-                                        ? 'bg-gray-700 text-gray-100'
-                                        : 'text-gray-200',
-                                      'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
-                                    )}
+                                    className={menuItemClass(active)}
                                     onClick={handleInsertFileTemplate}
                                   >
                                     <ArrowPathIcon
-                                      className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                      className={menuIconClass}
                                       aria-hidden="true"
                                     />
                                     Reset File to Template
@@ -260,16 +251,11 @@ export const FileMenu = (props: {
                               {({ active }) => (
                                 <button
                                   type="button"
-                                  className={classNames(
-                                    active
-                                      ? 'bg-gray-700 text-gray-100'
-                                      : 'text-gray-200',
-                                    'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
-                                  )}
+                                  className={menuItemClass(active)}
                                   onClick={() => props.onOpenSettings()}
                                 >
                                   <CogIcon
-                                    className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-300"
+                                    className={menuIconClass}
                                     aria-hidden="true"
                                   />
                                   Workspace Settings

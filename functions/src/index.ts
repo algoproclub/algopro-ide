@@ -1,7 +1,8 @@
 import { defineString } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { initializeApp } from 'firebase-admin/app';
+import { getDatabase, ServerValue } from 'firebase-admin/database';
 import {
   FileSubmission,
   Platform,
@@ -275,7 +276,7 @@ export const enum Errors {
 
 export class IncorrectDataError extends Error {}
 
-admin.initializeApp(
+const app = initializeApp(
   process.env.FUNCTIONS_EMULATOR
     ? {
         projectId: 'algopro-app',
@@ -283,7 +284,7 @@ admin.initializeApp(
       }
     : undefined
 );
-const db = admin.database();
+const db = getDatabase(app);
 
 const accountData: { [key in Platform]: AccountData } = {
   atcoder: {
@@ -597,7 +598,7 @@ const registerSubmission = async (
 
   await db.ref('submissions/pending').update({
     [fileID]: {
-      creationTime: admin.database.ServerValue.TIMESTAMP,
+      creationTime: ServerValue.TIMESTAMP,
     },
   });
 

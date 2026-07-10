@@ -299,7 +299,7 @@ function EditorPage() {
   return (
     <div className="h-full">
       <div className="h-full flex flex-col">
-        <div className="flex-shrink-0 bg-[#1E1E1E]">
+        <div className="flex-shrink-0 bg-[var(--panel-bg)] text-[color:var(--text-primary)]">
           <NavBar
             fileMenu={
               <FileMenu

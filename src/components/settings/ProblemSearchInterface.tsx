@@ -14,6 +14,29 @@ const searchClient = algoliasearch(
 
 const indexName = 'usacoProblems';
 
+const usePoweredByTheme = (): 'light' | 'dark' => {
+  const [theme, setTheme] = React.useState<'light' | 'dark'>('dark');
+
+  React.useEffect(() => {
+    const root = document.documentElement;
+    const updateTheme = () => {
+      setTheme(root.dataset.theme === 'light' ? 'light' : 'dark');
+    };
+
+    updateTheme();
+
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  return theme;
+};
+
 const FileSearch = ({
   hits,
   currentRefinement,
@@ -27,6 +50,8 @@ const FileSearch = ({
   onSelect: (arg: any) => void;
   canChange: boolean;
 }) => {
+  const poweredByTheme = usePoweredByTheme();
+
   return (
     <div>
       <div className="flex items-center relative">
@@ -34,7 +59,7 @@ const FileSearch = ({
           type="search"
           name={`problem-select`}
           id={`problem-select`}
-          className="mt-0 block w-full px-0 pt-0 pb-1 border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-black text-sm placeholder-gray-400"
+          className="mt-0 block w-full px-0 pt-0 pb-1 theme-input border-0 border-b-2 focus:ring-0 text-sm"
           value={currentRefinement}
           placeholder={'e.g. Train Scheduling'}
           onChange={e => refine(e.target.value)}
@@ -43,43 +68,31 @@ const FileSearch = ({
           autoFocus
           disabled={!canChange}
         />
-        {/* <span className="p-2 absolute right-0 bottom-px">
-          <SearchIcon className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-        </span> */}
-        {/* <input
-          type="search"
-          placeholder="Search"
-          className="focus:outline-none focus:ring-0 text-gray-700 dark:bg-dark-surface dark:text-gray-200 dark:placeholder-gray-400 border-0 flex-1"
-          value={currentRefinement}
-          onChange={e => refine(e.target.value)}
-          autoComplete="off"
-          autoFocus
-        />*/}
       </div>
       {currentRefinement !== '' && (
         <div>
-          <div className="text-sm max-h-[20rem] overflow-y-auto border-t divide-y divide-gray-200 border-gray-200">
+          <div className="text-sm max-h-[20rem] overflow-y-auto border-t divide-y divide-[color:var(--border-muted)] theme-border">
             {hits.map(hit => (
               <button
-                className="block hover:bg-blue-100 py-3 px-5 transition focus:outline-none w-full text-left"
+                className="block hover:bg-[color:var(--surface-hover)] py-3 px-5 transition focus:outline-none w-full text-left"
                 key={hit.id}
                 onClick={() => {
                   refine(''); // clear
                   onSelect(hit);
                 }}
               >
-                <h3 className="text-gray-600 font-medium">
+                <h3 className="theme-text font-medium">
                   <Highlight hit={hit} attribute="title" /> (
                   <Highlight hit={hit} attribute="id" />)
                 </h3>
-                <p className="text-gray-700 text-sm">
+                <p className="theme-text-muted text-sm">
                   <Highlight hit={hit} attribute="source" />
                 </p>
               </button>
             ))}
           </div>
-          <div className="px-5 py-3 border-t border-gray-200">
-            <PoweredBy theme="dark" />
+          <div className="px-5 py-3 border-t theme-border">
+            <PoweredBy theme={poweredByTheme} />
           </div>
         </div>
       )}

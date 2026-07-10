@@ -1,7 +1,9 @@
-FROM node:latest
+FROM node:22-trixie-slim
 
-COPY yjs /ide-yjs
-WORKDIR /ide-yjs
-RUN npm install
+WORKDIR /app/yjs
+
+COPY yjs ./
+
+RUN --mount=type=cache,target=/root/.npm npm install
 
 ENTRYPOINT ["npm", "run", "dev"]

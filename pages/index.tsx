@@ -29,29 +29,32 @@ export default function DashboardPage(): JSX.Element {
   }, []);
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 lg:p-12 min-h-full flex flex-col max-w-6xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 lg:p-12 min-h-full flex flex-col max-w-6xl mx-auto theme-page">
       <ConfirmOverrideModal />
       <div className="flex-1 relative">
-        <h1 className="text-gray-100 text-2xl md:text-4xl font-black">
+        <h1 className="theme-text text-2xl md:text-4xl font-black">
           AlgoPro IDE
         </h1>
-        <div className="text-gray-400 mt-6 mb-2">
+        <div className="theme-text-muted mt-6 mb-2">
           Based on the{' '}
           <a
-            className="underline text-gray-200"
+            className="underline text-[color:var(--text-secondary)] hover:text-[color:var(--accent-hover)]"
             href="https://github.com/cpinitiative/ide"
           >
             Real-Time Collaborative Online IDE
           </a>{' '}
           by{' '}
-          <a className="underline text-gray-200" href="https://joincpi.org/">
+          <a
+            className="underline text-[color:var(--text-secondary)] hover:text-[color:var(--accent-hover)]"
+            href="https://joincpi.org/"
+          >
             Competitive Programming Initiative
           </a>
         </div>
 
         {logged === false ? (
           <>
-            <div className="text-gray-400">Not signed in.</div>
+            <div className="theme-text-muted">Not signed in.</div>
             <div className="mt-2 flex flex-wrap gap-2">
               <SignInButton
                 service="Google"
@@ -71,7 +74,7 @@ export default function DashboardPage(): JSX.Element {
             </div>
           </>
         ) : !userData ? (
-          <div className="text-gray-400">Loading...</div>
+          <div className="theme-text-muted">Loading...</div>
         ) : !registered ? (
           <NoRegistrationMessage />
         ) : (
