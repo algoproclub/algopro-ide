@@ -22,12 +22,6 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:prettier/recommended',
-    'plugin:jest/recommended',
-    'plugin:jest-playwright/recommended',
-  ],
-  plugins: [
-    // todo maybe only for jest files?
-    'jest-playwright',
   ],
   overrides: [
     // This configuration will apply only to TypeScript files

@@ -21,12 +21,6 @@ Also, if you do not want to run the yjs server locally, or if you don't want to 
 
 Note: If you get a firebase emulators timeout error on Mac, see [firebase/firebase-tools#2379 (comment)](https://github.com/firebase/firebase-tools/issues/2379#issuecomment-951884721) and Issue #67 in this repo.
 
-### Playwright Tests
-
-```
-yarn playwright test
-```
-
 ### Configuring Firebase
 
 You can update the Firebase configuration (if you want to use a custom firebase project, for example) by modifying `pages/_app.tsx`.
@@ -44,7 +38,6 @@ You can update the Firebase configuration (if you want to use a custom firebase 
 - Typescript
 - Tailwind CSS
 - Firebase Realtime Database
-- Playwright for end-to-end testing
 - Deployed with [Vercel](https://vercel.com/?utm_source=cp-initiative&utm_campaign=oss)
 
 ## Contact Info
@@ -254,20 +247,6 @@ cp -r ./node_modules/monaco-editor-workers/dist/workers/editorWorker* ./public/m
 
 This is used by MonacoEditor.tsx (Monaco uses web workers).
 
-### Playwright Debugging
-
-We use the [Playwright Test test runner](https://playwright.dev/docs/intro), not the Playwright library. If you use VSCode, the Playwright Test test runner extension for VSCode is really nice.
-
 ### Troubleshooting `firebase emulators:exec`
 
-If `firebase emulators:exec` fails for unknown reason, try running `firebase emulators:exec "yarn playwright test" || cat firebase-debug.log`.
-
-
-### Tests that should be written
-
-- Compile error, stdout, stderr
-- Too large input
-- Too large output
-- Classrooms
-- Copying files (#64, this broke already lol)
-
+If `firebase emulators:exec` fails for unknown reason, try running `firebase emulators:exec "yarn build" || cat firebase-debug.log`.
