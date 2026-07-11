@@ -161,7 +161,9 @@ const fetchGroupsForSchool = async (schoolID: string): Promise<GroupInfo[]> => {
   const groups: GroupInfo[] = [];
   results.forEach(d => {
     const data = d.data();
-    groups.push({ id: d.id, name: data?.name || d.id, schoolID });
+    if (data?.inactive !== true) {
+      groups.push({ id: d.id, name: data?.name || d.id, schoolID });
+    }
   });
   groups.sort((a, b) => a.name.localeCompare(b.name));
   return groups;
