@@ -44,6 +44,3 @@ serviceAccountKey.json
 accounts.json
 
 tsconfig.tsbuildinfo
-
-# AI Debug benchmark data (captured submissions; not source)
-benchmark/data/

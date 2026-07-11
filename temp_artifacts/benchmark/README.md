@@ -49,8 +49,8 @@ wrong__Codeforces 242E_ XOR on Segment.cpp
 ## Run
 
 ```bash
-uv run python benchmark/ingest.py --input <dir-of-files> \
-    --output benchmark/data/parsed/manifest.jsonl
+uv run python temp_artifacts/benchmark/ingest.py --input <dir-of-files> \
+    --output temp_artifacts/benchmark/data/parsed/manifest.jsonl
 ```
 
 Emits PII-free JSONL: `{id, status, language, platform, problem_id,
@@ -61,7 +61,7 @@ pair candidates — never code or names.
 ## Privacy
 
 Only **code + problem + status** are extracted. Keep filenames problem-based (no
-student names). Everything under `benchmark/data/` is git-ignored, so neither raw
+student names). Everything under `temp_artifacts/benchmark/data/` is git-ignored, so neither raw
 captures nor parsed code is ever committed.
 
 ## Next (not built yet)

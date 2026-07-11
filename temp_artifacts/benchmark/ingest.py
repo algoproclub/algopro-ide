@@ -22,7 +22,7 @@ It handles two input shapes:
 
 Privacy: only code + problem + status are extracted. Filenames are expected to be
 problem-based (no names). The script never prints code or any file body to stdout
-— only counts and problem ids. Output lives under benchmark/data/ which is
+— only counts and problem ids. Output lives under temp_artifacts/benchmark/data/ which is
 git-ignored, so neither raw captures nor parsed code are ever committed.
 """
 
@@ -37,8 +37,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 # ---- Config (override via CLI) ---------------------------------------------
-DEFAULT_INPUT = Path("benchmark/data/raw")
-DEFAULT_OUTPUT = Path("benchmark/data/parsed/manifest.jsonl")
+DEFAULT_INPUT = Path("temp_artifacts/benchmark/data/raw")
+DEFAULT_OUTPUT = Path("temp_artifacts/benchmark/data/parsed/manifest.jsonl")
 
 CODE_EXTS: dict[str, str] = {
     ".cpp": "cpp", ".cc": "cpp", ".cxx": "cpp", ".cppfile": "cpp",
