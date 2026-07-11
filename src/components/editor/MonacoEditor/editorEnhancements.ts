@@ -176,6 +176,13 @@ export function createEditorEnhancements(
     }, 100);
   };
 
+  // Monaco hover messages are IMarkdownString values, but the AI-written
+  // reasons are plain text — a `*` used for multiplication must not render as
+  // emphasis. Escape every markdown-significant character so the tooltip shows
+  // the text verbatim (newlines become hard line breaks).
+  const escapeMarkdown = (text: string): string =>
+    text.replace(/[\\`*_{}[\]()#+\-.!|<>~]/g, '\\$&').replace(/\n/g, '  \n');
+
   // AI Debug feature: a persistent set of "suspected bug" line highlights.
   // Kept separate from the transient single-line linked highlight above so the
   // two never clobber each other. Cleared on a new debug run, on Run Code, and
@@ -209,8 +216,10 @@ export function createEditorEnhancements(
           },
           ...(mark.hoverMessage
             ? {
-                hoverMessage: { value: mark.hoverMessage },
-                glyphMarginHoverMessage: { value: mark.hoverMessage },
+                hoverMessage: { value: escapeMarkdown(mark.hoverMessage) },
+                glyphMarginHoverMessage: {
+                  value: escapeMarkdown(mark.hoverMessage),
+                },
               }
             : {}),
         },
