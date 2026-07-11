@@ -5,7 +5,7 @@
  */
 export const debugClientConfig = {
   /** Label shown on the Debug button. */
-  buttonLabel: 'Debug',
+  buttonLabel: 'AI Help',
   /**
    * When true, hovering a highlighted line — or its red glyph-margin dot — shows
    * the AI's per-line reason. Lines are always highlighted red; the reason only
