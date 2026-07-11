@@ -5,9 +5,15 @@ import type * as awarenessProtocol from 'y-protocols/awareness';
 
 export type EditorTheme = 'dark' | 'light';
 
+/** A single line the AI Debug feature wants to highlight. */
+export type BugHighlightMark = { line: number; hoverMessage?: string };
+
 export type AlgoProMonacoEditor = ReturnType<typeof MonacoApi.editor.create> & {
   setLineHighlight: (line: number) => void;
   clearLineHighlight: () => void;
+  /** AI Debug feature: highlight the given lines as suspected bugs. */
+  setBugHighlights: (marks: BugHighlightMark[]) => void;
+  clearBugHighlights: () => void;
 };
 
 export interface SharedEditorOptions {

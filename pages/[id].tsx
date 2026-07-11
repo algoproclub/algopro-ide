@@ -4,7 +4,11 @@ import { FileMenu } from '../src/components/NavBar/FileMenu';
 import { NavBar } from '../src/components/NavBar/NavBar';
 import { EditorProvider, useEditorContext } from '../src/context/EditorContext';
 import { RunButton } from '../src/components/RunButton';
+import { DebugButton } from '../src/components/DebugButton';
 import { submitToJudge } from '../src/scripts/judge';
+import { requestDebug } from '../src/scripts/requestDebug';
+import toast from 'react-hot-toast';
+import { debugClientConfig } from '../src/debug/debugClientConfig';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
   inputEditorValueAtom,
@@ -45,6 +49,7 @@ import WithRegistration from '../src/components/WithRegistration';
 function EditorPage() {
   const { fileData, updateFileData } = useEditorContext();
   const permission = useUserPermission();
+  const { firebaseUser } = useNullableUserContext();
   const loading = useAtomValue(loadingAtom);
   const [showSidebar, setShowSidebar] = useAtom(showSidebarAtom);
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
@@ -53,6 +58,7 @@ function EditorPage() {
   const [isProfileSettingsModalOpen, setIsProfileSettingsModalOpen] =
     useState(false);
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
+  const [isDebugging, setIsDebugging] = useState(false);
   const layoutEditors = useSetAtom(layoutEditorsAtom);
   const [mobileActiveTab, setMobileActiveTab] = useAtom(mobileActiveTabAtom);
   const getMainEditorValue = useAtomValue(mainEditorValueAtom);
@@ -282,6 +288,82 @@ function EditorPage() {
     }
     setIsLineHighlightSet(false);
     mainMonacoEditor?.clearLineHighlight();
+    // A new run invalidates any stale AI bug highlights.
+    mainMonacoEditor?.clearBugHighlights();
+  };
+
+  // AI "Debug": send the current code + problem to /api/debug (which asks the
+  // OpenRouter API to locate bugs) and highlight the returned lines. By design the
+  // v1 UX only highlights — it does not reveal the reason (see debugClientConfig).
+  const handleDebugCode = async () => {
+    if (!getMainEditorValue) {
+      // editor is still loading
+      return;
+    }
+    const code = getMainEditorValue();
+
+    let problemTitle: string | undefined = undefined;
+    let problemStatement: string | undefined = undefined;
+    let problemStatementUrl: string | undefined = undefined;
+    if (fileData.problem) {
+      const problem =
+        fileData.problem.platform === 'usaco'
+          ? (fileData.problem as ProblemData)
+          : await fetchProblemFromDb(fileData.problem);
+      problemTitle = problem?.title ?? undefined;
+      problemStatement = problem?.statement ?? undefined;
+      // Some platforms (njudge, oj.uz) have PDF-only statements; the server
+      // fetches + extracts the PDF when no inline statement is available.
+      problemStatementUrl = problem?.statementURL ?? undefined;
+    }
+
+    // /api/debug is auth-gated (ID token + `registered` claim); a logged-out
+    // user can't mint a token, so fail early with a clear message.
+    if (!firebaseUser) {
+      toast.error('You must be signed in to use Debug.');
+      return;
+    }
+
+    setIsDebugging(true);
+    mainMonacoEditor?.clearBugHighlights();
+    try {
+      // requestDebug mints a fresh ID token and POSTs to /api/debug; on
+      // failure it throws with the server's stable error code (caught below).
+      const result = await requestDebug({
+        language: fileData.settings.language,
+        code,
+        problemTitle,
+        problemStatement,
+        problemStatementUrl,
+      });
+      mainMonacoEditor?.setBugHighlights(
+        result.findings.map(finding => ({
+          line: finding.line,
+          hoverMessage: debugClientConfig.showReasons
+            ? finding.reason
+            : debugClientConfig.genericHoverMessage,
+        }))
+      );
+      // The AI's free-text summary is deliberately not shown (it stays in the
+      // API response + server audit log): the toast only says how many lines
+      // were highlighted, or that the code looks correct.
+      if (result.findings.length > 0) {
+        toast(
+          debugClientConfig.linesHighlightedMessage.replace(
+            '{count}',
+            String(result.findings.length)
+          )
+        );
+      } else {
+        toast.success(debugClientConfig.noIssuesMessage);
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      toast.error('Debug error: ' + message);
+      console.error(e);
+    } finally {
+      setIsDebugging(false);
+    }
   };
 
   const handleKeydown = (event: KeyboardEvent) => {
@@ -310,6 +392,13 @@ function EditorPage() {
               <RunButton
                 onClick={handleRunCode}
                 showLoading={fileData.isCodeRunning || loading}
+                disabledForViewOnly={readOnly}
+              />
+            }
+            debugButton={
+              <DebugButton
+                onClick={handleDebugCode}
+                showLoading={isDebugging}
                 disabledForViewOnly={readOnly}
               />
             }
