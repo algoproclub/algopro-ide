@@ -8,7 +8,6 @@ import { DebugButton } from '../src/components/DebugButton';
 import { submitToJudge } from '../src/scripts/judge';
 import { requestDebug } from '../src/scripts/requestDebug';
 import toast from 'react-hot-toast';
-import { showDebugNote, dismissDebugNote } from '../src/debug/showDebugNote';
 import { debugClientConfig } from '../src/debug/debugClientConfig';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
@@ -289,9 +288,8 @@ function EditorPage() {
     }
     setIsLineHighlightSet(false);
     mainMonacoEditor?.clearLineHighlight();
-    // A new run invalidates any stale AI bug highlights + note.
+    // A new run invalidates any stale AI bug highlights.
     mainMonacoEditor?.clearBugHighlights();
-    dismissDebugNote();
   };
 
   // AI "Debug": send the current code + problem to /api/debug (which asks the
@@ -328,7 +326,6 @@ function EditorPage() {
 
     setIsDebugging(true);
     mainMonacoEditor?.clearBugHighlights();
-    dismissDebugNote();
     try {
       // requestDebug mints a fresh ID token and POSTs to /api/debug; on
       // failure it throws with the server's stable error code (caught below).
@@ -347,14 +344,18 @@ function EditorPage() {
             : debugClientConfig.genericHoverMessage,
         }))
       );
-      // Global note: the AI's summary is the channel for issues that aren't tied
-      // to a single line (systemic / missing case / wrong approach). Shown as a
-      // dismissible note, flagged "overall" when there are no specific lines.
-      const note = (result.summary ?? '').trim();
-      if (note) {
-        showDebugNote(note, result.findings.length === 0);
-      } else if (result.findings.length === 0) {
-        toast(debugClientConfig.noIssuesMessage);
+      // The AI's free-text summary is deliberately not shown (it stays in the
+      // API response + server audit log): the toast only says how many lines
+      // were highlighted, or that the code looks correct.
+      if (result.findings.length > 0) {
+        toast(
+          debugClientConfig.linesHighlightedMessage.replace(
+            '{count}',
+            String(result.findings.length)
+          )
+        );
+      } else {
+        toast.success(debugClientConfig.noIssuesMessage);
       }
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);

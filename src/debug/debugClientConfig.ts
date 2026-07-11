@@ -14,6 +14,13 @@ export const debugClientConfig = {
   showReasons: true,
   /** Hover tooltip shown on highlighted lines when showReasons is false. */
   genericHoverMessage: 'The AI thinks this line may contain a bug.',
-  /** Shown when the AI reports no issues at all (no lines and no overall note). */
-  noIssuesMessage: 'The AI found no issues to flag in the code.',
+  /**
+   * Toast after a run that flagged lines; {count} is replaced by the number of
+   * highlighted lines. (The AI's free-text summary is deliberately NOT shown —
+   * it is still returned by the API and kept in the server audit log.)
+   */
+  linesHighlightedMessage:
+    'The AI highlighted {count} line(s) — hover them to see why.',
+  /** Shown when the AI flags no lines: the code looks correct. */
+  noIssuesMessage: 'The AI found no issues — the code looks correct.',
 } as const;

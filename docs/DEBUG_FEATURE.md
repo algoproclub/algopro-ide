@@ -14,14 +14,14 @@ under-specified.
 1. Student writes code in the editor and clicks **Debug**.
 2. The button shows a spinner while the AI analyses (~5–15 s).
 3. Suspect lines get a translucent red full-line highlight, a dot in the glyph
-   margin, and a mark on the overview ruler.
-4. Highlights clear when the student clicks **Run Code** or **Debug** again.
-5. If the AI finds nothing, an alert says so. Errors surface via an alert with a
-   distinct error code.
-
-By design **v1 only highlights** — it does not reveal the reason. The reason is
-still returned by the API (so turning it on is a one-line change) but is hidden
-in the UI. See `showReasons` below.
+   margin, and a mark on the overview ruler; hovering a line shows the AI's
+   reason (`showReasons`, on by default).
+4. A toast says only **how many lines were highlighted**, or — when the AI
+   flags nothing — that **the code looks correct**. The AI's free-text summary
+   is deliberately NOT shown in the UI (it remains in the API response and the
+   server audit log).
+5. Highlights clear when the student clicks **Run Code** or **Debug** again.
+   Errors surface via a toast with a distinct error code.
 
 ## Architecture / data flow
 
@@ -154,9 +154,10 @@ output schema).
 | Field | Default | Meaning |
 | --- | --- | --- |
 | `buttonLabel` | `Debug` | Text on the button. |
-| `showReasons` | `false` | `true` ⇒ show the AI's per-line reason as a hover tooltip. |
-| `genericHoverMessage` | "AI flagged…" | Tooltip when `showReasons` is false. |
-| `noIssuesMessage` | "The AI did not find…" | Alert when nothing is found. |
+| `showReasons` | `true` | `true` ⇒ show the AI's per-line reason as a hover tooltip. |
+| `genericHoverMessage` | "The AI thinks…" | Tooltip when `showReasons` is false. |
+| `linesHighlightedMessage` | "The AI highlighted {count}…" | Toast after a run that flagged lines. |
+| `noIssuesMessage` | "…the code looks correct." | Toast when the AI flags no lines. |
 
 ### Highlight appearance (`src/styles/globals.css`)
 `.debug-bug-highlight` (line background) and `.debug-bug-glyph` (margin dot).
