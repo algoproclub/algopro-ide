@@ -196,12 +196,15 @@ const SYSTEM_PROMPT = [
   'incorrect or non-accepted solution. Prefer a small number of high-confidence',
   'lines over many speculative ones. Each line "reason" is shown to the student',
   'on hover, so make it a concise, specific explanation of what is wrong there.',
-  'The "summary" is shown to the student as a global note: use it for the overall',
-  'diagnosis, and ESPECIALLY for problems that cannot be tied to a single line —',
-  'a wrong overall approach, a missing case, missing output/initialisation, logic',
-  'spread across the code, etc. In that case return an EMPTY buggyLines array and',
-  'put the full explanation in summary. If the code looks correct, return empty',
-  'buggyLines and say so in summary.',
+  'The "summary" is the overall diagnosis (it is kept in the server log).',
+  'Set "verdict" to "buggy" if the code has ANY problem (wrong logic, missing',
+  'code, wrong approach, incomplete solution), and to "correct" only if you',
+  'believe the code solves the problem. Whenever the verdict is "buggy",',
+  'buggyLines MUST contain at least one entry: for problems that cannot be tied',
+  'to a specific existing line — a missing loop, a missing case, a wrong overall',
+  'approach — anchor the finding to the most relevant line (e.g. where the',
+  'missing code should go, or the last line of the code) and explain the whole',
+  'problem in its "reason". Only a "correct" verdict may have empty buggyLines.',
   `The student is ${OUTPUT_LANGUAGE}-speaking: write every "reason" value and the`,
   `"summary" value in ${OUTPUT_LANGUAGE} — natural, fluent ${OUTPUT_LANGUAGE} —`,
   'no matter what language the problem statement, code, or comments are in. Keep',
@@ -210,7 +213,7 @@ const SYSTEM_PROMPT = [
   'Analyse only the provided text.',
   'Respond with ONLY a single JSON object, no markdown fences, no prose,',
   'of the form:',
-  '{"buggyLines":[{"line":<int>,"reason":"<short>"}],"summary":"<text>"}',
+  '{"verdict":"buggy"|"correct","buggyLines":[{"line":<int>,"reason":"<short>"}],"summary":"<text>"}',
 ].join(' ');
 
 function buildUserPrompt(req: DebugRequest): string {
@@ -407,7 +410,11 @@ function extractFindings(
     return null;
   }
   if (typeof parsed !== 'object' || parsed === null) return null;
-  const obj = parsed as { buggyLines?: unknown; summary?: unknown };
+  const obj = parsed as {
+    verdict?: unknown;
+    buggyLines?: unknown;
+    summary?: unknown;
+  };
   if (!Array.isArray(obj.buggyLines)) return null;
 
   const findings: DebugFinding[] = [];
@@ -423,10 +430,24 @@ function extractFindings(
       reason: typeof candidate.reason === 'string' ? candidate.reason : '',
     });
   }
-  return {
-    findings,
-    summary: typeof obj.summary === 'string' ? obj.summary : '',
-  };
+  const summary = typeof obj.summary === 'string' ? obj.summary : '';
+
+  // Safety net: the UI treats "no findings" as "code looks correct", so a
+  // buggy verdict with an empty (or fully out-of-range) buggyLines array must
+  // never reach the client — anchor the diagnosis to the last line instead.
+  // Also treat a missing/unparseable verdict as buggy when the model wrote a
+  // non-empty summary but flagged no lines: the empty-findings success path is
+  // only trusted with an explicit "correct".
+  const verdict = obj.verdict === 'correct' ? 'correct' : 'buggy';
+  if (
+    findings.length === 0 &&
+    verdict === 'buggy' &&
+    (summary !== '' || obj.buggyLines.length > 0)
+  ) {
+    findings.push({ line: lineCount, reason: summary });
+  }
+
+  return { findings, summary };
 }
 
 // ---- PDF statement extraction ----------------------------------------------
