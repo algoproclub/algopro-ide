@@ -1,16 +1,17 @@
 FROM golang:1.22-bookworm
 
-RUN apt-get update && apt-get install -y pypy3 && mkdir /tmp/pch
-
 WORKDIR /app
 
-COPY go.mod ./
-COPY go.sum ./
+RUN --mount=type=cache,target=/var/lib/apt/lists \
+    --mount=type=cache,target=/var/cache/apt \
+    apt-get update && \
+    apt-get install -y --no-install-recommends pypy3
 
-RUN go mod download
-RUN go mod verify
+COPY go.mod go.sum ./
 
-COPY main.go ./
-RUN go build -o execute
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download && go mod verify
 
-ENTRYPOINT ["/app/execute"]
+RUN mkdir /tmp/pch
+
+CMD ["go", "run", "."]
