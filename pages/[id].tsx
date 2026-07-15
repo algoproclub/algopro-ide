@@ -19,6 +19,7 @@ import {
   inputTabAtom,
   inputTabIndexAtom,
   mobileActiveTabAtom,
+  problemAtom,
   showSidebarAtom,
   tabsListAtom,
 } from '../src/atoms/workspaceUI';
@@ -36,8 +37,6 @@ import JudgeResult from '../src/types/judge';
 import useUserFileConnection from '../src/hooks/useUserFileConnection';
 import useUpdateUserDashboard from '../src/hooks/useUpdateUserDashboard';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
-import { ProblemData } from '../src/types/problem';
-import { fetchProblemFromDb } from '../src/scripts/fetchProblemFromDb';
 import Link from 'next/link';
 import ProfileSettings from '../src/components/settings/ProfileSettings';
 import WithRegistration from '../src/components/WithRegistration';
@@ -84,6 +83,12 @@ function EditorPage() {
   const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
   const setSavedEditorValue = useSetAtom(savedEditorValue);
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
+  const loadedProblem = useAtomValue(problemAtom);
+  const problemDataIsStale = fileData.problem
+    ? loadedProblem?.platform !== fileData.problem.platform ||
+      loadedProblem?.id !== fileData.problem.id
+    : loadedProblem !== null;
+  const problem = problemDataIsStale ? undefined : (loadedProblem ?? undefined);
 
   useUserFileConnection();
   useUpdateUserDashboard();
@@ -113,15 +118,9 @@ function EditorPage() {
     }, 0);
   };
 
-  const handleRunCode = async () => {
-    // FIXME: Do not store USACO problems directly in the Realtime DB.
-    let problem: ProblemData | undefined = undefined;
-    if (fileData.problem) {
-      problem =
-        fileData.problem?.platform === 'usaco'
-          ? (fileData.problem as ProblemData)
-          : await fetchProblemFromDb(fileData.problem);
-    }
+  const handleRunCode = () => {
+    if (problemDataIsStale) return;
+
     const setIsRunning = (isRunning: boolean) => {
       updateFileData({
         isCodeRunning: isRunning,
@@ -316,7 +315,9 @@ function EditorPage() {
             runButton={
               <RunButton
                 onClick={handleRunCode}
-                showLoading={fileData.isCodeRunning || loading}
+                showLoading={
+                  fileData.isCodeRunning || loading || problemDataIsStale
+                }
                 disabledForViewOnly={readOnly}
               />
             }

@@ -142,21 +142,29 @@ export default function Workspace({
   }, [inputEditorHandle, setCodemirrorInputEditor, setInputEditor]);
 
   useEffect(() => {
+    let cancelled = false;
+
     (async () => {
       setStatusData(null);
+      setTranslations({});
+      setSolutions({});
 
-      // FIXME: Do not store USACO problems directly in the Realtime DB.
       if (!fileData.problem) {
         setProblem(null);
         return;
       }
 
+      setProblem(undefined);
       const problemData = await fetchProblemFromDb(fileData.problem);
+
+      if (cancelled) return;
 
       setProblem(problemData);
       if (problemData) {
         setInputTab('judge');
         const translations = await fetchTranslationsFromDb(fileData.problem);
+
+        if (cancelled) return;
 
         translations['en'] ??= {
           hints: problemData.hints ?? [],
@@ -166,11 +174,21 @@ export default function Workspace({
         };
 
         setTranslations(translations);
-        setSolutions(await fetchSolutionsFromDb(fileData.problem));
+        const solutions = await fetchSolutionsFromDb(fileData.problem);
+
+        if (cancelled) return;
+
+        setSolutions(solutions);
         setLanguage('hu' in translations ? 'hu' : 'en');
       }
     })();
-  }, [fileData.problem?.platform]);
+
+    return () => {
+      cancelled = true;
+    };
+    // The RTDB object can change independently; only its identity triggers this load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fileData.problem?.platform, fileData.problem?.id]);
 
   useEffect(() => {
     get(ref(db, `files/${fileData.id}/solvedStatus/solved`)).then(
