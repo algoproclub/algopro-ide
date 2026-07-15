@@ -77,6 +77,7 @@ const TestCaseInfoModal = ({
         setDownloadURL(data.downloadURL);
         setPreviewText(data.previewText);
       } catch (e) {
+        setPreviewText('Failed to load');
         console.error(e);
       }
     }
