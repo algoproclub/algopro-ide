@@ -10,19 +10,21 @@ const Hint = ({ index, content }: { index: number; content: string }) => {
   const [hasBeenOpened] = useState(false);
 
   return (
-    <div
-      className={`mx-0 text-sm border border-gray-700 bg-[#121212] overflow-hidden`}
-    >
+    <div className="mx-0 text-sm border theme-border theme-surface-muted overflow-hidden">
       <button
         type="button"
-        className={`flex items-center justify-between text-gray-300 py-2.5 px-3.5 w-full ${
-          revealed ? 'bg-gray-800' : 'hover:bg-gray-900'
+        className={`flex items-center justify-between theme-text py-2.5 px-3.5 w-full ${
+          revealed
+            ? 'bg-[color:var(--surface-active)]'
+            : 'hover:bg-[color:var(--surface-hover)]'
         }`}
         onClick={() => setRevealed(!revealed)}
       >
         <div className="flex items-center">
           {!hasBeenOpened && (
-            <span className="text-[0.5rem] text-indigo-500 pr-2">&#9679;</span>
+            <span className="text-[0.5rem] text-[color:var(--accent)] pr-2">
+              &#9679;
+            </span>
           )}
           <span>Hint {index + 1}</span>
         </div>
@@ -33,7 +35,7 @@ const Hint = ({ index, content }: { index: number; content: string }) => {
         />
       </button>
       <div
-        className={`px-3.5 border-t border-gray-700 ${
+        className={`px-3.5 border-t theme-border ${
           revealed ? 'py-3' : 'h-0 overflow-hidden !border-0'
         } duration-200`}
       >

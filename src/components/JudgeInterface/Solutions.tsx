@@ -28,7 +28,7 @@ const Solutions = ({
 
   return (
     <>
-      <div className="border-b border-[#363636] -mx-4 px-4 pb-4 mb-4 space-y-2">
+      <div className="border-b border-[color:var(--border-muted)] -mx-4 px-4 pb-4 mb-4 space-y-2">
         <div className="flex items-center space-x-2">
           <span className="font-semibold space-x-2">
             Congratulations on solving the task!
@@ -52,17 +52,17 @@ const Solutions = ({
             </g>
           </svg>
         </div>
-        <div className="text-gray-400 text-sm">
+        <div className="theme-text-muted text-sm">
           Below you can see the model solutions.
         </div>
       </div>
       {problem.platform === 'planets' && problem.topicID && false && (
-        <div className="border-b border-[#363636] -mx-4 px-4 pb-4 mb-4 space-y-2">
+        <div className="border-b border-[color:var(--border-muted)] -mx-4 px-4 pb-4 mb-4 space-y-2">
           <Link
             href={`https://planets.algopro.hu/map#${problem.topicID}`}
             target="_blank"
           >
-            <button className="inline-flex items-center whitespace-nowrap px-4 py-2.5 bg-indigo-900 hover:bg-indigo-800 active:bg-indigo-700 rounded-md text-sm font-medium">
+            <button className="inline-flex items-center whitespace-nowrap px-4 py-2.5 theme-button-primary rounded-md text-sm font-medium">
               <FontAwesomeIcon
                 className="mr-2 inline h-4 w-4"
                 aria-hidden="true"
@@ -71,7 +71,7 @@ const Solutions = ({
               <span className="text-center flex-1">Back to the planet</span>
             </button>
           </Link>
-          <div className="text-gray-400 text-sm">
+          <div className="theme-text-muted text-sm">
             You can see the task on the roadmap, and the next steps.
           </div>
         </div>
@@ -89,7 +89,7 @@ const Solutions = ({
           </button>*/}
         </Link>
       </div>
-      <div className="h-full mt-4 -mx-4 border-y border-gray-700">
+      <div className="h-full mt-4 -mx-4 border-y theme-border">
         <CodeEditor
           value={solutions[languages[selected]]}
           language={

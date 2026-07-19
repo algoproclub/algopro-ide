@@ -173,7 +173,7 @@ const TestCaseInfoModal = ({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div className="bg-gray-800 rounded-lg shadow-xl transform transition-all w-full max-w-7xl mx-auto">
+            <div className="theme-surface-raised border theme-border rounded-lg shadow-xl transform transition-all w-full max-w-7xl mx-auto">
               <div className="px-4 sm:px-6 pt-4 pb-2">
                 <Dialog.Title
                   as="h3"
@@ -189,10 +189,10 @@ const TestCaseInfoModal = ({
                     <div className="flex flex-col gap-2">
                       <button
                         className={classNames(
-                          'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
+                          'inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none',
                           inputDownloadURL === null
-                            ? 'bg-gray-700'
-                            : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
+                            ? 'cursor-not-allowed'
+                            : 'focus:ring-2 focus:ring-[color:var(--accent)]'
                         )}
                         disabled={inputDownloadURL === null}
                         onClick={() => {
@@ -209,10 +209,10 @@ const TestCaseInfoModal = ({
                       </button>
                       <button
                         className={classNames(
-                          'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
+                          'inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none',
                           outputDownloadURL === null
-                            ? 'bg-gray-700'
-                            : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
+                            ? 'cursor-not-allowed'
+                            : 'focus:ring-2 focus:ring-[color:var(--accent)]'
                         )}
                         disabled={outputDownloadURL === null}
                         onClick={() => {
@@ -229,10 +229,10 @@ const TestCaseInfoModal = ({
                       </button>
                       <button
                         className={classNames(
-                          'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
+                          'inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none',
                           inputDownloadURL === null
-                            ? 'bg-gray-700'
-                            : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
+                            ? 'cursor-not-allowed'
+                            : 'focus:ring-2 focus:ring-[color:var(--accent)]'
                         )}
                         disabled={inputDownloadURL === null}
                         onClick={() => {
@@ -246,10 +246,10 @@ const TestCaseInfoModal = ({
                       </button>
                       <button
                         className={classNames(
-                          'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
+                          'inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none',
                           outputDownloadURL === null
-                            ? 'bg-gray-700'
-                            : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
+                            ? 'cursor-not-allowed'
+                            : 'focus:ring-2 focus:ring-[color:var(--accent)]'
                         )}
                         disabled={outputDownloadURL === null}
                         onClick={() => {
@@ -272,7 +272,7 @@ const TestCaseInfoModal = ({
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
-                  className="rounded-md text-gray-200 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="rounded-md theme-text-muted hover:text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                   onClick={closeWithoutSaving}
                 >
                   <span className="sr-only">Close</span>
@@ -298,7 +298,7 @@ const USACOTestCase = ({
     data.title?.toLowerCase() === 'correct answer'
       ? 'bg-green-700 border-green-700'
       : data.title === 'Did not run'
-        ? 'bg-gray-700 border-gray-700'
+        ? 'bg-[color:var(--surface-active)] border-[color:var(--border-strong)]'
         : data.title?.toLowerCase()?.includes('partially')
           ? 'bg-yellow-700 border-yellow-700'
           : 'bg-red-700 border-red-700';
@@ -408,12 +408,12 @@ export default function USACOResults({
   return (
     <div className="mt-3">
       <div className="pb-3">
-        <div className="flex items-center font-medium text-gray-200 border-gray-700 space-x-2">
+        <div className="flex items-center font-medium theme-text theme-border space-x-2">
           <span>
             {!['error', 'resolved'].includes(data.statusCode) && (
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'gear' }}
-                className="w-3.5 h-3.5 inline text-gray-400 animate-spin-slow"
+                className="w-3.5 h-3.5 inline theme-text-muted animate-spin-slow"
               />
             )}
             {data.statusCode === 'error' && (
@@ -459,7 +459,7 @@ export default function USACOResults({
           </span>
         </div>
         {submissionTime && (
-          <div className="text-sm text-gray-300">
+          <div className="text-sm theme-text-muted">
             {startTime ? (
               <span>
                 Time:{' '}
@@ -481,7 +481,7 @@ export default function USACOResults({
         {data.link && (
           <a
             href={data.link}
-            className="text-indigo-300 hover:underline break-all"
+            className="text-[color:var(--accent-hover)] hover:text-[color:var(--accent)] hover:underline break-all"
             target="_blank"
             rel="noreferrer"
           >
@@ -499,19 +499,19 @@ export default function USACOResults({
       )}
 
       {(output || data.testCases) && (
-        <div className="border-t -mx-4 border-gray-700 " />
+        <div className="border-t -mx-4 theme-border " />
       )}
       {output && (
         <div className="pt-3">
-          <pre className="font-mono text-gray-300 leading-tight mt-2 text-sm bg-gray-900 rounded p-3 border border-gray-700 overflow-auto">
+          <pre className="font-mono theme-text leading-tight mt-2 text-sm theme-surface-muted rounded p-3 border theme-border overflow-auto">
             {output}
           </pre>
           {equalUpToTrim && (
-            <p className="font-bold text-gray-200 mt-3">
+            <p className="font-bold theme-text mt-3">
               Your output contains extra whitespace. This is an error; see{' '}
               <a
                 href="https://usaco.guide/general/io?lang=cpp#usaco-note---extra-whitespace"
-                className="text-indigo-300"
+                className="text-[color:var(--accent-hover)] hover:text-[color:var(--accent)]"
               >
                 here
               </a>{' '}

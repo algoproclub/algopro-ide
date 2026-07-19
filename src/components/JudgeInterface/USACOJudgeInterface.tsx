@@ -105,33 +105,33 @@ export default function JudgeInterface({
     <div className="relative h-full flex flex-col">
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 pb-0">
-          <p className="text-gray-400 text-sm mb-4">
+          <p className="theme-text-muted text-sm mb-4">
             Early access. Report issues to Github. Do not spam submit.
             {/* Note: You will not be able to submit to a problem in an active contest. */}
             {/* ^ is this necessary? */}
           </p>
           <>
-            <p className="text-gray-100 font-bold text-lg">
+            <p className="theme-text font-bold text-lg">
               <a
                 href={getUSACOContestURL(problem.source || '')}
-                className="text-indigo-300"
+                className="text-[color:var(--accent-hover)] hover:text-[color:var(--accent)]"
                 target="_blank"
                 rel="noreferrer"
               >
                 {problem.source}
               </a>
             </p>
-            <p className="text-gray-100 font-bold text-lg">
+            <p className="theme-text font-bold text-lg">
               <a
                 href={problem.url}
-                className="text-indigo-300"
+                className="text-[color:var(--accent-hover)] hover:text-[color:var(--accent)]"
                 target="_blank"
                 rel="noreferrer"
               >
                 {problem.title}
               </a>
             </p>
-            <p className="text-gray-100 text-sm mb-4">
+            <p className="theme-text text-sm mb-4">
               <span className="font-bold">I/O:</span> {problem.input}/
               {problem.output}
               {problem.input.includes('.in') && (
@@ -145,7 +145,7 @@ export default function JudgeInterface({
             {problem.samples.length > 0 && (
               <button
                 type="button"
-                className="relative flex-shrink-0 inline-flex items-center px-4 py-2 w-40 shadow-sm text-sm font-medium text-white bg-indigo-900 hover:bg-indigo-800 focus:bg-indigo-800 focus:outline-none"
+                className="relative flex-shrink-0 inline-flex items-center px-4 py-2 w-40 shadow-sm text-sm font-medium theme-button-primary focus:outline-none"
                 onClick={handleRunCode}
               >
                 <PlayCircleIcon className="mr-2 h-5 w-5" aria-hidden="true" />
