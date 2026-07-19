@@ -127,8 +127,8 @@ const PageContent = () => {
 
   return (
     <div className="px-2">
-      <div className="mx-auto max-w-7xl border border-gray-600 bg-gray-800 mt-4">
-        <div className="p-4 pl-5 border-b border-gray-600 flex justify-between items-center truncate">
+      <div className="mx-auto max-w-7xl border theme-border theme-surface-raised mt-4">
+        <div className="p-4 pl-5 border-b theme-border flex justify-between items-center truncate">
           <span className="flex items-center truncate">
             <FontAwesomeIcon
               className="flex-shrink-0 w-5 h-5 mr-1.5 inline"
@@ -141,7 +141,11 @@ const PageContent = () => {
           </span>
           <div className="space-x-2 flex items-center">
             <button
-              className={`flex-shrink-0 px-4 py-2.5 ${memberEditorOpen ? 'bg-red-700 hover:bg-red-800 active:bg-red-900' : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'} rounded-md`}
+              className={`flex-shrink-0 px-4 py-2.5 rounded-md ${
+                memberEditorOpen
+                  ? 'bg-[color:var(--danger)] hover:bg-[color:var(--danger-hover)] text-[color:var(--text-inverted)]'
+                  : 'theme-button-primary'
+              }`}
               onClick={() => {
                 setMemberEditorOpen(prev => !prev);
               }}
@@ -149,7 +153,7 @@ const PageContent = () => {
               {memberEditorOpen ? 'Stop editing members' : 'Edit members'}
             </button>
             <Link href={`/groups/${group}/classes`}>
-              <button className="px-4 py-2.5 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 rounded-md flex items-center">
+              <button className="px-4 py-2.5 border rounded-md flex items-center theme-button-secondary">
                 Classes
                 <FontAwesomeIcon
                   className="ml-2 w-4 h-4 inline"
@@ -160,12 +164,12 @@ const PageContent = () => {
           </div>
         </div>
         {memberEditorOpen && (
-          <div className="p-4 border-b border-gray-600 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-gray-300">Add student:</div>
+          <div className="p-4 border-b theme-border flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm theme-text-muted">Add student:</div>
             <div className="flex flex-1 items-center gap-2">
               <div className="relative w-full">
                 <input
-                  className="w-full px-3 py-2 rounded-md bg-gray-800 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 rounded-md border theme-input focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                   placeholder="Search by name…"
                   type="text"
                   value={searchQuery}
@@ -174,16 +178,16 @@ const PageContent = () => {
                   }}
                 />
                 {normalizedQuery.length > 0 && (
-                  <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-600 bg-gray-800 shadow-lg">
+                  <div className="absolute z-10 mt-1 w-full rounded-md border theme-border theme-surface-raised shadow-lg">
                     {filteredSuggestions.length === 0 ? (
-                      <div className="px-3 py-2 text-sm text-gray-400">
+                      <div className="px-3 py-2 text-sm theme-text-muted">
                         No matches.
                       </div>
                     ) : (
                       filteredSuggestions.map(data => (
                         <div
                           key={data.uid}
-                          className="w-full px-3 py-2 hover:bg-gray-700 flex items-center justify-between gap-2"
+                          className="w-full px-3 py-2 hover:bg-[color:var(--surface-hover)] flex items-center justify-between gap-2"
                         >
                           <button
                             type="button"
@@ -197,7 +201,11 @@ const PageContent = () => {
                           </button>
                           <button
                             type="button"
-                            className={`${data.isInGroup ? 'bg-red-700 hover:bg-red-800 active:bg-red-900' : 'bg-green-700 hover:bg-green-800 active:bg-green-900'} rounded-md px-2 py-1 text-xs`}
+                            className={`${
+                              data.isInGroup
+                                ? 'bg-[color:var(--danger)] hover:bg-[color:var(--danger-hover)]'
+                                : 'bg-[color:var(--success)] hover:brightness-95'
+                            } rounded-md px-2 py-1 text-xs text-[color:var(--text-inverted)]`}
                             onClick={() => toggleInGroup(data)}
                           >
                             {data.isInGroup ? 'Remove' : 'Add'}
@@ -209,7 +217,7 @@ const PageContent = () => {
                 )}
               </div>
               <button
-                className="px-4 py-2.5 bg-gray-600 hover:bg-gray-500 active:bg-gray-400 rounded-md whitespace-nowrap"
+                className="px-4 py-2.5 border rounded-md whitespace-nowrap theme-button-secondary"
                 onClick={() => setShowAllStudents(prev => !prev)}
               >
                 {showAllStudents ? 'List all members' : 'List all students'}
@@ -217,7 +225,7 @@ const PageContent = () => {
             </div>
           </div>
         )}
-        <div className="w-full divide-y divide-gray-700 bg-gray-900 min-h-4">
+        <div className="w-full divide-y divide-[color:var(--border-muted)] theme-surface min-h-4">
           {listStudents.map(data => (
             <div key={data.uid} className="flex items-center justify-between">
               <div className="p-4">{data.name}</div>
@@ -225,7 +233,11 @@ const PageContent = () => {
                 <div className="px-4 py-2.5">
                   <button
                     onClick={() => toggleInGroup(data)}
-                    className={`${data.isInGroup ? 'bg-red-700 hover:bg-red-800 active:bg-red-900' : 'bg-green-700 hover:bg-green-800 active:bg-green-900'} rounded-md px-3 py-1.5 flex items-center`}
+                    className={`${
+                      data.isInGroup
+                        ? 'bg-[color:var(--danger)] hover:bg-[color:var(--danger-hover)]'
+                        : 'bg-[color:var(--success)] hover:brightness-95'
+                    } rounded-md px-3 py-1.5 flex items-center text-[color:var(--text-inverted)]`}
                   >
                     {data.isInGroup ? 'Remove' : 'Add'}
                     {data.isInGroup ? (

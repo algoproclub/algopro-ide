@@ -145,8 +145,8 @@ const PageContent = () => {
           onClose={() => setIsOpen(false)}
         />
       )}
-      <div className="mx-auto max-w-7xl border border-gray-600 bg-gray-800 mt-4">
-        <div className="p-4 border-b border-gray-600 flex items-center">
+      <div className="mx-auto max-w-7xl border theme-border theme-surface-raised mt-4">
+        <div className="p-4 border-b theme-border flex items-center">
           <Dropdown
             items={schoolNames}
             label="School"
@@ -154,7 +154,7 @@ const PageContent = () => {
             setSelected={setSchoolInd}
           />
           <button
-            className="flex-shrink-0 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-md mt-4 ml-3 flex items-center"
+            className="flex-shrink-0 px-4 py-2.5 theme-button-primary rounded-md mt-4 ml-3 flex items-center"
             onClick={() => setIsOpen(true)}
           >
             New group
@@ -164,10 +164,10 @@ const PageContent = () => {
             />
           </button>
         </div>
-        <div className="bg-gray-900 divide-y divide-gray-700 min-h-4">
+        <div className="theme-surface divide-y divide-[color:var(--border-muted)] min-h-4">
           {groups.map(group => (
             <div
-              className="flex items-center justify-between divide-x divide-gray-700"
+              className="flex items-center justify-between divide-x divide-[color:var(--border-muted)]"
               key={group.id}
             >
               <div className="px-4 py-2 flex items-center truncate">
@@ -177,14 +177,14 @@ const PageContent = () => {
                 />
                 <span className="truncate">
                   <span className="font-semibold">{group.name} </span>
-                  <span className="text-gray-300">({group.id})</span>
+                  <span className="theme-text-muted">({group.id})</span>
                 </span>
               </div>
               <div className="px-3 py-2 flex-shrink-0">
                 <Link href={`groups/${group.id}`}>
                   <button
                     title="Jump to group edit page"
-                    className="px-2 py-1 rounded-md hover:bg-gray-700"
+                    className="px-2 py-1 rounded-md hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]"
                   >
                     <FontAwesomeIcon
                       icon={{ prefix: 'fas', iconName: 'arrow-right' }}
@@ -194,7 +194,7 @@ const PageContent = () => {
                 </Link>
                 <button
                   title="Delete group"
-                  className="px-2 py-1 rounded-md hover:bg-gray-700"
+                  className="px-2 py-1 rounded-md hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]"
                   onClick={() => {
                     deleteGroup(group.id);
                   }}

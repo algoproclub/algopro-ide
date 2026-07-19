@@ -51,7 +51,7 @@ const PageContent = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-2">
-      <div className="mt-6 bg-gray-800 border border-gray-700 p-4 flex flex-col space-y-4">
+      <div className="mt-6 theme-surface-raised border theme-border p-4 flex flex-col space-y-4">
         <div className="flex flex-col sm:flex-row justfiy-center sm:justify-start sm:items-center sm:space-x-3 space-y-3 sm:space-y-0">
           <Dropdown
             items={schools.map(sc => sc.name)}
@@ -67,7 +67,7 @@ const PageContent = () => {
           />
           <div className="sm:pt-5 w-full sm:w-48 flex-shrink-0">
             <button
-              className="py-2 w-full sm:w-48 rounded-md text-sm bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800"
+              className="py-2 w-full sm:w-48 rounded-md text-sm theme-button-primary"
               onClick={generateLink}
             >
               Generate
@@ -77,7 +77,7 @@ const PageContent = () => {
         <div className="flex items-center space-x-3 w-full">
           <input
             value={link}
-            className="block h-8 bg-gray-800 border-0 border-b focus:outline-0 focus:ring-0 py-1 px-2 border-gray-600 w-full text-sm cursor-text"
+            className="block h-8 theme-input border-0 border-b focus:outline-0 focus:ring-0 py-1 px-2 w-full text-sm cursor-text"
           />
           <div className="flex-shrink-0 w-48">
             <CopyButton
