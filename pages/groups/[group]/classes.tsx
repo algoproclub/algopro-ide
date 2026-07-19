@@ -28,6 +28,15 @@ const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   }
 );
 
+const panelClass = 'border theme-border theme-surface-raised';
+const iconButtonClass =
+  'px-2 py-1 rounded-md hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]';
+const secondaryButtonClass =
+  'border theme-border theme-button-secondary rounded-md';
+const primaryButtonClass = 'theme-button-primary rounded-md';
+const dangerButtonClass =
+  'bg-[color:var(--danger)] hover:bg-[color:var(--danger-hover)] text-[color:var(--text-inverted)] rounded-md';
+
 type ClassData = {
   tasks: URLProblem[];
   creationTime: number;
@@ -166,9 +175,7 @@ const ClassDropdown = ({
         {({ open }) => (
           <div className="space-y-2">
             <Disclosure.Button className="w-full">
-              <div
-                className={`flex items-center justify-center w-full border px-4 py-2.5 rounded-md border-gray-600 hover:border-gray-500 text-[0.95rem] bg-gray-800`}
-              >
+              <div className="flex items-center justify-center w-full border theme-border px-4 py-2.5 rounded-md hover:border-[color:var(--border-strong)] hover:bg-[color:var(--surface-hover)] text-[0.95rem] theme-surface-raised">
                 Class {classID}
                 <FontAwesomeIcon
                   icon={{ prefix: 'fas', iconName: 'chevron-down' }}
@@ -178,8 +185,8 @@ const ClassDropdown = ({
                 />
               </div>
             </Disclosure.Button>
-            <Disclosure.Panel className="relative border border-gray-600">
-              <div className="flex items-center justify-between bg-gray-800 px-3 py-2 border-b border-gray-600 space-x-2">
+            <Disclosure.Panel className="relative border theme-border">
+              <div className="flex items-center justify-between theme-surface-raised px-3 py-2 border-b theme-border space-x-2">
                 <div className="flex items-center space-x-2">
                   <span className="font-bold">Tasks</span>
                   <FontAwesomeIcon
@@ -191,7 +198,7 @@ const ClassDropdown = ({
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
-                    className="rounded-md bg-gray-600  px-3 py-1.5 hover:bg-gray-500 active:bg-gray-400 flex items-center"
+                    className={`px-3 py-1.5 flex items-center ${secondaryButtonClass}`}
                     onClick={copyContent}
                   >
                     Copy
@@ -201,7 +208,7 @@ const ClassDropdown = ({
                     />
                   </button>
                   <button
-                    className="rounded-md bg-green-700  px-3 py-1.5 hover:bg-green-800 active:bg-green-900 flex items-center"
+                    className="rounded-md bg-[color:var(--success)] hover:brightness-95 text-[color:var(--text-inverted)] px-3 py-1.5 flex items-center"
                     onClick={addNewTasks}
                   >
                     <span>New</span>
@@ -212,15 +219,15 @@ const ClassDropdown = ({
                   </button>
                 </div>
               </div>
-              <div className="divide-y divide-gray-700 text-sm border-b border-gray-600">
+              <div className="divide-y divide-[color:var(--border-muted)] text-sm border-b theme-border">
                 {data.tasks.map(({ platform, id, url }, index) => (
                   <div
                     key={index}
-                    className="flex items-stretch justify-between bg-gray-900"
+                    className="flex items-stretch justify-between theme-surface"
                   >
                     <a
                       href={url}
-                      className="px-3 py-2 underline hover:text-indigo-200"
+                      className="px-3 py-2 underline text-[color:var(--accent-hover)] hover:text-[color:var(--accent)]"
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -231,11 +238,11 @@ const ClassDropdown = ({
                       )}
                       {!platform && <>{url}</>}
                     </a>
-                    <div className="border-l px-3 py-2 border-gray-700 flex items-center space-x-2">
+                    <div className="border-l px-3 py-2 border-[color:var(--border-muted)] flex items-center space-x-2">
                       {platform && id && (
                         <a
                           title="Jump to class edit page"
-                          className="px-2 py-1 rounded-md hover:bg-gray-700"
+                          className={iconButtonClass}
                           href={`/edit/${platform}/${id}`}
                           target="_blank"
                           rel="noreferrer"
@@ -251,7 +258,7 @@ const ClassDropdown = ({
                       )}
                       <button
                         title="Edit task"
-                        className="px-2 py-1 rounded-md hover:bg-gray-700"
+                        className={iconButtonClass}
                         onClick={() => {
                           setURL(url);
                           setOnSaveTask(() => (url: string) => {
@@ -273,7 +280,7 @@ const ClassDropdown = ({
                       </button>
                       <button
                         title="Delete task"
-                        className="px-2 py-1 rounded-md hover:bg-gray-700"
+                        className={iconButtonClass}
                         onClick={() => {
                           onUpdate({
                             ...data,
@@ -290,15 +297,15 @@ const ClassDropdown = ({
                   </div>
                 ))}
               </div>
-              <div className="p-4 bg-gray-800 space-x-2.5 text-[0.95rem]">
+              <div className="p-4 theme-surface-raised space-x-2.5 text-[0.95rem]">
                 <button
-                  className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800"
+                  className={`px-4 py-2 ${primaryButtonClass}`}
                   onClick={onSave}
                 >
                   Save
                 </button>
                 <button
-                  className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 active:bg-red-800"
+                  className={`px-4 py-2 ${dangerButtonClass}`}
                   onClick={onDelete}
                 >
                   Delete
@@ -387,8 +394,8 @@ const PageContent = () => {
     <div className="px-2">
       {group && (
         <div className="mx-auto max-w-7xl mt-4 space-y-3">
-          <div className="border border-gray-600 bg-gray-800 flex-col">
-            <div className="p-4 pl-5 border-b border-gray-600 flex justify-between items-center truncate">
+          <div className={`${panelClass} flex-col`}>
+            <div className="p-4 pl-5 border-b theme-border flex justify-between items-center truncate">
               <span className="flex items-center truncate">
                 <FontAwesomeIcon
                   className="flex-shrink-0 w-5 h-5 mr-1.5"
@@ -405,12 +412,12 @@ const PageContent = () => {
                 Class ID
                 <input
                   type="text"
-                  className="mt-1 w-full bg-gray-900 border border-gray-600 text-sm"
+                  className="mt-1 w-full border theme-input text-sm"
                   onChange={e => setNewID(e.target.value)}
                 />
               </label>
               <button
-                className="flex-shrink-0 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-md flex items-center"
+                className="flex-shrink-0 px-4 py-2.5 theme-button-primary rounded-md flex items-center"
                 onClick={() => {
                   if (newID in classes) {
                     alert('The entered ID already exists.');
