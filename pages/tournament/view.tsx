@@ -29,6 +29,7 @@ const CodeView = () => {
     <div className="h-full w-full relative">
       <div className="absolute inset-0">
         {fileData && lang && (
+          // The spectator editor intentionally keeps its dark syntax theme.
           <LazyRealtimeEditor
             theme={'dark'}
             language={{ cpp: 'cpp', java: 'java', py: 'python' }[lang]}
@@ -50,7 +51,7 @@ const CodeView = () => {
           />
         )}
       </div>
-      <p className="text-sm font-mono text-gray-200 pl-4 status-node" />
+      <p className="text-sm font-mono theme-text pl-4 status-node" />
     </div>
   );
 };
@@ -73,7 +74,7 @@ const ResultView = ({ startTime }: { startTime: number }) => {
   }, []);
 
   return (
-    <div className="px-4 overflow-y-auto bg-gray-900">
+    <div className="px-4 overflow-y-auto theme-surface-muted">
       {statusData ? (
         <USACOResults
           data={statusData}
@@ -81,7 +82,7 @@ const ResultView = ({ startTime }: { startTime: number }) => {
           startTime={startTime}
         />
       ) : (
-        <div className="font-semibold text-gray-400 p-4 text-[0.92rem]">
+        <div className="font-semibold theme-text-muted p-4 text-[0.92rem]">
           No submission yet.
         </div>
       )}
@@ -101,11 +102,11 @@ const SolutionViewContent = ({
   onFileChange: (fileID: string) => void;
 }) => {
   return (
-    <div className="flex flex-col min-h-0 overflow-hidden w-full">
-      <div className="px-4 py-2 border-b border-gray-600 font-semibold text-gray-400 bg-gray-900 min-h-0 truncate flex items-center justify-between">
+    <div className="flex flex-col min-h-0 overflow-hidden w-full theme-surface">
+      <div className="px-4 py-2 border-b theme-border font-semibold theme-text-muted theme-surface-muted min-h-0 truncate flex items-center justify-between">
         <div className="relative w-full">
           <select
-            className="appearance-none bg-gray-800 border border-gray-600 rounded-md p-2 text-sm text-white hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition w-full"
+            className="appearance-none theme-input border rounded-md p-2 text-sm hover:border-[color:var(--accent)] focus:outline-none focus:ring-2 transition w-full"
             value={selectedFileID}
             onChange={e => onFileChange(e.target.value)}
           >
@@ -132,7 +133,7 @@ const SolutionViewContent = ({
             >
               <div
                 className={classNames(
-                  'absolute w-full bg-gray-700 group-hover:bg-gray-600 group-active:bg-gray-600 group-focus:bg-gray-600 pointer-events-none transition',
+                  'absolute w-full bg-[color:var(--gutter)] group-hover:bg-[color:var(--gutter-hover)] group-active:bg-[color:var(--gutter-hover)] group-focus:bg-[color:var(--gutter-hover)] pointer-events-none transition',
                   'top-[7px] bottom-[7px]'
                 )}
               ></div>
@@ -232,7 +233,7 @@ const SpectatePage = () => {
 
   return (
     <WithAdminLogin>
-      <div className="h-full w-full flex divide-x divide-gray-700">
+      <div className="h-full w-full flex divide-x divide-[color:var(--border-muted)] theme-page">
         <SolutionView
           fileID={files?.[0]}
           startTime={startTime}
