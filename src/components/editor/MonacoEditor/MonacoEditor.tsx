@@ -594,10 +594,12 @@ export default function MonacoEditor({
       automaticLayout: editorOptions?.automaticLayout,
       insertSpaces: editorOptions?.insertSpaces,
       readOnly: editorOptions?.readOnly,
-      tabSize: editorOptions?.tabSize,
       fontSize: editorOptions?.fontSize,
       ...monacoOptions,
     });
+    editorRef.current
+      .getModel()
+      ?.updateOptions({ tabSize: editorOptions?.tabSize });
   }, [editor, editorOptions, monacoOptions]);
 
   useEffect(() => {
