@@ -22,6 +22,7 @@ const ProfileSettings = ({
   const [defaultLanguage, setDefaultLanguage] = useState<Language>('cpp');
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
   const [tabSize, setTabSize] = useState<number>(-1);
+  const [fontSize, setFontSize] = useState<number>(-1);
   const [lightMode, setLightMode] = useState<boolean>(false);
   const [rainbowIndent, setRainbowIndent] = useState<boolean>(false);
   const [manualSubmission, setManualSubmission] = useState<boolean>(false);
@@ -48,6 +49,7 @@ const ProfileSettings = ({
       setDefaultLanguage(userData?.defaultLanguage ?? 'cpp');
       setEditorMode(userData?.editorMode ?? 'Normal');
       setTabSize(userData?.tabSize ?? -1);
+      setFontSize(userData?.fontSize ?? -1);
       setLightMode(userData?.lightMode ?? false);
       setRainbowIndent(userData?.rainbowIndent ?? false);
       setManualSubmission(userData?.manualSubmission ?? false);
@@ -126,6 +128,7 @@ const ProfileSettings = ({
       discordID,
       editorMode,
       tabSize,
+      fontSize,
       lightMode,
       rainbowIndent,
       manualSubmission,
@@ -216,6 +219,11 @@ const ProfileSettings = ({
                       tabSize={tabSize}
                       onTabSizeChange={size => {
                         setTabSize(size);
+                        dirtyRef.current = true;
+                      }}
+                      fontSize={fontSize}
+                      onFontSizeChange={size => {
+                        setFontSize(size);
                         dirtyRef.current = true;
                       }}
                       lightMode={lightMode}
