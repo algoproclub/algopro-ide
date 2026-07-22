@@ -32,6 +32,18 @@ const INSERT_LINE_AFTER_DEFAULT_BINDING =
   monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter;
 const INSERT_LINE_AFTER_REBOUND_BINDING =
   monaco.KeyMod.Alt | monaco.KeyCode.Enter;
+const INCREASE_FONT_SIZE_BINDING =
+  monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Comma;
+const INCREASE_FONT_SIZE_NUMPAD_BINDING =
+  monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.NumpadAdd;
+const DECREASE_FONT_SIZE_BINDING =
+  monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Minus;
+const DECREASE_FONT_SIZE_NUMPAD_BINDING =
+  monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.NumpadSubtract;
+const RESET_FONT_SIZE_BINDING =
+  monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Digit0;
+const RESET_FONT_SIZE_NUMPAD_BINDING =
+  monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Numpad0;
 
 const LANGUAGE_EXTENSION_LOADERS: Record<string, () => Promise<unknown>> = {
   cpp: () => import('@codingame/monaco-vscode-cpp-default-extension'),
@@ -76,7 +88,7 @@ function loadLanguageExtension(language?: string | null): Promise<void> {
 const rebindAction = (
   id: string,
   oldBinding: number | undefined,
-  newBinding?: number
+  newBinding?: number | number[]
 ) => {
   const rules: monaco.editor.IKeybindingRule[] = [];
 
@@ -88,11 +100,21 @@ const rebindAction = (
   }
 
   if (newBinding !== undefined) {
-    rules.push({
-      command: id,
-      keybinding: newBinding,
-      when: EDITOR_TEXT_FOCUS,
-    });
+    if (typeof newBinding === 'number') {
+      rules.push({
+        command: id,
+        keybinding: newBinding,
+        when: EDITOR_TEXT_FOCUS,
+      });
+    } else {
+      for (const binding of newBinding) {
+        rules.push({
+          command: id,
+          keybinding: binding,
+          when: EDITOR_TEXT_FOCUS,
+        });
+      }
+    }
   }
 
   return monaco.editor.addKeybindingRules(rules);
@@ -243,7 +265,10 @@ export default function MonacoEditor({
 
   useEffect(() => {
     let disposed = false;
-    let keybindingDisposable: monaco.IDisposable | undefined;
+    let keybindingInsertLineAfterDisposable: monaco.IDisposable | undefined;
+    let keybindingIncreaseFontSizeDisposable: monaco.IDisposable | undefined;
+    let keybindingDecreaseFontSizeDisposable: monaco.IDisposable | undefined;
+    let keybindingResetFontSizeDisposable: monaco.IDisposable | undefined;
     let createdEditorApp: EditorApp | null = null;
 
     void Promise.all([
@@ -299,10 +324,25 @@ export default function MonacoEditor({
         enhancementsRef.current = enhancements;
 
         // Ctrl+Enter for "Insert Line Below" conflicts with our shortcut for running code.
-        keybindingDisposable = rebindAction(
+        keybindingInsertLineAfterDisposable = rebindAction(
           'editor.action.insertLineAfter',
           INSERT_LINE_AFTER_DEFAULT_BINDING,
           INSERT_LINE_AFTER_REBOUND_BINDING
+        );
+        keybindingIncreaseFontSizeDisposable = rebindAction(
+          'editor.action.fontZoomIn',
+          undefined,
+          [INCREASE_FONT_SIZE_BINDING, INCREASE_FONT_SIZE_NUMPAD_BINDING]
+        );
+        keybindingDecreaseFontSizeDisposable = rebindAction(
+          'editor.action.fontZoomOut',
+          undefined,
+          [DECREASE_FONT_SIZE_BINDING, DECREASE_FONT_SIZE_NUMPAD_BINDING]
+        );
+        keybindingResetFontSizeDisposable = rebindAction(
+          'editor.action.fontZoomReset',
+          undefined,
+          [RESET_FONT_SIZE_BINDING, RESET_FONT_SIZE_NUMPAD_BINDING]
         );
 
         if (initialSaveViewState) {
@@ -324,8 +364,14 @@ export default function MonacoEditor({
 
     return () => {
       disposed = true;
-      keybindingDisposable?.dispose();
-      keybindingDisposable = undefined;
+      keybindingInsertLineAfterDisposable?.dispose();
+      keybindingInsertLineAfterDisposable = undefined;
+      keybindingIncreaseFontSizeDisposable?.dispose();
+      keybindingIncreaseFontSizeDisposable = undefined;
+      keybindingDecreaseFontSizeDisposable?.dispose();
+      keybindingDecreaseFontSizeDisposable = undefined;
+      keybindingResetFontSizeDisposable?.dispose();
+      keybindingResetFontSizeDisposable = undefined;
 
       const currentEditorApp = editorAppRef.current ?? createdEditorApp;
 
