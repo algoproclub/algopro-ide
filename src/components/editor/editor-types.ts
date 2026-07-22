@@ -15,6 +15,7 @@ export interface SharedEditorOptions {
   insertSpaces?: boolean;
   readOnly?: boolean;
   tabSize?: number;
+  fontSize?: number;
 }
 
 export interface EditorLspOptions {

@@ -119,7 +119,7 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
       theme={props.theme === 'light' ? githubLight : vscodeDark}
       onChange={(val: string, _) => props.onChange?.(val)}
       height="100%"
-      style={{ fontSize: '13px' }}
+      style={{ fontSize: `${props.editorOptions?.fontSize ?? 13}px` }}
       readOnly={props.editorOptions?.readOnly ?? false}
       extensions={extensions}
       onCreateEditor={view => props.onReady?.(createEditorHandle(view))}
