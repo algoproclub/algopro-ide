@@ -54,7 +54,7 @@ export const CodeInterface = ({
   }, [editorHandle, setMainCodemirrorEditor, setMainMonacoEditor]);
 
   const {
-    userData: { tabSize, lightMode, rainbowIndent },
+    userData: { tabSize, fontSize, lightMode, rainbowIndent },
     templateCode,
   } = useUserContext();
 
@@ -77,6 +77,7 @@ export const CodeInterface = ({
               insertSpaces: false,
               readOnly,
               tabSize,
+              fontSize,
             }}
             onReady={handle => {
               setEditorHandle(handle);
