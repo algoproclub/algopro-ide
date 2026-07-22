@@ -163,7 +163,9 @@ function createEditorAppConfig(
       },
       links: false,
       'semanticHighlighting.enabled': true,
+      lineNumbersMinChars: 0, // default 5 creates a huge gap with large fonts
       tabSize: props.editorOptions?.tabSize,
+      fontSize: props.editorOptions?.fontSize ?? 13,
       theme: props.resolvedTheme,
       ...props.monacoOptions,
     },
@@ -593,6 +595,7 @@ export default function MonacoEditor({
       insertSpaces: editorOptions?.insertSpaces,
       readOnly: editorOptions?.readOnly,
       tabSize: editorOptions?.tabSize,
+      fontSize: editorOptions?.fontSize,
       ...monacoOptions,
     });
   }, [editor, editorOptions, monacoOptions]);
