@@ -57,6 +57,7 @@ export const WorkspaceSettingsModal = ({
   const [defaultLanguage, setDefaultLanguage] = useState<Language>('cpp');
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
   const [tabSize, setTabSize] = useState<number>(-1);
+  const [fontSize, setFontSize] = useState<number>(-1);
   const [lightMode, setLightMode] = useState<boolean>(false);
   const [rainbowIndent, setRainbowIndent] = useState<boolean>(false);
   const [manualSubmission, setManualSubmission] = useState<boolean>(false);
@@ -75,6 +76,7 @@ export const WorkspaceSettingsModal = ({
       setDefaultLanguage(userData.defaultLanguage ?? '');
       setEditorMode(userData.editorMode);
       setTabSize(userData.tabSize);
+      setFontSize(userData.fontSize);
       setLightMode(userData.lightMode);
       setRainbowIndent(userData.rainbowIndent);
       setManualSubmission(userData.manualSubmission);
@@ -138,6 +140,7 @@ export const WorkspaceSettingsModal = ({
       discordID,
       editorMode,
       tabSize,
+      fontSize,
       lightMode,
       rainbowIndent,
       manualSubmission,

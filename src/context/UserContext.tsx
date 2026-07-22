@@ -48,6 +48,7 @@ export type UserData = {
   id: string;
   editorMode: EditorMode;
   tabSize: number;
+  fontSize: number;
   lightMode: boolean;
   rainbowIndent: boolean;
   defaultPermission: 'READ_WRITE' | 'READ' | 'PRIVATE';
@@ -139,6 +140,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         id: user.uid,
         editorMode: data.editorMode ?? 'Normal',
         tabSize: data.tabSize ?? 4,
+        fontSize: data.fontSize ?? 13,
         lightMode: data.lightMode ?? false,
         rainbowIndent: data.rainbowIndent ?? false,
         defaultPermission: data.defaultPermission ?? 'READ_WRITE',
