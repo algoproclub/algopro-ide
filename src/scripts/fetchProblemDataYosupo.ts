@@ -124,6 +124,16 @@ function parseYosupoInfoToml(raw: string): YosupoInfo {
 function formatParam(value: bigint) {
   if (value === 0n) return '0';
 
+  let powerOfTwoValue = value + 1n;
+  let powerOfTwoExponent = 0;
+  while (powerOfTwoValue > 1n && powerOfTwoValue % 2n === 0n) {
+    powerOfTwoValue /= 2n;
+    powerOfTwoExponent += 1;
+  }
+  if (powerOfTwoValue === 1n && powerOfTwoExponent >= 20) {
+    return `2^{${powerOfTwoExponent}} - 1`;
+  }
+
   if (value % 100_000n === 0n) {
     let power = 5n;
     while (value % 10n ** (power + 1n) === 0n) {
