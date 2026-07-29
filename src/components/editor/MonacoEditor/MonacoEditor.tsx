@@ -34,7 +34,7 @@ const INSERT_LINE_AFTER_DEFAULT_BINDING =
 const INSERT_LINE_AFTER_REBOUND_BINDING =
   monaco.KeyMod.Alt | monaco.KeyCode.Enter;
 const INCREASE_FONT_SIZE_BINDING =
-  monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Comma;
+  monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Equal;
 const INCREASE_FONT_SIZE_NUMPAD_BINDING =
   monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.NumpadAdd;
 const DECREASE_FONT_SIZE_BINDING =
@@ -335,17 +335,17 @@ export default function MonacoEditor({
         keybindingIncreaseFontSizeDisposable = rebindAction(
           'editor.action.fontZoomIn',
           undefined,
-          [INCREASE_FONT_SIZE_BINDING, INCREASE_FONT_SIZE_NUMPAD_BINDING]
+          [INCREASE_FONT_SIZE_NUMPAD_BINDING, INCREASE_FONT_SIZE_BINDING]
         );
         keybindingDecreaseFontSizeDisposable = rebindAction(
           'editor.action.fontZoomOut',
           undefined,
-          [DECREASE_FONT_SIZE_BINDING, DECREASE_FONT_SIZE_NUMPAD_BINDING]
+          [DECREASE_FONT_SIZE_NUMPAD_BINDING, DECREASE_FONT_SIZE_BINDING]
         );
         keybindingResetFontSizeDisposable = rebindAction(
           'editor.action.fontZoomReset',
           undefined,
-          [RESET_FONT_SIZE_BINDING, RESET_FONT_SIZE_NUMPAD_BINDING]
+          [RESET_FONT_SIZE_NUMPAD_BINDING, RESET_FONT_SIZE_BINDING]
         );
 
         if (initialSaveViewState) {
