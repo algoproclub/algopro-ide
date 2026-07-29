@@ -7,6 +7,7 @@ import ProfileStatus from './ProfileStatus';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import defaultCode from '../../scripts/defaultCode';
+import { DEFAULT_FONT_SIZE_EDITOR } from '../../constants/editorConstants';
 
 const ProfileSettings = ({
   isOpen,
@@ -49,7 +50,7 @@ const ProfileSettings = ({
       setDefaultLanguage(userData?.defaultLanguage ?? 'cpp');
       setEditorMode(userData?.editorMode ?? 'Normal');
       setTabSize(userData?.tabSize ?? -1);
-      setFontSize(userData?.fontSize ?? -1);
+      setFontSize(userData?.fontSize ?? DEFAULT_FONT_SIZE_EDITOR);
       setLightMode(userData?.lightMode ?? false);
       setRainbowIndent(userData?.rainbowIndent ?? false);
       setManualSubmission(userData?.manualSubmission ?? false);

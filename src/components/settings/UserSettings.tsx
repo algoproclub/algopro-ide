@@ -6,7 +6,7 @@ import TemplateCodeSettings from './TemplateCodeSettings';
 import {
   MAX_FONT_SIZE_EDITOR,
   MIN_FONT_SIZE_EDITOR,
-} from '../../scripts/updateSettings';
+} from '../../constants/editorConstants';
 
 const EDITOR_MODES = ['Normal', 'Vim' /*'Emacs'*/];
 
@@ -340,7 +340,11 @@ export default function UserSettings({
                 max={MAX_FONT_SIZE_EDITOR}
                 value={fontSize}
                 onChange={e => {
-                  onFontSizeChange(Number.parseInt(e.target.value));
+                  const value = e.currentTarget.valueAsNumber;
+                  if (Number.isNaN(value)) {
+                    return;
+                  }
+                  onFontSizeChange(Math.round(value));
                 }}
               />
             </div>

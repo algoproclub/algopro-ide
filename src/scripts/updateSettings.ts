@@ -1,8 +1,10 @@
+import {
+  DEFAULT_FONT_SIZE_EDITOR,
+  MAX_FONT_SIZE_EDITOR,
+  MIN_FONT_SIZE_EDITOR,
+} from '../constants/editorConstants';
 import { EditorMode, Language } from '../context/UserContext';
 import { getDatabase, ref, runTransaction } from 'firebase/database';
-
-export const MAX_FONT_SIZE_EDITOR = 42;
-export const MIN_FONT_SIZE_EDITOR = 8;
 
 export const updateUserSettings = async ({
   userID,
@@ -37,7 +39,10 @@ export const updateUserSettings = async ({
       tabSize,
       fontSize: Math.min(
         MAX_FONT_SIZE_EDITOR,
-        Math.max(MIN_FONT_SIZE_EDITOR, fontSize)
+        Math.max(
+          MIN_FONT_SIZE_EDITOR,
+          Number.isNaN(fontSize) ? DEFAULT_FONT_SIZE_EDITOR : fontSize
+        )
       ),
       lightMode,
       rainbowIndent,

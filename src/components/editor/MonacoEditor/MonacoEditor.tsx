@@ -21,6 +21,7 @@ import {
   MONACO_VSCODE_LIGHT_THEME,
   MONACO_WORKSPACE_URI,
 } from './monacoServices';
+import { DEFAULT_FONT_SIZE_EDITOR } from '../../../constants/editorConstants';
 
 const viewStates = new Map<string, monaco.editor.ICodeEditorViewState | null>();
 
@@ -165,7 +166,7 @@ function createEditorAppConfig(
       'semanticHighlighting.enabled': true,
       lineNumbersMinChars: 0, // default 5 creates a huge gap with large fonts
       tabSize: props.editorOptions?.tabSize,
-      fontSize: props.editorOptions?.fontSize ?? 13,
+      fontSize: props.editorOptions?.fontSize ?? DEFAULT_FONT_SIZE_EDITOR,
       theme: props.resolvedTheme,
       ...props.monacoOptions,
     },
@@ -594,7 +595,7 @@ export default function MonacoEditor({
       automaticLayout: editorOptions?.automaticLayout,
       insertSpaces: editorOptions?.insertSpaces,
       readOnly: editorOptions?.readOnly,
-      fontSize: editorOptions?.fontSize,
+      fontSize: editorOptions?.fontSize ?? DEFAULT_FONT_SIZE_EDITOR,
       ...monacoOptions,
     });
     editorRef.current
