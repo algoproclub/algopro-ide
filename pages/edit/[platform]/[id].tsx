@@ -29,6 +29,7 @@ import {
 import WithAdminLogin from '../../../src/components/WithAdminLogin';
 import Dropdown from '../../../src/components/Dropdown';
 import Checkbox from '../../../src/components/Checkbox';
+import { useUserContext } from '../../../src/context/UserContext';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -127,6 +128,9 @@ const HTMLEditor = ({
   };
   const [mode, setMode] = useState('code');
   const [fullscreen, setFullscreen] = useState(false);
+  const {
+    userData: { fontSize },
+  } = useUserContext();
 
   return (
     <div
@@ -193,6 +197,7 @@ const HTMLEditor = ({
             editorOptions={{
               readOnly: readonly,
               automaticLayout: true,
+              fontSize,
             }}
           />
         </div>

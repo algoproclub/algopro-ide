@@ -1,6 +1,8 @@
 import React from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { isLineHighlightSetAtom } from '../atoms/workspace';
+import { DEFAULT_FONT_SIZE_EDITOR } from '../constants/editorConstants';
+import { useUserContext } from '../context/UserContext';
 
 /* eslint-disable no-control-regex */
 const ERASE_LINE = '\x1b[K';
@@ -107,11 +109,18 @@ export const CompilerOutput = ({
   clearLineHighlight?: () => void;
 }): JSX.Element => {
   const lines = output.split('\n');
+  const {
+    userData: { fontSize },
+  } = useUserContext();
 
   return (
     <pre
-      className="text-xs px-4 pt-2 h-full overflow-auto"
-      style={{ color: 'var(--terminal-white)' }}
+      className="px-4 pt-2 h-full overflow-auto"
+      style={{
+        color: 'var(--terminal-white)',
+        fontSize: `${fontSize ?? DEFAULT_FONT_SIZE_EDITOR}px`,
+        lineHeight: `${(fontSize ?? DEFAULT_FONT_SIZE_EDITOR) / 0.75}px`,
+      }}
     >
       {lines.map((line, idx) => (
         <OutputLine

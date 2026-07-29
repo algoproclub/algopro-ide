@@ -8,6 +8,7 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import type { SharedEditorProps } from './editor/editor-types';
 import { CodeEditor } from './editor/CodeEditor';
 import { editor } from 'monaco-editor';
+import { useUserContext } from '../context/UserContext';
 
 const ASAN_REGEX =
   /^([\s\S]*)={65}\s.+AddressSanitizer: (\S+) on address [\s\S]*?main\.cpp:(\d+)/;
@@ -139,6 +140,10 @@ export const StderrOutput = ({
   const savedEditorValue = useAtomValue(savedEditorValueAtom);
   const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
 
+  const {
+    userData: { fontSize },
+  } = useUserContext();
+
   let decodedOutput = output;
   const editorValueLines = savedEditorValue
     ? savedEditorValue.split('\n')
@@ -213,6 +218,7 @@ export const StderrOutput = ({
           readOnly: true,
           automaticLayout: false,
           insertSpaces: true,
+          fontSize,
         }}
         onReady={onReady}
       />

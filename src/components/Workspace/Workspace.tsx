@@ -238,7 +238,7 @@ export default function Workspace({
   }, []);
 
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
-  const { lightMode } = useUserContext().userData;
+  const { lightMode, fontSize } = useUserContext().userData;
 
   useEffect(() => {
     setLanguage('hu' in translations ? 'hu' : 'en');
@@ -301,6 +301,7 @@ export default function Workspace({
                     automaticLayout: false,
                     insertSpaces: false,
                     readOnly,
+                    fontSize,
                   }}
                   onReady={handle => {
                     setInputEditorHandle(handle);

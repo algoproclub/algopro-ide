@@ -246,6 +246,7 @@ export const Output = ({
               readOnly: true,
               automaticLayout: false,
               insertSpaces: true,
+              fontSize: userData.fontSize,
             }}
             onReady={onReady}
           />
