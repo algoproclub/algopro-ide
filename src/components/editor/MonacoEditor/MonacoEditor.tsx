@@ -164,7 +164,7 @@ function createEditorAppConfig(
       },
       links: false,
       'semanticHighlighting.enabled': true,
-      lineNumbersMinChars: 0, // default 5 creates a huge gap with large fonts
+      lineNumbersMinChars: 2, // default 5 creates a huge gap with large fonts
       tabSize: props.editorOptions?.tabSize,
       fontSize: props.editorOptions?.fontSize ?? DEFAULT_FONT_SIZE_EDITOR,
       theme: props.resolvedTheme,
