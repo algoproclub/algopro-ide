@@ -23,6 +23,7 @@ import {
 import animals from '../scripts/animals';
 import { Platform } from '../types/problem';
 import defaultCode from '../scripts/defaultCode';
+import { DEFAULT_FONT_SIZE_EDITOR } from '../constants/editorConstants';
 
 export type Language = 'cpp' | 'java' | 'py';
 export const LANGUAGES: { label: string; value: Language }[] = [
@@ -140,7 +141,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         id: user.uid,
         editorMode: data.editorMode ?? 'Normal',
         tabSize: data.tabSize ?? 4,
-        fontSize: data.fontSize ?? 13,
+        fontSize: data.fontSize ?? DEFAULT_FONT_SIZE_EDITOR,
         lightMode: data.lightMode ?? false,
         rainbowIndent: data.rainbowIndent ?? false,
         defaultPermission: data.defaultPermission ?? 'READ_WRITE',
