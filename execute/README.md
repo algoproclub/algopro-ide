@@ -6,9 +6,7 @@ a Firebase ID token in the `Authorization: Bearer <token>` header.
 Requirements:
 
 - go 1.22
-- isolate v1 installed:
-  - install isolate from tag `v1.10.1` (for example using `git clone --depth 1 --branch v1.10.1 https://github.com/ioi/isolate`)
-  - if not enabled, [enable cgroups v1](https://wiki.archlinux.org/title/cgroups#Enable_cgroup_v1)
+- [Isolate](https://github.com/ioi/isolate) v2.6 installed with cgroups v2
 
 ## how to run
 
@@ -20,7 +18,7 @@ Important: tests might fail because of [this issue](https://github.com/google/sa
 
 `go test .` runs a collection of tests that have been collected from the students and teachers.
 
-Use `go test . -verbose` to view the request and response objects.
+Use `go test -v .` to view the request and response objects.
 
 ## http server
 
@@ -81,48 +79,159 @@ responses:
       - 16: internal error
       - 32: compilation error
     - output: string, the stdout produced by the program (max 5000 bytes)
-    - stderr: string, the stderr produced by the program (including ASAN, max 5000 bytes)
+    - stderr: string, the stderr produced by the program (including ASan, max 10000 bytes)
     - memory: int, memory usage in KiBs
     - time: string, cpu time used in a [string format](https://pkg.go.dev/time#Duration.String)
 
-## Deployment instructions
+## Deployment on Ubuntu 26.04
 
-Install the g++ compiler:
+### Install the compilers and runtimes
 
-```
-$ sudo apt --no-install-recommends install g++
-```
+Install the default C++ compiler:
 
-Install latest pypy3:
-
-```
-$ sudo add-apt-repository ppa:pypy/ppa
-$ sudo apt update
-$ sudo apt install pypy3
+```sh
+sudo apt update
+sudo apt install --no-install-recommends g++
 ```
 
-Build this go binary locally (with `GOOS=linux GOARCH=amd64` if on a different platform), and then copy it to the server via `scp`.
+The execute service invokes `/usr/bin/g++`.
 
-Compile and build IOI Isolate on the server locally:
+Install the latest packaged PyPy release from the
+[PyPy PPA](https://launchpad.net/~pypy/+archive/ubuntu/ppa):
 
-```
-$ sudo apt install git make libcap-dev libsystemd-dev pkgconf
-$ git clone https://github.com/ioi/isolate.git
-$ cd isolate && sudo make install
-$ sudo cp systemd/isolate.service /etc/systemd/system
-$ sudo systemctl start isolate && sudo systemctl enable isolate
-```
-
-Disable "High Entropy mmap randomization" to fix intermittent memory allocation failures with ASan shadow memory enabled (https://github.com/google/sanitizers/issues/1614#issuecomment-2010316781):
-
-```
-$ sudo sysctl vm.mmap_rnd_bits=28
+```sh
+sudo apt install software-properties-common wget
+sudo add-apt-repository ppa:pypy/ppa
+sudo apt update
+sudo apt install pypy3
 ```
 
-Install Numpy under pypy3 (this is a bit hacky, pypy does not support NumPy 1.x which is the default on Ubuntu 24.04):
+Install pip and NumPy for PyPy in order to use the latest versions.
 
+```sh
+wget https://bootstrap.pypa.io/get-pip.py
+sudo pypy3 get-pip.py --break-system-packages
+sudo pypy3 -m pip install 'numpy>=2.0' --break-system-packages --root-user-action=ignore
+rm get-pip.py
 ```
-$ wget https://bootstrap.pypa.io/get-pip.py
-$ pypy3 get-pip.py --break-system-packages
-$ sudo pypy3 -m pip install numpy>=2.0 --break-system-packages
+
+This root-level pip installation is a workaround for the current server setup.
+We should replace it with a cleaner, reproducible way to provide NumPy to PyPy.
+
+### Install IOI Isolate
+
+Build and install the pinned Isolate version expected by this service:
+
+```sh
+sudo apt install --no-install-recommends git make libcap-dev libseccomp-dev libsystemd-dev pkgconf
+git clone --depth 1 --branch v2.6 https://github.com/ioi/isolate.git
+cd isolate
+make isolate isolate-check-environment isolate-cg-keeper
+sudo make install
+sudo addgroup --system isolate
+sudo adduser --disabled-login --ingroup isolate --home /nonexistent --no-create-home --shell /bin/false --comment "" isolate
+sudo systemctl daemon-reload
+sudo systemctl enable --now isolate.service
 ```
+
+Check that Isolate started successfully:
+
+```sh
+systemctl status isolate.service
+```
+
+### Configure AddressSanitizer
+
+Ubuntu's high-entropy mmap randomization can intermittently prevent ASan from
+allocating its shadow memory. Apply the
+[recommended workaround](https://github.com/google/sanitizers/issues/1614#issuecomment-2010316781)
+and persist it across reboots:
+
+```sh
+echo 'vm.mmap_rnd_bits = 28' | sudo tee /etc/sysctl.d/99-execute-asan.conf
+sudo sysctl --system
+```
+
+### Build and upload the execute binary
+
+Production runs on an AWS EC2 `t4g.small` instance, which uses the AArch64
+architecture.
+
+From the `execute` directory, cross-compile a Linux ARM64 binary:
+
+```sh
+GOOS=linux GOARCH=arm64 go build
+scp execute ubuntu@<server>:/home/ubuntu/execute
+```
+
+The first C++ compilation may generate a precompiled header. PCH generation
+runs with a 768 MiB compiler memory limit, and the PCH files are kept under a
+separate 256 MiB disk limit.
+
+### Run execute with systemd
+
+Create `/etc/systemd/system/execute.service`:
+
+```ini
+[Unit]
+Description=Execute backend
+Wants=network-online.target
+After=network-online.target isolate.service
+Requires=isolate.service
+
+[Service]
+Type=simple
+User=ubuntu
+ExecStart=/home/ubuntu/execute
+Restart=always
+RestartSec=3
+Environment="FIREBASE_PROJECT_IDS=algopro-app,algopro-dev,matfiz-ide"
+Environment="EXECUTE_ALLOWED_ORIGINS=https://ide.algopro.hu,https://dev.ide.algopro.hu,https://ide.matfiz.org"
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start the service:
+
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable --now execute.service
+systemctl status execute.service
+```
+
+Logs are available through journald:
+
+```sh
+journalctl -u execute.service -f
+```
+
+After uploading a new binary, restart the service with
+`sudo systemctl restart execute.service`.
+
+### Expose the service through Caddy
+
+Install [Caddy](https://caddyserver.com/docs/install):
+
+```sh
+sudo apt install caddy
+```
+
+Point the hostname's DNS record at the server, allow inbound TCP ports 80 and
+443, and configure `/etc/caddy/Caddyfile`:
+
+```caddyfile
+execute.algopro.hu {
+	reverse_proxy 127.0.0.1:1235
+}
+```
+
+Validate and reload the configuration:
+
+```sh
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+```
+
+Caddy obtains and renews the TLS certificate automatically. Port 1235 should
+not be exposed publicly; only Caddy needs to reach it.
