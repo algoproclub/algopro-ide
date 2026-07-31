@@ -41,6 +41,7 @@ services:
       - FIREBASE_STORAGE_EMULATOR_HOST=firebase:9199
       - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
       - DATABASE_PATH=/data/db.sqlite
+      - SECURITY_KEY=example-yjs-security-key
     volumes:
       - data:/data
     depends_on:
@@ -80,6 +81,7 @@ services:
       - NEXT_PUBLIC_EXECUTE_URL=http://localhost:1235
       - NEXT_PUBLIC_YJS_URL=ws://localhost:1234
       - YJS_API_URL=http://yjs:1234
+      - YJS_SECURITY_KEY=example-yjs-security-key
       - LOGIN_BOT_URL=http://login-bot:3100
     ports:
       - '3000:3000'
