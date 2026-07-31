@@ -1,11 +1,9 @@
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { Options as ReactMarkdownOptions } from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
 // @ts-expect-error mjs file
 import renderMathInElement from 'katex/dist/contrib/auto-render.mjs';
-import { ReactMarkdownOptions } from 'react-markdown/lib/react-markdown';
 
 export default function Markdown(props: ReactMarkdownOptions): JSX.Element {
   const ref = React.useRef(null);

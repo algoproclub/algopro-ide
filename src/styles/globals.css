@@ -364,3 +364,7 @@ body {
     color: var(--terminal-blue);
   }
 }
+
+.cm-theme {
+  height: 100%;
+}
