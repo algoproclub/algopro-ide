@@ -367,10 +367,15 @@ const updateStatusData = async (
     try {
       const [ownerID, problem] = await Promise.all([
         getFileOwner(id),
-        db.ref(`files/${id}/problem`).get().then(s => s.val() as { platform: string; id: string } | null),
+        db
+          .ref(`files/${id}/problem`)
+          .get()
+          .then(s => s.val() as { platform: string; id: string } | null),
       ]);
       if (ownerID && problem?.platform && problem?.id) {
-        updates[`users/${ownerID}/platform-${problem.platform}/solved/${problem.id}`] = true;
+        updates[
+          `users/${ownerID}/platform-${problem.platform}/solved/${problem.id}`
+        ] = true;
       }
     } catch (e) {
       console.error('Failed to denormalize solved status for file', id, e);
@@ -682,10 +687,7 @@ const updateStatus = async () => {
   }
 };
 
-const region =
-  process.env.IS_TEST_ENV || process.env.FUNCTIONS_EMULATOR
-    ? 'us-central1'
-    : 'europe-west1';
+const region = process.env.FUNCTIONS_EMULATOR ? 'us-central1' : 'europe-west1';
 
 exports.onlockdeleted = onValueDeleted(
   { ref: 'submissions/lock', region },
