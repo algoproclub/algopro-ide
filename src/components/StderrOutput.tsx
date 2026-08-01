@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   mainMonacoEditorAtom,
   isLineHighlightSetAtom,
@@ -185,10 +185,17 @@ export const StderrOutput = ({
     decodedOutput += errorLine;
   }
 
-  if (!isLineHighlightSet && errorLineNumber) {
+  useEffect(() => {
+    if (isLineHighlightSet || !errorLineNumber) return;
+
     mainMonacoEditor?.setLineHighlight(errorLineNumber);
     setIsLineHighlightSet(true);
-  }
+  }, [
+    errorLineNumber,
+    isLineHighlightSet,
+    mainMonacoEditor,
+    setIsLineHighlightSet,
+  ]);
 
   return (
     <div
