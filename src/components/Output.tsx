@@ -17,11 +17,110 @@ type StatusHistoryEntry = StatusData & { submissionTime?: number };
 export interface OutputProps {
   result: JudgeResult | null;
   statusData: StatusData | null;
-  statusDataHistory: StatusHistoryEntry[];
+  statusDataHistory: StatusHistoryEntry[] | null;
   onReady?: SharedEditorProps['onReady'];
 }
 
 type OutputTab = 'stdout' | 'stderr' | 'compile_output' | 'results' | 'history';
+
+function OutputHistory({
+  entries,
+}: {
+  entries: StatusHistoryEntry[];
+}): JSX.Element {
+  return (
+    <div className="h-full w-full overflow-y-auto">
+      <table className="table-tasks w-full space-x-2 border-b border-[var(--border-color)] text-[color:var(--text-primary)]">
+        <thead
+          className="border-b border-[var(--border-color)] text-left text-sm"
+          style={{ backgroundColor: 'var(--panel-bg-alt)' }}
+        >
+          <tr>
+            <th></th>
+            <th>Verdict</th>
+            <th>Time</th>
+            <th>Memory</th>
+            <th>Testcases</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-[var(--border-color)] text-sm">
+          {entries
+            .slice()
+            .reverse()
+            .map((item, index) => (
+              <tr
+                style={{
+                  backgroundColor:
+                    index % 2 ? 'var(--panel-bg-alt)' : 'var(--panel-bg)',
+                }}
+                key={item.submissionTime ?? entries.length - index}
+              >
+                <td>{entries.length - index}</td>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  <a
+                    href={item.link || undefined}
+                    target="_blank"
+                    className={`${item.link ? 'hover:underline' : undefined} flex items-center`}
+                    rel="noreferrer"
+                  >
+                    {item.message?.toLowerCase() === 'correct answer' ? (
+                      <FontAwesomeIcon
+                        icon={{ prefix: 'fas', iconName: 'check' }}
+                        className="mr-1.5 inline h-3.5 w-3.5 text-green-500"
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        icon={{ prefix: 'fas', iconName: 'xmark' }}
+                        className="mr-1.5 inline h-3.5 w-3.5 text-red-500"
+                      />
+                    )}
+                    {item.message}
+                    {item.link && (
+                      <FontAwesomeIcon
+                        icon={{
+                          prefix: 'fas',
+                          iconName: 'up-right-from-square',
+                        }}
+                        className="ml-1.5 inline h-3.5 w-3.5"
+                      />
+                    )}
+                  </a>
+                </td>
+                <td style={{ whiteSpace: 'nowrap' }}>{item.time ?? '-'}</td>
+                <td style={{ whiteSpace: 'nowrap' }}>{item.memory ?? '-'}</td>
+                <td>
+                  <div className="flex flex-wrap">
+                    {item.testCases?.map((testCase, index) => {
+                      const passed = testCase.title === 'correct answer';
+                      const timedOut = testCase.title === 'time limit exceeded';
+                      const iconName = passed
+                        ? 'check'
+                        : timedOut
+                          ? 'clock'
+                          : testCase.title === 'runtime error'
+                            ? 'bug'
+                            : 'xmark';
+
+                      return (
+                        <FontAwesomeIcon
+                          title={testCase.title}
+                          icon={{ prefix: timedOut ? 'far' : 'fas', iconName }}
+                          className={`mr-0.5 inline h-3.5 w-3.5 ${
+                            passed ? 'text-green-500' : 'text-red-500'
+                          }`}
+                          key={index}
+                        />
+                      );
+                    })}
+                  </div>
+                </td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export const Output = ({
   result,
@@ -29,6 +128,7 @@ export const Output = ({
   statusDataHistory,
   onReady,
 }: OutputProps): JSX.Element => {
+  const history = statusDataHistory ?? [];
   const [option, setOption] = useState<OutputTab>('stdout');
   const [tabs, setTabs] = useState<
     Array<{ label: string; value: string; highlight: boolean }>
@@ -76,8 +176,21 @@ export const Output = ({
     if (statusData) setOption('results');
   }, [statusData]);
 
+  const availableTabs = tabs.filter(tab => {
+    if (tab.value === 'results') return Boolean(statusData);
+    if (tab.value === 'history') return history.length > 0;
+    return true;
+  });
+  const currentOption = availableTabs.some(tab => tab.value === option)
+    ? option
+    : (availableTabs[0].value as OutputTab);
+
+  useEffect(() => {
+    if (currentOption !== option) setOption(currentOption);
+  }, [currentOption, option]);
+
   let outputText;
-  if (option !== 'results' && option !== 'history') {
+  if (currentOption !== 'results' && currentOption !== 'history') {
     if (result?.status === 'internal_error') {
       outputText =
         result.debugData?.source === 'run_code'
@@ -86,14 +199,14 @@ export const Output = ({
             result.message +
             '\n\nPlease report this as a GitHub issue.';
     } else {
-      if (option === 'compile_output') {
+      if (currentOption === 'compile_output') {
         if (result?.status === 'compile_error') {
           outputText = result.message ?? '';
         } else {
           outputText = result?.compilationMessage ?? '';
         }
       } else {
-        outputText = result?.[option] ?? '';
+        outputText = result?.[currentOption] ?? '';
       }
     }
   }
@@ -105,137 +218,20 @@ export const Output = ({
   return (
     <>
       <TabBar
-        tabs={
-          statusDataHistory
-            ? tabs
-            : statusData
-              ? tabs.slice(0, -1)
-              : tabs.slice(0, -2)
-        }
-        activeTab={option}
+        tabs={availableTabs}
+        activeTab={currentOption}
         onTabSelect={tab => {
           setOption(tab.value as OutputTab);
         }}
       />
       <div className="flex-1 bg-[var(--panel-bg)] text-[color:var(--text-primary)] min-h-0 overflow-hidden tw-forms-disable tw-forms-disable-all-descendants">
-        {option === 'results' && (
+        {currentOption === 'results' && (
           <div className="px-4 h-full overflow-y-auto">
             {statusData && <USACOResults data={statusData} />}
           </div>
         )}
-        {option === 'history' && (
-          <div className="h-full overflow-y-auto w-full">
-            <table
-              className={
-                'text-[color:var(--text-primary)] table-tasks space-x-2 w-full border-b border-[var(--border-color)]'
-              }
-            >
-              <thead
-                className="border-b border-[var(--border-color)] text-left text-sm"
-                style={{ backgroundColor: 'var(--panel-bg-alt)' }}
-              >
-                <tr>
-                  <th></th>
-                  <th>Verdict</th>
-                  <th>Time</th>
-                  <th>Memory</th>
-                  <th>Testcases</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--border-color)] text-sm">
-                {statusDataHistory
-                  .slice()
-                  .reverse()
-                  .map((item, index) => (
-                    <tr
-                      style={{
-                        backgroundColor:
-                          index % 2 ? 'var(--panel-bg-alt)' : 'var(--panel-bg)',
-                      }}
-                      key={
-                        item.submissionTime ?? statusDataHistory.length - index
-                      }
-                    >
-                      <td>{statusDataHistory.length - index}</td>
-                      <td style={{ whiteSpace: 'nowrap' }}>
-                        <a
-                          href={item.link || undefined}
-                          target="_blank"
-                          className={`${item.link ? 'hover:underline' : undefined} flex items-center`}
-                          rel="noreferrer"
-                        >
-                          {item.message?.toLowerCase() === 'correct answer' ? (
-                            <FontAwesomeIcon
-                              icon={{ prefix: 'fas', iconName: 'check' }}
-                              className="text-green-500 w-3.5 h-3.5 mr-1.5 inline"
-                            />
-                          ) : (
-                            <FontAwesomeIcon
-                              icon={{ prefix: 'fas', iconName: 'xmark' }}
-                              className="w-3.5 h-3.5 text-red-500 mr-1.5 inline"
-                            />
-                          )}
-                          {item.message}
-                          {item.link && (
-                            <FontAwesomeIcon
-                              icon={{
-                                prefix: 'fas',
-                                iconName: 'up-right-from-square',
-                              }}
-                              className="w-3.5 h-3.5 ml-1.5 inline"
-                            />
-                          )}
-                        </a>
-                      </td>
-                      <td style={{ whiteSpace: 'nowrap' }}>
-                        {item.time ?? '-'}
-                      </td>
-                      <td style={{ whiteSpace: 'nowrap' }}>
-                        {item.memory ?? '-'}
-                      </td>
-                      <td>
-                        <div className="flex flex-wrap">
-                          {item.testCases &&
-                            item.testCases.map((tc, index) =>
-                              tc.title == 'correct answer' ? (
-                                <FontAwesomeIcon
-                                  title={tc.title}
-                                  icon={{ prefix: 'fas', iconName: 'check' }}
-                                  className="text-green-500 w-3.5 h-3.5 mr-0.5 inline"
-                                  key={index}
-                                />
-                              ) : (
-                                <FontAwesomeIcon
-                                  title={tc.title}
-                                  icon={{
-                                    prefix: (() => {
-                                      if (tc.title === 'time limit exceeded')
-                                        return 'far';
-                                      return 'fas';
-                                    })(),
-
-                                    iconName: (() => {
-                                      if (tc.title === 'time limit exceeded')
-                                        return 'clock';
-                                      if (tc.title === 'runtime error')
-                                        return 'bug';
-                                      return 'xmark';
-                                    })(),
-                                  }}
-                                  className="mr-0.5 w-3.5 h-3.5 text-red-500 inline"
-                                  key={index}
-                                />
-                              )
-                            )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {option === 'stdout' && (
+        {currentOption === 'history' && <OutputHistory entries={history} />}
+        {currentOption === 'stdout' && (
           <CodeEditor
             theme={lightMode ? 'light' : 'dark'}
             language={'plaintext'}
@@ -251,14 +247,14 @@ export const Output = ({
             onReady={onReady}
           />
         )}
-        {option === 'stderr' && (
+        {currentOption === 'stderr' && (
           <StderrOutput
             output={outputText ?? ''}
             lightMode={lightMode}
             onReady={onReady}
           />
         )}
-        {option === 'compile_output' && (
+        {currentOption === 'compile_output' && (
           <CompilerOutput
             output={outputText ?? ''}
             highlightLine={l => mainMonacoEditor?.setLineHighlight(l)}
@@ -266,7 +262,7 @@ export const Output = ({
           />
         )}
       </div>
-      {option !== 'results' && option !== 'history' && result && (
+      {currentOption !== 'results' && currentOption !== 'history' && result && (
         <div
           className="text-sm font-mono text-right px-4 py-1 text-[color:var(--text-secondary)]"
           data-test-id="code-execution-output-status"
