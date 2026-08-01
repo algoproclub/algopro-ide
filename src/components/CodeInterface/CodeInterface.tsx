@@ -73,7 +73,6 @@ export const CodeInterface = ({
             language={{ cpp: 'cpp', java: 'java', py: 'python' }[lang]}
             path={`myfile.${lang}`}
             editorOptions={{
-              automaticLayout: false,
               insertSpaces: false,
               readOnly,
               tabSize,
@@ -82,10 +81,7 @@ export const CodeInterface = ({
             onReady={handle => {
               setEditorHandle(handle);
               if (isMonacoEditorHandle(handle)) {
-                setTimeout(() => {
-                  handle.layout();
-                  handle.focus();
-                }, 0);
+                handle.focus();
               }
             }}
             defaultValue={problem?.templateCode?.[lang] ?? templateCode[lang]}

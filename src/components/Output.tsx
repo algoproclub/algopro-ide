@@ -2,7 +2,6 @@ import { TabBar } from './TabBar';
 import React, { useState, useEffect } from 'react';
 import { useAtomValue } from 'jotai';
 import JudgeResult from '../types/judge';
-import type { SharedEditorProps } from './editor/editor-types';
 import USACOResults from './JudgeInterface/USACOResults';
 import { StatusData } from '../types/problem';
 import { useUserContext } from '../context/UserContext';
@@ -18,7 +17,6 @@ export interface OutputProps {
   result: JudgeResult | null;
   statusData: StatusData | null;
   statusDataHistory: StatusHistoryEntry[] | null;
-  onReady?: SharedEditorProps['onReady'];
 }
 
 type OutputTab = 'stdout' | 'stderr' | 'compile_output' | 'results' | 'history';
@@ -126,7 +124,6 @@ export const Output = ({
   result,
   statusData,
   statusDataHistory,
-  onReady,
 }: OutputProps): JSX.Element => {
   const history = statusDataHistory ?? [];
   const [option, setOption] = useState<OutputTab>('stdout');
@@ -240,19 +237,13 @@ export const Output = ({
             path="output"
             editorOptions={{
               readOnly: true,
-              automaticLayout: false,
               insertSpaces: true,
               fontSize: userData.fontSize,
             }}
-            onReady={onReady}
           />
         )}
         {currentOption === 'stderr' && (
-          <StderrOutput
-            output={outputText ?? ''}
-            lightMode={lightMode}
-            onReady={onReady}
-          />
+          <StderrOutput output={outputText ?? ''} lightMode={lightMode} />
         )}
         {currentOption === 'compile_output' && (
           <CompilerOutput

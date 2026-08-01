@@ -4,7 +4,6 @@ import {
   useEditorContext,
 } from '../../src/context/EditorContext';
 import React, { useEffect, useState } from 'react';
-import classNames from 'classnames';
 import { LazyRealtimeEditor } from '../../src/components/RealtimeEditor/LazyRealtimeEditor';
 import {
   DataSnapshot,
@@ -17,7 +16,7 @@ import {
 import { useNullableUserContext } from '../../src/context/UserContext';
 import { StatusData } from '../../src/types/problem';
 import USACOResults from '../../src/components/JudgeInterface/USACOResults';
-import Split from 'react-split-grid';
+import { Group, Panel, Separator } from 'react-resizable-panels';
 import WithAdminLogin from '../../src/components/WithAdminLogin';
 import { HocuspocusProviderWebsocketComponent } from '@hocuspocus/provider-react';
 
@@ -119,30 +118,19 @@ const SolutionViewContent = ({
           </select>
         </div>
       </div>
-      <Split
-        render={({ getGridProps, getGutterProps }) => (
-          <div
-            className={`grid grid-rows-[2fr,3px,1fr] w-full h-full min-h-0`}
-            {...getGridProps()}
-          >
-            <CodeView />
-            <div
-              className={classNames(
-                'cursor-[row-resize] group relative z-10 my-[-6px]'
-              )}
-              {...getGutterProps('row', 1)}
-            >
-              <div
-                className={classNames(
-                  'absolute w-full bg-[color:var(--gutter)] group-hover:bg-[color:var(--gutter-hover)] group-active:bg-[color:var(--gutter-hover)] group-focus:bg-[color:var(--gutter-hover)] pointer-events-none transition',
-                  'top-[7px] bottom-[7px]'
-                )}
-              ></div>
-            </div>
-            <ResultView startTime={startTime} />
-          </div>
-        )}
-      />
+      <Group
+        orientation="vertical"
+        className="min-h-0"
+        defaultLayout={{ code: 67, results: 33 }}
+      >
+        <Panel id="code" minSize="10%" className="min-h-0">
+          <CodeView />
+        </Panel>
+        <Separator className="h-[3px] cursor-row-resize bg-[color:var(--gutter)] transition hover:bg-[color:var(--gutter-hover)] focus:bg-[color:var(--gutter-hover)] focus:outline-none" />
+        <Panel id="results" minSize="10%" className="min-h-0">
+          <ResultView startTime={startTime} />
+        </Panel>
+      </Group>
     </div>
   );
 };

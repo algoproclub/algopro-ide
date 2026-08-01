@@ -258,6 +258,11 @@ body,
   display: none !important;
 }
 
+/* react-resizable-panels sets display via inline styles; restore hidden behavior. */
+[data-panel][hidden] {
+  display: none !important;
+}
+
 /* This is vim normal input */
 .status-node > span + span {
   padding-left: 0.75rem;
@@ -281,7 +286,7 @@ body,
 }
 
 .text-input {
-  @apply px-1 block w-full pb-1 border-0 border-b-2 focus:ring-0 text-sm bg-transparent;
+  @apply block w-full border-0 border-b-2 bg-transparent px-1 pb-1 text-sm focus:ring-0;
   border-color: var(--border-color);
   color: var(--text-primary);
 }
@@ -395,4 +400,16 @@ body {
 
 .cm-theme {
   height: 100%;
+}
+
+.workspace-touch-resize-handle[data-separator='active']
+  .workspace-touch-row-grip {
+  height: 1rem;
+  width: 2.5rem;
+}
+
+.workspace-touch-resize-handle[data-separator='active']
+  .workspace-touch-column-grip {
+  height: 2.5rem;
+  width: 1rem;
 }

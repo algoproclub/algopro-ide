@@ -5,7 +5,6 @@ import {
   savedEditorValue as savedEditorValueAtom,
 } from '../atoms/workspace';
 import { useAtomValue, useSetAtom } from 'jotai';
-import type { SharedEditorProps } from './editor/editor-types';
 import { CodeEditor } from './editor/CodeEditor';
 import { editor } from 'monaco-editor';
 import { useUserContext } from '../context/UserContext';
@@ -129,11 +128,9 @@ function validateLine(
 export const StderrOutput = ({
   output,
   lightMode,
-  onReady,
 }: {
   output: string;
   lightMode: boolean;
-  onReady?: SharedEditorProps['onReady'];
 }): JSX.Element => {
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
   const isLineHighlightSet = useAtomValue(isLineHighlightSetAtom);
@@ -223,11 +220,9 @@ export const StderrOutput = ({
         path="output"
         editorOptions={{
           readOnly: true,
-          automaticLayout: false,
           insertSpaces: true,
           fontSize,
         }}
-        onReady={onReady}
       />
     </div>
   );

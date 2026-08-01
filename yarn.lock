@@ -7773,7 +7773,7 @@ prompts@^2.0.1:
     kleur "^3.0.3"
     sisteransi "^1.0.5"
 
-prop-types@^15.5.7, prop-types@^15.6.2, prop-types@^15.8.1:
+prop-types@^15.6.2, prop-types@^15.8.1:
   version "15.8.1"
   resolved "https://registry.npmjs.org/prop-types/-/prop-types-15.8.1.tgz"
   integrity sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==
@@ -7932,13 +7932,10 @@ react-popper@^2.3.0:
     react-fast-compare "^3.0.1"
     warning "^4.0.2"
 
-react-split-grid@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.npmjs.org/react-split-grid/-/react-split-grid-1.0.4.tgz"
-  integrity sha512-RMEzFFnntgn+u5GFq+ognmv30CsTgrR97zB4RkMx2VSX9Sw8A7fjzCUfw/Avj7m8GCEw19GIjoUQGOQUOOjlcA==
-  dependencies:
-    prop-types "^15.5.7"
-    split-grid "^1.0.9"
+react-resizable-panels@^4.12.2:
+  version "4.12.2"
+  resolved "https://registry.yarnpkg.com/react-resizable-panels/-/react-resizable-panels-4.12.2.tgz#8402870ef686757c683235496e82771f0fb7f820"
+  integrity sha512-NwY5LCo4WrxVvDh0xoMML6EMLPONP/8ckKcIdpnojxexoatZdjLiRqLJQjQK5CPkd4SYiB/2M5BVrjZBQtOO7Q==
 
 react-time-ago@^7.3.1:
   version "7.3.1"
@@ -8448,11 +8445,6 @@ space-separated-tokens@^2.0.0:
   version "2.0.2"
   resolved "https://registry.npmjs.org/space-separated-tokens/-/space-separated-tokens-2.0.2.tgz"
   integrity sha512-PEGlAwrG8yXGXRjW32fGbg66JAlOAwbObuqVoJpv/mRgoWDQfgH1wDPvtzWyUSNAXBGSk8h755YDbbcEy3SH2Q==
-
-split-grid@^1.0.9:
-  version "1.0.11"
-  resolved "https://registry.npmjs.org/split-grid/-/split-grid-1.0.11.tgz"
-  integrity sha512-ELtFtxc3r5we5GZfe6Fi0BFFxIi2M6BY1YEntBscKRDD3zx4JVHqx2VnTRSQu1BixCYSTH3MTjKd4esI2R7EgQ==
 
 sprintf-js@~1.0.2:
   version "1.0.3"

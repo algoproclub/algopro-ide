@@ -21,11 +21,13 @@ import { DEFAULT_FONT_SIZE_EDITOR } from '../../constants/editorConstants';
 export interface SettingsDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onResetLayout: () => void;
 }
 
 export const WorkspaceSettingsModal = ({
   isOpen,
   onClose,
+  onResetLayout,
 }: SettingsDialogProps): JSX.Element => {
   const {
     userData,
@@ -204,7 +206,16 @@ export const WorkspaceSettingsModal = ({
                   onWorkspaceSettingsChange={onChange}
                   userPermission={userPermission || 'READ'}
                 />
-                <div className="flex items-center space-x-2.5">
+                <div className="border-t border-[var(--border-color)] pt-4">
+                  <button
+                    type="button"
+                    className="inline-flex items-center px-4 py-2 border border-[var(--border-color)] shadow-sm text-[0.92rem] font-medium rounded-md text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onClick={onResetLayout}
+                  >
+                    Reset workspace layout
+                  </button>
+                </div>
+                <div className="flex items-center justify-end space-x-2.5">
                   <button
                     type="button"
                     className="inline-flex items-center px-4 py-2 border border-[var(--border-color)] shadow-sm text-[0.92rem] font-medium rounded-md text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
