@@ -44,3 +44,5 @@ serviceAccountKey.json
 accounts.json
 
 tsconfig.tsbuildinfo
+
+next-env.d.ts
