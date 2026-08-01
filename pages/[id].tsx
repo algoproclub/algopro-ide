@@ -8,7 +8,6 @@ import { RunCodeError, runCode, runCodeBatch } from '../src/scripts/runCode';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
   inputEditorValueAtom,
-  layoutEditorsAtom,
   loadingAtom,
   mainEditorValueAtom,
   mainMonacoEditorAtom,
@@ -79,8 +78,8 @@ function EditorPage() {
     useState(false);
   const [isProfileSettingsModalOpen, setIsProfileSettingsModalOpen] =
     useState(false);
+  const [layoutResetKey, setLayoutResetKey] = useState(0);
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
-  const layoutEditors = useSetAtom(layoutEditorsAtom);
   const [mobileActiveTab, setMobileActiveTab] = useAtom(mobileActiveTabAtom);
   const getMainEditorValue = useAtomValue(mainEditorValueAtom);
   const getInputEditorValue = useAtomValue(inputEditorValueAtom);
@@ -120,9 +119,6 @@ function EditorPage() {
 
   const handleToggleSidebar = () => {
     setShowSidebar(show => !show);
-    setTimeout(() => {
-      layoutEditors();
-    }, 0);
   };
 
   const handleRunCode = () => {
@@ -344,7 +340,11 @@ function EditorPage() {
           <HocuspocusProviderWebsocketComponent
             url={process.env.NEXT_PUBLIC_YJS_URL!}
           >
-            <Workspace handleRunCode={handleRunCode} tabsList={tabsList} />
+            <Workspace
+              handleRunCode={handleRunCode}
+              tabsList={tabsList}
+              layoutResetKey={layoutResetKey}
+            />
           </HocuspocusProviderWebsocketComponent>
         </div>
         {!isDesktop && (
@@ -358,6 +358,7 @@ function EditorPage() {
       <WorkspaceSettingsModal
         isOpen={isWorkspaceSettingsModalOpen}
         onClose={() => setIsWorkspaceSettingsModalOpen(false)}
+        onResetLayout={() => setLayoutResetKey(key => key + 1)}
       />
       <ProfileSettings
         isOpen={isProfileSettingsModalOpen}

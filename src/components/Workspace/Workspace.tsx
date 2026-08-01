@@ -1,14 +1,22 @@
-import { EllipsisHorizontalIcon } from '@heroicons/react/20/solid';
-import { useSetAtom, useAtomValue } from 'jotai';
+import {
+  EllipsisHorizontalIcon,
+  EllipsisVerticalIcon,
+} from '@heroicons/react/20/solid';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import classNames from 'classnames';
-import { useAtom } from 'jotai';
-import React, { useEffect, useState } from 'react';
-import Split from 'react-split-grid';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Group,
+  Panel,
+  Separator,
+  useDefaultLayout,
+  useGroupRef,
+  type Layout,
+  type LayoutStorage,
+} from 'react-resizable-panels';
 import {
   inputCodemirrorEditorAtom,
   inputMonacoEditorAtom,
-  layoutEditorsAtom,
-  outputMonacoEditorAtom,
 } from '../../atoms/workspace';
 import {
   inputTabAtom,
@@ -54,6 +62,116 @@ import {
   fetchTranslationsFromDb,
 } from '../../scripts/fetchProblemFromDb';
 import Solutions from '../JudgeInterface/Solutions';
+
+const defaultDesktopPanelSizes = { code: 60, sidebar: 10 };
+const defaultInputOutputLayout = { input: 67, output: 33 };
+const minimumInputOutputSize = 10;
+const minimumSidebarSize = 8;
+const desktopLayoutStorageKey = 'algopro-workspace-columns';
+const inputOutputLayoutStorageKey = 'algopro-workspace-input-output';
+
+type DesktopPanelSizes = typeof defaultDesktopPanelSizes;
+
+const layoutStorage = {
+  getItem(key: string): string | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      console.error('Failed to read workspace layout.', error);
+      return null;
+    }
+  },
+  setItem(key: string, value: string): void {
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      console.error('Failed to save workspace layout.', error);
+    }
+  },
+  removeItem(key: string): void {
+    try {
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error('Failed to reset workspace layout.', error);
+    }
+  },
+};
+
+const inputOutputLayoutStorage: LayoutStorage = {
+  getItem: () => layoutStorage.getItem(inputOutputLayoutStorageKey),
+  setItem: (_key, value) =>
+    layoutStorage.setItem(inputOutputLayoutStorageKey, value),
+};
+
+function getDesktopLayout(
+  sizes: DesktopPanelSizes,
+  showSidebar: boolean
+): Layout {
+  if (!showSidebar) {
+    return { code: sizes.code, io: 100 - sizes.code };
+  }
+
+  const sidebar = Math.max(
+    minimumSidebarSize,
+    Math.min(sizes.sidebar, 100 - sizes.code - minimumInputOutputSize)
+  );
+  const code = Math.min(sizes.code, 100 - sidebar - minimumInputOutputSize);
+
+  return { code, io: 100 - code - sidebar, sidebar };
+}
+
+function PanelResizeHandle({
+  orientation,
+}: {
+  orientation: 'horizontal' | 'vertical';
+}): JSX.Element {
+  const isTouchDevice = useMediaQuery('(any-pointer: coarse)');
+  const GripIcon =
+    orientation === 'horizontal'
+      ? EllipsisVerticalIcon
+      : EllipsisHorizontalIcon;
+
+  return (
+    <Separator
+      className={classNames(
+        'items-center justify-center bg-[var(--gutter)] transition focus:outline-none',
+        orientation === 'horizontal'
+          ? isTouchDevice
+            ? 'w-0.5 cursor-col-resize'
+            : 'w-px cursor-col-resize'
+          : isTouchDevice
+            ? 'h-0.5 cursor-row-resize'
+            : 'h-px cursor-row-resize',
+        'hover:bg-[var(--gutter-hover)] focus:bg-[var(--gutter-hover)]',
+        'relative z-10 flex',
+        isTouchDevice &&
+          classNames(
+            "workspace-touch-resize-handle before:absolute before:content-['']",
+            orientation === 'horizontal'
+              ? 'before:-inset-x-2 before:inset-y-0'
+              : 'before:-inset-y-2 before:inset-x-0'
+          )
+      )}
+    >
+      <span
+        className={classNames(
+          'pointer-events-none flex items-center justify-center text-[color:var(--text-secondary)]',
+          isTouchDevice
+            ? classNames(
+                'workspace-touch-resize-grip rounded-full bg-[var(--gutter-hover)] transition-[width,height]',
+                orientation === 'horizontal'
+                  ? 'workspace-touch-column-grip h-8 w-3.5'
+                  : 'workspace-touch-row-grip h-3.5 w-8'
+              )
+            : 'h-5 w-5'
+        )}
+      >
+        <GripIcon className={isTouchDevice ? 'h-3.5 w-3.5' : 'h-5 w-5'} />
+      </span>
+    </Separator>
+  );
+}
 
 export function getHints(
   translations: Record<string, Translation>,
@@ -108,16 +226,12 @@ function WorkspaceInputPanel(): JSX.Element {
         path="input"
         dataTestId="input-editor"
         editorOptions={{
-          automaticLayout: false,
           insertSpaces: false,
           readOnly,
           fontSize,
         }}
         onReady={handle => {
           setInputEditorHandle(handle);
-          if (isMonacoEditorHandle(handle)) {
-            setTimeout(() => handle.layout(), 0);
-          }
         }}
         defaultValue="1 2 3"
         yjsDocumentId={`${fileData.id}.input`}
@@ -242,7 +356,6 @@ function OutputPane(): JSX.Element {
   const [judgeResults] = useJudgeResults();
   const statusData = useAtomValue(statusDataAtom);
   const statusDataHistory = useAtomValue(statusDataHistoryAtom);
-  const setOutputEditor = useSetAtom(outputMonacoEditorAtom);
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
@@ -250,15 +363,6 @@ function OutputPane(): JSX.Element {
         result={judgeResults[inputTabIndex]}
         statusData={statusData}
         statusDataHistory={statusDataHistory}
-        onReady={handle => {
-          if (!isMonacoEditorHandle(handle)) {
-            setOutputEditor(null);
-            return;
-          }
-
-          setOutputEditor(handle.raw);
-          setTimeout(() => handle.layout(), 0);
-        }}
       />
     </div>
   );
@@ -273,142 +377,199 @@ function SidebarPane(): JSX.Element {
   );
 }
 
+function InputOutputPane({
+  tabsList,
+  handleRunCode,
+  layoutResetKey,
+}: {
+  tabsList: { label: string; value: string }[];
+  handleRunCode: () => void;
+  layoutResetKey: number;
+}): JSX.Element {
+  const groupRef = useGroupRef();
+  const previousLayoutResetKeyRef = useRef(layoutResetKey);
+  const { defaultLayout, onLayoutChanged } = useDefaultLayout({
+    id: 'workspace-io-rows',
+    storage: inputOutputLayoutStorage,
+    onlySaveAfterUserInteractions: true,
+  });
+
+  useEffect(() => {
+    if (layoutResetKey === previousLayoutResetKeyRef.current) return;
+    previousLayoutResetKeyRef.current = layoutResetKey;
+
+    layoutStorage.removeItem(inputOutputLayoutStorageKey);
+    groupRef.current?.setLayout(defaultInputOutputLayout);
+  }, [groupRef, layoutResetKey]);
+
+  return (
+    <Group
+      id="workspace-io-rows"
+      groupRef={groupRef}
+      orientation="vertical"
+      defaultLayout={defaultLayout ?? defaultInputOutputLayout}
+      onLayoutChanged={onLayoutChanged}
+    >
+      <Panel id="input" minSize="10%" className="h-full min-h-0">
+        <InputPane tabsList={tabsList} handleRunCode={handleRunCode} />
+      </Panel>
+      <PanelResizeHandle orientation="vertical" />
+      <Panel id="output" minSize="10%" className="h-full min-h-0">
+        <OutputPane />
+      </Panel>
+    </Group>
+  );
+}
+
 function WorkspacePanels({
   handleRunCode,
   tabsList,
+  layoutResetKey,
 }: {
   handleRunCode: () => void;
   tabsList: { label: string; value: string }[];
+  layoutResetKey: number;
 }): JSX.Element {
-  const layoutEditors = useSetAtom(layoutEditorsAtom);
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
   const mobileActiveTab = useAtomValue(mobileActiveTabAtom);
   const showSidebar = useAtomValue(showSidebarAtom);
+  const groupRef = useGroupRef();
+  const desktopPanelSizesRef = useRef<DesktopPanelSizes>({
+    ...defaultDesktopPanelSizes,
+  });
+  const desktopLayoutLoadedRef = useRef(false);
+  const previousLayoutResetKeyRef = useRef(layoutResetKey);
+
+  const renderSidebar = !isDesktop || showSidebar;
 
   useEffect(() => {
-    function handleResize() {
-      layoutEditors();
-    }
+    if (!isDesktop || desktopLayoutLoadedRef.current) return;
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [layoutEditors]);
+    try {
+      const stored = layoutStorage.getItem(desktopLayoutStorageKey);
+      const sizes = stored
+        ? (JSON.parse(stored) as Partial<DesktopPanelSizes>)
+        : null;
+
+      if (
+        typeof sizes?.code === 'number' &&
+        Number.isFinite(sizes.code) &&
+        typeof sizes.sidebar === 'number' &&
+        Number.isFinite(sizes.sidebar)
+      ) {
+        desktopPanelSizesRef.current = {
+          code: sizes.code,
+          sidebar: sizes.sidebar,
+        };
+      }
+    } catch {
+      // Use the default layout when storage is unavailable or invalid.
+    }
+    desktopLayoutLoadedRef.current = true;
+
+    groupRef.current?.setLayout(
+      getDesktopLayout(desktopPanelSizesRef.current, showSidebar)
+    );
+  }, [groupRef, isDesktop, showSidebar]);
 
   useEffect(() => {
-    if (!isDesktop) {
-      layoutEditors();
-    }
-  }, [isDesktop, mobileActiveTab, layoutEditors]);
+    if (layoutResetKey === previousLayoutResetKeyRef.current) return;
+    previousLayoutResetKeyRef.current = layoutResetKey;
 
-  const gridColumns =
-    isDesktop && !showSidebar
-      ? 'grid-cols-[3fr,3px,2fr,0px,0px]'
-      : 'grid-cols-[3fr,3px,2fr,3px,1fr]';
+    layoutStorage.removeItem(desktopLayoutStorageKey);
+    desktopPanelSizesRef.current = { ...defaultDesktopPanelSizes };
+    if (isDesktop) {
+      groupRef.current?.setLayout(
+        getDesktopLayout(desktopPanelSizesRef.current, showSidebar)
+      );
+    }
+  }, [groupRef, isDesktop, layoutResetKey, showSidebar]);
+
+  const handleDesktopLayoutChanged = (
+    layout: Layout,
+    { isUserInteraction }: { isUserInteraction: boolean }
+  ) => {
+    if (!isDesktop) return;
+
+    if (!isUserInteraction) {
+      const expected = getDesktopLayout(
+        desktopPanelSizesRef.current,
+        showSidebar
+      );
+      if (
+        Object.entries(expected).some(
+          ([id, size]) => Math.abs((layout[id] ?? -100) - size) > 0.01
+        )
+      ) {
+        groupRef.current?.setLayout(expected);
+      }
+      return;
+    }
+
+    desktopPanelSizesRef.current = {
+      code: layout.code,
+      sidebar: layout.sidebar ?? desktopPanelSizesRef.current.sidebar,
+    };
+    layoutStorage.setItem(
+      desktopLayoutStorageKey,
+      JSON.stringify(desktopPanelSizesRef.current)
+    );
+  };
 
   return (
-    <Split
-      columnMinSize={1}
-      rowMinSize={1}
-      onDragEnd={() => layoutEditors()}
-      render={({ getGridProps, getGutterProps }) => (
-        <div
-          className={`grid ${gridColumns} h-full grid-rows-[2fr,3px,1fr] overflow-hidden`}
-          {...getGridProps()}
-        >
-          <div
-            className={classNames(
-              'row-span-full min-w-0 overflow-hidden',
-              !isDesktop && 'col-span-full',
-              !isDesktop && mobileActiveTab !== 'code' && 'hidden'
-            )}
+    <Group
+      id="workspace-columns"
+      groupRef={groupRef}
+      defaultLayout={getDesktopLayout(defaultDesktopPanelSizes, showSidebar)}
+      disabled={!isDesktop}
+      onLayoutChanged={handleDesktopLayoutChanged}
+    >
+      <Panel
+        id="code"
+        minSize={isDesktop ? '10%' : 0}
+        hidden={!isDesktop && mobileActiveTab !== 'code'}
+        className="h-full min-h-0"
+      >
+        <CodeInterface className="h-full min-w-0 overflow-hidden" />
+      </Panel>
+      {isDesktop && <PanelResizeHandle orientation="horizontal" />}
+      <Panel
+        id="io"
+        minSize={isDesktop ? '10%' : 0}
+        hidden={!isDesktop && mobileActiveTab !== 'io'}
+        className="h-full min-h-0"
+      >
+        <InputOutputPane
+          tabsList={tabsList}
+          handleRunCode={handleRunCode}
+          layoutResetKey={layoutResetKey}
+        />
+      </Panel>
+      {renderSidebar && (
+        <>
+          {isDesktop && <PanelResizeHandle orientation="horizontal" />}
+          <Panel
+            id="sidebar"
+            minSize={isDesktop ? '8%' : 0}
+            hidden={!isDesktop && mobileActiveTab !== 'users'}
+            className="h-full min-h-0"
           >
-            <CodeInterface className="h-full min-w-0 overflow-hidden" />
-          </div>
-          <div
-            className={classNames(
-              'group relative z-10 col-start-2 row-span-full mx-[-6px] cursor-[col-resize]',
-              !isDesktop && 'hidden'
-            )}
-            {...getGutterProps('column', 1)}
-          >
-            <div className="pointer-events-none absolute right-[7px] left-[7px] h-full bg-[var(--gutter)] transition group-hover:bg-[var(--gutter-hover)] group-active:bg-[var(--gutter-hover)]" />
-          </div>
-          <div
-            className={classNames(
-              'flex min-h-0 min-w-0 flex-col overflow-hidden',
-              !isDesktop && 'col-span-full mb-[6px]',
-              !isDesktop && mobileActiveTab !== 'io' && 'hidden',
-              isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
-            )}
-          >
-            <InputPane tabsList={tabsList} handleRunCode={handleRunCode} />
-          </div>
-          <div
-            className={classNames(
-              'group relative z-10 my-[-6px] cursor-[row-resize]',
-              !isDesktop && 'col-span-full',
-              !isDesktop && mobileActiveTab !== 'io' && 'hidden',
-              isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
-            )}
-            {...getGutterProps('row', 1)}
-          >
-            <div
-              className={classNames(
-                'pointer-events-none absolute w-full bg-[var(--gutter)] transition group-hover:bg-[var(--gutter-hover)] group-focus:bg-[var(--gutter-hover)] group-active:bg-[var(--gutter-hover)]',
-                isDesktop
-                  ? 'top-[7px] bottom-[7px]'
-                  : 'inset-y-0 flex items-center justify-center bg-[var(--gutter)]'
-              )}
-            >
-              {!isDesktop && (
-                <EllipsisHorizontalIcon className="h-5 w-5 text-[color:var(--text-secondary)]" />
-              )}
-            </div>
-          </div>
-          <div
-            className={classNames(
-              'flex min-h-0 min-w-0 flex-col overflow-hidden',
-              !isDesktop && 'col-span-full mt-[6px]',
-              !isDesktop && mobileActiveTab !== 'io' && 'hidden',
-              isDesktop && (showSidebar ? 'col-span-1' : 'col-span-3')
-            )}
-          >
-            <OutputPane />
-          </div>
-          {((showSidebar && isDesktop) ||
-            (!isDesktop && mobileActiveTab === 'users')) && (
-            <>
-              <div
-                className={classNames(
-                  'group relative z-10 col-start-4 row-span-full mx-[-6px] cursor-[col-resize]',
-                  !isDesktop && 'hidden'
-                )}
-                {...getGutterProps('column', 3)}
-              >
-                <div className="pointer-events-none absolute right-[7px] left-[7px] h-full bg-[var(--gutter)] transition group-hover:bg-[var(--gutter-hover)] group-active:bg-[var(--gutter-hover)]" />
-              </div>
-              <div
-                className={classNames(
-                  'row-span-full min-w-0',
-                  isDesktop ? 'col-start-5' : 'col-span-full pt-4'
-                )}
-              >
-                <SidebarPane />
-              </div>
-            </>
-          )}
-        </div>
+            <SidebarPane />
+          </Panel>
+        </>
       )}
-    />
+    </Group>
   );
 }
 
 export default function Workspace({
   handleRunCode,
   tabsList,
+  layoutResetKey,
 }: {
   handleRunCode: () => void;
   tabsList: { label: string; value: string }[];
+  layoutResetKey: number;
 }): JSX.Element {
   const { fileData } = useEditorContext();
   const setInputTab = useSetAtom(inputTabAtom);
@@ -518,5 +679,11 @@ export default function Workspace({
     };
   }, []);
 
-  return <WorkspacePanels tabsList={tabsList} handleRunCode={handleRunCode} />;
+  return (
+    <WorkspacePanels
+      handleRunCode={handleRunCode}
+      tabsList={tabsList}
+      layoutResetKey={layoutResetKey}
+    />
+  );
 }
