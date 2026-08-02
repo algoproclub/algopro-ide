@@ -26,7 +26,7 @@ firebase_admin.initialize_app(
 print("Initialized app")
 
 db_root_ref = db.reference(url="http://127.0.0.1:9000/?ns=algopro-app-default-rtdb")
-print("Conencted to database")
+print("Connected to database")
 
 fs_client = firestore.client()
 print("Connected to firestore")
@@ -65,31 +65,51 @@ def make_user(
     *,
     email: str,
     display_name: str,
-    password: str,
     is_admin: bool,
     teacher_in_schools: list[str],
     student_in_schools: list[str],
     groups: list[str],
-) -> auth.UserRecord:
+    is_unregistered: bool = False,
+) -> auth.UserRecord | None:
     claims = {}
-    claims["registered"] = True
+    if not is_unregistered:
+        claims["registered"] = True
     if is_admin:
         claims["admin"] = True
     if len(teacher_in_schools) > 0:
         claims["teacher"] = teacher_in_schools
 
-    try:
-        user = auth.get_user_by_email(email)
-    except:
-        user = auth.create_user(email=email)
-    user = auth.update_user(
-        user.uid,
+    # Generate a stable UID based on the email so subsequent runs overwrite idempotently
+    user_uid = f"mock-uid-{email.replace('@', '-').replace('.', '-')}"
+
+    google_provider = auth.UserProvider(
+        uid=f"google-{user_uid}",
+        provider_id="google.com",
         email=email,
         display_name=display_name,
-        password=password,
+    )
+
+    user_record = auth.ImportUserRecord(
+        uid=user_uid,
+        email=email,
+        display_name=display_name,
+        provider_data=[google_provider],
         custom_claims=claims,
     )
 
+    try:
+        result = auth.import_users([user_record])
+        if result.failure_count > 0:
+            print(f"Failed to import Google user {email}: {result.errors[0].reason}")
+            return None
+
+        # Fetch the actual user record to return it and get the UID for Firestore
+        user = auth.get_user(user_uid)
+    except Exception as e:
+        print(f"Error importing Google user {email}: {e}")
+        return None
+
+    # Write data to Firestore
     userdata_doc = fs_client.document("userdata", user.uid)
     userdata_doc.set(
         {
@@ -99,12 +119,18 @@ def make_user(
         },
         merge=True,
     )
+
+    print(f"Created/Updated Google user: {email} (UID: {user.uid})")
     return user
 
 
 make_school(school_id="algopro", name="Algo Pro Club")
 
-make_group(school="algopro", unprefixed_id="group-1", name="Algo Pro Group 1",)
+make_group(
+    school="algopro",
+    unprefixed_id="group-1",
+    name="Algo Pro Group 1",
+)
 make_class(
     group_id="algopro~group-1",
     class_id="01",
@@ -154,7 +180,6 @@ make_class(
 make_user(
     email="admin@example.com",
     display_name="Admin User",
-    password="password123",
     is_admin=True,
     teacher_in_schools=[],
     student_in_schools=[],
@@ -164,7 +189,6 @@ make_user(
 make_user(
     email="algoproteacher1@example.com",
     display_name="AlgoPro Teacher 1",
-    password="password123",
     is_admin=False,
     teacher_in_schools=["algopro"],
     student_in_schools=[],
@@ -174,7 +198,6 @@ make_user(
 make_user(
     email="algoprostudent1@example.com",
     display_name="AlgoPro Student 1",
-    password="password123",
     is_admin=False,
     teacher_in_schools=[],
     student_in_schools=["algopro"],
@@ -184,7 +207,6 @@ make_user(
 make_user(
     email="algoprostudent2@example.com",
     display_name="AlgoPro Student 2",
-    password="password123",
     is_admin=False,
     teacher_in_schools=[],
     student_in_schools=["algopro"],
@@ -194,7 +216,6 @@ make_user(
 make_user(
     email="algoprostudent3@example.com",
     display_name="AlgoPro Student 3",
-    password="password123",
     is_admin=False,
     teacher_in_schools=[],
     student_in_schools=["algopro"],
@@ -204,9 +225,18 @@ make_user(
 make_user(
     email="noschoolstudent@example.com",
     display_name="NoSchool Student",
-    password="password123",
     is_admin=False,
     teacher_in_schools=[],
     student_in_schools=[],
     groups=[],
+)
+
+make_user(
+    email="unregistered@example.com",
+    display_name="Unregistered User",
+    is_admin=False,
+    teacher_in_schools=[],
+    student_in_schools=[],
+    groups=[],
+    is_unregistered=True,
 )
