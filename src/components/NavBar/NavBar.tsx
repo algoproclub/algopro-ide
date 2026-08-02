@@ -32,15 +32,16 @@ export interface DesktopNavBarProps {
   setIsProfileSettingsOpen: (isOpen: boolean) => void;
 }
 
+type SimpleButtonProps = {
+  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+} & React.ComponentPropsWithoutRef<'button'>;
+
 const SimpleButton = ({
   Icon,
   disabled,
   onClick,
-}: {
-  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  disabled: boolean;
-  onClick: () => void;
-}): JSX.Element => {
+  ...buttonProps
+}: SimpleButtonProps): JSX.Element => {
   const enabledButtonClass =
     'text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] focus:bg-[var(--hover-bg)] focus:outline-none';
   const disabledButtonClass =
@@ -55,6 +56,7 @@ const SimpleButton = ({
         disabled && disabledButtonClass
       )}
       onClick={onClick}
+      {...buttonProps}
     >
       <Icon className="h-5 w-5" />
     </button>
@@ -107,16 +109,20 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
         </Tooltip>
         <EditorNavigationMenu />
         {props.fileMenu}
-        <SimpleButton
-          onClick={handleUndo}
-          Icon={ArrowUturnLeftIcon}
-          disabled={props.showViewOnly}
-        />
-        <SimpleButton
-          onClick={handleRedo}
-          Icon={ArrowUturnRightIcon}
-          disabled={props.showViewOnly}
-        />
+        <Tooltip label="Undo">
+          <SimpleButton
+            onClick={handleUndo}
+            Icon={ArrowUturnLeftIcon}
+            disabled={props.showViewOnly}
+          />
+        </Tooltip>
+        <Tooltip label="Redo">
+          <SimpleButton
+            onClick={handleRedo}
+            Icon={ArrowUturnRightIcon}
+            disabled={props.showViewOnly}
+          />
+        </Tooltip>
       </div>
       {props.runButton}
       {problem?.submittable && problem.id === fileData.problem?.id && (
