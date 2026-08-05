@@ -1,5 +1,5 @@
 import React from 'react';
-import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
+import ConfirmOverrideModal from '../src/components/ConfirmOverrideModal';
 import { useSetAtom } from 'jotai';
 import {
   signInWithGoogleAtom,

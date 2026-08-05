@@ -32,6 +32,7 @@ export function EditModal<T>({
   cancelLabel?: string;
 }) {
   const [draft, setDraft] = useState<T>(value);
+  const saveDraft = () => onSave(draft);
 
   useEffect(() => {
     if (isOpen) setDraft(value);
@@ -68,7 +69,7 @@ export function EditModal<T>({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div className="inline-block theme-surface-raised theme-border border md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
+            <div className="inline-block w-full transform overflow-hidden border border-line bg-surface-raised text-left text-content shadow-xl transition-all md:rounded-lg sm:my-8 sm:max-w-2xl">
               <div className="px-4 sm:px-6 pt-4 pb-2">
                 <Dialog.Title
                   as="h3"
@@ -78,33 +79,48 @@ export function EditModal<T>({
                 </Dialog.Title>
               </div>
 
-              <div className="p-4 sm:p-6 space-y-6">
+              <form
+                className="space-y-6 p-4 sm:p-6"
+                onSubmit={event => {
+                  event.preventDefault();
+                  saveDraft();
+                }}
+                onKeyDown={event => {
+                  if (event.key === 'Escape') {
+                    event.preventDefault();
+                    onClose();
+                  }
+                  if (
+                    event.key === 'Enter' &&
+                    !event.shiftKey &&
+                    !event.nativeEvent.isComposing &&
+                    event.target instanceof HTMLTextAreaElement
+                  ) {
+                    event.preventDefault();
+                    saveDraft();
+                  }
+                }}
+              >
                 <div>{renderEditor(draft, setDraft)}</div>
 
                 <div className="flex items-center space-x-2.5">
                   <button
                     type="button"
-                    className="inline-flex items-center px-4 py-2 border theme-button-secondary shadow-sm text-[0.92rem] font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                    className="ui-button-secondary px-4 py-2 text-[0.92rem]"
                     onClick={onClose}
                   >
                     {cancelLabel}
                   </button>
-                  <button
-                    type="button"
-                    className="inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-                    onClick={() => {
-                      onSave(draft);
-                    }}
-                  >
+                  <button type="submit" className="ui-button-primary px-4 py-2">
                     {saveLabel}
                   </button>
                 </div>
-              </div>
+              </form>
 
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
-                  className="rounded-md theme-text-muted hover:text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  className="ui-icon-button text-content-muted hover:text-content"
                   onClick={onClose}
                 >
                   <span className="sr-only">Close</span>
@@ -155,7 +171,7 @@ export function EditTextAreaModal({
       onClose={onClose}
       renderEditor={(val, setVal) => (
         <textarea
-          className="font-mono h-60 theme-input border w-full min-h-[10rem] text-sm"
+          className="h-60 min-h-[10rem] w-full rounded-md border border-line bg-input p-3 font-mono text-sm text-content shadow-sm outline-none transition-colors hover:border-line-strong focus-visible:border-line-strong focus-visible:ring-2 focus-visible:ring-focus"
           value={val}
           onKeyDown={handleKeyDown}
           onChange={e => {
@@ -192,7 +208,7 @@ export function EditInlineTextModal({
       onClose={onClose}
       renderEditor={(val, setVal) => (
         <input
-          className="theme-input border w-full text-sm"
+          className="w-full rounded-md border border-line bg-input px-3 py-2 text-sm text-content shadow-sm outline-none transition-colors hover:border-line-strong focus-visible:border-line-strong focus-visible:ring-2 focus-visible:ring-focus"
           type="text"
           value={val}
           onChange={e => {
@@ -233,31 +249,25 @@ export function EditGroupModal({
       renderEditor={(val, setVal) => (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex flex-col space-y-1.5">
-            <label className="text-sm theme-text">Group ID</label>
+            <label className="text-sm text-content">Group ID</label>
             <div className="flex items-center space-x-0.5">
-              <span className="theme-surface theme-border border text-sm rounded-md px-3 py-2 w-fit flex-shrink">
+              <span className="w-fit flex-shrink rounded-md border border-line bg-surface px-3 py-2 text-sm text-content">
                 {schoolID}
                 {'~'}
               </span>
               <input
-                className="theme-input border w-full text-sm rounded-md px-3 py-2"
+                className="w-full rounded-md border border-line bg-input px-3 py-2 text-sm text-content shadow-sm outline-none transition-colors hover:border-line-strong focus-visible:border-line-strong focus-visible:ring-2 focus-visible:ring-focus"
                 value={val.left}
                 onChange={e => setVal(v => ({ ...v, left: e.target.value }))}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') e.preventDefault();
-                }}
               />
             </div>
           </div>
           <div className="flex flex-col space-y-1.5">
-            <label className="text-sm theme-text">Group name</label>
+            <label className="text-sm text-content">Group name</label>
             <input
-              className="theme-input border w-full text-sm rounded-md px-3 py-2"
+              className="w-full rounded-md border border-line bg-input px-3 py-2 text-sm text-content shadow-sm outline-none transition-colors hover:border-line-strong focus-visible:border-line-strong focus-visible:ring-2 focus-visible:ring-focus"
               value={val.right}
               onChange={e => setVal(v => ({ ...v, right: e.target.value }))}
-              onKeyDown={e => {
-                if (e.key === 'Enter') e.preventDefault();
-              }}
             />
           </div>
         </div>

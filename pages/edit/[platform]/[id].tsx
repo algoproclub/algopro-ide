@@ -34,6 +34,7 @@ import Dropdown, {
 import Checkbox from '../../../src/components/Checkbox';
 import { useUserContext } from '../../../src/context/UserContext';
 import PageTitle from '../../../src/components/PageTitle';
+import ConfirmationModal from '../../../src/components/ConfirmationModal';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -246,25 +247,12 @@ const EditHintModal = ({
   onClose: () => void;
 }) => {
   const [selectedLang, setSelectedLang] = useState<Language>('cpp');
-  const confirmedToggle = () => {
-    if (
-      confirm(
-        "If you switch, the hint's content will be deleted. Do you want to proceed?"
-      )
-    ) {
-      setHint(h => {
-        if (typeof h == 'string') {
-          return {};
-        } else {
-          return '';
-        }
-      });
-    }
-  };
+  const [isTypeChangeConfirmationOpen, setIsTypeChangeConfirmationOpen] =
+    useState(false);
 
   const checked = typeof hint != 'string';
 
-  return (
+  const editor = (
     <EditModal<Hint>
       isOpen={isOpen}
       title="Edit hint"
@@ -291,7 +279,7 @@ const EditHintModal = ({
               <Checkbox
                 checked={checked}
                 label="Language-dependent hint"
-                toggleChecked={confirmedToggle}
+                toggleChecked={() => setIsTypeChangeConfirmationOpen(true)}
               />
             </div>
             <textarea
@@ -320,6 +308,30 @@ const EditHintModal = ({
       }}
     />
   );
+
+  return (
+    <>
+      <ConfirmationModal
+        isOpen={isTypeChangeConfirmationOpen}
+        title="Change hint type?"
+        description="Changing the hint type deletes its content."
+        confirmLabel="Change type"
+        onConfirm={() => {
+          setHint(h => (typeof h === 'string' ? {} : ''));
+          setIsTypeChangeConfirmationOpen(false);
+        }}
+        onClose={() => setIsTypeChangeConfirmationOpen(false)}
+      />
+      {editor}
+    </>
+  );
+};
+
+type PendingConfirmation = {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  onConfirm: () => void;
 };
 
 const EditSampleModal = ({
@@ -506,6 +518,8 @@ const PageContent = () => {
   const [language, setLanguage] = useState<TextLanguage>('-');
   const [solutionLanguage, setSolutionLanguage] = useState<Language>('cpp');
   const [isSampleModalOpen, setIsSampleModalOpen] = useState(false);
+  const [pendingConfirmation, setPendingConfirmation] =
+    useState<PendingConfirmation | null>(null);
   const router = useRouter();
 
   const getTranslated = async (platform: string, id: string) => {
@@ -773,19 +787,32 @@ const PageContent = () => {
       <PageTitle>
         {problemTitle ? `Edit: ${problemTitle} (${problemID})` : undefined}
       </PageTitle>
+      <ConfirmationModal
+        isOpen={pendingConfirmation !== null}
+        title={pendingConfirmation?.title ?? ''}
+        description={pendingConfirmation?.description ?? ''}
+        confirmLabel={pendingConfirmation?.confirmLabel ?? ''}
+        onConfirm={() => {
+          pendingConfirmation?.onConfirm();
+          setPendingConfirmation(null);
+        }}
+        onClose={() => setPendingConfirmation(null)}
+      />
       <div className="relative z-30 mb-2">
         <LanguageSelectorDropdown
           languages={['-', 'hu', 'en', 'es']}
           language={language}
           setLanguage={lang => {
-            if (
-              !unsaved ||
-              confirm(
-                'The unsaved changes will be lost. Do you want to proceed?'
-              )
-            ) {
+            if (!unsaved) {
               setLanguage(lang);
+              return;
             }
+            setPendingConfirmation({
+              title: 'Discard unsaved changes?',
+              description: 'Changing the language discards unsaved changes.',
+              confirmLabel: 'Change language',
+              onConfirm: () => setLanguage(lang),
+            });
           }}
         />
       </div>
@@ -855,16 +882,17 @@ const PageContent = () => {
                   hintNum={index + 1}
                   key={index}
                   onDelete={() => {
-                    if (
-                      confirm(
-                        'The hint will be deleted. Do you want to proceed?'
-                      )
-                    ) {
-                      setUnsaved(true);
-                      setHints(prev => {
-                        return prev.filter((_, ind) => ind !== index);
-                      });
-                    }
+                    setPendingConfirmation({
+                      title: 'Delete hint?',
+                      description: 'This hint will be deleted.',
+                      confirmLabel: 'Delete hint',
+                      onConfirm: () => {
+                        setUnsaved(true);
+                        setHints(prev =>
+                          prev.filter((_, ind) => ind !== index)
+                        );
+                      },
+                    });
                   }}
                   onEdit={() => {
                     setEditedHint(hint);
@@ -964,18 +992,19 @@ const PageContent = () => {
                         <button
                           className={iconButtonClass}
                           onClick={() => {
-                            if (
-                              confirm(
-                                'The sample will be deleted. Do you want to proceed?'
-                              )
-                            ) {
-                              setUnsaved(true);
-                              setSamples(prev =>
-                                prev.filter(
-                                  (_, sampleIndex) => sampleIndex !== index
-                                )
-                              );
-                            }
+                            setPendingConfirmation({
+                              title: 'Delete sample?',
+                              description: 'This sample will be deleted.',
+                              confirmLabel: 'Delete sample',
+                              onConfirm: () => {
+                                setUnsaved(true);
+                                setSamples(prev =>
+                                  prev.filter(
+                                    (_, sampleIndex) => sampleIndex !== index
+                                  )
+                                );
+                              },
+                            });
                           }}
                         >
                           <FontAwesomeIcon
@@ -1001,15 +1030,21 @@ const PageContent = () => {
           items={codeLangs}
           selected={solutionLanguage}
           setSelected={val => {
-            if (
-              !unsavedSol ||
-              confirm(
-                'The unsaved changes will be lost. Do you want to proceed?'
-              )
-            ) {
+            if (!unsavedSol) {
               setSolutionLanguage(val);
               setUnsavedSol(false);
+              return;
             }
+            setPendingConfirmation({
+              title: 'Discard unsaved changes?',
+              description:
+                'Changing the solution language discards unsaved changes.',
+              confirmLabel: 'Change language',
+              onConfirm: () => {
+                setSolutionLanguage(val);
+                setUnsavedSol(false);
+              },
+            });
           }}
         />
         <div className="mt-2 border theme-border h-48">

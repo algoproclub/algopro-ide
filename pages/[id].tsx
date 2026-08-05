@@ -33,7 +33,7 @@ import { cleanJudgeResult } from '../src/editorUtils';
 import JudgeResult from '../src/types/judge';
 import useUserFileConnection from '../src/hooks/useUserFileConnection';
 import useUpdateUserDashboard from '../src/hooks/useUpdateUserDashboard';
-import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
+import ConfirmOverrideModal from '../src/components/ConfirmOverrideModal';
 import Link from 'next/link';
 import ProfileSettings from '../src/components/settings/ProfileSettings';
 import WithRegistration from '../src/components/WithRegistration';
