@@ -28,6 +28,11 @@ service cloud.firestore {
       }
     }
 
+    match /metadata/problemLibrary {
+      allow read: if request.auth != null && request.auth.token.registered == true;
+      allow write: if false;
+    }
+
     match /groups/{group} {
       function isValidGroup(schoolID, id) {
         return schoolID is string && id is string && id.matches('^' + schoolID + '~[a-z0-9_-]+$');

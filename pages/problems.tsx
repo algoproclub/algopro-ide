@@ -1,14 +1,8 @@
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { getPlatformName } from '../src/scripts/getPlatformName';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { collection, getDocs, getFirestore } from 'firebase/firestore';
-import {
-  platforms,
-  type ProblemTag,
-  problemTags,
-  type TagProblem,
-} from '../src/types/problem';
+import { platforms, type ProblemTag, problemTags } from '../src/types/problem';
 import Checkbox from '../src/components/Checkbox';
 import { useUserContext } from '../src/context/UserContext';
 import PageTitle from '../src/components/PageTitle';
@@ -21,8 +15,9 @@ import {
   fetchGroupSolvedCounts,
   type GroupSolvedCounts,
 } from '../src/data/taskStatus';
-
-const firestore = getFirestore();
+import { useAtomValue } from 'jotai';
+import { problemLibraryAtom } from '../src/atoms/problemLibrary';
+import ProblemLibraryRefreshButton from '../src/components/ProblemLibraryRefreshButton';
 
 const cellBorderClass = 'border-x border-[color:var(--border-muted)]';
 const iconButtonClass =
@@ -58,7 +53,7 @@ const Tag = ({
 
 const PageContent = () => {
   const { userRole } = useUserContext();
-  const [problemset, setProblemset] = useState<TagProblem[]>([]);
+  const problemset = useAtomValue(problemLibraryAtom);
   const [platformFilter, setPlatformFilter] = useState<Record<string, boolean>>(
     Object.fromEntries(platforms.map(label => [label, true]))
   );
@@ -121,21 +116,6 @@ const PageContent = () => {
     }));
   };
 
-  useEffect(() => {
-    const loadData = async () => {
-      const snaps = await Promise.all(
-        platforms.map(platform =>
-          getDocs(collection(firestore, `problemsets/${platform}/problems`))
-        )
-      );
-      const problems = snaps.flatMap(snap =>
-        snap.docs.map(doc => doc.data() as TagProblem)
-      );
-      setProblemset(problems);
-    };
-    loadData();
-  }, []);
-
   const tagFilterInputOptions = problemTags.filter(option =>
     option.toLowerCase().includes(tagFilterInput.toLowerCase())
   );
@@ -162,7 +142,10 @@ const PageContent = () => {
   };
 
   return (
-    <div className="space-y-2 m-10 mx-20">
+    <div className="m-10 mx-20 space-y-2">
+      <div className="flex justify-end">
+        <ProblemLibraryRefreshButton />
+      </div>
       <table className="theme-table px-3 py-2 border theme-border text-sm space-x-2 w-full">
         <tbody>
           <tr>
@@ -386,7 +369,11 @@ export default function ProblemsetPage() {
     <>
       <PageTitle>Problemset</PageTitle>
       <WithTeacherLogin>
-        <PageContent />
+        <Suspense
+          fallback={<div className="p-4">Loading problem library…</div>}
+        >
+          <PageContent />
+        </Suspense>
       </WithTeacherLogin>
     </>
   );
