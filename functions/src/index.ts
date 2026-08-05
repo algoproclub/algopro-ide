@@ -2,6 +2,7 @@ import { defineString } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import { initializeApp } from 'firebase-admin/app';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getDatabase, ServerValue } from 'firebase-admin/database';
 import {
   FileSubmission,
@@ -33,6 +34,7 @@ import {
   onValueDeleted,
   onValueUpdated,
 } from 'firebase-functions/v2/database';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 
 import { randomUUID } from 'crypto';
 import {
@@ -285,6 +287,35 @@ const app = initializeApp(
     : undefined
 );
 const db = getDatabase(app);
+const firestore = getFirestore(app);
+
+export const updateProblemLibraryRevision = onDocumentWritten(
+  {
+    document: 'problemsets/{platform}/problems/{problem}',
+    region: 'europe-west1',
+  },
+  async event => {
+    const metadata = (data: Record<string, unknown> | undefined) =>
+      JSON.stringify({
+        title: data?.title ?? null,
+        url: data?.url ?? null,
+        tags: data?.tags ?? null,
+      });
+    if (
+      metadata(event.data?.before.data()) === metadata(event.data?.after.data())
+    ) {
+      return;
+    }
+
+    await firestore.doc('metadata/problemLibrary').set(
+      {
+        revision: FieldValue.increment(1),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }
+);
 
 const accountData: { [key in Platform]: AccountData } = {
   atcoder: {
