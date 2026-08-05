@@ -196,7 +196,7 @@ body,
 }
 
 .theme-button-secondary:hover:not(:disabled),
-.theme-button-secondary:focus:not(:disabled) {
+.theme-button-secondary:focus-visible:not(:disabled) {
   background-color: var(--button-secondary-hover);
 }
 
