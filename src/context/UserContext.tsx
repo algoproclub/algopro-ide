@@ -26,6 +26,7 @@ import defaultCode from '../scripts/defaultCode';
 import { DEFAULT_FONT_SIZE_EDITOR } from '../constants/editorConstants';
 
 export type Language = 'cpp' | 'java' | 'py';
+
 export const LANGUAGES: { label: string; value: Language }[] = [
   {
     label: 'C++',
@@ -36,7 +37,7 @@ export const LANGUAGES: { label: string; value: Language }[] = [
     value: 'java',
   },
   {
-    label: 'Python 3.8.1',
+    label: 'Python',
     value: 'py',
   },
 ];
