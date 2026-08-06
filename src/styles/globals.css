@@ -260,7 +260,7 @@ body,
 
 .theme-button-primary:hover:not(:disabled),
 .theme-button-primary:focus:not(:disabled) {
-  background-color: var(--accent-hover);
+  background-color: var(--button-primary-hover);
 }
 
 .theme-button-secondary {

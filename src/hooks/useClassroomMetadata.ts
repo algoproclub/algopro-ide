@@ -12,9 +12,12 @@ import {
   type Student,
 } from '../data/classroomMetadata';
 
+export type ClassroomResourceStatus = 'idle' | 'loading' | 'ready' | 'error';
+
 type ClassroomResource<T> = {
   data: T[];
-  status: 'idle' | 'loading' | 'ready' | 'error';
+  status: ClassroomResourceStatus;
+  hasLoadedData: boolean;
   isRefreshing: boolean;
 };
 
@@ -72,17 +75,20 @@ const useClassroomList = <T>(
     return {
       data: emptyList,
       status: scopeKey ? 'loading' : 'idle',
+      hasLoadedData: false,
       isRefreshing: false,
     };
   if (resource.version !== refreshVersion)
     return {
       data: resource.data ?? emptyList,
       status: resource.data ? 'ready' : 'loading',
+      hasLoadedData: resource.data !== undefined,
       isRefreshing: resource.data !== undefined,
     };
   return {
     data: resource.data ?? emptyList,
     status: resource.status,
+    hasLoadedData: resource.data !== undefined,
     isRefreshing: false,
   };
 };
