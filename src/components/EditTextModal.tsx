@@ -90,15 +90,6 @@ export function EditModal<T>({
                     event.preventDefault();
                     onClose();
                   }
-                  if (
-                    event.key === 'Enter' &&
-                    !event.shiftKey &&
-                    !event.nativeEvent.isComposing &&
-                    event.target instanceof HTMLTextAreaElement
-                  ) {
-                    event.preventDefault();
-                    saveDraft();
-                  }
                 }}
               >
                 <div>{renderEditor(draft, setDraft)}</div>
@@ -247,16 +238,15 @@ export function EditGroupModal({
       onSave={onSave}
       onClose={onClose}
       renderEditor={(val, setVal) => (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-3">
           <div className="flex flex-col space-y-1.5">
             <label className="text-sm text-content">Group ID</label>
-            <div className="flex items-center space-x-0.5">
-              <span className="w-fit flex-shrink rounded-md border border-line bg-surface px-3 py-2 text-sm text-content">
-                {schoolID}
-                {'~'}
+            <div className="flex items-center gap-2">
+              <span className="flex-none whitespace-nowrap text-sm text-content-muted">
+                {schoolID}~
               </span>
               <input
-                className="w-full rounded-md border border-line bg-input px-3 py-2 text-sm text-content shadow-sm outline-none transition-colors hover:border-line-strong focus-visible:border-line-strong focus-visible:ring-2 focus-visible:ring-focus"
+                className="min-w-0 flex-1 rounded-md border border-line bg-input px-3 py-2 text-sm text-content shadow-sm outline-none transition-colors hover:border-line-strong focus-visible:border-line-strong focus-visible:ring-2 focus-visible:ring-focus"
                 value={val.left}
                 onChange={e => setVal(v => ({ ...v, left: e.target.value }))}
               />

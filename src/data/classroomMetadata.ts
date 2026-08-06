@@ -1,5 +1,8 @@
 import {
+  arrayRemove,
+  arrayUnion,
   collection,
+  deleteDoc,
   doc,
   documentId,
   type FieldPath,
@@ -9,7 +12,10 @@ import {
   orderBy,
   query,
   QueryDocumentSnapshot,
+  runTransaction,
+  updateDoc,
   where,
+  writeBatch,
 } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { UserRole } from '../context/UserContext';
@@ -84,8 +90,11 @@ const fetchStudentRoster = async (
   return response.json();
 };
 
+export const fetchGroupRoster = (groupID: string) =>
+  fetchStudentRoster(groupID, 'group');
+
 export const fetchGroupStudents = async (groupID: string): Promise<Student[]> =>
-  (await fetchStudentRoster(groupID, 'group')).students;
+  (await fetchGroupRoster(groupID)).students;
 
 export const fetchSchoolStudents = (groupID: string) =>
   fetchStudentRoster(groupID, 'school');
@@ -251,6 +260,128 @@ export const fetchGroupClasses = async (
     id: classDocument.id,
     data: classDocument.data() as GroupClassData,
   }));
+};
+
+export const createGroup = async ({
+  id,
+  name,
+  schoolID,
+}: {
+  id: string;
+  name: string;
+  schoolID: string;
+}) => {
+  const shortID = id.slice(`${schoolID}~`.length);
+  if (
+    !schoolID ||
+    !id.startsWith(`${schoolID}~`) ||
+    !/^[a-z0-9_-]+$/.test(shortID) ||
+    !name.trim()
+  )
+    throw new Error('Invalid group data.');
+  const groupRef = doc(firestore, 'groups', id);
+  return runTransaction(firestore, async transaction => {
+    if ((await transaction.get(groupRef)).exists()) return false;
+    transaction.set(groupRef, { name: name.trim(), school: schoolID });
+    return true;
+  });
+};
+
+export const deleteGroup = async (groupID: string) => {
+  const groupRef = doc(firestore, 'groups', groupID);
+  const groupExists = await runTransaction(firestore, async transaction => {
+    const group = await transaction.get(groupRef);
+    if (!group.exists()) return false;
+    if (group.data()?.deleting !== true)
+      transaction.update(groupRef, { deleting: true });
+    return true;
+  });
+  if (!groupExists) return;
+
+  const [roster, classes] = await Promise.all([
+    fetchGroupRoster(groupID),
+    getDocs(collection(firestore, 'groups', groupID, 'classes')),
+  ]).catch(async error => {
+    await updateDoc(groupRef, { deleting: false });
+    throw error;
+  });
+
+  const batch = writeBatch(firestore);
+  batch.delete(groupRef);
+  classes.forEach(groupClass => batch.delete(groupClass.ref));
+  roster.memberUIDs.forEach(userID =>
+    batch.update(doc(firestore, 'userdata', userID), {
+      groups: arrayRemove(groupID),
+    })
+  );
+  await batch.commit();
+};
+
+export const createGroupClass = async (
+  groupID: string,
+  classID: string,
+  data: GroupClassData
+) => {
+  if (!groupID || !classID || groupID.includes('/') || classID.includes('/'))
+    throw new Error('Invalid class path.');
+  const groupRef = doc(firestore, 'groups', groupID);
+  const classRef = doc(firestore, 'groups', groupID, 'classes', classID);
+  return runTransaction(firestore, async transaction => {
+    const [group, groupClass] = await Promise.all([
+      transaction.get(groupRef),
+      transaction.get(classRef),
+    ]);
+    if (!group.exists() || group.data()?.deleting === true)
+      throw new Error('The group is unavailable.');
+    if (groupClass.exists()) return false;
+    transaction.set(classRef, data);
+    return true;
+  });
+};
+
+export const updateGroupClass = (
+  groupID: string,
+  classID: string,
+  data: GroupClassData
+) => {
+  return updateDoc(doc(firestore, 'groups', groupID, 'classes', classID), data);
+};
+
+export const deleteGroupClass = (groupID: string, classID: string) =>
+  deleteDoc(doc(firestore, 'groups', groupID, 'classes', classID));
+
+export const saveGroupMemberships = async (
+  groupID: string,
+  changes: Array<[uid: string, isInGroup: boolean]>
+) => {
+  if (new Set(changes.map(([uid]) => uid)).size !== changes.length)
+    throw new Error('Invalid membership changes.');
+  const groupRef = doc(firestore, 'groups', groupID);
+  await runTransaction(firestore, async transaction => {
+    const group = await transaction.get(groupRef);
+    if (!group.exists() || group.data()?.deleting === true)
+      throw new Error('The group is unavailable.');
+    const schoolID = group.data()?.school;
+    if (typeof schoolID !== 'string')
+      throw new Error('The group has no school.');
+
+    const users = await Promise.all(
+      changes.map(([uid]) => transaction.get(doc(firestore, 'userdata', uid)))
+    );
+    if (
+      users.some(user => {
+        const schools = user.data()?.schools;
+        return !Array.isArray(schools) || !schools.includes(schoolID);
+      })
+    )
+      throw new Error('Every student must belong to the group school.');
+
+    changes.forEach(([, isInGroup], index) =>
+      transaction.update(users[index].ref, {
+        groups: isInGroup ? arrayUnion(groupID) : arrayRemove(groupID),
+      })
+    );
+  });
 };
 
 export const getDashboardTasks = (problems: URLProblem[]): DashboardTask[] =>
