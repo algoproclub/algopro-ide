@@ -7,11 +7,12 @@ import CodeRunResult, {
 type ExecuteResponse = {
   compiled: boolean;
   compiler_output: string;
-  verdict: number;
+  status: CodeRunStatus;
   output: string;
   stderr: string;
   memory: number;
-  time: number | string;
+  time: number;
+  signal: number;
 };
 
 type RunCodeRequest = {
@@ -63,41 +64,28 @@ function filenameFor(language: Language, code: string): string {
   }[language];
 }
 
-function mapStatus(verdict: number): CodeRunStatus {
-  if (verdict == 1) return 'success';
-  if (verdict == 2) return 'time_limit_exceeded';
-  if (verdict == 4) return 'runtime_error';
-  if (verdict == 8) return 'runtime_error';
-  if (verdict == 16) return 'internal_error';
-  return 'compile_error';
-}
-
 function mapExecuteResult(result: ExecuteResponse): CodeRunResult {
   if (!result.compiled) {
     return {
-      message: result.compiler_output,
       status: 'compile_error',
-      memory: '',
-      stderr: '',
-      stdout: '',
-      time: '',
-      statusDescription: '',
+      ...(result.compiler_output && { message: result.compiler_output }),
     };
   }
 
-  const time =
-    typeof result.time === 'number'
-      ? (result.time / 1e9).toString()
-      : (parseInt(result.time) / 1e9).toString();
-
+  const { status } = result;
   return {
-    compilationMessage: result.compiler_output,
-    status: mapStatus(result.verdict),
-    memory: result.memory.toString(),
-    stderr: result.stderr,
-    stdout: result.output,
-    time,
-    statusDescription: '',
+    status,
+    ...(status !== 'memory_limit_exceeded' &&
+      Number.isFinite(result.memory) && { memory: result.memory }),
+    ...(status !== 'time_limit_exceeded' &&
+      Number.isFinite(result.time) && { time: result.time }),
+    ...(Number.isInteger(result.signal) &&
+      result.signal > 0 && { signal: result.signal }),
+    ...(result.compiler_output && {
+      compilationMessage: result.compiler_output,
+    }),
+    ...(result.stderr && { stderr: result.stderr }),
+    ...(result.output && { stdout: result.output }),
   };
 }
 

@@ -139,7 +139,7 @@ func (req Request) Run(ctx context.Context, sp sandbox.Provider, compileCache *C
 			return &Response{
 				Compiled:       false,
 				CompilerOutput: artifact.CompilerOutput,
-				Verdict:        sandbox.VerdictCE,
+				Status:         statuses[sandbox.VerdictCE],
 			}, nil
 		}
 		return withSandbox(ctx, sp, func(sbox sandbox.Sandbox) (*Response, error) {
@@ -157,7 +157,7 @@ func (req Request) Run(ctx context.Context, sp sandbox.Provider, compileCache *C
 			return &Response{
 				Compiled:       false,
 				CompilerOutput: artifact.CompilerOutput,
-				Verdict:        sandbox.VerdictCE,
+				Status:         statuses[sandbox.VerdictCE],
 			}, nil
 		}
 		return req.runCompiled(ctx, sbox, lang, artifact)
@@ -193,23 +193,34 @@ func (req Request) runCompiled(ctx context.Context, sbox sandbox.Sandbox, lang l
 		Compiled:       true,
 		CompilerOutput: artifact.CompilerOutput,
 
-		Verdict: status.Verdict,
-		Output:  stdout.String(),
-		Stderr:  stderr.String(),
-		Memory:  int(status.Memory / memory.KB),
-		Time:    status.Time,
+		Status: statuses[status.Verdict],
+		Output: stdout.String(),
+		Stderr: stderr.String(),
+		Memory: int(status.Memory / memory.KB),
+		Time:   status.Time.Seconds(),
+		Signal: status.Signal,
 	}, nil
+}
+
+var statuses = map[sandbox.Verdict]string{
+	sandbox.VerdictOK: "success",
+	sandbox.VerdictCE: "compile_error",
+	sandbox.VerdictRE: "runtime_error",
+	sandbox.VerdictML: "memory_limit_exceeded",
+	sandbox.VerdictTL: "time_limit_exceeded",
+	sandbox.VerdictXX: "internal_error",
 }
 
 type Response struct {
 	Compiled       bool   `json:"compiled"`
-	CompilerOutput string `json:"compiler_output"`
+	CompilerOutput string `json:"compiler_output,omitempty"`
 
-	Verdict sandbox.Verdict `json:"verdict"`
-	Output  string          `json:"output"`
-	Stderr  string          `json:"stderr"`
-	Memory  int             `json:"memory"`
-	Time    time.Duration   `json:"time"`
+	Status string  `json:"status"`
+	Output string  `json:"output,omitempty"`
+	Stderr string  `json:"stderr,omitempty"`
+	Memory int     `json:"memory,omitempty"`
+	Time   float64 `json:"time,omitempty"`
+	Signal int     `json:"signal,omitempty"`
 }
 
 type TokenVerifier interface {

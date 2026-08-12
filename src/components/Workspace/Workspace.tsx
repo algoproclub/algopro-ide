@@ -4,7 +4,7 @@ import {
 } from '@heroicons/react/20/solid';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import classNames from 'classnames';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Group,
   Panel,
@@ -20,7 +20,6 @@ import {
 } from '../../atoms/workspace';
 import {
   inputTabAtom,
-  inputTabIndexAtom,
   languageAtom,
   mobileActiveTabAtom,
   problemAtom,
@@ -38,7 +37,7 @@ import { LazyRealtimeEditor } from '../RealtimeEditor/LazyRealtimeEditor';
 import { Output } from '../Output';
 import { TabBar } from '../TabBar';
 import { UserList } from '../UserList/UserList';
-import Samples from '../JudgeInterface/Samples';
+import Samples, { getSampleTabId } from '../JudgeInterface/Samples';
 import Hints from '../JudgeInterface/Hints';
 import useJudgeResults from '../../hooks/useJudgeResults';
 import USACOJudgeInterface from '../JudgeInterface/USACOJudgeInterface';
@@ -245,7 +244,6 @@ function TaskOverviewPanel({
 }: {
   handleRunCode: () => void;
 }): JSX.Element {
-  const { fileData } = useEditorContext();
   const problem = useAtomValue(problemAtom);
   const translations = useAtomValue(translationsAtom);
   const [language, setLanguage] = useAtom(languageAtom);
@@ -253,8 +251,7 @@ function TaskOverviewPanel({
 
   return (
     <div className="h-full overflow-hidden">
-      {problem?.id === fileData.problem?.id &&
-        problem &&
+      {problem &&
         Object.keys(translations).length > 0 &&
         (problem.platform !== 'usaco' ? (
           <GenericJudgeInterface
@@ -275,92 +272,92 @@ function TaskOverviewPanel({
   );
 }
 
-function InputTabPanel({
-  tabId,
+function InputPane({
   handleRunCode,
 }: {
-  tabId: string;
   handleRunCode: () => void;
 }): JSX.Element {
   const { fileData } = useEditorContext();
-  const problem = useAtomValue(problemAtom);
+  const [inputTab, setInputTab] = useAtom(inputTabAtom);
+  const loadedProblem = useAtomValue(problemAtom);
   const translations = useAtomValue(translationsAtom);
   const language = useAtomValue(languageAtom);
   const solutions = useAtomValue(solutionsAtom);
+  const solved = useAtomValue(solvedAtom);
+  const problem =
+    loadedProblem?.id === fileData.problem?.id ? loadedProblem : undefined;
+  const hints = problem ? getHints(translations, language) : [];
+  const showSolutions =
+    solved &&
+    (Object.keys(solutions).length > 0 || problem?.platform === 'planets');
 
-  switch (tabId) {
-    case 'input':
-      return <WorkspaceInputPanel />;
-    case 'judge':
-      return <TaskOverviewPanel handleRunCode={handleRunCode} />;
-    case 'hints':
-      return (
-        <div className="h-full overflow-hidden">
-          {problem?.id === fileData.problem?.id && (
-            <Hints hints={getHints(translations, language)} />
-          )}
-        </div>
-      );
-    case 'solutions':
-      return (
-        <div className="h-full overflow-hidden">
-          {problem?.id === fileData.problem?.id && problem && (
-            <div className="relative h-full p-4 pb-0">
-              <Solutions problem={problem} solutions={solutions} />
-            </div>
-          )}
-        </div>
-      );
-    default:
-      return (
-        <div className="h-full overflow-y-auto">
-          {problem?.id === fileData.problem?.id && problem && (
-            <div className="relative h-full p-4 pb-0">
+  return (
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+      <TabBar
+        selectedId={inputTab}
+        onSelectionChange={setInputTab}
+        ariaLabel="Workspace input"
+        panelsClassName="min-h-0 min-w-0 flex-1 overflow-hidden bg-[var(--panel-bg)] text-[color:var(--text-primary)]"
+      >
+        <TabBar.Item id="input" label="Input" unmount={false}>
+          <WorkspaceInputPanel />
+        </TabBar.Item>
+        {problem && (
+          <TabBar.Item id="judge" label="Task Overview">
+            <TaskOverviewPanel handleRunCode={handleRunCode} />
+          </TabBar.Item>
+        )}
+        {hints.length > 0 && (
+          <TabBar.Item id="hints" label="Hints">
+            <Hints hints={hints} />
+          </TabBar.Item>
+        )}
+        {problem?.samples.map((_, index) => {
+          const tabId = getSampleTabId(problem.samples.length, index);
+
+          return (
+            <TabBar.Item key={tabId} id={tabId} label={tabId}>
               <Samples
                 samples={problem.samples}
                 inputTab={tabId}
                 handleRunCode={handleRunCode}
               />
+            </TabBar.Item>
+          );
+        })}
+        {problem && showSolutions && (
+          <TabBar.Item id="solutions" label="Solutions">
+            <div className="h-full overflow-hidden">
+              <div className="relative h-full p-4 pb-0">
+                <Solutions problem={problem} solutions={solutions} />
+              </div>
             </div>
-          )}
-        </div>
-      );
-  }
-}
-
-function InputPane({
-  tabsList,
-  handleRunCode,
-}: {
-  tabsList: { label: string; value: string }[];
-  handleRunCode: () => void;
-}): JSX.Element {
-  const [inputTab, setInputTab] = useAtom(inputTabAtom);
-
-  return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-      <TabBar
-        tabs={tabsList}
-        activeTab={inputTab}
-        onTabSelect={tab => setInputTab(tab.value)}
-      />
-      <div className="min-h-0 min-w-0 flex-1 overflow-hidden bg-[var(--panel-bg)] text-[color:var(--text-primary)]">
-        <InputTabPanel tabId={inputTab} handleRunCode={handleRunCode} />
-      </div>
+          </TabBar.Item>
+        )}
+      </TabBar>
     </div>
   );
 }
 
 function OutputPane(): JSX.Element {
-  const inputTabIndex = useAtomValue(inputTabIndexAtom);
-  const [judgeResults] = useJudgeResults();
+  const { fileData } = useEditorContext();
+  const inputTab = useAtomValue(inputTabAtom);
+  const loadedProblem = useAtomValue(problemAtom);
+  const { getResultForTab } = useJudgeResults();
   const statusData = useAtomValue(statusDataAtom);
   const statusDataHistory = useAtomValue(statusDataHistoryAtom);
+  const sampleCount =
+    loadedProblem &&
+    fileData.problem &&
+    loadedProblem.platform === fileData.problem.platform &&
+    loadedProblem.id === fileData.problem.id
+      ? loadedProblem.samples.length
+      : 0;
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
       <Output
-        result={judgeResults[inputTabIndex]}
+        result={getResultForTab(inputTab, sampleCount)}
         statusData={statusData}
         statusDataHistory={statusDataHistory}
       />
@@ -378,11 +375,9 @@ function SidebarPane(): JSX.Element {
 }
 
 function InputOutputPane({
-  tabsList,
   handleRunCode,
   layoutResetKey,
 }: {
-  tabsList: { label: string; value: string }[];
   handleRunCode: () => void;
   layoutResetKey: number;
 }): JSX.Element {
@@ -411,7 +406,7 @@ function InputOutputPane({
       onLayoutChanged={onLayoutChanged}
     >
       <Panel id="input" minSize="10%" className="h-full min-h-0">
-        <InputPane tabsList={tabsList} handleRunCode={handleRunCode} />
+        <InputPane handleRunCode={handleRunCode} />
       </Panel>
       <PanelResizeHandle orientation="vertical" />
       <Panel id="output" minSize="10%" className="h-full min-h-0">
@@ -423,11 +418,9 @@ function InputOutputPane({
 
 function WorkspacePanels({
   handleRunCode,
-  tabsList,
   layoutResetKey,
 }: {
   handleRunCode: () => void;
-  tabsList: { label: string; value: string }[];
   layoutResetKey: number;
 }): JSX.Element {
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
@@ -540,7 +533,6 @@ function WorkspacePanels({
         className="h-full min-h-0"
       >
         <InputOutputPane
-          tabsList={tabsList}
           handleRunCode={handleRunCode}
           layoutResetKey={layoutResetKey}
         />
@@ -564,11 +556,9 @@ function WorkspacePanels({
 
 export default function Workspace({
   handleRunCode,
-  tabsList,
   layoutResetKey,
 }: {
   handleRunCode: () => void;
-  tabsList: { label: string; value: string }[];
   layoutResetKey: number;
 }): JSX.Element {
   const { fileData } = useEditorContext();
@@ -682,7 +672,6 @@ export default function Workspace({
   return (
     <WorkspacePanels
       handleRunCode={handleRunCode}
-      tabsList={tabsList}
       layoutResetKey={layoutResetKey}
     />
   );

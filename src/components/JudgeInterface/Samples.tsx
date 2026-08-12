@@ -11,6 +11,10 @@ export function getSampleIndex(inputTab: string): number {
   return inputTab.length === 6 ? 1 : +inputTab.substring(7);
 }
 
+export function getSampleTabId(sampleCount: number, index: number): string {
+  return sampleCount === 1 ? 'Sample' : `Sample ${index + 1}`;
+}
+
 export const PreBox = ({
   title,
   text,
@@ -66,7 +70,7 @@ export default function Samples({
   const isCodeRunActive = useCodeRunActive(fileData.codeRun);
 
   return (
-    <div className="text-sm">
+    <div className="relative h-full overflow-y-auto p-4 pb-0 text-sm">
       <div className="border-b border-[color:var(--border-muted)] -mx-4 px-4 pb-4">
         <button
           type="button"

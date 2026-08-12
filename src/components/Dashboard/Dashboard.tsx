@@ -29,10 +29,6 @@ import { doc, getDoc, getFirestore } from 'firebase/firestore';
 const firestore = getFirestore();
 const db = getDatabase();
 
-const tabs = [
-  { label: 'Classes', value: 'classes' },
-  { label: 'Recent', value: 'recent' },
-];
 const PAGE_SIZE = 8;
 
 const Pagination = ({
@@ -372,7 +368,9 @@ const ClassesTab = () => {
 
 export default function Dashboard() {
   const [showHidden, setShowHidden] = useState<boolean>(false);
-  const [tab, setTab] = useState('classes');
+  const [selectedTab, setSelectedTab] = useState<'classes' | 'recent'>(
+    'classes'
+  );
 
   return (
     <div className="theme-page">
@@ -395,20 +393,23 @@ export default function Dashboard() {
         />
       </h2>
       <TabBar
-        tabs={tabs}
-        activeTab={tab}
-        onTabSelect={tab => {
-          setTab(tab.value);
-        }}
-        homepage={true}
-      />
-      {tab === 'classes' && <ClassesTab />}
-      {tab === 'recent' && (
-        <RecentTab
-          showHidden={showHidden}
-          toggleShowHidden={() => setShowHidden(val => !val)}
-        />
-      )}
+        selectedId={selectedTab}
+        ariaLabel="Dashboard views"
+        onSelectionChange={setSelectedTab}
+        listClassName="space-x-1"
+        tabClassName="rounded-t-md"
+        activeTabClassName="bg-[var(--surface-active)] text-[color:var(--text-primary)]"
+      >
+        <TabBar.Item id="classes" label="Classes">
+          <ClassesTab />
+        </TabBar.Item>
+        <TabBar.Item id="recent" label="Recent">
+          <RecentTab
+            showHidden={showHidden}
+            toggleShowHidden={() => setShowHidden(value => !value)}
+          />
+        </TabBar.Item>
+      </TabBar>
     </div>
   );
 }

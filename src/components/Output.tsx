@@ -1,5 +1,5 @@
 import { TabBar } from './TabBar';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAtomValue } from 'jotai';
 import JudgeResult from '../types/judge';
 import USACOResults from './JudgeInterface/USACOResults';
@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CompilerOutput } from './CompilerOutput';
 import { mainMonacoEditorAtom } from '../atoms/workspace';
 import { StderrOutput } from './StderrOutput';
+import { getJudgeStatusDescription } from '../editorUtils';
 
 type StatusHistoryEntry = StatusData & { submissionTime?: number };
 
@@ -20,6 +21,95 @@ export interface OutputProps {
 }
 
 type OutputTab = 'stdout' | 'stderr' | 'compile_output' | 'results' | 'history';
+
+type OutputSelection = {
+  result: JudgeResult | null;
+  statusData: StatusData | null;
+  selectedId: OutputTab;
+  acknowledged: OutputTab[];
+};
+function isSameOutput(
+  previous: JudgeResult | null,
+  current: JudgeResult | null
+): boolean {
+  return (
+    previous?.status === current?.status &&
+    previous?.stdout === current?.stdout &&
+    previous?.stderr === current?.stderr &&
+    previous?.message === current?.message &&
+    previous?.compilationMessage === current?.compilationMessage &&
+    previous?.signal === current?.signal &&
+    previous?.debugData?.source === current?.debugData?.source
+  );
+}
+
+function getDefaultOutputTab(result: JudgeResult | null): OutputTab {
+  if (
+    result?.status === 'compile_error' ||
+    result?.status === 'internal_error'
+  ) {
+    return 'compile_output';
+  }
+  if (result?.stdout) return 'stdout';
+  if (result?.stderr) return 'stderr';
+  return 'stdout';
+}
+
+function getOutputText(result: JudgeResult | null, tab: OutputTab): string {
+  if (result?.status === 'internal_error') {
+    return result.debugData?.source === 'run_code'
+      ? `Run Code Error: ${result.message}`
+      : `Internal Error: ${result.message}\n\nPlease report this as a GitHub issue.`;
+  }
+
+  if (tab === 'compile_output') {
+    return result?.status === 'compile_error'
+      ? (result.message ?? '')
+      : (result?.compilationMessage ?? '');
+  }
+
+  if (tab === 'stdout' || tab === 'stderr') return result?.[tab] ?? '';
+  return '';
+}
+
+function ExecutionOutputPanel({
+  children,
+  result,
+}: {
+  children: React.ReactNode;
+  result: JudgeResult | null;
+}): JSX.Element {
+  const executionTime =
+    result?.status === 'time_limit_exceeded'
+      ? '∞ms'
+      : result?.time === undefined
+        ? null
+        : `${Math.round(result.time * 1000)}ms`;
+  const memory =
+    result?.status === 'memory_limit_exceeded'
+      ? '∞MB'
+      : result?.memory === undefined
+        ? null
+        : result.memory < 1000
+          ? `${result.memory}kB`
+          : `${Math.round(result.memory / 100) / 10}MB`;
+
+  return (
+    <div className="tw-forms-disable tw-forms-disable-all-descendants flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+      {result && (
+        <div
+          className="px-4 py-1 text-right font-mono text-sm text-[color:var(--text-secondary)]"
+          data-test-id="code-execution-output-status"
+        >
+          {[getJudgeStatusDescription(result), executionTime, memory]
+            .filter(Boolean)
+            .join(', ')}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function OutputHistory({
   entries,
@@ -125,114 +215,58 @@ export const Output = ({
   statusData,
   statusDataHistory,
 }: OutputProps): JSX.Element => {
-  const history = statusDataHistory ?? [];
-  const [option, setOption] = useState<OutputTab>('stdout');
-  const [tabs, setTabs] = useState<
-    Array<{ label: string; value: string; highlight: boolean }>
-  >([
-    { label: 'stdout', value: 'stdout', highlight: false },
-    { label: 'stderr', value: 'stderr', highlight: false },
-    { label: 'compile output', value: 'compile_output', highlight: false },
-    { label: 'results', value: 'results', highlight: false },
-    { label: 'history', value: 'history', highlight: false },
-  ]);
-
-  useEffect(() => {
-    setOption('stdout');
-    let option = null;
-    const updatedTabs = tabs.map(tab => ({ ...tab, highlight: false }));
-
-    if (result?.stderr) {
-      option = 'stderr';
-      const stderrTab = updatedTabs.find(tab => tab.value === 'stderr');
-      if (stderrTab) stderrTab.highlight = true;
-    }
-    if (result?.stdout) {
-      option = 'stdout';
-      const stdoutTab = updatedTabs.find(tab => tab.value === 'stdout');
-      if (stdoutTab) stdoutTab.highlight = true;
-    }
-    if (result?.compilationMessage) {
-      const compileTab = updatedTabs.find(
-        tab => tab.value === 'compile_output'
-      );
-      if (compileTab) compileTab.highlight = true;
-    }
-    if (
-      result?.status === 'compile_error' ||
-      result?.status === 'internal_error'
-    ) {
-      option = 'compile_output';
-    }
-
-    setTabs(updatedTabs);
-    if (option) setOption(option as OutputTab);
-  }, [result?.status, result?.stdout, result?.stderr]);
-
-  useEffect(() => {
-    if (statusData) setOption('results');
-  }, [statusData]);
-
-  const availableTabs = tabs.filter(tab => {
-    if (tab.value === 'results') return Boolean(statusData);
-    if (tab.value === 'history') return history.length > 0;
-    return true;
+  const [selection, setSelection] = useState<OutputSelection>(() => {
+    const selectedId = statusData ? 'results' : getDefaultOutputTab(result);
+    return { result, statusData, selectedId, acknowledged: [selectedId] };
   });
-  const currentOption = availableTabs.some(tab => tab.value === option)
-    ? option
-    : (availableTabs[0].value as OutputTab);
+  const resultChanged = !isSameOutput(selection.result, result);
+  const statusChanged = selection.statusData !== statusData;
+  let currentSelection = selection;
 
-  useEffect(() => {
-    if (currentOption !== option) setOption(currentOption);
-  }, [currentOption, option]);
-
-  let outputText;
-  if (currentOption !== 'results' && currentOption !== 'history') {
-    if (result?.status === 'internal_error') {
-      outputText =
-        result.debugData?.source === 'run_code'
-          ? 'Run Code Error: ' + result.message
-          : 'Internal Error: ' +
-            result.message +
-            '\n\nPlease report this as a GitHub issue.';
-    } else {
-      if (currentOption === 'compile_output') {
-        if (result?.status === 'compile_error') {
-          outputText = result.message ?? '';
-        } else {
-          outputText = result?.compilationMessage ?? '';
-        }
-      } else {
-        outputText = result?.[currentOption] ?? '';
-      }
-    }
+  if (resultChanged || statusChanged) {
+    const selectedId =
+      statusChanged && statusData ? 'results' : getDefaultOutputTab(result);
+    currentSelection = {
+      result,
+      statusData,
+      selectedId,
+      acknowledged: resultChanged ? [selectedId] : selection.acknowledged,
+    };
+    setSelection(currentSelection);
   }
 
+  const history = statusDataHistory ?? [];
+  const isHighlighted = (id: OutputTab, hasOutput: boolean): boolean =>
+    hasOutput && !currentSelection.acknowledged.includes(id);
+
   const { userData } = useUserContext();
-  const lightMode = userData.lightMode;
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
 
   return (
-    <>
-      <TabBar
-        tabs={availableTabs}
-        activeTab={currentOption}
-        onTabSelect={tab => {
-          setOption(tab.value as OutputTab);
-        }}
-      />
-      <div className="flex-1 bg-[var(--panel-bg)] text-[color:var(--text-primary)] min-h-0 overflow-hidden tw-forms-disable tw-forms-disable-all-descendants">
-        {currentOption === 'results' && (
-          <div className="px-4 h-full overflow-y-auto">
-            {statusData && <USACOResults data={statusData} />}
-          </div>
-        )}
-        {currentOption === 'history' && <OutputHistory entries={history} />}
-        {currentOption === 'stdout' && (
+    <TabBar
+      selectedId={currentSelection.selectedId}
+      onSelectionChange={selectedId => {
+        setSelection(current => ({
+          ...current,
+          selectedId,
+          acknowledged: current.acknowledged.includes(selectedId)
+            ? current.acknowledged
+            : [...current.acknowledged, selectedId],
+        }));
+      }}
+      ariaLabel="Program output"
+      panelsClassName="min-h-0 flex-1 overflow-hidden bg-[var(--panel-bg)] text-[color:var(--text-primary)]"
+    >
+      <TabBar.Item
+        id="stdout"
+        label="stdout"
+        highlight={isHighlighted('stdout', Boolean(result?.stdout))}
+      >
+        <ExecutionOutputPanel result={result}>
           <CodeEditor
-            theme={lightMode ? 'light' : 'dark'}
-            language={'plaintext'}
-            value={outputText}
+            theme={userData.lightMode ? 'light' : 'dark'}
+            language="plaintext"
+            value={getOutputText(result, 'stdout')}
             saveViewState={false}
             path="output"
             editorOptions={{
@@ -241,27 +275,48 @@ export const Output = ({
               fontSize: userData.fontSize,
             }}
           />
+        </ExecutionOutputPanel>
+      </TabBar.Item>
+      <TabBar.Item
+        id="stderr"
+        label="stderr"
+        highlight={isHighlighted('stderr', Boolean(result?.stderr))}
+      >
+        <ExecutionOutputPanel result={result}>
+          <StderrOutput
+            output={getOutputText(result, 'stderr')}
+            lightMode={userData.lightMode}
+          />
+        </ExecutionOutputPanel>
+      </TabBar.Item>
+      <TabBar.Item
+        id="compile_output"
+        label="compile output"
+        highlight={isHighlighted(
+          'compile_output',
+          Boolean(result?.compilationMessage)
         )}
-        {currentOption === 'stderr' && (
-          <StderrOutput output={outputText ?? ''} lightMode={lightMode} />
-        )}
-        {currentOption === 'compile_output' && (
+      >
+        <ExecutionOutputPanel result={result}>
           <CompilerOutput
-            output={outputText ?? ''}
-            highlightLine={l => mainMonacoEditor?.setLineHighlight(l)}
+            output={getOutputText(result, 'compile_output')}
+            highlightLine={line => mainMonacoEditor?.setLineHighlight(line)}
             clearLineHighlight={() => mainMonacoEditor?.clearLineHighlight()}
           />
-        )}
-      </div>
-      {currentOption !== 'results' && currentOption !== 'history' && result && (
-        <div
-          className="text-sm font-mono text-right px-4 py-1 text-[color:var(--text-secondary)]"
-          data-test-id="code-execution-output-status"
-        >
-          {result.statusDescription}, {result.time ?? '-'}s,{' '}
-          {result.memory ?? '-'}KB
-        </div>
+        </ExecutionOutputPanel>
+      </TabBar.Item>
+      {statusData && (
+        <TabBar.Item id="results" label="results">
+          <div className="h-full overflow-y-auto px-4">
+            <USACOResults data={statusData} />
+          </div>
+        </TabBar.Item>
       )}
-    </>
+      {history.length > 0 && (
+        <TabBar.Item id="history" label="history">
+          <OutputHistory entries={history} />
+        </TabBar.Item>
+      )}
+    </TabBar>
   );
 };
