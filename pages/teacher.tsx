@@ -22,6 +22,7 @@ import { parseProblem } from '../src/scripts/parseProblem';
 import { getPlatformName } from '../src/scripts/getPlatformName';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import { UserRole, useUserContext } from '../src/context/UserContext';
+import PageTitle from '../src/components/PageTitle';
 
 const times = ['1 hour', '3 hours', '1 day', '7 days', 'All'];
 const timeInMs = [
@@ -569,10 +570,6 @@ const PageContent = () => {
   const [data, setData] = useState<(SolutionData | null)[][]>([]);
   const [fromTime, setFromTime] = useState(0);
 
-  useEffect(() => {
-    document.title = 'Teacher interface - AlgoPro IDE';
-  }, []);
-
   const schoolNames = useMemo(() => schools.map(s => s.name), [schools]);
   const groupNames = useMemo(() => groupsList.map(g => g.name), [groupsList]);
 
@@ -745,8 +742,11 @@ const PageContent = () => {
 
 export default function TeacherPage() {
   return (
-    <WithTeacherLogin>
-      <PageContent />
-    </WithTeacherLogin>
+    <>
+      <PageTitle>Teacher dashboard</PageTitle>
+      <WithTeacherLogin>
+        <PageContent />
+      </WithTeacherLogin>
+    </>
   );
 }

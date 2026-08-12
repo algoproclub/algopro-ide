@@ -5,6 +5,7 @@ import { fetchTeacherSchools } from './teacher';
 import { useUserContext } from '../src/context/UserContext';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { CopyButton } from '../src/components/CopyButton';
+import PageTitle from '../src/components/PageTitle';
 
 const generateToken = httpsCallable<
   { schoolID: string; expTime: number },
@@ -95,8 +96,11 @@ const PageContent = () => {
 
 export default function InvitePage() {
   return (
-    <WithTeacherLogin>
-      <PageContent />
-    </WithTeacherLogin>
+    <>
+      <PageTitle>Invite students</PageTitle>
+      <WithTeacherLogin>
+        <PageContent />
+      </WithTeacherLogin>
+    </>
   );
 }
