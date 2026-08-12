@@ -16,8 +16,8 @@ firebase.google.com/go/v4 v4.15.0/go.mod h1:S/4MJqVZn1robtXkHhpRUbwOC4gdYtgsiMMJ
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/MicahParks/keyfunc v1.9.0 h1:lhKd5xrFHLNOWrDc4Tyb/Q1AJ4LCzQ48GVJyVIID3+o=
 github.com/MicahParks/keyfunc v1.9.0/go.mod h1:IdnCilugA0O/99dW+/MkvlyrsX8+L8+x95xuVNtM5jw=
-github.com/algoproclub/njudge v0.6.1-0.20260713082108-f2cd3566b785 h1:+doKlfvfrHBPoGRi0hSlMqk1MU9JKcwTYTzF1M/fSoA=
-github.com/algoproclub/njudge v0.6.1-0.20260713082108-f2cd3566b785/go.mod h1:AtYF/KfJW0h8tGweOXFhWaylVIzS7S2Z1orMQe8Adyo=
+github.com/algoproclub/njudge v0.6.1-0.20260829113447-8f562a9934f2 h1:Dj1Zg5bsvk22U6Zx74VOZc2dMo9sOX6teWxgy0ncuI8=
+github.com/algoproclub/njudge v0.6.1-0.20260829113447-8f562a9934f2/go.mod h1:AtYF/KfJW0h8tGweOXFhWaylVIzS7S2Z1orMQe8Adyo=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=

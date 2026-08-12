@@ -14,11 +14,6 @@ export const inputCodemirrorEditorAtom = atom<EditorView | null>(null);
 export const isLineHighlightSetAtom = atom<boolean>(false);
 export const savedEditorValue = atom<string | null>(null);
 
-export const layoutEditorsAtom = atom(null, (get, _set, _arg) => {
-  get(mainMonacoEditorAtom)?.layout();
-  get(inputMonacoEditorAtom)?.layout();
-});
-
 // returns a function that can be called to get the value of the editor
 export const mainEditorValueAtom = atom(get => {
   const monacoEditor = get(mainMonacoEditorAtom);

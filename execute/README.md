@@ -71,17 +71,12 @@ responses:
   - json body with fields:
     - compiled: boolean
     - compiler_output: string
-    - verdict: integer ([reference](https://pkg.go.dev/github.com/mraron/njudge@v0.5.0/pkg/language/sandbox#Verdict))
-      - 1: OK
-      - 2: time limit exceeded (>5secs)
-      - 4: memory limit exceeded (>128MiB)
-      - 8: runtime error
-      - 16: internal error
-      - 32: compilation error
+    - status: `success`, `time_limit_exceeded`, `memory_limit_exceeded`, `runtime_error`, `internal_error`, or `compile_error`
     - output: string, the stdout produced by the program (max 5000 bytes)
     - stderr: string, the stderr produced by the program (including ASan, max 10000 bytes)
-    - memory: int, memory usage in KiBs
-    - time: string, cpu time used in a [string format](https://pkg.go.dev/time#Duration.String)
+    - memory: number, memory usage in kB
+    - time: number, CPU time used in seconds
+    - signal: integer, fatal signal number when the program was killed by a signal
 
 ## Deployment on Ubuntu 26.04
 

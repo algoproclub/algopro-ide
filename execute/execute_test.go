@@ -240,7 +240,7 @@ int main() {
 			wantErr: false,
 			resp: Response{
 				Compiled: true,
-				Verdict:  sandbox.VerdictRE,
+				Status:   "runtime_error",
 			},
 		},
 		{
@@ -253,7 +253,7 @@ int main() {
 			wantErr: false,
 			resp: Response{
 				Compiled: true,
-				Verdict:  sandbox.VerdictRE,
+				Status:   "runtime_error",
 			},
 		},
 		{
@@ -267,7 +267,7 @@ int main() {béla}`,
 			wantErr: false,
 			resp: Response{
 				Compiled: false,
-				Verdict:  sandbox.VerdictCE,
+				Status:   "compile_error",
 			},
 		},
 		{
@@ -283,7 +283,7 @@ int main() {
 			wantErr: false,
 			resp: Response{
 				Compiled: true,
-				Verdict:  sandbox.VerdictTL,
+				Status:   "time_limit_exceeded",
 			},
 		},
 		{
@@ -302,7 +302,7 @@ int main() {
 			wantErr: false,
 			resp: Response{
 				Compiled: true,
-				Verdict:  sandbox.VerdictRE,
+				Status:   "runtime_error",
 			},
 		},
 		{
@@ -320,7 +320,7 @@ int main() {
 			wantErr: false,
 			resp: Response{
 				Compiled: true,
-				Verdict:  sandbox.VerdictOK,
+				Status:   "success",
 			},
 		},
 		{
@@ -337,7 +337,7 @@ print("error", file=sys.stderr)`,
 			checkStderr: true,
 			resp: Response{
 				Compiled: true,
-				Verdict:  sandbox.VerdictOK,
+				Status:   "success",
 				Output:   "hello vilag\n",
 				Stderr:   "error\n",
 			},
@@ -353,7 +353,7 @@ print("error", file=sys.stderr)`,
 				assert.Nil(t, err)
 			}
 			assert.Equal(t, test.resp.Compiled, resp.Compiled)
-			assert.Equal(t, test.resp.Verdict, resp.Verdict)
+			assert.Equal(t, test.resp.Status, resp.Status)
 			if test.checkOutput {
 				assert.Equal(t, test.resp.Output, resp.Output)
 			}
@@ -439,7 +439,7 @@ func TestPostExecute(t *testing.T) {
 			checkResponseOutput: true,
 			wantResponse: Response{
 				Compiled: true,
-				Verdict:  sandbox.VerdictOK,
+				Status:   "success",
 				Output:   "hello világ\n",
 				Stderr:   "stdérr\n",
 			},
@@ -454,7 +454,7 @@ func TestPostExecute(t *testing.T) {
 			checkResponseOutput: true,
 			wantResponse: Response{
 				Compiled: true,
-				Verdict:  sandbox.VerdictOK,
+				Status:   "success",
 				Output:   "eredményünk: 30\n",
 			},
 		},
@@ -475,7 +475,7 @@ func TestPostExecute(t *testing.T) {
 				resp := Response{}
 				assert.Nil(t, json.NewDecoder(res.Body).Decode(&resp))
 				assert.Equal(t, test.wantResponse.Compiled, resp.Compiled)
-				assert.Equal(t, test.wantResponse.Verdict, resp.Verdict)
+				assert.Equal(t, test.wantResponse.Status, resp.Status)
 				if test.checkResponseOutput {
 					assert.Equal(t, test.wantResponse.Output, resp.Output)
 				}

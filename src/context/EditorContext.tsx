@@ -18,6 +18,7 @@ import React, {
 import { ChatMessage } from '../components/Chat';
 import { FileSubmission, PlatformProblem, ProblemData } from '../types/problem';
 import type { CodeRun } from '../scripts/codeRun';
+import type JudgeResult from '../types/judge';
 
 export type Language = 'cpp' | 'java' | 'py';
 
@@ -45,8 +46,8 @@ export type FileData = {
   codeRun?: CodeRun | null;
   submission: FileSubmission;
   state: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    judge_resuts: any;
+    input_judge_result?: JudgeResult | null;
+    sample_judge_results?: Array<JudgeResult | null>;
   };
   chat: {
     [key: string]: Omit<ChatMessage, 'key'>;
@@ -57,9 +58,11 @@ export type FileData = {
   };
 };
 
+type FileUpdate = Partial<FileData> & Record<string, unknown>;
+
 export type EditorContextType = {
   fileData: FileData;
-  updateFileData: (firebaseUpdateData: Partial<FileData>) => Promise<void>;
+  updateFileData: (firebaseUpdateData: FileUpdate) => Promise<void>;
   /**
    * Maps YJS File ID ==> true / false
    * If file ID is not in the map, assume it's false
@@ -133,7 +136,7 @@ export function EditorProvider({
   }, [fileId]);
 
   const updateFileData = useCallback(
-    (firebaseUpdateData: object) => {
+    (firebaseUpdateData: FileUpdate) => {
       return update(ref(getDatabase(), 'files/' + fileId), firebaseUpdateData);
     },
     [fileId]

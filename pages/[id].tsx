@@ -16,11 +16,9 @@ import {
 } from '../src/atoms/workspace';
 import {
   inputTabAtom,
-  inputTabIndexAtom,
   mobileActiveTabAtom,
   problemAtom,
   showSidebarAtom,
-  tabsListAtom,
 } from '../src/atoms/workspaceUI';
 import React, { useEffect, useState } from 'react';
 import { useMediaQuery } from '../src/hooks/useMediaQuery';
@@ -60,10 +58,6 @@ function runCodeErrorToResult(error: unknown): JudgeResult {
     statusDescription: 'Run Code Error',
     message:
       `${status}${error instanceof Error ? error.message : String(error)}`.trim(),
-    stdout: '',
-    stderr: '',
-    time: '',
-    memory: '',
     debugData,
   };
 }
@@ -83,7 +77,11 @@ function EditorPage() {
   const [mobileActiveTab, setMobileActiveTab] = useAtom(mobileActiveTabAtom);
   const getMainEditorValue = useAtomValue(mainEditorValueAtom);
   const getInputEditorValue = useAtomValue(inputEditorValueAtom);
-  const [judgeResults, setJudgeResults] = useJudgeResults();
+  const {
+    sampleResults: storedSampleResults,
+    setInputResult,
+    setSampleResults,
+  } = useJudgeResults();
   const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
   const setSavedEditorValue = useSetAtom(savedEditorValue);
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
@@ -99,23 +97,7 @@ function EditorPage() {
   useUserFileConnection();
   const { pageTitle } = useUpdateUserDashboard();
 
-  const [inputTab, setInputTab] = useAtom(inputTabAtom);
-  const inputTabIndex = useAtomValue(inputTabIndexAtom);
-
-  let tabsList = useAtomValue(tabsListAtom);
-
-  if (!fileData.problem) {
-    tabsList = tabsList.filter(
-      ({ value }) => value != 'judge' && !value.startsWith('Sample')
-    );
-    setInputTab('input');
-  }
-  useEffect(() => {
-    if (inputTabIndex === tabsList.length) {
-      // current tab doesn't exist
-      setInputTab(tabsList[0].value);
-    }
-  }, [tabsList, inputTab, setInputTab, inputTabIndex]);
+  const inputTab = useAtomValue(inputTabAtom);
 
   const handleToggleSidebar = () => {
     setShowSidebar(show => !show);
@@ -134,18 +116,21 @@ function EditorPage() {
       });
     };
 
-    const setResultAt = (index: number, data: JudgeResult | null) => {
-      const newJudgeResults = judgeResults;
-      while (newJudgeResults.length <= index) newJudgeResults.push(null);
-      newJudgeResults[index] = data;
-      setJudgeResults(newJudgeResults);
+    const setActiveResult = (result: JudgeResult | null) => {
+      if (inputTab === 'input') {
+        return setInputResult(result);
+      }
+
+      const sampleIndex = getSampleIndex(inputTab) - 1;
+      const nextResults = Array.from(
+        { length: Math.max(storedSampleResults.length, sampleIndex + 1) },
+        (_, index) => storedSampleResults[index] ?? null
+      );
+      nextResults[sampleIndex] = result;
+      return setSampleResults(nextResults);
     };
 
-    const runWithInput = async (
-      input: string,
-      expectedOutput?: string,
-      prefix?: string
-    ) => {
+    const runWithInput = async (input: string, expectedOutput?: string) => {
       if (!getMainEditorValue) {
         // editor is still loading
         return;
@@ -156,22 +141,21 @@ function EditorPage() {
       if (!runID) {
         return;
       }
-      setResultAt(inputTabIndex, null);
+      await setActiveResult(null);
 
       try {
         const code = getMainEditorValue();
         const data = await executeCode(code, input);
-        cleanJudgeResult(data, expectedOutput, prefix);
-        setResultAt(inputTabIndex, data);
+        cleanJudgeResult(data, expectedOutput);
+        await setActiveResult(data);
       } catch (e) {
-        setResultAt(inputTabIndex, runCodeErrorToResult(e));
+        const errorResult = runCodeErrorToResult(e);
+        await setActiveResult(errorResult);
         console.error(e);
       } finally {
         await endCodeRun(fileData.id, runID);
       }
     };
-
-    const runAllList = ['judge', 'hints', 'solutions'];
 
     const runAllSamples = async () => {
       if (!problem || !getMainEditorValue) {
@@ -185,7 +169,7 @@ function EditorPage() {
       if (!runID) {
         return;
       }
-      setResultAt(1, null);
+      await setSampleResults([]);
 
       try {
         const code = getMainEditorValue();
@@ -195,86 +179,18 @@ function EditorPage() {
           inputs: samples.map(sample => sample.input),
         });
 
-        const newJudgeResults = judgeResults;
-        const results: JudgeResult[] = [];
-
-        let lastIndex = 0;
         for (let index = 0; index < samples.length; ++index) {
           const sample = samples[index];
           const data = sampleResults[index];
           if (data.status === 'internal_error') {
             console.error(data);
-            throw new Error(data.message || JSON.stringify(data));
           }
-          let prefix = 'Sample';
-          if (samples.length > 1) prefix += ` ${index + 1}`;
-          prefix += ': ';
-          if (!sample.output) prefix = '';
-          cleanJudgeResult(data, sample.output, prefix);
-          results.push(data);
-          let tabName = 'Sample';
-          if (samples.length > 1) tabName += ` ${index + 1}`;
-          let tabIndex = tabsList.findIndex(tab => tab.label === tabName); // Find the index in tablists
-          if (tabIndex === -1) tabIndex = tabsList.length + index;
-          newJudgeResults[tabIndex] = data;
-          lastIndex = tabIndex;
+          cleanJudgeResult(data, sample.output);
         }
-        if (samples.length > 1) {
-          let verdicts = '';
-          for (const result of results) {
-            // https://newjudge0.usaco.guide/#statuses-and-languages-status-get
-            if (result.status === 'compile_error') {
-              // compilation error
-              setJudgeResults([result]);
-              break;
-            }
-            if (result.status === 'success') verdicts += 'A';
-            else if (result.status === 'wrong_answer') verdicts += 'W';
-            else if (result.status === 'time_limit_exceeded') verdicts += 'T';
-            else if (result.status === 'runtime_error') verdicts += 'R';
-            else verdicts += '?';
-          }
-          let firstFailed = 0;
-          while (
-            firstFailed < samples.length - 1 &&
-            verdicts[firstFailed] === 'A'
-          )
-            ++firstFailed;
-
-          const failedResult: JudgeResult = JSON.parse(
-            JSON.stringify(results[firstFailed])
-          );
-          if (verdicts.length > 1)
-            failedResult.statusDescription =
-              'Sample Verdicts: ' +
-              verdicts +
-              '. ' +
-              failedResult.statusDescription;
-          newJudgeResults[1] = failedResult;
-          runAllList.forEach((item, index) => {
-            let tabindex = tabsList.findIndex(tab => tab.value === item);
-            if (tabindex === -1) tabindex = tabsList.length + index;
-            newJudgeResults[tabindex] = failedResult;
-          });
-        } else {
-          runAllList.forEach(item => {
-            const tabindex = tabsList.findIndex(tab => tab.value === item);
-            if (tabindex === -1) {
-              return;
-            }
-            newJudgeResults[tabindex] = newJudgeResults[lastIndex];
-          });
-        }
-        setJudgeResults(newJudgeResults);
+        await setSampleResults(sampleResults);
       } catch (e) {
         const errorResult = runCodeErrorToResult(e);
-        const newJudgeResults = judgeResults;
-        runAllList.forEach((item, index) => {
-          let tabIndex = tabsList.findIndex(tab => tab.value === item);
-          if (tabIndex === -1) tabIndex = tabsList.length + index;
-          newJudgeResults[tabIndex] = errorResult;
-        });
-        setJudgeResults(newJudgeResults);
+        await setSampleResults(samples.map(() => errorResult));
         console.error(e);
       } finally {
         await endCodeRun(fileData.id, runID);
@@ -285,14 +201,14 @@ function EditorPage() {
 
     if (inputTab === 'input') {
       if (getInputEditorValue) runWithInput(getInputEditorValue());
-    } else if (runAllList.includes(inputTab)) {
+    } else if (['judge', 'hints', 'solutions'].includes(inputTab)) {
       runAllSamples();
     } else {
       const samples = problem?.samples;
       if (samples) {
         const index = getSampleIndex(inputTab);
         const sample = samples[index - 1];
-        runWithInput(sample.input, sample.output, inputTab + ': ');
+        runWithInput(sample.input, sample.output);
       }
     }
     setIsLineHighlightSet(false);
@@ -342,7 +258,6 @@ function EditorPage() {
           >
             <Workspace
               handleRunCode={handleRunCode}
-              tabsList={tabsList}
               layoutResetKey={layoutResetKey}
             />
           </HocuspocusProviderWebsocketComponent>
