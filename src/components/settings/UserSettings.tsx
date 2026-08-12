@@ -3,6 +3,10 @@ import { EditorMode, Language, LANGUAGES } from '../../context/UserContext';
 import { RadioGroupContents } from './RadioGroupContents';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import TemplateCodeSettings from './TemplateCodeSettings';
+import {
+  MAX_FONT_SIZE_EDITOR,
+  MIN_FONT_SIZE_EDITOR,
+} from '../../constants/editorConstants';
 
 const EDITOR_MODES = ['Normal', 'Vim' /*'Emacs'*/];
 
@@ -136,6 +140,8 @@ export default function UserSettings({
   onEditorModeChange,
   tabSize,
   onTabSizeChange,
+  fontSize,
+  onFontSizeChange,
   lightMode,
   onLightModeChange,
   rainbowIndent,
@@ -161,6 +167,8 @@ export default function UserSettings({
   onEditorModeChange: (mode: EditorMode) => void;
   tabSize: number;
   onTabSizeChange: (tabSize: number) => void;
+  fontSize: number;
+  onFontSizeChange: (fontSize: number) => void;
   lightMode: boolean;
   onLightModeChange: (lightMode: boolean) => void;
   rainbowIndent: boolean;
@@ -316,6 +324,30 @@ export default function UserSettings({
                 return { label: val + ' chars', value: val };
               })}
             />
+            <div>
+              <label
+                htmlFor={`fontSize`}
+                className="block text-[0.92rem] text-[color:var(--text-secondary)]"
+              >
+                Font size (pixels)
+              </label>
+              <input
+                type="number"
+                name={`fontSize`}
+                id={`fontSize`}
+                className="text-input"
+                min={MIN_FONT_SIZE_EDITOR}
+                max={MAX_FONT_SIZE_EDITOR}
+                value={fontSize}
+                onChange={e => {
+                  const value = e.currentTarget.valueAsNumber;
+                  if (Number.isNaN(value)) {
+                    return;
+                  }
+                  onFontSizeChange(Math.round(value));
+                }}
+              />
+            </div>
           </div>
         )}
         <button

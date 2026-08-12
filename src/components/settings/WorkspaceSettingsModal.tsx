@@ -16,6 +16,7 @@ import {
 import { FileSettings, useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { updateUserSettings } from '../../scripts/updateSettings';
+import { DEFAULT_FONT_SIZE_EDITOR } from '../../constants/editorConstants';
 
 export interface SettingsDialogProps {
   isOpen: boolean;
@@ -57,6 +58,7 @@ export const WorkspaceSettingsModal = ({
   const [defaultLanguage, setDefaultLanguage] = useState<Language>('cpp');
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
   const [tabSize, setTabSize] = useState<number>(-1);
+  const [fontSize, setFontSize] = useState<number>(DEFAULT_FONT_SIZE_EDITOR);
   const [lightMode, setLightMode] = useState<boolean>(false);
   const [rainbowIndent, setRainbowIndent] = useState<boolean>(false);
   const [manualSubmission, setManualSubmission] = useState<boolean>(false);
@@ -75,6 +77,7 @@ export const WorkspaceSettingsModal = ({
       setDefaultLanguage(userData.defaultLanguage ?? '');
       setEditorMode(userData.editorMode);
       setTabSize(userData.tabSize);
+      setFontSize(userData.fontSize);
       setLightMode(userData.lightMode);
       setRainbowIndent(userData.rainbowIndent);
       setManualSubmission(userData.manualSubmission);
@@ -138,6 +141,7 @@ export const WorkspaceSettingsModal = ({
       discordID,
       editorMode,
       tabSize,
+      fontSize,
       lightMode,
       rainbowIndent,
       manualSubmission,

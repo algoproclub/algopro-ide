@@ -465,6 +465,11 @@ export class PlanetsSubmitter extends Submitter {
     this.authorization = authorization;
   }
 
+  // We do not store any credentials for planets, so login is a no-op.
+  async login(_: object): Promise<void> {
+    return;
+  }
+
   async loginWith(_: object): Promise<boolean> {
     return true;
   }
@@ -492,11 +497,17 @@ export class PlanetsSubmitter extends Submitter {
       }
     );
     if (res.status !== 200) {
+      let errorMessage: string;
+
+      const response = await res.text();
+      try {
+        errorMessage = JSON.parse(response).error.message;
+      } catch (e) {
+        errorMessage = response;
+      }
+
       throw new Error(
-        'planets submission failed, status: ' +
-          res.status +
-          ' ' +
-          (await res.json()).error.message
+        'planets submission failed, status: ' + res.status + ' ' + errorMessage
       );
     }
     const data = await res.json();

@@ -32,7 +32,7 @@ def setup_firebase(use_emulator: bool):
         },
     )
 
-setup_firebase(use_emulator=True)
+setup_firebase(use_emulator=False)
 print("Initialized app")
 
 fs_client = firestore.client()

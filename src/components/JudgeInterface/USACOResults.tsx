@@ -1,40 +1,17 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  PlatformProblem,
-  ProblemData,
-  StatusData,
-  TestCase,
-} from '../../types/problem';
+import { StatusData, TestCase } from '../../types/problem';
 import TimeAgoLabel from '../TimeStamp';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useEditorContext } from '../../context/EditorContext';
-import {
-  getStorage,
-  ref as storageRef,
-  getDownloadURL,
-  getMetadata,
-  StorageReference,
-} from 'firebase/storage';
 import classNames from 'classnames';
 import { PreBox } from './Samples';
+import fetchTestCase from './fetchTestCase';
 
 const capitalize = (text: string): string => {
   return text[0].toUpperCase() + text.substring(1);
 };
-
-function makeTestcaseStorageRef(
-  problem: ProblemData | PlatformProblem,
-  kind: 'input' | 'output',
-  trialNum: number
-) {
-  const { platform, id } = problem;
-  const path = `testcases/${platform}/${id}/${kind}${trialNum - 1}.txt`;
-  const storage = getStorage();
-  const ref = storageRef(storage, path);
-  return ref;
-}
 
 async function downloadFileFromURLWithName(url: string, fileName: string) {
   const res = await fetch(url);
@@ -61,82 +38,57 @@ async function downloadFileAndCopyToClipboard(url: string) {
 
 // copied from UserSettingsModal
 const TestCaseInfoModal = ({
-  isOpen,
-  onClose,
+  onAfterClose,
   testCase,
 }: {
-  isOpen: boolean;
-  onClose: () => void;
+  onAfterClose: () => void;
   testCase: TestCase;
 }) => {
   const { fileData } = useEditorContext();
   const problem = fileData.problem;
+  const [isOpen, setIsOpen] = useState<boolean>(true);
 
   const [inputDownloadURL, setInputDownloadURL] = useState<string | null>(null);
   const [outputDownloadURL, setOutputDownloadURL] = useState<string | null>(
     null
   );
-  const [inputPreviewText, setInputPreviewText] = useState<string>('');
-  const [outputPreviewText, setOutputPreviewText] = useState<string>('');
+  const [inputPreviewText, setInputPreviewText] =
+    useState<string>('Loading...');
+  const [outputPreviewText, setOutputPreviewText] =
+    useState<string>('Loading...');
 
   useEffect(() => {
-    setInputDownloadURL(null);
-    setOutputDownloadURL(null);
-    setInputPreviewText('');
-    setOutputPreviewText('');
-
     if (problem === null) return;
-
-    const inputRef = makeTestcaseStorageRef(
-      problem,
-      'input',
-      testCase.trialNum
-    );
-    const outputRef = makeTestcaseStorageRef(
-      problem,
-      'output',
-      testCase.trialNum
-    );
+    const activeProblem = problem;
 
     async function startTestcaseSetup(
-      ref: StorageReference,
+      kind: 'input' | 'output',
       setDownloadURL: (url: string) => void,
       setPreviewText: (text: string) => void
     ) {
       try {
-        const meta = await getMetadata(ref);
-        const url = await getDownloadURL(ref);
-        setDownloadURL(url);
-        const sizeInBytes = meta.size;
-        const sizeInMiBs = sizeInBytes / 1024 / 1024;
-        if (sizeInMiBs > 1) {
-          setPreviewText(
-            'Warning: Testcase file is over 1MiB!\nPlease download manually.'
-          );
-          return;
-        }
-        const res = await fetch(url);
-        const text = await res.text();
-        if (text.length > 1000) {
-          const trimmedText = text.substring(0, 1000);
-          setPreviewText(
-            `Warning: Only showing the first 1000 chars!\n${trimmedText}...`
-          );
-        } else {
-          setPreviewText(text);
-        }
+        const data = await fetchTestCase(
+          activeProblem,
+          kind,
+          testCase.trialNum
+        );
+        if (!data) return;
+
+        setDownloadURL(data.downloadURL);
+        setPreviewText(data.previewText);
       } catch (e) {
+        setPreviewText('Failed to load');
         console.error(e);
       }
     }
 
     // we don't await so that they can run parallelly
-    startTestcaseSetup(inputRef, setInputDownloadURL, setInputPreviewText);
-    startTestcaseSetup(outputRef, setOutputDownloadURL, setOutputPreviewText);
+    startTestcaseSetup('input', setInputDownloadURL, setInputPreviewText);
+    startTestcaseSetup('output', setOutputDownloadURL, setOutputPreviewText);
   }, [testCase, problem]);
 
   const closeWithoutSaving = () => {
-    onClose();
+    setIsOpen(false);
   };
 
   if (problem === null) {
@@ -144,7 +96,7 @@ const TestCaseInfoModal = ({
   }
 
   return (
-    <Transition.Root show={isOpen} as={Fragment}>
+    <Transition.Root show={isOpen} as={Fragment} afterLeave={onAfterClose}>
       <Dialog
         as="div"
         static
@@ -400,7 +352,6 @@ export default function USACOResults({
     }
   }
 
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedTestCase, setSelectedTestCase] = useState<TestCase | null>(
     null
   );
@@ -492,9 +443,9 @@ export default function USACOResults({
 
       {selectedTestCase && (
         <TestCaseInfoModal
+          key={selectedTestCase.trialNum}
           testCase={selectedTestCase}
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onAfterClose={() => setSelectedTestCase(null)}
         />
       )}
 
@@ -527,10 +478,7 @@ export default function USACOResults({
               <USACOTestCase
                 key={tc.trialNum}
                 data={tc}
-                onClick={() => {
-                  setSelectedTestCase(tc);
-                  setIsModalOpen(true);
-                }}
+                onClick={() => setSelectedTestCase(tc)}
               />
             ))}
           </div>

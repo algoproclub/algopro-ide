@@ -1,14 +1,11 @@
 FROM node:22-trixie-slim
 WORKDIR /app
 
-COPY package*.json ./
-COPY yarn.lock ./
-RUN yarn install
-COPY tsconfig.json ./
-COPY index.html ./
-COPY *.js ./
-COPY *.ts ./
+ENV NEXT_TELEMETRY_DISABLED=1
 
+COPY package*.json yarn.lock ./
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
+    yarn install
 
 EXPOSE 3000
-ENTRYPOINT ["yarn", "dev"]
+CMD ["yarn", "dev"]

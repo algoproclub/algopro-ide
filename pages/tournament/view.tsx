@@ -19,6 +19,7 @@ import { StatusData } from '../../src/types/problem';
 import USACOResults from '../../src/components/JudgeInterface/USACOResults';
 import Split from 'react-split-grid';
 import WithAdminLogin from '../../src/components/WithAdminLogin';
+import { HocuspocusProviderWebsocketComponent } from '@hocuspocus/provider-react';
 
 const db = getDatabase();
 
@@ -195,7 +196,7 @@ const SpectatePage = () => {
   const [files, setFiles] = useState<string[]>(
     [left, middle, right].filter(x => x) as string[]
   );
-  const [startTime] = useState(0);
+  const [startTime, setStartTime] = useState(0);
   const [participants, setParticipants] = useState<
     { name: string; fileID: string }[]
   >([]);
@@ -204,12 +205,21 @@ const SpectatePage = () => {
     if (files.length > 0) return;
 
     const fetchFiles = async () => {
+      const latestIDSnapshot = await get(ref(db, 'tournaments/latestID'));
+      const tournamentID = latestIDSnapshot.val();
+
       const participantsSnapshot = await get(
-        ref(db, 'tournaments/latestID/participants')
+        ref(db, `tournaments/${tournamentID}/participants`)
       );
       const participantsData = participantsSnapshot.val() as {
         [userName: string]: { fileID: string };
       };
+
+      setStartTime(
+        Date.parse(
+          (await get(ref(db, `tournaments/${tournamentID}/info/start`))).val()
+        )
+      );
 
       const participantList = await Promise.all(
         Object.entries(participantsData).map(async ([, data]) => {
@@ -233,32 +243,36 @@ const SpectatePage = () => {
 
   return (
     <WithAdminLogin>
-      <div className="h-full w-full flex divide-x divide-[color:var(--border-muted)] theme-page">
-        <SolutionView
-          fileID={files?.[0]}
-          startTime={startTime}
-          participants={participants}
-          onFileChange={newFileID =>
-            setFiles(prev => [newFileID, prev[1], prev[2]])
-          }
-        />
-        <SolutionView
-          fileID={files?.[1]}
-          startTime={startTime}
-          participants={participants}
-          onFileChange={newFileID =>
-            setFiles(prev => [prev[0], newFileID, prev[2]])
-          }
-        />
-        <SolutionView
-          fileID={files?.[2]}
-          startTime={startTime}
-          participants={participants}
-          onFileChange={newFileID =>
-            setFiles(prev => [prev[0], prev[1], newFileID])
-          }
-        />
-      </div>
+      <HocuspocusProviderWebsocketComponent
+        url={process.env.NEXT_PUBLIC_YJS_URL!}
+      >
+        <div className="h-full w-full flex divide-x divide-[color:var(--border-muted)] theme-page">
+          <SolutionView
+            fileID={files?.[0]}
+            startTime={startTime}
+            participants={participants}
+            onFileChange={newFileID =>
+              setFiles(prev => [newFileID, prev[1], prev[2]])
+            }
+          />
+          <SolutionView
+            fileID={files?.[1]}
+            startTime={startTime}
+            participants={participants}
+            onFileChange={newFileID =>
+              setFiles(prev => [prev[0], newFileID, prev[2]])
+            }
+          />
+          <SolutionView
+            fileID={files?.[2]}
+            startTime={startTime}
+            participants={participants}
+            onFileChange={newFileID =>
+              setFiles(prev => [prev[0], prev[1], newFileID])
+            }
+          />
+        </div>
+      </HocuspocusProviderWebsocketComponent>
     </WithAdminLogin>
   );
 };

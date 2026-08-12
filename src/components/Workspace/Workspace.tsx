@@ -47,7 +47,7 @@ import {
   ref,
   get,
 } from 'firebase/database';
-import { PlatformProblem, Translation } from '../../types/problem';
+import { Translation } from '../../types/problem';
 import {
   fetchProblemFromDb,
   fetchSolutionsFromDb,
@@ -142,25 +142,29 @@ export default function Workspace({
   }, [inputEditorHandle, setCodemirrorInputEditor, setInputEditor]);
 
   useEffect(() => {
+    let cancelled = false;
+
     (async () => {
       setStatusData(null);
+      setTranslations({});
+      setSolutions({});
 
-      // FIXME: Do not store USACO problems directly in the Realtime DB.
       if (!fileData.problem) {
         setProblem(null);
         return;
       }
 
-      const problemData = await fetchProblemFromDb(
-        fileData.problem as PlatformProblem
-      );
+      setProblem(undefined);
+      const problemData = await fetchProblemFromDb(fileData.problem);
+
+      if (cancelled) return;
 
       setProblem(problemData);
       if (problemData) {
         setInputTab('judge');
-        const translations = await fetchTranslationsFromDb(
-          fileData.problem as PlatformProblem
-        );
+        const translations = await fetchTranslationsFromDb(fileData.problem);
+
+        if (cancelled) return;
 
         translations['en'] ??= {
           hints: problemData.hints ?? [],
@@ -170,13 +174,21 @@ export default function Workspace({
         };
 
         setTranslations(translations);
-        setSolutions(
-          await fetchSolutionsFromDb(fileData.problem as PlatformProblem)
-        );
+        const solutions = await fetchSolutionsFromDb(fileData.problem);
+
+        if (cancelled) return;
+
+        setSolutions(solutions);
         setLanguage('hu' in translations ? 'hu' : 'en');
       }
     })();
-  }, [fileData.problem?.platform]);
+
+    return () => {
+      cancelled = true;
+    };
+    // The RTDB object can change independently; only its identity triggers this load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fileData.problem?.platform, fileData.problem?.id]);
 
   useEffect(() => {
     get(ref(db, `files/${fileData.id}/solvedStatus/solved`)).then(
@@ -226,7 +238,7 @@ export default function Workspace({
   }, []);
 
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
-  const { lightMode } = useUserContext().userData;
+  const { lightMode, fontSize } = useUserContext().userData;
 
   useEffect(() => {
     setLanguage('hu' in translations ? 'hu' : 'en');
@@ -289,6 +301,7 @@ export default function Workspace({
                     automaticLayout: false,
                     insertSpaces: false,
                     readOnly,
+                    fontSize,
                   }}
                   onReady={handle => {
                     setInputEditorHandle(handle);

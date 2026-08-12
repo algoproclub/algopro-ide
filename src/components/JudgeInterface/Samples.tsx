@@ -5,6 +5,7 @@ import { useEditorContext } from '../../context/EditorContext';
 import LoadingIndicator from '../LoadingIndicator';
 import useUserPermission from '../../hooks/useUserPermission';
 import classNames from 'classnames';
+import useCodeRunActive from '../../hooks/useCodeRunActive';
 
 export function getSampleIndex(inputTab: string): number {
   return inputTab.length === 6 ? 1 : +inputTab.substring(7);
@@ -62,6 +63,7 @@ export default function Samples({
   const sample = samples[index - 1];
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
+  const isCodeRunActive = useCodeRunActive(fileData.codeRun);
 
   return (
     <div className="text-sm">
@@ -71,11 +73,11 @@ export default function Samples({
           title={
             readOnly ? "You can't run code in a view-only document." : undefined
           }
-          disabled={readOnly || fileData.isCodeRunning}
+          disabled={readOnly || isCodeRunActive}
           className="rounded-md relative flex-shrink-0 inline-flex items-center px-4 py-2.5 w-40 shadow-sm text-sm font-medium theme-button-primary focus:outline-none disabled:cursor-not-allowed"
           onClick={handleRunCode}
         >
-          {fileData.isCodeRunning ? (
+          {isCodeRunActive ? (
             <>
               <LoadingIndicator className="h-5 w-5 p-0.5 mr-1.5" />
               <span className="text-center flex-1">Running...</span>

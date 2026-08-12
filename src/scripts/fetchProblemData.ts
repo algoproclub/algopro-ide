@@ -435,6 +435,35 @@ async function fetchProblemDataOjuz(
 }
 
 const MAX_TOTAL_SAMPLE_SIZE = 768 * 1024; // 768 KiB, as total Firestore doc max size is 1 MiB.
+const MAX_SAMPLE_STDOUT_SIZE = 5000; // The execute server truncates stdout to 5000 bytes
+
+const compareFilenames = (a: string, b: string): number => {
+  const aMatch = a.match(/^(.*?)(\d+)?(\.[^.]*)?$/);
+  const bMatch = b.match(/^(.*?)(\d+)?(\.[^.]*)?$/);
+
+  const aPrefix = aMatch?.[1] ?? a;
+  const bPrefix = bMatch?.[1] ?? b;
+
+  const prefixResult = aPrefix.localeCompare(bPrefix);
+  if (prefixResult !== 0) return prefixResult;
+
+  const aNumber = aMatch?.[2] === undefined ? null : Number(aMatch[2]);
+  const bNumber = bMatch?.[2] === undefined ? null : Number(bMatch[2]);
+
+  if (aNumber !== bNumber) {
+    if (aNumber === null) return -1;
+    if (bNumber === null) return 1;
+    return aNumber - bNumber;
+  }
+
+  const aExt = aMatch?.[3] ?? '';
+  const bExt = bMatch?.[3] ?? '';
+
+  const extResult = aExt.localeCompare(bExt);
+  if (extResult !== 0) return extResult;
+
+  return a.localeCompare(b);
+};
 
 // TODO: Add an API endpoint in njudge instead of scraping the HTML.
 async function fetchProblemDataNjudge(
@@ -470,7 +499,7 @@ async function fetchProblemDataNjudge(
     return null;
   }
 
-  const samples: Sample[] = [];
+  let samples: Sample[] = [];
 
   const attachmentURL = (filename: string) =>
     `https://njudge.hu/problemset/main/${problemID}/attachment/${filename}/`;
@@ -490,7 +519,9 @@ async function fetchProblemDataNjudge(
   const sampleResponse = await fetch(attachmentURL('minta.zip'));
   if (sampleResponse.ok) {
     const zip = new AdmZip(Buffer.from(await sampleResponse.arrayBuffer()));
-    for (const zipEntry of zip.getEntries()) {
+    for (const zipEntry of zip
+      .getEntries()
+      .sort((a, b) => compareFilenames(a.name, b.name))) {
       const match = zipEntry.name.match(/^be(\d+)\.txt$/);
       if (!match) continue;
 
@@ -517,7 +548,8 @@ async function fetchProblemDataNjudge(
         return href ? (href.split('/').filter(Boolean).pop() ?? null) : null;
       })
       .filter((_, filename): filename is string => filename !== null)
-      .toArray();
+      .toArray()
+      .sort(compareFilenames);
 
     const attachmentSet = new Set(attachmentFiles);
 
@@ -549,11 +581,17 @@ async function fetchProblemDataNjudge(
         samples.push({ input: inputContents, output: outputContents });
       } catch (e) {
         console.warn(
-          `Failed to fetch sample test files ${filename} and ${outputFilename} for njudge ${problemID}: ${e}`
+          `Failed to fetch sample test files ${filename} and ${outputFilename} for njudge ${problemID}`,
+          e
         );
       }
     }
   }
+
+  samples = samples.filter(
+    sample =>
+      Buffer.byteLength(sample.output, 'utf-8') <= MAX_SAMPLE_STDOUT_SIZE
+  );
 
   const sampleSize = (sample: Sample) =>
     Buffer.byteLength(sample.input, 'utf8') +

@@ -11,7 +11,14 @@ def change_group_ids(fs_client: Client, old_group_id_to_new_group_id: dict[str, 
     for doc in fs_client.collection("userdata").list_documents():
         doc: DocumentReference = doc
         snap = doc.get()
-        old_groups: list[str] = snap.get("groups")
+
+        snap_dict = snap.to_dict()
+
+        if snap_dict is None or "groups" not in snap_dict:
+            print(f"Skipping {doc.id}")
+            continue
+
+        old_groups: list[str] = snap_dict["groups"]
 
         if all(id not in old_group_id_to_new_group_id.keys() for id in old_groups):
             continue

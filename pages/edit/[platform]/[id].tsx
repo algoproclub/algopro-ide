@@ -29,6 +29,7 @@ import {
 import WithAdminLogin from '../../../src/components/WithAdminLogin';
 import Dropdown from '../../../src/components/Dropdown';
 import Checkbox from '../../../src/components/Checkbox';
+import { useUserContext } from '../../../src/context/UserContext';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -141,6 +142,9 @@ const HTMLEditor = ({
   };
   const [mode, setMode] = useState('code');
   const [fullscreen, setFullscreen] = useState(false);
+  const {
+    userData: { fontSize },
+  } = useUserContext();
 
   return (
     <div
@@ -208,6 +212,7 @@ const HTMLEditor = ({
             editorOptions={{
               readOnly: readonly,
               automaticLayout: true,
+              fontSize,
             }}
           />
         </div>
@@ -247,7 +252,7 @@ const EditHintModal = ({
     ) {
       setHint(h => {
         if (typeof h == 'string') {
-          return {} as Hint;
+          return {};
         } else {
           return '';
         }
@@ -298,13 +303,13 @@ const EditHintModal = ({
                   if (typeof prev === 'string') {
                     return valStr;
                   } else if (valStr !== '') {
-                    return { ...prev, [selectedLang]: valStr } as Hint;
+                    return { ...prev, [selectedLang]: valStr };
                   } else {
                     return Object.fromEntries(
                       Object.entries(prev).filter(
                         ([key]) => key !== selectedLang
                       )
-                    ) as Hint;
+                    );
                   }
                 });
               }}
@@ -725,16 +730,6 @@ const PageContent = () => {
   };
 
   const handleAutoTranslateOpenAI = async () => {
-    const functions = await getFunctions();
-    const myFunction = httpsCallable(functions, 'translateOpenAI');
-    console.log(functions);
-    myFunction({ some: 'data' })
-      .then(result => {
-        console.log(result.data);
-      })
-      .catch(error => {
-        console.error('Error calling function:', error);
-      });
     const response = await translateOpenAI({
       text: original,
       lang: language,

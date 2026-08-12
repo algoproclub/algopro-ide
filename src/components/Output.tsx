@@ -41,7 +41,7 @@ export const Output = ({
   ]);
 
   useEffect(() => {
-    setOption('stdout' as OutputTab);
+    setOption('stdout');
     let option = null;
     const updatedTabs = tabs.map(tab => ({ ...tab, highlight: false }));
 
@@ -80,9 +80,11 @@ export const Output = ({
   if (option !== 'results' && option !== 'history') {
     if (result?.status === 'internal_error') {
       outputText =
-        'Internal Error: ' +
-        result.message +
-        '\n\nPlease report this as a Github issue.';
+        result.debugData?.source === 'run_code'
+          ? 'Run Code Error: ' + result.message
+          : 'Internal Error: ' +
+            result.message +
+            '\n\nPlease report this as a GitHub issue.';
     } else {
       if (option === 'compile_output') {
         if (result?.status === 'compile_error') {
@@ -244,6 +246,7 @@ export const Output = ({
               readOnly: true,
               automaticLayout: false,
               insertSpaces: true,
+              fontSize: userData.fontSize,
             }}
             onReady={onReady}
           />

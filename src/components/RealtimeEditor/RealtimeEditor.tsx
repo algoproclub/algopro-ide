@@ -1,10 +1,21 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useAtom } from 'jotai';
+import {
+  HocuspocusRoom,
+  useHocuspocusConnectionStatus,
+  useHocuspocusEvent,
+  useHocuspocusProvider,
+  useHocuspocusSyncStatus,
+} from '@hocuspocus/provider-react';
+import { getAuth } from 'firebase/auth';
 import { loadingAtom } from '../../atoms/workspace';
 import { EditorProps, EditorYjsInfo } from '../editor/editor-types';
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
-import '../../styles/yjs.css';
 import EditorConnectionStatusIndicator from '../editor/EditorConnectionStatusIndicator';
 import colorFromUserId, {
   bgColorFromUserId,
@@ -12,6 +23,9 @@ import colorFromUserId, {
 import { useUserContext } from '../../context/UserContext';
 import { useEditorContext } from '../../context/EditorContext';
 import { CodeEditor } from '../editor/CodeEditor';
+import '../../styles/yjs.css';
+
+const AUTHENTICATION_FAILURE_WINDOW_MS = 30_000;
 
 export interface RealtimeEditorProps extends EditorProps {
   defaultValue?: string;
@@ -20,67 +34,148 @@ export interface RealtimeEditorProps extends EditorProps {
   dataTestId?: string;
 }
 
-const RealtimeEditor = ({
+const RealtimeEditorRoom = ({
   defaultValue,
   yjsDocumentId,
   useEditorWithVim = false,
   dataTestId = '',
   ...props
 }: RealtimeEditorProps): JSX.Element => {
+  const provider = useHocuspocusProvider();
+  const connectionStatus = useHocuspocusConnectionStatus();
+  const providerSyncStatus = useHocuspocusSyncStatus();
   const { doNotInitializeTheseFileIdsRef } = useEditorContext();
   const { userData, firebaseUser } = useUserContext();
   const [, setLoading] = useAtom(loadingAtom);
   const { editorMode: mode } = userData;
   const [yjsInfo, setYjsInfo] = useState<EditorYjsInfo | null>(null);
-
-  const [connectionStatus, setConnectionStatus] = useState<
-    'disconnected' | 'connecting' | 'connected'
-  >('disconnected');
-  const [isSynced, setIsSynced] = useState<boolean>(false);
+  const [isRoomReady, setIsRoomReady] = useState(provider.synced);
+  const authenticationFailureWindowStartRef = useRef<number | null>(null);
+  const authenticationRetryBlockedRef = useRef(false);
+  const path = props.path;
+  const editorOptionsProp = props.editorOptions;
+  const isProviderOnActiveDocument =
+    provider.configuration.name === yjsDocumentId;
 
   useEffect(() => {
-    if (!firebaseUser) return;
+    authenticationFailureWindowStartRef.current = null;
+    authenticationRetryBlockedRef.current = false;
+  }, [provider]);
 
-    const { path } = props;
-    const affectsLoading =
-      path && ['myfile.cpp', 'myfile.java', 'myfile.py'].includes(path);
-    if (affectsLoading) setLoading(true);
+  useHocuspocusEvent('authenticationFailed', async ({ reason }) => {
+    const now = Date.now();
+    const failureWindowStart = authenticationFailureWindowStartRef.current;
+    const failedAgainWithinWindow =
+      failureWindowStart !== null &&
+      now - failureWindowStart < AUTHENTICATION_FAILURE_WINDOW_MS;
 
+    if (authenticationRetryBlockedRef.current || failedAgainWithinWindow) {
+      authenticationRetryBlockedRef.current = true;
+      console.error('YJS authentication failed', reason);
+      return;
+    }
+
+    authenticationFailureWindowStartRef.current = now;
+    console.log('Will refresh Firebase token for YJS');
+    // If Hocuspocus rejects an expired Firebase token, force a refresh and
+    // resend auth on the existing provider to avoid remounting the editor.
+    try {
+      await firebaseUser.getIdToken(true);
+      await provider.sendToken();
+      provider.startSync();
+    } catch (error) {
+      console.error('Failed to refresh Firebase token for YJS', error);
+    }
+  });
+
+  useHocuspocusEvent('authenticated', () => {
+    authenticationFailureWindowStartRef.current = null;
+    authenticationRetryBlockedRef.current = false;
+  });
+
+  useHocuspocusEvent('close', () => {
+    setIsRoomReady(false);
+  });
+
+  useHocuspocusEvent('disconnect', () => {
+    setIsRoomReady(false);
+  });
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!provider.hasUnsyncedChanges) return;
+
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [provider]);
+
+  useEffect(() => {
+    const awareness = provider.awareness;
+    if (!awareness) return;
+
+    awareness.setLocalStateField('firebaseUserID', firebaseUser.uid);
+  }, [firebaseUser, provider.awareness]);
+
+  useEffect(() => {
+    // Clear stale bindings while switching rooms; they will be reattached once
+    // the provider points to the new document and sync completes.
+    setYjsInfo(null);
+    setIsRoomReady(false);
+  }, [yjsDocumentId]);
+
+  useEffect(() => {
     const documentId = yjsDocumentId;
+    if (!isProviderOnActiveDocument) return;
 
-    const ydocument = new Y.Doc();
-    const provider = new WebsocketProvider(
-      process.env.NEXT_PUBLIC_YJS_URL!,
-      documentId,
-      ydocument
-    );
+    const awareness = provider.awareness;
+    if (!awareness) return;
 
-    // Set the cursor color
-    // Note that this is actually stored in firebase, but for now we'll just use this
-    provider.awareness.setLocalStateField('firebaseUserID', firebaseUser.uid);
-
-    // Bind Yjs to the editor model
-    const monacoText = ydocument.getText('monaco');
+    const monacoText = provider.document.getText('monaco');
     setYjsInfo({
       documentId,
       path,
       yjsText: monacoText,
-      yjsAwareness: provider.awareness,
+      yjsAwareness: awareness,
     });
 
-    // add custom color for every selector
+    return () => {
+      setYjsInfo(currentYjsInfo =>
+        currentYjsInfo?.documentId === documentId ? null : currentYjsInfo
+      );
+    };
+  }, [
+    isProviderOnActiveDocument,
+    path,
+    provider.awareness,
+    provider.document,
+    yjsDocumentId,
+  ]);
+
+  useEffect(() => {
+    const affectsLoading =
+      path && ['myfile.cpp', 'myfile.java', 'myfile.py'].includes(path);
+    if (affectsLoading) setLoading(true);
+
     const handleAwarenessChange = ({ added }: { added: Array<number> }) => {
-      // We should be responsible and remove styles when someone leaves (ie. removed.length > 0)
-      // but I'm lazy...
       if (added.length === 0) return;
+
       type UserAwarenessData = Map<
         number,
         {
           firebaseUserID: string;
         }
       >;
-      const awarenessState =
-        provider.awareness.getStates() as UserAwarenessData;
+
+      const awareness = provider.awareness;
+      if (!awareness) return;
+
+      const awarenessState = awareness.getStates() as UserAwarenessData;
       for (const addedUserID of added) {
         const firebaseUserID =
           awarenessState.get(addedUserID)?.firebaseUserID ??
@@ -96,80 +191,103 @@ const RealtimeEditor = ({
       }
     };
 
-    provider.awareness.on('change', handleAwarenessChange);
+    const awareness = provider.awareness;
+    if (!awareness) return;
 
-    const handleStatus = ({
-      status,
-    }: {
-      status: 'disconnected' | 'connecting' | 'connected';
-    }) => {
-      setConnectionStatus(status);
-    };
-
-    provider.on('status', handleStatus);
-
-    const handleSync = (isSynced: boolean) => {
-      // Handle file initialization
-      // We need to check for doNotInitializeTheseFileIdsRef.current here
-      // to make sure we're the client that's supposed to initialize the document.
-      // This is to prevent multiple clients from initializing the document when the language changes.
-      // See EditorContext.tsx for more information
-      if (isSynced && !doNotInitializeTheseFileIdsRef.current[yjsDocumentId]) {
-        const isInitializedMap = ydocument.getMap('isInitialized');
-        if (!isInitializedMap.get('isInitialized')) {
-          isInitializedMap.set('isInitialized', true);
-          if (monacoText.length === 0 && defaultValue)
-            monacoText.insert(0, defaultValue ?? '');
-        }
-        doNotInitializeTheseFileIdsRef.current[yjsDocumentId] = true;
-
-        // special case: if yjsDocumentId ends in .cpp or .java or .py, don't initialize any
-        // of those file IDs to prevent the issue from multiple initializations when the language
-        // changes. (wow, this code is really messy and possibly overly complicated and should be refactored)
-        if (
-          yjsDocumentId.endsWith('cpp') ||
-          yjsDocumentId.endsWith('java') ||
-          yjsDocumentId.endsWith('py')
-        ) {
-          const prefix = yjsDocumentId.substring(
-            0,
-            yjsDocumentId.lastIndexOf('.')
-          );
-          doNotInitializeTheseFileIdsRef.current[prefix + '.cpp'] = true;
-          doNotInitializeTheseFileIdsRef.current[prefix + '.java'] = true;
-          doNotInitializeTheseFileIdsRef.current[prefix + '.py'] = true;
-        }
-      }
-      setIsSynced(isSynced);
-      setLoading(false);
-    };
-
-    provider.on('sync', handleSync);
+    awareness.on('change', handleAwarenessChange);
 
     return () => {
-      provider.awareness.off('change', handleAwarenessChange);
-      provider.off('status', handleStatus);
-      provider.off('sync', handleSync);
-
-      setYjsInfo(currentYjsInfo =>
-        currentYjsInfo?.documentId === documentId ? null : currentYjsInfo
-      );
-
-      setConnectionStatus('disconnected');
-      setIsSynced(false);
-      provider.destroy();
-      ydocument.destroy();
+      awareness.off('change', handleAwarenessChange);
     };
-    // defaultValue shouldn't change without the other values changing (and if it does, it's probably a bug)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [yjsDocumentId, firebaseUser, props.path]);
+  }, [path, provider.awareness, setLoading]);
 
-  // make editor read only until yjs syncs with server
+  const initializeDocumentIfNeeded = useCallback(() => {
+    if (!provider.synced || !isProviderOnActiveDocument) return;
+
+    const documentId = yjsDocumentId;
+
+    if (!doNotInitializeTheseFileIdsRef.current[documentId]) {
+      const isInitializedMap = provider.document.getMap('isInitialized');
+      const monacoText = provider.document.getText('monaco');
+
+      if (!isInitializedMap.get('isInitialized')) {
+        isInitializedMap.set('isInitialized', true);
+        if (monacoText.length === 0 && defaultValue) {
+          monacoText.insert(0, defaultValue);
+        }
+      }
+
+      doNotInitializeTheseFileIdsRef.current[documentId] = true;
+
+      if (
+        yjsDocumentId.endsWith('cpp') ||
+        yjsDocumentId.endsWith('java') ||
+        yjsDocumentId.endsWith('py')
+      ) {
+        const prefix = yjsDocumentId.substring(
+          0,
+          yjsDocumentId.lastIndexOf('.')
+        );
+        doNotInitializeTheseFileIdsRef.current[prefix + '.cpp'] = true;
+        doNotInitializeTheseFileIdsRef.current[prefix + '.java'] = true;
+        doNotInitializeTheseFileIdsRef.current[prefix + '.py'] = true;
+      }
+    }
+
+    setIsRoomReady(true);
+    setLoading(false);
+  }, [
+    defaultValue,
+    doNotInitializeTheseFileIdsRef,
+    isProviderOnActiveDocument,
+    provider,
+    setLoading,
+    yjsDocumentId,
+  ]);
+
+  useEffect(() => {
+    if (!isProviderOnActiveDocument) {
+      setIsRoomReady(false);
+      return;
+    }
+
+    setIsRoomReady(provider.synced);
+    if (provider.synced) {
+      initializeDocumentIfNeeded();
+      return;
+    }
+
+    const handleSynced = () => {
+      initializeDocumentIfNeeded();
+    };
+
+    provider.on('synced', handleSynced);
+    return () => {
+      provider.off('synced', handleSynced);
+    };
+  }, [
+    initializeDocumentIfNeeded,
+    isProviderOnActiveDocument,
+    provider,
+    yjsDocumentId,
+  ]);
+
+  const isEditorReady =
+    isProviderOnActiveDocument &&
+    connectionStatus === 'connected' &&
+    isRoomReady &&
+    provider.synced;
+  const editorSyncStatus =
+    connectionStatus === 'connected' && !isEditorReady
+      ? 'initializing'
+      : providerSyncStatus;
+
+  // Keep the editor read only until its room is connected and ready.
   const editorOptions = useMemo(() => {
-    const editorOptions = { ...(props.editorOptions || {}) };
-    if (!isSynced) editorOptions.readOnly = true;
-    return editorOptions;
-  }, [isSynced, props.editorOptions]);
+    const nextEditorOptions = { ...(editorOptionsProp || {}) };
+    if (!isEditorReady) nextEditorOptions.readOnly = true;
+    return nextEditorOptions;
+  }, [editorOptionsProp, isEditorReady]);
 
   const activeYjsInfo = useMemo(() => {
     if (!yjsInfo) {
@@ -180,12 +298,12 @@ const RealtimeEditor = ({
       return null;
     }
 
-    if (yjsInfo.path !== props.path) {
+    if (yjsInfo.path !== path) {
       return null;
     }
 
     return yjsInfo;
-  }, [props.path, yjsDocumentId, yjsInfo]);
+  }, [path, yjsDocumentId, yjsInfo]);
 
   return (
     <div
@@ -195,7 +313,7 @@ const RealtimeEditor = ({
     >
       <EditorConnectionStatusIndicator
         connectionStatus={connectionStatus}
-        isSynced={isSynced}
+        syncStatus={editorSyncStatus}
       />
       <CodeEditor
         {...props}
@@ -204,6 +322,25 @@ const RealtimeEditor = ({
         vim={useEditorWithVim && mode === 'Vim'}
       />
     </div>
+  );
+};
+
+const RealtimeEditor = ({
+  yjsDocumentId,
+  ...props
+}: RealtimeEditorProps): JSX.Element => {
+  const getToken = useCallback(async () => {
+    const currentUser = getAuth().currentUser;
+    // Let Firebase hand us a fresh ID token on demand instead of caching one in
+    // component state. getIdToken() refreshes automatically when the current
+    // token is close to expiring.
+    return currentUser ? currentUser.getIdToken() : '';
+  }, []);
+
+  return (
+    <HocuspocusRoom name={yjsDocumentId} token={getToken}>
+      <RealtimeEditorRoom {...props} yjsDocumentId={yjsDocumentId} />
+    </HocuspocusRoom>
   );
 };
 

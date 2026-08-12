@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ProblemData } from '../../types/problem';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEditorContext } from '../../context/EditorContext';
+import { useUserContext } from '../../context/UserContext';
 
 const Solutions = ({
   problem,
@@ -16,6 +17,9 @@ const Solutions = ({
   const { fileData } = useEditorContext();
   const languages = Object.keys(solutions);
   const [selected, setSelected] = useState(0);
+  const {
+    userData: { fontSize },
+  } = useUserContext();
 
   useEffect(() => {
     if (fileData) {
@@ -97,6 +101,7 @@ const Solutions = ({
           }
           editorOptions={{
             readOnly: true,
+            fontSize,
           }}
         />
       </div>

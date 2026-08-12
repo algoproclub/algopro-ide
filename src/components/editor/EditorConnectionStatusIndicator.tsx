@@ -1,28 +1,66 @@
-// Note: yjs sync is kind of weird.
-// isSynced = false means the file is still loading for the first time
-// afterwards, even if there are pending changes, synced will
-// always be true...
+import { useEffect, useState } from 'react';
 
-// future todo: somehow communicate ^ to the user?
-// can probably listen to doc transactions to learn about this
+const SYNC_INDICATOR_DELAY_MS = 100;
+
+type EditorSyncStatus = 'initializing' | 'syncing' | 'synced';
+
+function useDelayedSyncIndicator(syncStatus: EditorSyncStatus) {
+  const [delayElapsed, setDelayElapsed] = useState(false);
+  const isSyncing = syncStatus === 'syncing';
+
+  useEffect(() => {
+    if (!isSyncing) {
+      // Reset the delay for the next batch of changes. The returned value is
+      // gated below, so the sync status disappears immediately in this render.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDelayElapsed(false);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setDelayElapsed(true);
+    }, SYNC_INDICATOR_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [isSyncing]);
+
+  return isSyncing && delayElapsed;
+}
 
 export default function EditorConnectionStatusIndicator({
   connectionStatus,
-  isSynced,
+  syncStatus,
 }: {
   connectionStatus: 'disconnected' | 'connecting' | 'connected';
-  isSynced: boolean;
+  syncStatus: EditorSyncStatus;
 }) {
-  let connectionText;
-  let statusIndicatorClass;
+  const isSyncing = syncStatus === 'syncing';
+  const showSyncIndicator = useDelayedSyncIndicator(syncStatus);
+  let connectionText: string;
+  let statusIndicatorClass: string;
 
-  // for now, our editors are either connecting or connected.
-  if (connectionStatus === 'connected' && isSynced) {
-    connectionText = 'Connected';
-    statusIndicatorClass = 'bg-green-500';
-  } else {
-    connectionText = 'Connecting...';
-    statusIndicatorClass = 'bg-yellow-500';
+  switch (connectionStatus) {
+    case 'connected':
+      if (syncStatus === 'initializing' || showSyncIndicator) {
+        connectionText = 'Synchronizing...';
+        statusIndicatorClass = 'bg-yellow-500';
+      } else {
+        connectionText = 'Connected';
+        statusIndicatorClass = 'bg-green-500';
+      }
+      break;
+    case 'connecting':
+      connectionText = isSyncing ? 'Reconnecting to save...' : 'Connecting...';
+      statusIndicatorClass = 'bg-yellow-500';
+      break;
+    case 'disconnected':
+      connectionText = isSyncing
+        ? 'Disconnected — changes not saved'
+        : 'Disconnected';
+      statusIndicatorClass = 'bg-red-500';
+      break;
   }
 
   return (
