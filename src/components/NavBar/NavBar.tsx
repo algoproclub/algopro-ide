@@ -1,7 +1,6 @@
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  HomeIcon,
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
 } from '@heroicons/react/20/solid';
@@ -20,6 +19,8 @@ import {
 import { yUndoManagerKeymap } from 'y-codemirror.next';
 import { SettingsMenu } from './SettingsMenu';
 import { EditorNavigationMenu } from './EditorNavigationMenu';
+import Logo from '../Logo';
+import Tooltip from '../Tooltip';
 
 export interface DesktopNavBarProps {
   fileMenu: JSX.Element;
@@ -99,9 +100,11 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
   return (
     <div className="flex items-center overflow-x-auto border-b border-[var(--border-color)] bg-[var(--panel-bg-alt)] text-[color:var(--text-primary)]">
       <div className="flex w-full lg:w-auto items-center divide-x divide-[var(--border-color)]">
-        <Link href="/" className={navButtonClass}>
-          <HomeIcon className="h-5 w-5" />
-        </Link>
+        <Tooltip label="Home">
+          <Link href="/" aria-label="Home" className={navButtonClass}>
+            <Logo className="h-5 w-5 object-contain" alt="Home" />
+          </Link>
+        </Tooltip>
         <EditorNavigationMenu />
         {props.fileMenu}
         <SimpleButton

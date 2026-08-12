@@ -30,6 +30,7 @@ import WithAdminLogin from '../../../src/components/WithAdminLogin';
 import Dropdown from '../../../src/components/Dropdown';
 import Checkbox from '../../../src/components/Checkbox';
 import { useUserContext } from '../../../src/context/UserContext';
+import PageTitle from '../../../src/components/PageTitle';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -473,6 +474,7 @@ const PageContent = () => {
     );
   };
   const [original, setOriginal] = useState('');
+  const [problemTitle, setProblemTitle] = useState<string | null>(null);
   const [translated, setTranslated] = useState('');
   const [initTranslated, setInitTranslated] = useState('');
   const [platform, setPlatform] = useState<string | null>(null);
@@ -592,6 +594,7 @@ const PageContent = () => {
     (async () => {
       try {
         const problemData = await getOriginal(platform, problemID);
+        setProblemTitle(problemData.title);
         setOriginal(problemData.statement ?? '');
         setSamples(normalizeSamples(problemData.samples));
         setInitSolution(await getSolution(platform, problemID));
@@ -763,6 +766,9 @@ const PageContent = () => {
 
   return (
     <div className="p-3 text-white max-w-[1440px] mx-auto">
+      <PageTitle>
+        {problemTitle ? `Edit: ${problemTitle} (${problemID})` : undefined}
+      </PageTitle>
       <div className="relative z-30 mb-2">
         <LanguageSelectorDropdown
           languages={['-', 'hu', 'en', 'es']}

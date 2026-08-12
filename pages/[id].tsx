@@ -44,6 +44,7 @@ import { beginCodeRun, endCodeRun } from '../src/scripts/codeRun';
 import useCodeRunActive from '../src/hooks/useCodeRunActive';
 import useServerTimeOffset from '../src/hooks/useServerTimeOffset';
 import { HocuspocusProviderWebsocketComponent } from '@hocuspocus/provider-react';
+import PageTitle from '../src/components/PageTitle';
 
 function runCodeErrorToResult(error: unknown): JudgeResult {
   const runCodeError = error instanceof RunCodeError ? error : undefined;
@@ -97,7 +98,7 @@ function EditorPage() {
   const isCodeRunActive = useCodeRunActive(fileData.codeRun);
 
   useUserFileConnection();
-  useUpdateUserDashboard();
+  const { pageTitle } = useUpdateUserDashboard();
 
   const [inputTab, setInputTab] = useAtom(inputTabAtom);
   const inputTabIndex = useAtomValue(inputTabIndexAtom);
@@ -316,6 +317,7 @@ function EditorPage() {
 
   return (
     <div className="h-full">
+      <PageTitle>{pageTitle}</PageTitle>
       <div className="h-full flex flex-col">
         <div className="flex-shrink-0 bg-[var(--panel-bg)] text-[color:var(--text-primary)]">
           <NavBar

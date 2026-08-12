@@ -20,6 +20,9 @@ import {
 import { SettingsMenu } from './NavBar/SettingsMenu';
 import ProfileSettings from './settings/ProfileSettings';
 import React, { useState } from 'react';
+import Logo from './Logo';
+
+const productName = process.env.NEXT_PUBLIC_PRODUCT_NAME ?? 'AlgoPro IDE';
 
 interface NavLinkProps {
   href: string;
@@ -187,7 +190,8 @@ export const TopNavBar = (): JSX.Element => {
               href="/"
               className="flex items-center px-3 py-2 text-base font-semibold theme-text hover:text-[color:var(--accent-hover)] whitespace-nowrap"
             >
-              AlgoPro IDE
+              <Logo className="w-7 h-7 mr-2 object-contain" />
+              {productName}
             </Link>
 
             {/* Desktop Navigation */}
