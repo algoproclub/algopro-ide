@@ -1,15 +1,19 @@
 import { get, getDatabase, onValue, ref } from 'firebase/database';
 import { Platform, platforms, StatusData } from '../types/problem';
 import { fetchGroupStudents, type TaskStatusTarget } from './classroomMetadata';
+import {
+  getSubmissionOutcome,
+  isSubmissionPending,
+  type SubmissionOutcome,
+} from './submissionStatus';
 
 const database = getDatabase();
 
-export type VerdictType = 'accepted' | 'wrong' | 'untried' | 'error';
-
 export type TaskStatus = {
   fileID: string;
-  verdict: string;
-  verdictType: VerdictType;
+  message: string | null;
+  outcome: SubmissionOutcome;
+  isSubmitting: boolean;
   codeSize: number;
   lastEdit: number;
 };
@@ -62,16 +66,6 @@ type FileTeacherData = {
   editTime: number;
 };
 
-const getVerdictType = ({ message, statusCode }: StatusData): VerdictType => {
-  switch (statusCode) {
-    case 'error':
-      return 'error';
-    case 'resolved':
-      return message === 'correct answer' ? 'accepted' : 'wrong';
-  }
-  return 'untried';
-};
-
 const createTaskStatus = (
   fileID: string,
   fileData: FileTeacherData | null,
@@ -79,18 +73,14 @@ const createTaskStatus = (
 ): TaskStatus | null => {
   if (!fileData) return null;
 
-  const verdictType = submissionData
-    ? getVerdictType(submissionData)
+  const outcome = submissionData
+    ? getSubmissionOutcome(submissionData)
     : 'untried';
   return {
     fileID,
-    verdict:
-      verdictType === 'error'
-        ? 'error'
-        : verdictType === 'untried'
-          ? 'untried'
-          : (submissionData?.message ?? '-'),
-    verdictType,
+    message: submissionData?.message ?? null,
+    outcome,
+    isSubmitting: submissionData ? isSubmissionPending(submissionData) : false,
     codeSize: fileData.codeSize,
     lastEdit: fileData.editTime,
   };

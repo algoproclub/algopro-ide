@@ -11,6 +11,7 @@ import {
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import {
   Hint,
+  languages as codeLangs,
   Language,
   Platform,
   ProblemData,
@@ -21,13 +22,15 @@ import {
 import dynamic from 'next/dynamic';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { LanguageSelectorDropdown } from '../../../src/components/JudgeInterface/GenericJudgeInterface';
 import {
   EditModal,
   handleKeyDown,
 } from '../../../src/components/EditTextModal';
 import WithAdminLogin from '../../../src/components/WithAdminLogin';
-import Dropdown from '../../../src/components/Dropdown';
+import Dropdown, {
+  LanguageSelectorDropdown,
+  Language as TextLanguage,
+} from '../../../src/components/Dropdown';
 import Checkbox from '../../../src/components/Checkbox';
 import { useUserContext } from '../../../src/context/UserContext';
 import PageTitle from '../../../src/components/PageTitle';
@@ -54,8 +57,6 @@ const translateOpenAI = httpsCallable<
   },
   string
 >(getFunctions(undefined, 'europe-west1'), 'translateOpenAI');
-
-const codeLangs: Language[] = ['cpp', 'py', 'java'];
 
 const cellBorderClass = 'border-x border-[color:var(--border-muted)]';
 const iconButtonClass =
@@ -244,7 +245,7 @@ const EditHintModal = ({
   onSave: (h: Hint) => void;
   onClose: () => void;
 }) => {
-  const [selected, setSelected] = useState(0);
+  const [selectedLang, setSelectedLang] = useState<Language>('cpp');
   const confirmedToggle = () => {
     if (
       confirm(
@@ -262,7 +263,6 @@ const EditHintModal = ({
   };
 
   const checked = typeof hint != 'string';
-  const selectedLang = codeLangs[selected];
 
   return (
     <EditModal<Hint>
@@ -283,8 +283,8 @@ const EditHintModal = ({
             <Dropdown
               items={codeLangs}
               label="Language"
-              selected={selected}
-              setSelected={setSelected}
+              selected={selectedLang}
+              setSelected={setSelectedLang}
               disabled={!checked}
             />
             <div className="pl-1">
@@ -503,8 +503,8 @@ const PageContent = () => {
   );
   const [unsaved, setUnsaved] = useState(false);
   const [unsavedSol, setUnsavedSol] = useState(false);
-  const [language, setLanguage] = useState('-');
-  const [solutionLanguage, setSolutionLanguage] = useState(0);
+  const [language, setLanguage] = useState<TextLanguage>('-');
+  const [solutionLanguage, setSolutionLanguage] = useState<Language>('cpp');
   const [isSampleModalOpen, setIsSampleModalOpen] = useState(false);
   const router = useRouter();
 
@@ -556,7 +556,7 @@ const PageContent = () => {
     const snapshot = await getDoc(
       doc(
         getFirestore(),
-        `problemsets/${platform}/problems/${id}/solutions/${codeLangs[solutionLanguage]}`
+        `problemsets/${platform}/problems/${id}/solutions/${solutionLanguage}`
       )
     );
     return snapshot.data()?.content ?? '';
@@ -691,11 +691,11 @@ const PageContent = () => {
         'problems',
         problemID,
         'solutions',
-        codeLangs[solutionLanguage]
+        solutionLanguage
       ),
       {
         content: solution,
-        type: codeLangs[solutionLanguage],
+        type: solutionLanguage,
       }
     );
     setUnsaved(false);
@@ -777,14 +777,14 @@ const PageContent = () => {
         <LanguageSelectorDropdown
           languages={['-', 'hu', 'en', 'es']}
           language={language}
-          setLanguage={(text: string) => {
+          setLanguage={lang => {
             if (
               !unsaved ||
               confirm(
                 'The unsaved changes will be lost. Do you want to proceed?'
               )
             ) {
-              setLanguage(text);
+              setLanguage(lang);
             }
           }}
         />
@@ -1000,14 +1000,14 @@ const PageContent = () => {
         <Dropdown
           items={codeLangs}
           selected={solutionLanguage}
-          setSelected={num => {
+          setSelected={val => {
             if (
               !unsavedSol ||
               confirm(
                 'The unsaved changes will be lost. Do you want to proceed?'
               )
             ) {
-              setSolutionLanguage(num);
+              setSolutionLanguage(val);
               setUnsavedSol(false);
             }
           }}
@@ -1019,9 +1019,7 @@ const PageContent = () => {
             theme="dark"
             onChange={handleSolutionChange}
             language={
-              { cpp: 'cpp', py: 'python', java: 'java' }[
-                codeLangs[solutionLanguage]
-              ]
+              { cpp: 'cpp', py: 'python', java: 'java' }[solutionLanguage]
             }
           />
         </div>
