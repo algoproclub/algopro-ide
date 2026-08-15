@@ -6,11 +6,11 @@ export const useScopedSelection = (
   preferredID?: string | null
 ) => {
   const fallbackID =
-    preferredID && validIDs.includes(preferredID)
-      ? preferredID
-      : validIDs.length > 0
-        ? validIDs[0]
-        : null;
+    preferredID === null
+      ? null
+      : preferredID && validIDs.includes(preferredID)
+        ? preferredID
+        : (validIDs[0] ?? null);
   const [selection, setSelection] = useState(() => ({
     scopeKey,
     selectedID: fallbackID,
