@@ -2,29 +2,26 @@ import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import React, { useEffect, useState } from 'react';
 import { getPlatformName } from '../src/scripts/getPlatformName';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { collection, getDocs, getFirestore } from 'firebase/firestore';
 import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  getFirestore,
-  query,
-  where,
-} from 'firebase/firestore';
-import {
-  type Platform,
   platforms,
   type ProblemTag,
   problemTags,
   type TagProblem,
 } from '../src/types/problem';
 import Checkbox from '../src/components/Checkbox';
-import { useUserContext, type UserRole } from '../src/context/UserContext';
-import { get, getDatabase, ref } from 'firebase/database';
+import { useUserContext } from '../src/context/UserContext';
 import PageTitle from '../src/components/PageTitle';
+import {
+  useManagedSchools,
+  useSchoolGroups,
+} from '../src/hooks/useClassroomMetadata';
+import {
+  fetchGroupSolvedCounts,
+  type GroupSolvedCounts,
+} from '../src/data/taskStatus';
 
 const firestore = getFirestore();
-const database = getDatabase();
 
 const cellBorderClass = 'border-x border-[color:var(--border-muted)]';
 const iconButtonClass =
@@ -56,88 +53,6 @@ const Tag = ({
   );
 };
 
-type Option = { id: string; name: string };
-
-async function getSchools(userRole: UserRole | null): Promise<Option[]> {
-  if (userRole?.admin) {
-    const schoolsSnap = await getDocs(collection(firestore, 'schools'));
-    return schoolsSnap.docs.map(docu => ({
-      id: docu.id,
-      name: docu.data().name || docu.id,
-    }));
-  }
-
-  const schoolIDs = userRole?.teacher;
-
-  if (!schoolIDs) {
-    return [];
-  }
-
-  const results = await Promise.all(
-    schoolIDs.map(async id => {
-      const snap = await getDoc(doc(firestore, 'schools', id));
-      return { id, name: snap.data()?.name || snap.id };
-    })
-  );
-
-  return results;
-}
-
-async function getGroups(schoolID: string): Promise<Option[]> {
-  const groupsSnap = await getDocs(
-    query(collection(firestore, 'groups'), where('school', '==', schoolID))
-  );
-
-  return groupsSnap.docs.map(docu => ({
-    id: docu.id,
-    name: docu.data().name || docu.id,
-  }));
-}
-
-type ProblemKey = `${Platform}:${string}`;
-type SolvedAggregated = {
-  studentCount: number;
-  problems: Record<ProblemKey, number>;
-};
-
-async function getSolvedCounts(
-  schoolId: string,
-  groupId: string
-): Promise<SolvedAggregated> {
-  const schoolStudentsSnap = await getDocs(
-    query(
-      collection(firestore, 'userdata'),
-      where('schools', 'array-contains', schoolId)
-    )
-  );
-
-  const groupStudentIds = schoolStudentsSnap.docs
-    .filter(doc => doc.get('groups')?.includes(groupId) === true)
-    .map(doc => doc.id);
-
-  const userSnaps = await Promise.all(
-    groupStudentIds.map(id => get(ref(database, `users/${id}`)))
-  );
-
-  const solvedCounts: Record<ProblemKey, number> = {};
-  for (const snap of userSnaps) {
-    const userData = snap.val() ?? {};
-    for (const platform of platforms) {
-      const solved: Record<string, true> =
-        userData[`platform-${platform}`]?.['solved'] ?? {};
-      for (const problemId of Object.keys(solved)) {
-        const key: ProblemKey = `${platform}:${problemId}`;
-        solvedCounts[key] = (solvedCounts[key] ?? 0) + 1;
-      }
-    }
-  }
-
-  return {
-    studentCount: groupStudentIds.length,
-    problems: solvedCounts,
-  };
-}
-
 const PageContent = () => {
   const { userRole } = useUserContext();
   const [problemset, setProblemset] = useState<TagProblem[]>([]);
@@ -149,44 +64,52 @@ const PageContent = () => {
   const [tagFilterInput, setTagFilterInput] = useState<string>('');
   const [tagFilterFocus, setTagFilterFocus] = useState(false);
 
-  const [schools, setSchools] = useState<Option[]>([]);
-  const [groups, setGroups] = useState<Option[]>([]);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string>();
   const [selectedGroupId, setSelectedGroupId] = useState<string>();
-
-  const [solvedCounts, setSolvedCounts] = useState<SolvedAggregated>({
-    studentCount: 0,
-    problems: {},
-  });
+  const schoolsResource = useManagedSchools(userRole);
+  const schools = schoolsResource.data;
+  const schoolID = schools.some(school => school.id === selectedSchoolId)
+    ? selectedSchoolId
+    : undefined;
+  const groupsResource = useSchoolGroups(schoolID ?? null);
+  const groups = groupsResource.data;
+  const groupID = groups.some(group => group.id === selectedGroupId)
+    ? selectedGroupId
+    : undefined;
+  const [solvedResource, setSolvedResource] = useState<{
+    groupID: string;
+    status: 'loading' | 'ready' | 'error';
+    data: GroupSolvedCounts;
+  } | null>(null);
+  const solvedCounts =
+    groupID && solvedResource?.groupID === groupID
+      ? solvedResource.data
+      : { studentCount: 0, problems: {} };
+  const solvedStatus =
+    groupID && solvedResource?.groupID === groupID
+      ? solvedResource.status
+      : 'loading';
 
   useEffect(() => {
-    getSchools(userRole).then(setSchools);
-  }, [userRole]);
-
-  useEffect(() => {
-    setSelectedGroupId(undefined);
-
-    if (!selectedSchoolId) {
-      setGroups([]);
-      return;
-    }
-
-    getGroups(selectedSchoolId).then(setGroups);
-  }, [selectedSchoolId]);
-
-  useEffect(() => {
-    if (!selectedGroupId || !selectedSchoolId) {
-      setSolvedCounts({ studentCount: 0, problems: {} });
-      return;
-    }
+    if (!groupID) return;
     let cancelled = false;
-    getSolvedCounts(selectedSchoolId, selectedGroupId).then(result => {
-      if (!cancelled) setSolvedCounts(result);
-    });
+    fetchGroupSolvedCounts(groupID).then(
+      data => {
+        if (!cancelled) setSolvedResource({ groupID, status: 'ready', data });
+      },
+      () => {
+        if (!cancelled)
+          setSolvedResource({
+            groupID,
+            status: 'error',
+            data: { studentCount: 0, problems: {} },
+          });
+      }
+    );
     return () => {
       cancelled = true;
     };
-  }, [selectedGroupId, selectedSchoolId]);
+  }, [groupID]);
 
   const togglePlatformFilter = (label: string) => {
     setPlatformFilter(prev => ({
@@ -323,10 +246,11 @@ const PageContent = () => {
                   <select
                     aria-label="School"
                     className={selectClass}
-                    value={selectedSchoolId ?? ''}
-                    onChange={e =>
-                      setSelectedSchoolId(e.target.value || undefined)
-                    }
+                    value={schoolID ?? ''}
+                    onChange={e => {
+                      setSelectedSchoolId(e.target.value || undefined);
+                      setSelectedGroupId(undefined);
+                    }}
                   >
                     <option value="">Select school…</option>
                     {schools.map(({ id, name }) => (
@@ -341,16 +265,14 @@ const PageContent = () => {
                   <select
                     aria-label="Group"
                     className={selectClass}
-                    value={selectedGroupId ?? ''}
+                    value={groupID ?? ''}
                     onChange={e =>
                       setSelectedGroupId(e.target.value || undefined)
                     }
-                    disabled={!selectedSchoolId || groups.length === 0}
+                    disabled={!schoolID || groups.length === 0}
                   >
                     <option value="">
-                      {selectedSchoolId
-                        ? 'Select group…'
-                        : 'Select school first'}
+                      {schoolID ? 'Select group…' : 'Select school first'}
                     </option>
                     {groups.map(({ id, name }) => (
                       <option key={id} value={id}>
@@ -364,6 +286,12 @@ const PageContent = () => {
           </tr>
         </tbody>
       </table>
+      {(schoolsResource.status === 'error' ||
+        groupsResource.status === 'error') && (
+        <p className="text-sm text-[color:var(--danger)]">
+          Schools or groups could not be loaded.
+        </p>
+      )}
       <div className="border theme-border theme-surface-raised overflow-y-auto mt-5">
         <table className="text-sm theme-table border-collapse w-full">
           <tbody className="divide-y divide-[color:var(--border-muted)]">
@@ -400,14 +328,16 @@ const PageContent = () => {
                         <Tag key={index} tag={tag}></Tag>
                       ))}
                   </td>
-                  {selectedGroupId && platform && id && (
+                  {groupID && platform && id && (
                     <td
                       className={`px-3 py-1.5 w-[8rem] ${cellBorderClass} text-center`}
                     >
                       <span className="whitespace-nowrap">
-                        Solved:{' '}
-                        {solvedCounts.problems[`${platform}:${id}`] ?? 0}/
-                        {solvedCounts.studentCount}
+                        {solvedStatus === 'loading'
+                          ? 'Loading…'
+                          : solvedStatus === 'error'
+                            ? 'Unavailable'
+                            : `Solved: ${solvedCounts.problems[`${platform}:${id}`] ?? 0}/${solvedCounts.studentCount}`}
                       </span>
                     </td>
                   )}

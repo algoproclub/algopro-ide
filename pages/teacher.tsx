@@ -1,28 +1,29 @@
 import Dropdown from '../src/components/Dropdown';
 import dynamic from 'next/dynamic';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
-import { Platform, StatusCode, URLProblem } from '../src/types/problem';
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  getFirestore,
-  orderBy,
-  query,
-  where,
-} from 'firebase/firestore';
-import { get, getDatabase, ref } from 'firebase/database';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
 import { Disclosure } from '@headlessui/react';
 import TimeAgoLabel from '../src/components/TimeStamp';
 import Checkbox from '../src/components/Checkbox';
-import { parseProblem } from '../src/scripts/parseProblem';
-import { getPlatformName } from '../src/scripts/getPlatformName';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
-import { UserRole, useUserContext } from '../src/context/UserContext';
+import { useUserContext } from '../src/context/UserContext';
 import PageTitle from '../src/components/PageTitle';
+import RefreshButton from '../src/components/RefreshButton';
+import {
+  getDashboardTasks,
+  type ClassTask,
+  type Student,
+} from '../src/data/classroomMetadata';
+import type { TaskStatus } from '../src/data/taskStatus';
+import {
+  useSchoolGroups,
+  useGroupClasses,
+  useGroupStudents,
+  useManagedSchools,
+} from '../src/hooks/useClassroomMetadata';
+import { useScopedSelection } from '../src/hooks/useScopedSelection';
+import { useClassTaskStatuses } from '../src/hooks/useStudentTaskStatuses';
 
 const times = ['1 hour', '3 hours', '1 day', '7 days', 'All'];
 const timeInMs = [
@@ -32,33 +33,6 @@ const timeInMs = [
   1000 * 60 * 60 * 24 * 7,
   Infinity,
 ];
-const solutionRefreshMs = 15_000;
-
-export type School = { id: string; name: string };
-export type GroupInfo = { id: string; name: string; schoolID: string };
-
-type Student = {
-  id: string;
-  name: string;
-};
-export type ProblemData = {
-  platform: Platform | null;
-  id: string | null;
-  url: string;
-  source: string;
-};
-
-type VerdictType = 'accepted' | 'wrong' | 'untried' | 'error';
-export type SolutionData = {
-  fileID: string;
-  verdict: string;
-  verdictType: VerdictType;
-  codeSize: number;
-  lastEdit: number;
-};
-
-const firestore = getFirestore();
-const database = getDatabase();
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
     import('@fortawesome/react-fontawesome').then(mod => mod.FontAwesomeIcon),
@@ -70,185 +44,6 @@ const secondaryButtonClass =
 const tableBorderClass = 'divide-[color:var(--border-muted)]';
 const tableCellSurfaceClass = 'bg-[color:var(--table-row-bg)]';
 const tableCellAltSurfaceClass = 'bg-[color:var(--table-row-alt-bg)]';
-
-const getVerdictType = ({
-  message,
-  statusCode,
-}: {
-  message: string;
-  statusCode: StatusCode;
-}): VerdictType => {
-  switch (statusCode) {
-    case 'error':
-      return 'error';
-    case 'resolved': {
-      return message === 'correct answer' ? 'accepted' : 'wrong';
-    }
-  }
-  return 'untried';
-};
-
-const getVerdict = ({
-  message,
-  verdictType,
-}: {
-  message?: string;
-  verdictType: VerdictType;
-}) => {
-  switch (verdictType) {
-    case 'error':
-      return 'error';
-    case 'untried':
-      return 'untried';
-  }
-  return message ?? '-';
-};
-
-export const fetchTeacherSchools = async (userRole: UserRole | null) => {
-  if (userRole?.admin) {
-    return (await getDocs(collection(firestore, 'schools'))).docs.map(docu => {
-      return { id: docu.id, name: docu.data().name || docu.id };
-    });
-  } else {
-    const schoolIDs = userRole?.teacher;
-    if (!schoolIDs) {
-      return [];
-    }
-    return await Promise.all(
-      schoolIDs.map(async (id: string) => {
-        const snap = await getDoc(doc(firestore, 'schools', id));
-        return { id, name: snap.data()?.name || snap.id };
-      })
-    );
-  }
-};
-
-export const fetchSolutionData = async (
-  platform: Platform,
-  problemID: string,
-  userID: string
-): Promise<SolutionData | null> => {
-  const problemRef = ref(
-    database,
-    `users/${userID}/platform-${platform}/problem-id-to-file-id/${problemID}`
-  );
-  const fileID: string | undefined = (await get(problemRef)).val();
-
-  if (!fileID) {
-    return null;
-  }
-  const fileRef = ref(database, `files/${fileID}/teacher`);
-  const fileData = (await get(fileRef)).val();
-
-  if (!fileData) {
-    return null;
-  }
-  const submissionRef = ref(database, `submissions/${fileID}/statusData`);
-  const submissionData = (await get(submissionRef)).val();
-  const verdictType = submissionData
-    ? getVerdictType(submissionData)
-    : 'untried';
-  const verdict = getVerdict({
-    message: submissionData?.message,
-    verdictType,
-  });
-  return {
-    fileID: fileID,
-    verdict: verdict,
-    verdictType: verdictType,
-    codeSize: fileData.codeSize,
-    lastEdit: fileData.editTime,
-  };
-};
-
-const fetchGroupsForSchool = async (schoolID: string): Promise<GroupInfo[]> => {
-  if (!schoolID) return [];
-  const results = await getDocs(
-    query(collection(firestore, 'groups'), where('school', '==', schoolID))
-  );
-  const groups: GroupInfo[] = [];
-  results.forEach(d => {
-    const data = d.data();
-    if (data?.inactive !== true) {
-      groups.push({ id: d.id, name: data?.name || d.id, schoolID });
-    }
-  });
-  groups.sort((a, b) => a.name.localeCompare(b.name));
-  return groups;
-};
-
-export const fetchProblems = async (
-  groupID: string,
-  classID?: string
-): Promise<ProblemData[]> => {
-  if (!groupID || !classID) {
-    return [];
-  }
-  const problems: URLProblem[] | undefined = (
-    await getDoc(doc(firestore, 'groups', groupID, 'classes', classID))
-  ).data()?.tasks;
-
-  if (!problems) {
-    return [];
-  }
-  return problems.map(({ url }) => {
-    const parsed = parseProblem(url);
-    return {
-      id: parsed.id,
-      platform: parsed.platform,
-      source:
-        parsed.id && parsed.platform
-          ? getPlatformName(parsed.platform) + ' - ' + parsed.id
-          : parsed.url,
-      url: url,
-    };
-  });
-};
-
-const fetchStudents = async (groupID: string): Promise<Student[]> => {
-  const groupSnap = await getDoc(doc(firestore, 'groups', groupID));
-  const schoolID = groupSnap.get('school');
-
-  const usersSnap = await getDocs(
-    query(
-      collection(firestore, 'userdata'),
-      where('schools', 'array-contains', schoolID)
-      // Note: we need `schools` to be in the query to make the firebase rule work
-      //       Because we can only use `array-contains` once per query, we can't
-      //       also filter for a specific group via the query.
-      //       So we filter for our group via normal JS logic below
-    )
-  );
-  return usersSnap.docs
-    .filter(doc => ((doc.get('groups') ?? []) as string[]).includes(groupID))
-    .map(doc => ({ id: doc.id, name: doc.data().user_full_name }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-};
-
-export const fetchClasses = async (groupID: string) => {
-  const classesSnap = await getDocs(
-    query(
-      collection(firestore, 'groups', groupID, 'classes'),
-      orderBy('creationTime', 'desc')
-    )
-  );
-  return classesSnap.docs.map(doc => doc.id);
-};
-
-const RefreshButton = ({ onRefresh }: { onRefresh: () => void }) => {
-  return (
-    <button
-      className={`flex items-center justify-center px-4 py-3.5 -mb-1 rounded-lg ${secondaryButtonClass}`}
-      onClick={onRefresh}
-    >
-      <FontAwesomeIcon
-        icon={{ prefix: 'fas', iconName: 'arrows-rotate' }}
-        className="w-4 h-4 inline"
-      />
-    </button>
-  );
-};
-
 const Controls = ({
   schoolInd,
   groupInd,
@@ -264,6 +59,7 @@ const Controls = ({
   setTimeInd,
   toggleHighlight,
   onRefresh,
+  isRefreshing,
 }: {
   schoolInd: number;
   groupInd: number;
@@ -279,6 +75,7 @@ const Controls = ({
   setTimeInd: (_: number) => void;
   toggleHighlight: () => void;
   onRefresh: () => void;
+  isRefreshing: boolean;
 }) => {
   return (
     <div className="theme-surface-raised w-full space-y-2.5 px-5 py-3.5 border theme-border">
@@ -307,7 +104,11 @@ const Controls = ({
           selected={timeInd}
           setSelected={setTimeInd}
         />
-        <RefreshButton onRefresh={onRefresh} />
+        <RefreshButton
+          onClick={onRefresh}
+          title="Refresh groups, classes and students"
+          isLoading={isRefreshing}
+        />
       </div>
       <Checkbox
         checked={highlight}
@@ -333,6 +134,7 @@ const ControlDropdown = ({
   setTimeInd,
   toggleHighlight,
   onRefresh,
+  isRefreshing,
 }: {
   schoolInd: number;
   groupInd: number;
@@ -348,6 +150,7 @@ const ControlDropdown = ({
   setTimeInd: (_: number) => void;
   toggleHighlight: () => void;
   onRefresh: () => void;
+  isRefreshing: boolean;
 }) => {
   return (
     <Disclosure>
@@ -369,15 +172,11 @@ const ControlDropdown = ({
                 />
               </div>
             </Disclosure.Button>
-            <button
-              className={`flex items-center justify-center px-4 py-1 rounded-lg ${secondaryButtonClass}`}
+            <RefreshButton
               onClick={onRefresh}
-            >
-              <FontAwesomeIcon
-                icon={{ prefix: 'fas', iconName: 'arrows-rotate' }}
-                className="w-4 h-4 inline"
-              />
-            </button>
+              title="Refresh groups, classes and students"
+              isLoading={isRefreshing}
+            />
           </div>
           <Disclosure.Panel className="px-5 py-6 relative space-y-4 border theme-border theme-surface-raised">
             <Dropdown
@@ -423,9 +222,9 @@ const GroupData = ({
   highlight,
   fromTime,
 }: {
-  problems: ProblemData[];
+  problems: ClassTask[];
   students: Student[];
-  data: (SolutionData | null)[][];
+  data: (TaskStatus | null)[][];
   highlight: boolean;
   fromTime: number;
 }) => {
@@ -570,138 +369,104 @@ const GroupData = ({
 
 const PageContent = () => {
   const { userRole } = useUserContext();
-  const [schoolInd, setSchoolInd] = useState(0);
-  const [groupInd, setGroupInd] = useState(0);
   const [timeInd, setTimeInd] = useState(0);
-  const [classInd, setClassInd] = useState(0);
   const [highlight, setHighlight] = useState(false);
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  const [fromTime, setFromTime] = useState(
+    () => Date.now() - timeInMs[timeInd]
+  );
 
-  const [schools, setSchools] = useState<School[]>([]);
-  const [groupsList, setGroupsList] = useState<GroupInfo[]>([]);
-  const [classes, setClasses] = useState<string[]>([]);
-  const [problems, setProblems] = useState<ProblemData[]>([]);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [data, setData] = useState<(SolutionData | null)[][]>([]);
-  const [fromTime, setFromTime] = useState(0);
+  const schoolsResource = useManagedSchools(userRole, refreshVersion);
+  const schools = schoolsResource.data;
+  const [schoolID, setSchoolID] = useScopedSelection(
+    'teacher-schools',
+    schools.map(school => school.id)
+  );
+  const groupsResource = useSchoolGroups(schoolID, { refreshVersion });
+  const groupsList = groupsResource.data;
+  const [groupID, setGroupID] = useScopedSelection(
+    schoolID,
+    groupsList.map(group => group.id)
+  );
+  const classesResource = useGroupClasses(groupID, refreshVersion);
+  const studentsResource = useGroupStudents(groupID, refreshVersion);
+  const groupClasses = classesResource.data;
+  const students = studentsResource.data;
+  const classes = groupClasses.map(groupClass => groupClass.id);
+  const [classID, setClassID] = useScopedSelection(groupID, classes);
 
-  const schoolNames = useMemo(() => schools.map(s => s.name), [schools]);
-  const groupNames = useMemo(() => groupsList.map(g => g.name), [groupsList]);
+  const schoolNames = schools.map(school => school.name);
+  const groupNames = groupsList.map(group => group.name);
+  const schoolInd = Math.max(
+    0,
+    schools.findIndex(school => school.id === schoolID)
+  );
+  const groupInd = Math.max(
+    0,
+    groupsList.findIndex(group => group.id === groupID)
+  );
+  const classInd = Math.max(0, classes.indexOf(classID ?? ''));
 
-  const selectedSchoolID = schools[schoolInd]?.id || '';
-  const selectedGroupID = groupsList[groupInd]?.id || '';
-
-  const refreshGroups = useCallback(async () => {
-    if (!selectedSchoolID) {
-      setGroupsList([]);
-      return;
-    }
-
-    const nextGroups = await fetchGroupsForSchool(selectedSchoolID);
-    setGroupsList(nextGroups);
-    setGroupInd(index => Math.min(index, Math.max(nextGroups.length - 1, 0)));
-  }, [selectedSchoolID]);
-
-  const refreshClassesAndStudents = useCallback(async () => {
-    if (!selectedGroupID) {
-      setClasses([]);
-      setStudents([]);
-      setProblems([]);
-      setData([]);
-      return;
-    }
-
-    const [nextClasses, nextStudents] = await Promise.all([
-      fetchClasses(selectedGroupID),
-      fetchStudents(selectedGroupID),
-    ]);
-    setClasses(nextClasses);
-    setStudents(nextStudents);
-    setClassInd(index => Math.min(index, Math.max(nextClasses.length - 1, 0)));
-  }, [selectedGroupID]);
-
-  const handleRefresh = useCallback(async () => {
-    await Promise.all([refreshGroups(), refreshClassesAndStudents()]);
-  }, [refreshGroups, refreshClassesAndStudents]);
-
-  useEffect(() => {
-    const initSchools = async () => {
-      const schools = await fetchTeacherSchools(userRole);
-      setSchools(schools);
+  const studentIDs = students.map(student => student.id);
+  const selectedClass = groupClasses.find(
+    groupClass => groupClass.id === classID
+  );
+  const dashboardTasks = getDashboardTasks(selectedClass?.data.tasks ?? []);
+  const problems = dashboardTasks;
+  const summary = useClassTaskStatuses({
+    schoolID,
+    groupID,
+    classID,
+    studentIDs,
+    tasks: dashboardTasks,
+  });
+  const studentRows = students.map(student => {
+    const states = dashboardTasks.map(
+      task => summary?.[student.id]?.[task.key]
+    );
+    return {
+      student,
+      states,
+      data: states.map(state =>
+        state?.status === 'ready' ? state.data : null
+      ),
     };
-    initSchools();
-  }, [userRole]);
+  });
+  const statusesSettled =
+    summary !== null &&
+    studentRows.every(row =>
+      row.states.every(
+        state => state?.status === 'ready' || state?.status === 'error'
+      )
+    );
+  const visibleRows = statusesSettled
+    ? studentRows.filter(row =>
+        row.states.some(
+          state =>
+            state?.status === 'ready' &&
+            state.data !== null &&
+            state.data.lastEdit >= fromTime
+        )
+      )
+    : [];
 
-  useEffect(() => {
-    setGroupInd(0);
-    setClassInd(0);
-    setClasses([]);
-    setStudents([]);
-    setProblems([]);
-    setData([]);
-    refreshGroups();
-  }, [selectedSchoolID, refreshGroups]);
-
-  useEffect(() => {
-    refreshClassesAndStudents();
-  }, [refreshClassesAndStudents]);
-
-  useEffect(() => {
-    const updateData = async () => {
-      const problemsPromise = Promise.all(
-        problems
-          .filter(problem => problem.id && problem.platform)
-          .map(problem => {
-            return Promise.all(
-              students.map(student =>
-                fetchSolutionData(problem.platform!, problem.id!, student.id)
-              )
-            );
-          })
-      );
-
-      setFromTime(Date.now() - timeInMs[timeInd]);
-      setData(await problemsPromise);
-    };
-
-    updateData();
-    const interval = setInterval(updateData, solutionRefreshMs);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [problems, students, timeInd]);
-
-  useEffect(() => {
-    const updateProblems = async () => {
-      if (!selectedGroupID) {
-        setProblems([]);
-        return;
-      }
-      setProblems(await fetchProblems(selectedGroupID, classes[classInd]));
-    };
-    updateProblems();
-  }, [classes, classInd, selectedGroupID]);
-
-  const transpose = (array: (SolutionData | null)[][]) => {
-    return array.length > 0
-      ? array[0].map((_, j) => array.map(row => row[j]))
-      : [];
-  };
+  const filteredStudents = visibleRows.map(row => row.student);
+  const filteredData = visibleRows.map(row => row.data);
 
   const updateTimeInd = (index: number) => {
     setFromTime(Date.now() - timeInMs[index]);
     setTimeInd(index);
   };
-
-  const problemWithID = problems.map(problem => !!problem.id);
-  const filteredProblems = problems.filter((_, i) => problemWithID[i]);
-  const transposed = transpose(data);
-
-  const hasSolution = transposed.map(solutions =>
-    solutions.some(sol => sol !== null && sol.lastEdit >= fromTime)
+  const handleRefresh = () => setRefreshVersion(version => version + 1);
+  const classroomResources = [
+    schoolsResource,
+    groupsResource,
+    classesResource,
+    studentsResource,
+  ];
+  const isRefreshing = classroomResources.some(
+    resource => resource.status === 'loading' || resource.isRefreshing
   );
-  const filteredStudents = students.filter((_, i) => hasSolution[i]);
-  const filteredData = transposed.filter((_, i) => hasSolution[i]);
 
   return (
     <div className="px-2">
@@ -716,12 +481,13 @@ const PageContent = () => {
             schoolNames={schoolNames}
             groupNames={groupNames}
             highlight={highlight}
-            setSchoolInd={index => setSchoolInd(index)}
-            setGroupInd={index => setGroupInd(index)}
-            setClassInd={index => setClassInd(index)}
+            setSchoolInd={index => setSchoolID(schools[index]?.id ?? null)}
+            setGroupInd={index => setGroupID(groupsList[index]?.id ?? null)}
+            setClassInd={index => setClassID(classes[index] ?? null)}
             setTimeInd={index => updateTimeInd(index)}
             toggleHighlight={() => setHighlight(val => !val)}
             onRefresh={handleRefresh}
+            isRefreshing={isRefreshing}
           />
         </div>
         <div className="hidden md:block">
@@ -734,16 +500,22 @@ const PageContent = () => {
             schoolNames={schoolNames}
             groupNames={groupNames}
             highlight={highlight}
-            setSchoolInd={index => setSchoolInd(index)}
-            setGroupInd={index => setGroupInd(index)}
-            setClassInd={index => setClassInd(index)}
+            setSchoolInd={index => setSchoolID(schools[index]?.id ?? null)}
+            setGroupInd={index => setGroupID(groupsList[index]?.id ?? null)}
+            setClassInd={index => setClassID(classes[index] ?? null)}
             setTimeInd={index => updateTimeInd(index)}
             toggleHighlight={() => setHighlight(val => !val)}
             onRefresh={handleRefresh}
+            isRefreshing={isRefreshing}
           />
         </div>
+        {classroomResources.some(resource => resource.status === 'error') && (
+          <p className="text-sm text-[color:var(--danger)]">
+            Classroom data could not be loaded.
+          </p>
+        )}
         <GroupData
-          problems={filteredProblems}
+          problems={problems}
           students={filteredStudents}
           data={filteredData}
           highlight={highlight}
