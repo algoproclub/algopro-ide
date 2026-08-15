@@ -23,6 +23,7 @@ import {
   useManagedSchools,
 } from '../src/hooks/useClassroomMetadata';
 import { useScopedSelection } from '../src/hooks/useScopedSelection';
+import TaskStatusIndicator from '../src/components/TaskStatus/TaskStatusIndicator';
 import { useClassTaskStatuses } from '../src/hooks/useStudentTaskStatuses';
 
 const times = ['1 hour', '3 hours', '1 day', '7 days', 'All'];
@@ -44,71 +45,100 @@ const secondaryButtonClass =
 const tableBorderClass = 'divide-[color:var(--border-muted)]';
 const tableCellSurfaceClass = 'bg-[color:var(--table-row-bg)]';
 const tableCellAltSurfaceClass = 'bg-[color:var(--table-row-alt-bg)]';
-const Controls = ({
-  schoolInd,
-  groupInd,
-  classInd,
-  timeInd,
-  highlight,
-  schoolNames,
-  groupNames,
-  classes,
-  setSchoolInd,
-  setGroupInd,
-  setClassInd,
-  setTimeInd,
-  toggleHighlight,
-  onRefresh,
-  isRefreshing,
-}: {
-  schoolInd: number;
-  groupInd: number;
-  classInd: number;
-  timeInd: number;
+type ControlsProps = {
+  schoolID: string | null;
+  groupID: string | null;
+  classID: string | null;
+  timeOption: number;
   highlight: boolean;
-  schoolNames: string[];
-  groupNames: string[];
+  schoolsLoading: boolean;
+  groupsLoading: boolean;
+  classesLoading: boolean;
+  schoolOptions: Array<{ label: string; value: string }>;
+  groupOptions: Array<{ label: string; value: string }>;
   classes: string[];
-  setSchoolInd: (_: number) => void;
-  setGroupInd: (_: number) => void;
-  setClassInd: (_: number) => void;
-  setTimeInd: (_: number) => void;
+  setSchoolID: (_: string) => void;
+  setGroupID: (_: string) => void;
+  setClassID: (_: string) => void;
+  setTimeOption: (_: number) => void;
   toggleHighlight: () => void;
   onRefresh: () => void;
   isRefreshing: boolean;
-}) => {
+};
+
+const ControlsFields = ({
+  schoolID,
+  groupID,
+  classID,
+  timeOption,
+  highlight,
+  schoolsLoading,
+  groupsLoading,
+  classesLoading,
+  schoolOptions,
+  groupOptions,
+  classes,
+  setSchoolID,
+  setGroupID,
+  setClassID,
+  setTimeOption,
+  toggleHighlight,
+  onRefresh,
+  isRefreshing,
+  layout,
+}: ControlsProps & { layout: 'mobile' | 'desktop' }) => {
+  const isDesktop = layout === 'desktop';
+
   return (
-    <div className="theme-surface-raised w-full space-y-2.5 px-5 py-3.5 border theme-border">
-      <div className="w-full flex space-x-2 items-end">
+    <div className={isDesktop ? 'space-y-2.5' : 'space-y-4'}>
+      <div
+        className={isDesktop ? 'w-full flex space-x-2 items-end' : 'space-y-4'}
+      >
         <Dropdown
-          items={schoolNames}
+          items={schoolOptions}
           label="School"
-          selected={schoolInd}
-          setSelected={setSchoolInd}
+          placeholder="Select school…"
+          disabledPlaceholder="Loading schools…"
+          selected={schoolID}
+          setSelected={setSchoolID}
+          disabled={schoolsLoading}
         />
         <Dropdown
-          items={groupNames}
+          items={groupOptions}
           label="Group"
-          selected={groupInd}
-          setSelected={setGroupInd}
+          disabledPlaceholder={
+            groupsLoading ? 'Loading groups…' : 'Select a school first'
+          }
+          placeholder="Select group…"
+          selected={groupID}
+          setSelected={setGroupID}
+          disabled={!schoolID || groupsLoading}
         />
         <Dropdown
           items={classes}
           label="Class"
-          selected={classInd}
-          setSelected={setClassInd}
+          disabledPlaceholder={
+            classesLoading ? 'Loading classes…' : 'Select a group first'
+          }
+          placeholder="Select class…"
+          emptyLabel="No classes in this group yet"
+          selected={classID}
+          setSelected={setClassID}
+          disabled={!groupID || classesLoading}
         />
         <Dropdown
-          items={times}
+          items={times.map((label, index) => ({ label, value: index }))}
           label="Last edit"
-          selected={timeInd}
-          setSelected={setTimeInd}
+          selected={timeOption}
+          setSelected={setTimeOption}
         />
-        <RefreshButton
-          onClick={onRefresh}
-          title="Refresh groups, classes and students"
-          isLoading={isRefreshing}
-        />
+        {isDesktop && (
+          <RefreshButton
+            title="Refresh groups, classes and students"
+            onClick={onRefresh}
+            isLoading={isRefreshing}
+          />
+        )}
       </div>
       <Checkbox
         checked={highlight}
@@ -119,101 +149,42 @@ const Controls = ({
   );
 };
 
-const ControlDropdown = ({
-  schoolInd,
-  groupInd,
-  classInd,
-  timeInd,
-  highlight,
-  schoolNames,
-  groupNames,
-  classes,
-  setSchoolInd,
-  setGroupInd,
-  setClassInd,
-  setTimeInd,
-  toggleHighlight,
-  onRefresh,
-  isRefreshing,
-}: {
-  schoolInd: number;
-  groupInd: number;
-  classInd: number;
-  timeInd: number;
-  highlight: boolean;
-  schoolNames: string[];
-  groupNames: string[];
-  classes: string[];
-  setSchoolInd: (_: number) => void;
-  setGroupInd: (_: number) => void;
-  setClassInd: (_: number) => void;
-  setTimeInd: (_: number) => void;
-  toggleHighlight: () => void;
-  onRefresh: () => void;
-  isRefreshing: boolean;
-}) => {
-  return (
-    <Disclosure>
-      {({ open }) => (
-        <div className="space-y-2">
-          <div className="w-full flex items-stretch space-x-2">
-            <Disclosure.Button className="w-full">
-              <div
-                className={`flex items-center justify-center w-full border px-4 py-2.5 rounded-md text-[0.95rem] ${
-                  open
-                    ? 'theme-border bg-[color:var(--surface-hover)]'
-                    : secondaryButtonClass
-                }`}
-              >
-                Filter
-                <FontAwesomeIcon
-                  icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-                  className={`ml-2 w-3.5 h-3.5 inline transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`}
-                />
-              </div>
-            </Disclosure.Button>
-            <RefreshButton
-              onClick={onRefresh}
-              title="Refresh groups, classes and students"
-              isLoading={isRefreshing}
-            />
+const Controls = (props: ControlsProps) => (
+  <>
+    <div className="md:hidden">
+      <Disclosure>
+        {({ open }) => (
+          <div className="space-y-2">
+            <div className="w-full flex items-stretch space-x-2">
+              <Disclosure.Button className="w-full">
+                <div
+                  className={`flex items-center justify-center w-full border px-4 py-2.5 rounded-md text-[0.95rem] ${open ? 'theme-border bg-[color:var(--surface-hover)]' : secondaryButtonClass}`}
+                >
+                  Filter
+                  <FontAwesomeIcon
+                    icon={{ prefix: 'fas', iconName: 'chevron-down' }}
+                    className={`ml-2 w-3.5 h-3.5 inline transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`}
+                  />
+                </div>
+              </Disclosure.Button>
+              <RefreshButton
+                title="Refresh groups, classes and students"
+                onClick={props.onRefresh}
+                isLoading={props.isRefreshing}
+              />
+            </div>
+            <Disclosure.Panel className="px-5 py-6 relative space-y-4 border theme-border theme-surface-raised">
+              <ControlsFields layout="mobile" {...props} />
+            </Disclosure.Panel>
           </div>
-          <Disclosure.Panel className="px-5 py-6 relative space-y-4 border theme-border theme-surface-raised">
-            <Dropdown
-              items={schoolNames}
-              label="School"
-              selected={schoolInd}
-              setSelected={setSchoolInd}
-            />
-            <Dropdown
-              items={groupNames}
-              label="Group"
-              selected={groupInd}
-              setSelected={setGroupInd}
-            />
-            <Dropdown
-              items={classes}
-              label="Class"
-              selected={classInd}
-              setSelected={setClassInd}
-            />
-            <Dropdown
-              items={times}
-              label="Last edit"
-              selected={timeInd}
-              setSelected={setTimeInd}
-            />
-            <Checkbox
-              checked={highlight}
-              toggleChecked={toggleHighlight}
-              label="Highlight last edited file"
-            />
-          </Disclosure.Panel>
-        </div>
-      )}
-    </Disclosure>
-  );
-};
+        )}
+      </Disclosure>
+    </div>
+    <div className="hidden md:block theme-surface-raised w-full space-y-2.5 px-5 py-3.5 border theme-border">
+      <ControlsFields layout="desktop" {...props} />
+    </div>
+  </>
+);
 
 const GroupData = ({
   problems,
@@ -311,32 +282,11 @@ const GroupData = ({
                               target="_blank"
                               rel="noreferrer"
                             >
-                              {data[i][j].verdict[0].toUpperCase() +
-                                data[i][j].verdict.slice(1)}
+                              <TaskStatusIndicator
+                                state={{ status: 'ready', data: data[i][j] }}
+                                untriedColor="accent"
+                              />
                             </a>
-                            <span>
-                              {data[i][j].verdictType === 'wrong' && (
-                                <FontAwesomeIcon
-                                  icon={{ prefix: 'fas', iconName: 'xmark' }}
-                                  className="inline w-4 h-4 text-red-500"
-                                />
-                              )}
-                              {data[i][j].verdictType === 'accepted' && (
-                                <FontAwesomeIcon
-                                  icon={{ prefix: 'fas', iconName: 'check' }}
-                                  className="inline w-4 h-4 text-green-500"
-                                />
-                              )}
-                              {data[i][j].verdictType === 'error' && (
-                                <FontAwesomeIcon
-                                  icon={{
-                                    prefix: 'fas',
-                                    iconName: 'triangle-exclamation',
-                                  }}
-                                  className="inline w-4 h-4 text-yellow-500"
-                                />
-                              )}
-                            </span>
                           </div>
                           <div
                             className={`truncate w-full px-4 py-1.5 ${tableCellAltSurfaceClass}`}
@@ -395,18 +345,14 @@ const PageContent = () => {
   const classes = groupClasses.map(groupClass => groupClass.id);
   const [classID, setClassID] = useScopedSelection(groupID, classes);
 
-  const schoolNames = schools.map(school => school.name);
-  const groupNames = groupsList.map(group => group.name);
-  const schoolInd = Math.max(
-    0,
-    schools.findIndex(school => school.id === schoolID)
-  );
-  const groupInd = Math.max(
-    0,
-    groupsList.findIndex(group => group.id === groupID)
-  );
-  const classInd = Math.max(0, classes.indexOf(classID ?? ''));
-
+  const schoolOptions = schools.map(school => ({
+    label: school.name,
+    value: school.id,
+  }));
+  const groupOptions = groupsList.map(group => ({
+    label: group.name,
+    value: group.id,
+  }));
   const studentIDs = students.map(student => student.id);
   const selectedClass = groupClasses.find(
     groupClass => groupClass.id === classID
@@ -471,44 +417,26 @@ const PageContent = () => {
   return (
     <div className="px-2">
       <div className="mx-auto max-w-7xl mt-4 space-y-4">
-        <div className="md:hidden">
-          <ControlDropdown
-            schoolInd={schoolInd}
-            groupInd={groupInd}
-            classInd={classInd}
-            timeInd={timeInd}
-            classes={classes}
-            schoolNames={schoolNames}
-            groupNames={groupNames}
-            highlight={highlight}
-            setSchoolInd={index => setSchoolID(schools[index]?.id ?? null)}
-            setGroupInd={index => setGroupID(groupsList[index]?.id ?? null)}
-            setClassInd={index => setClassID(classes[index] ?? null)}
-            setTimeInd={index => updateTimeInd(index)}
-            toggleHighlight={() => setHighlight(val => !val)}
-            onRefresh={handleRefresh}
-            isRefreshing={isRefreshing}
-          />
-        </div>
-        <div className="hidden md:block">
-          <Controls
-            schoolInd={schoolInd}
-            groupInd={groupInd}
-            classInd={classInd}
-            timeInd={timeInd}
-            classes={classes}
-            schoolNames={schoolNames}
-            groupNames={groupNames}
-            highlight={highlight}
-            setSchoolInd={index => setSchoolID(schools[index]?.id ?? null)}
-            setGroupInd={index => setGroupID(groupsList[index]?.id ?? null)}
-            setClassInd={index => setClassID(classes[index] ?? null)}
-            setTimeInd={index => updateTimeInd(index)}
-            toggleHighlight={() => setHighlight(val => !val)}
-            onRefresh={handleRefresh}
-            isRefreshing={isRefreshing}
-          />
-        </div>
+        <Controls
+          schoolID={schoolID}
+          groupID={groupID}
+          classID={classID}
+          timeOption={timeInd}
+          classes={classes}
+          schoolsLoading={schoolsResource.status === 'loading'}
+          groupsLoading={groupsResource.status === 'loading'}
+          classesLoading={classesResource.status === 'loading'}
+          schoolOptions={schoolOptions}
+          groupOptions={groupOptions}
+          highlight={highlight}
+          setSchoolID={setSchoolID}
+          setGroupID={setGroupID}
+          setClassID={setClassID}
+          setTimeOption={updateTimeInd}
+          toggleHighlight={() => setHighlight(value => !value)}
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+        />
         {classroomResources.some(resource => resource.status === 'error') && (
           <p className="text-sm text-[color:var(--danger)]">
             Classroom data could not be loaded.

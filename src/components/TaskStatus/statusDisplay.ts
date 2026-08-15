@@ -13,6 +13,7 @@ import {
   isSubmissionPending,
   type SubmissionOutcome,
 } from '../../data/submissionStatus';
+import type { TaskStatusState } from '../../data/taskStatus';
 import type { StatusData } from '../../types/problem';
 import styles from './statusDisplay.module.css';
 
@@ -122,4 +123,33 @@ export const getTestCaseStatusDisplay = (title: string) => {
     });
   }
   return getOutcomeDisplay(getVerdictOutcome(title));
+};
+
+export const getTaskStatusDisplay = (
+  state: TaskStatusState,
+  untriedColor: 'accent' | 'muted' = 'muted'
+): StatusDisplay => {
+  if (state.status === 'loading') {
+    return buildStatusDisplay({
+      label: 'Loading…',
+      Icon: MinusIcon,
+      color: 'muted',
+    });
+  }
+  if (state.status === 'error') {
+    return buildStatusDisplay({
+      label: 'Unavailable',
+      Icon: ExclamationTriangleIcon,
+      color: 'warning',
+    });
+  }
+  if (!state.data) {
+    return buildStatusDisplay({
+      label: 'No file',
+      Icon: MinusIcon,
+      color: 'muted',
+    });
+  }
+  if (state.data.isSubmitting) return submittingDisplay;
+  return getOutcomeDisplay(state.data.outcome, untriedColor);
 };

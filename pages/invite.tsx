@@ -20,7 +20,7 @@ const expTimes = [
 
 const PageContent = () => {
   const [selectedSchoolID, setSelectedSchoolID] = useState<string | null>(null);
-  const [expInd, setExpInd] = useState(0);
+  const [expTime, setExpTime] = useState(expTimes[0].time);
   const [link, setLink] = useState('');
   const { userRole } = useUserContext();
   const schoolsResource = useManagedSchools(userRole);
@@ -28,11 +28,6 @@ const PageContent = () => {
   const schoolID = schools.some(school => school.id === selectedSchoolID)
     ? selectedSchoolID
     : (schools[0]?.id ?? null);
-  const schoolInd = Math.max(
-    0,
-    schools.findIndex(school => school.id === schoolID)
-  );
-
   const generateLink = () => {
     if (!schoolID) {
       alert('Please select a school');
@@ -40,7 +35,7 @@ const PageContent = () => {
     }
     generateToken({
       schoolID,
-      expTime: expTimes[expInd].time,
+      expTime,
     }).then(res => {
       if (res.data) {
         setLink(
@@ -59,17 +54,23 @@ const PageContent = () => {
       <div className="mt-6 theme-surface-raised border theme-border p-4 flex flex-col space-y-4">
         <div className="flex flex-col sm:flex-row justify-center sm:justify-start sm:items-center sm:space-x-3 space-y-3 sm:space-y-0">
           <Dropdown
-            items={schools.map(sc => sc.name)}
-            selected={schoolInd}
-            setSelected={index =>
-              setSelectedSchoolID(schools[index]?.id ?? null)
-            }
+            items={schools.map(school => ({
+              value: school.id,
+              label: school.name,
+            }))}
+            selected={schoolID}
+            setSelected={setSelectedSchoolID}
             label="School"
+            disabled={schoolsResource.status === 'loading'}
+            disabledPlaceholder="Loading schools…"
           />
           <Dropdown
-            items={expTimes.map(e => e.label)}
-            selected={expInd}
-            setSelected={i => setExpInd(i)}
+            items={expTimes.map(expiration => ({
+              value: expiration.time,
+              label: expiration.label,
+            }))}
+            selected={expTime}
+            setSelected={setExpTime}
             label="Expiration time"
           />
           <div className="sm:pt-5 w-full sm:w-48 flex-shrink-0">
@@ -89,6 +90,8 @@ const PageContent = () => {
         <div className="flex items-center space-x-3 w-full">
           <input
             value={link}
+            readOnly
+            aria-label="Generated invite link"
             className="block h-8 theme-input border-0 border-b focus:outline-0 focus:ring-0 py-1 px-2 w-full text-sm cursor-text"
           />
           <div className="flex-shrink-0 w-48">

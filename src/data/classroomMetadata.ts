@@ -271,3 +271,9 @@ export const getDashboardTasks = (problems: URLProblem[]): DashboardTask[] =>
       },
     ];
   });
+
+export const formatClassTaskID = (
+  groupName: string,
+  classID: string,
+  taskIndex: number
+) => `${groupName.trim()[0]?.toUpperCase() ?? '–'}.${classID}.${taskIndex + 1}`;

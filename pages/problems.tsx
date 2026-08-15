@@ -12,6 +12,7 @@ import {
 import Checkbox from '../src/components/Checkbox';
 import { useUserContext } from '../src/context/UserContext';
 import PageTitle from '../src/components/PageTitle';
+import Dropdown from '../src/components/Dropdown';
 import {
   useManagedSchools,
   useSchoolGroups,
@@ -28,8 +29,6 @@ const iconButtonClass =
   'px-2 py-1 rounded-md hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]';
 const inputClass =
   'font-mono theme-input border h-8 resize-none p-2 rounded text-sm';
-const selectClass =
-  'theme-input border h-8 px-2 pr-8 rounded text-sm disabled:opacity-50';
 
 const Tag = ({
   tag,
@@ -42,7 +41,11 @@ const Tag = ({
     <div className="rounded-md border theme-border theme-surface px-2 py-1 m-1 whitespace-nowrap inline-block">
       {tag}
       {tagToggle && (
-        <button className={iconButtonClass} onClick={() => tagToggle(tag)}>
+        <button
+          aria-label={`Remove ${tag} filter`}
+          className={iconButtonClass}
+          onClick={() => tagToggle(tag)}
+        >
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'trash' }}
             className="inline w-3.5 h-3.5"
@@ -240,46 +243,44 @@ const PageContent = () => {
             <td className={`px-3 py-1.5 ${cellBorderClass} w-[22rem]`}>
               <div className="flex flex-col space-y-3 py-2">
                 <div className="flex flex-col">
-                  <label className="text-xs theme-text-muted mb-1">
-                    School
-                  </label>
-                  <select
-                    aria-label="School"
-                    className={selectClass}
-                    value={schoolID ?? ''}
-                    onChange={e => {
-                      setSelectedSchoolId(e.target.value || undefined);
+                  <Dropdown
+                    items={schools.map(({ id, name }) => ({
+                      label: name,
+                      value: id,
+                    }))}
+                    selected={schoolID ?? null}
+                    setSelected={value => {
+                      setSelectedSchoolId(value);
                       setSelectedGroupId(undefined);
                     }}
-                  >
-                    <option value="">Select school…</option>
-                    {schools.map(({ id, name }) => (
-                      <option key={id} value={id}>
-                        {name}
-                      </option>
-                    ))}
-                  </select>
+                    label="School"
+                    placeholder="Select school…"
+                    disabled={schoolsResource.status === 'loading'}
+                    disabledPlaceholder="Loading schools…"
+                    onClear={() => {
+                      setSelectedSchoolId(undefined);
+                      setSelectedGroupId(undefined);
+                    }}
+                  />
                 </div>
                 <div className="flex flex-col">
-                  <label className="text-xs theme-text-muted mb-1">Group</label>
-                  <select
-                    aria-label="Group"
-                    className={selectClass}
-                    value={groupID ?? ''}
-                    onChange={e =>
-                      setSelectedGroupId(e.target.value || undefined)
+                  <Dropdown
+                    items={groups.map(({ id, name }) => ({
+                      label: name,
+                      value: id,
+                    }))}
+                    selected={groupID ?? null}
+                    setSelected={setSelectedGroupId}
+                    label="Group"
+                    placeholder="Select group…"
+                    disabledPlaceholder={
+                      groupsResource.status === 'loading'
+                        ? 'Loading groups…'
+                        : 'Select school first'
                     }
-                    disabled={!schoolID || groups.length === 0}
-                  >
-                    <option value="">
-                      {schoolID ? 'Select group…' : 'Select school first'}
-                    </option>
-                    {groups.map(({ id, name }) => (
-                      <option key={id} value={id}>
-                        {name}
-                      </option>
-                    ))}
-                  </select>
+                    disabled={!schoolID || groupsResource.status === 'loading'}
+                    onClear={() => setSelectedGroupId(undefined)}
+                  />
                 </div>
               </div>
             </td>

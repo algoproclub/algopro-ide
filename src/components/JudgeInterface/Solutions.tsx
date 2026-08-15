@@ -1,9 +1,10 @@
 import Dropdown from '../Dropdown';
 import { CodeEditor } from '../editor/CodeEditor';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { ProblemData } from '../../types/problem';
 import { useEditorContext } from '../../context/EditorContext';
-import { useUserContext } from '../../context/UserContext';
+import { useUserContext, LANGUAGES } from '../../context/UserContext';
+import { useScopedSelection } from '../../hooks/useScopedSelection';
 
 const Solutions = ({
   solutions,
@@ -13,19 +14,15 @@ const Solutions = ({
 }) => {
   const { fileData } = useEditorContext();
   const languages = Object.keys(solutions);
-  const [selected, setSelected] = useState(0);
+  const fileLanguage = fileData?.settings.language;
+  const [selected, setSelected] = useScopedSelection(
+    fileData ? `${fileData.id}\0${fileLanguage}` : 'solutions',
+    languages,
+    fileLanguage
+  );
   const {
     userData: { fontSize },
   } = useUserContext();
-
-  useEffect(() => {
-    if (fileData) {
-      const index = languages.findIndex(x => x == fileData.settings.language);
-      if (index !== -1) {
-        setSelected(index);
-      }
-    }
-  }, [fileData]);
 
   return (
     <>
@@ -59,17 +56,22 @@ const Solutions = ({
       </div>
       <div className="flex items-end space-x-3">
         <Dropdown
-          items={languages}
+          items={languages.map(lang => ({
+            value: lang,
+            label: LANGUAGES.find(x => x.value === lang)?.label ?? lang,
+          }))}
           label="Language"
           selected={selected}
-          setSelected={(k: number) => setSelected(k)}
+          setSelected={setSelected}
         />
       </div>
       <div className="h-full mt-4 -mx-4 border-y theme-border">
         <CodeEditor
-          value={solutions[languages[selected]]}
+          value={selected ? solutions[selected] : ''}
           language={
-            { cpp: 'cpp', py: 'python', java: 'java' }[languages[selected]]
+            selected
+              ? { cpp: 'cpp', py: 'python', java: 'java' }[selected]
+              : undefined
           }
           editorOptions={{
             readOnly: true,

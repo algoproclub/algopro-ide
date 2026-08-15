@@ -1,5 +1,4 @@
 import React, { Fragment, useEffect, useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { StatusData, TestCase } from '../../types/problem';
 import TimeAgoLabel from '../TimeStamp';
 import { Dialog, Transition } from '@headlessui/react';
@@ -251,6 +250,7 @@ const USACOTestCase = ({
   onClick?: () => void;
 }) => {
   const display = getTestCaseStatusDisplay(data.title);
+  const StatusIcon = display.Icon;
   return (
     <div
       className={classNames(
@@ -266,24 +266,7 @@ const USACOTestCase = ({
       <div
         className={`flex items-center justify-center pt-1 font-semibold ${display.surfaceTextClass}`}
       >
-        {data.symbol === '✓' && (
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'check' }}
-            className="inline h-6 w-6"
-          />
-        )}
-        {data.symbol === 'x' && (
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'xmark' }}
-            className="inline h-6 w-6"
-          />
-        )}
-        {data.symbol === '~' && (
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'check' }}
-            className="inline h-6 w-6"
-          />
-        )}
+        <StatusIcon className="inline h-6 w-6" />
       </div>
       <div>
         <div className="flex justify-end">
