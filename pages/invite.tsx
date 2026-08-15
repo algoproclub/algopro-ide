@@ -1,11 +1,11 @@
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import Dropdown from '../src/components/Dropdown';
-import React, { useEffect, useState } from 'react';
-import { fetchTeacherSchools } from './teacher';
+import React, { useState } from 'react';
 import { useUserContext } from '../src/context/UserContext';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { CopyButton } from '../src/components/CopyButton';
 import PageTitle from '../src/components/PageTitle';
+import { useManagedSchools } from '../src/hooks/useClassroomMetadata';
 
 const generateToken = httpsCallable<
   { schoolID: string; expTime: number },
@@ -19,23 +19,27 @@ const expTimes = [
 ];
 
 const PageContent = () => {
-  const [schools, setSchools] = useState<{ id: string; name: string }[]>([]);
-  const [schoolInd, setSchoolInd] = useState(0);
+  const [selectedSchoolID, setSelectedSchoolID] = useState<string | null>(null);
   const [expInd, setExpInd] = useState(0);
   const [link, setLink] = useState('');
   const { userRole } = useUserContext();
-
-  useEffect(() => {
-    const initSchools = async () => {
-      const schools = await fetchTeacherSchools(userRole);
-      setSchools(schools);
-    };
-    initSchools();
-  }, [userRole]);
+  const schoolsResource = useManagedSchools(userRole);
+  const schools = schoolsResource.data;
+  const schoolID = schools.some(school => school.id === selectedSchoolID)
+    ? selectedSchoolID
+    : (schools[0]?.id ?? null);
+  const schoolInd = Math.max(
+    0,
+    schools.findIndex(school => school.id === schoolID)
+  );
 
   const generateLink = () => {
+    if (!schoolID) {
+      alert('Please select a school');
+      return;
+    }
     generateToken({
-      schoolID: schools[schoolInd].id,
+      schoolID,
       expTime: expTimes[expInd].time,
     }).then(res => {
       if (res.data) {
@@ -57,7 +61,9 @@ const PageContent = () => {
           <Dropdown
             items={schools.map(sc => sc.name)}
             selected={schoolInd}
-            setSelected={i => setSchoolInd(i)}
+            setSelected={index =>
+              setSelectedSchoolID(schools[index]?.id ?? null)
+            }
             label="School"
           />
           <Dropdown
@@ -75,6 +81,11 @@ const PageContent = () => {
             </button>
           </div>
         </div>
+        {schoolsResource.status === 'error' && (
+          <p className="text-sm text-[color:var(--danger)]">
+            Schools could not be loaded.
+          </p>
+        )}
         <div className="flex items-center space-x-3 w-full">
           <input
             value={link}

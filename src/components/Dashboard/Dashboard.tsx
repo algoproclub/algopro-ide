@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   getDatabase,
   ref,
@@ -17,16 +17,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Checkbox from '../Checkbox';
 import Dropdown from '../Dropdown';
 import TimeAgoLabel from '../TimeStamp';
-import {
-  fetchClasses,
-  fetchProblems,
-  fetchSolutionData,
-  ProblemData,
-  SolutionData,
-} from '../../../pages/teacher';
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import { useDashboardClassroom } from '../../hooks/useDashboardClassroom';
+import { useStudentTaskStatuses } from '../../hooks/useStudentTaskStatuses';
+import RefreshButton from '../RefreshButton';
 
-const firestore = getFirestore();
 const db = getDatabase();
 
 const PAGE_SIZE = 8;
@@ -167,101 +161,67 @@ const RecentTab = ({
 };
 
 const ClassesTab = () => {
-  const { firebaseUser } = useUserContext();
-  const [groups, setGroups] = useState<string[]>([]);
-  const [groupInd, setGroupInd] = useState(0);
-  const [classInd, setClassInd] = useState(0);
-  const [classes, setClasses] = useState<string[]>([]);
-  const [problems, setProblems] = useState<ProblemData[]>([]);
-  const [data, setData] = useState<(SolutionData | null)[]>([]);
-
-  useEffect(() => {
-    if (!firebaseUser) {
-      return;
-    }
-    const updateGroups = async () => {
-      const newGroups: string[] | undefined = (
-        await getDoc(doc(firestore, 'userdata', firebaseUser.uid))
-      ).data()?.groups;
-
-      if (!newGroups) {
-        return;
-      }
-      setGroups(newGroups);
-    };
-    updateGroups();
-  }, [firebaseUser]);
-
-  useEffect(() => {
-    if (groups.length === 0) return;
-
-    handleRefresh();
-  }, [groupInd, groups, classInd]);
-
-  useEffect(() => {
-    if (groups.length === 0) return;
-
-    fetchClasses(groups[groupInd]).then(res => {
-      setClasses(res);
-    });
-    const timeout = setInterval(() => {
-      handleRefresh();
-    }, 15000);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (groups.length === 0) return;
-
-    const updateProblems = async () => {
-      setProblems(await fetchProblems(groups[groupInd], classes[classInd]));
-    };
-    updateProblems();
-  }, [classes]);
-
-  useEffect(() => {
-    if (groups.length === 0) return;
-
-    const updateData = async () => {
-      const problemsPromise = Promise.all(
-        problems
-          .filter(problem => problem.platform && problem.id)
-          .map(problem => {
-            return fetchSolutionData(
-              problem.platform!,
-              problem.id!,
-              firebaseUser.uid
-            );
-          })
-      );
-      setData(await problemsPromise);
-    };
-    updateData();
-  }, [problems]);
-
-  const handleRefresh = async () => {
-    setClasses(await fetchClasses(groups[groupInd]));
-  };
+  const { firebaseUser, userRole } = useUserContext();
+  const userID = firebaseUser?.uid ?? null;
+  const {
+    groupID,
+    classID,
+    groups,
+    classes,
+    tasks,
+    groupsResource,
+    classesResource,
+    selectGroup,
+    selectClass,
+    refresh,
+  } = useDashboardClassroom({ userID, userRole });
+  const selectedGroup = groups.find(group => group.id === groupID);
+  const statuses = useStudentTaskStatuses({
+    schoolID: selectedGroup?.schoolID ?? null,
+    groupID,
+    classID,
+    userID,
+    targets: tasks,
+  });
+  const groupInd = Math.max(
+    0,
+    groups.findIndex(group => group.id === groupID)
+  );
+  const classInd = Math.max(0, classes.indexOf(classID ?? ''));
 
   return (
     <div className="divide-y divide-[color:var(--border-muted)] border theme-border theme-surface">
       <div className="flex items-center px-3.5 py-3 space-x-3">
         <Dropdown
-          items={groups}
+          items={groups.map(group => group.name)}
           label={'Group'}
           selected={groupInd}
-          setSelected={(index: number) => setGroupInd(index)}
+          setSelected={(index: number) =>
+            selectGroup(groups[index]?.id ?? null)
+          }
         />
         <Dropdown
           items={classes}
           label={'Class'}
           selected={classInd}
-          setSelected={(index: number) => setClassInd(index)}
+          setSelected={(index: number) => selectClass(classes[index] ?? null)}
+        />
+        <RefreshButton
+          onClick={refresh}
+          title="Refresh tasks"
+          isLoading={
+            groupsResource.status === 'loading' ||
+            classesResource.status === 'loading' ||
+            classesResource.isRefreshing
+          }
         />
       </div>
+      {(groupsResource.status === 'error' ||
+        classesResource.status === 'error') && (
+        <p className="px-3.5 py-2 text-sm text-[color:var(--danger)]">
+          Groups or classes could not be loaded.
+        </p>
+      )}
       <div className="overflow-x-auto">
         <table className="table-tasks table-fixed w-full text-sm divide-y divide-[color:var(--border-muted)] truncate theme-table">
           <thead className="theme-table-header">
@@ -274,10 +234,11 @@ const ClassesTab = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-[color:var(--border-muted)] theme-surface-muted">
-            {data.map((row, index) => {
-              const curProblem = problems[Math.min(index, problems.length - 1)];
+            {tasks.map(task => {
+              const state = statuses[task.key] ?? { status: 'loading' };
+              const row = state.status === 'ready' ? state.data : null;
               let tempFileID = 'Tap to Create';
-              let tempFileIDhref = `/solve/${curProblem.platform}/${curProblem.id}`;
+              let tempFileIDhref = `/solve/${task.platform}/${task.id}`;
               let tempVerdict = 'Untried';
               let tempCodeSize = '';
               if (row) {
@@ -288,17 +249,23 @@ const ClassesTab = () => {
                 tempCodeSize = row.codeSize
                   ? row.codeSize.toString()
                   : 'Unknown';
+              } else if (state.status === 'loading') {
+                tempFileID = 'Loading…';
+                tempVerdict = 'Loading…';
+              } else if (state.status === 'error') {
+                tempFileID = 'Unavailable';
+                tempVerdict = 'Unavailable';
               }
               return (
-                <tr key={index}>
+                <tr key={task.key}>
                   <td className="truncate">
                     <a
-                      href={problems[Math.min(index, problems.length - 1)].url}
+                      href={task.url}
                       target="_blank"
                       className="underline theme-text hover:text-[color:var(--accent-hover)]"
                       rel="noreferrer"
                     >
-                      {problems[Math.min(index, problems.length - 1)].source}
+                      {task.source}
                     </a>
                   </td>
                   <td>
@@ -357,7 +324,7 @@ const ClassesTab = () => {
       </div>
       <Pagination
         page={classInd}
-        setPage={(val: number) => setClassInd(val)}
+        setPage={(val: number) => selectClass(classes[val] ?? null)}
         minPage={0}
         maxPage={Math.max(0, classes.length - 1)}
         label={`Class: ${classes[classInd] ?? '-'}`}

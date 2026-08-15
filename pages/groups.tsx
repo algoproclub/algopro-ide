@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   collection,
   getDocs,
@@ -13,55 +13,39 @@ import {
 } from 'firebase/firestore';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import { useUserContext } from '../src/context/UserContext';
-import { fetchTeacherSchools, GroupInfo, School } from './teacher';
 import Dropdown from '../src/components/Dropdown';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { EditGroupModal, TwoFieldValue } from '../src/components/EditTextModal';
 import Link from 'next/link';
 import PageTitle from '../src/components/PageTitle';
+import {
+  useManagedSchools,
+  useSchoolGroups,
+} from '../src/hooks/useClassroomMetadata';
+import { useScopedSelection } from '../src/hooks/useScopedSelection';
 
 const firestore = getFirestore();
 
 const PageContent = () => {
   const { userRole } = useUserContext();
-  const [groups, setGroups] = useState<GroupInfo[]>([]);
-  const [schools, setSchools] = useState<School[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [schoolInd, setSchoolInd] = useState(0);
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  const schoolsResource = useManagedSchools(userRole);
+  const schools = schoolsResource.data;
+  const [schoolID, setSchoolID] = useScopedSelection(
+    'group-editor-schools',
+    schools.map(school => school.id)
+  );
+  const groupsResource = useSchoolGroups(schoolID, {
+    includeInactive: true,
+    refreshVersion,
+  });
+  const groups = groupsResource.data;
+  const schoolInd = Math.max(
+    0,
+    schools.findIndex(school => school.id === schoolID)
+  );
   const schoolNames = schools.map(s => s.name);
-
-  useEffect(() => {
-    const initSchools = async () => {
-      const schools = await fetchTeacherSchools(userRole);
-      setSchools(schools);
-    };
-    initSchools();
-  }, [userRole]);
-
-  const fetchGroups = async () => {
-    if (!schools[schoolInd]) {
-      return;
-    }
-    const groupsSnap = await getDocs(
-      query(
-        collection(firestore, 'groups'),
-        where('school', '==', schools[schoolInd].id)
-      )
-    );
-    setGroups(
-      groupsSnap.docs.map(docu => {
-        return {
-          id: docu.id,
-          name: docu.get('name') || docu.id,
-          schoolID: docu.get('school'),
-        };
-      })
-    );
-  };
-
-  useEffect(() => {
-    fetchGroups();
-  }, [schoolInd, schools]);
 
   const onSave = async (group: TwoFieldValue) => {
     const groupID = `${schools[schoolInd].id}~${group.left}`;
@@ -94,7 +78,7 @@ const PageContent = () => {
       console.error(e);
       return;
     }
-    await fetchGroups();
+    setRefreshVersion(version => version + 1);
     setIsOpen(false);
   };
   const deleteGroup = (id: string) => {
@@ -121,7 +105,7 @@ const PageContent = () => {
         }
       });
       await batch.commit();
-      await fetchGroups();
+      setRefreshVersion(version => version + 1);
       setIsOpen(false);
     };
     if (
@@ -150,7 +134,7 @@ const PageContent = () => {
             items={schoolNames}
             label="School"
             selected={schoolInd}
-            setSelected={setSchoolInd}
+            setSelected={index => setSchoolID(schools[index]?.id ?? null)}
           />
           <button
             className="flex-shrink-0 px-4 py-2.5 theme-button-primary rounded-md mt-4 ml-3 flex items-center"
