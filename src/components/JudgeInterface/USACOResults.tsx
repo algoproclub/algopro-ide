@@ -8,6 +8,10 @@ import { useEditorContext } from '../../context/EditorContext';
 import classNames from 'classnames';
 import { PreBox } from './Samples';
 import fetchTestCase from './fetchTestCase';
+import {
+  getSubmissionStatusDisplay,
+  getTestCaseStatusDisplay,
+} from '../TaskStatus/statusDisplay';
 
 const capitalize = (text: string): string => {
   return text[0].toUpperCase() + text.substring(1);
@@ -246,49 +250,38 @@ const USACOTestCase = ({
   data: TestCase;
   onClick?: () => void;
 }) => {
-  const containerClasses =
-    data.title?.toLowerCase() === 'correct answer'
-      ? 'bg-green-700 border-green-700'
-      : data.title === 'Did not run'
-        ? 'bg-[color:var(--surface-active)] border-[color:var(--border-strong)]'
-        : data.title?.toLowerCase()?.includes('partially')
-          ? 'bg-yellow-700 border-yellow-700'
-          : 'bg-red-700 border-red-700';
-  const textColor =
-    data.title?.toLowerCase() === 'correct answer'
-      ? 'text-green-100'
-      : data.title?.toLowerCase()?.includes('partially')
-        ? 'text-yellow-100'
-        : 'text-red-100';
+  const display = getTestCaseStatusDisplay(data.title);
   return (
     <div
       className={classNames(
-        `m-1 p-1 inline-block w-[5.5rem] bg-opacity-25 border-opacity-50 border relative rounded-[4px]`,
-        containerClasses,
+        'relative m-1 inline-block w-[5.5rem] rounded-[4px] border-[0.75px] p-1',
+        display.colorClass,
+        display.badgeSurfaceClass,
+        display.badgeBorderClass,
         onClick ? 'hover:cursor-pointer' : ''
       )}
       title={capitalize(data.title)}
       onClick={onClick ?? (() => {})}
     >
       <div
-        className={`font-semibold flex items-center justify-center ${textColor} pt-1`}
+        className={`flex items-center justify-center pt-1 font-semibold ${display.surfaceTextClass}`}
       >
         {data.symbol === '✓' && (
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'check' }}
-            className="inline w-6 h-6"
+            className="inline h-6 w-6"
           />
         )}
         {data.symbol === 'x' && (
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'xmark' }}
-            className="inline w-6 h-6"
+            className="inline h-6 w-6"
           />
         )}
         {data.symbol === '~' && (
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'check' }}
-            className="inline w-6 h-6"
+            className="inline h-6 w-6"
           />
         )}
       </div>
@@ -299,7 +292,7 @@ const USACOTestCase = ({
           )}
         </div>
         <div className="flex items-center justify-between">
-          <span className={`${textColor} text-[0.8125rem] font-bold leading-3`}>
+          <span className="text-[0.8125rem] font-bold leading-3">
             {data.trialNum}
           </span>
           <span className={`text-[0.625rem] leading-3`}>{data.time}</span>
@@ -355,52 +348,25 @@ export default function USACOResults({
   const [selectedTestCase, setSelectedTestCase] = useState<TestCase | null>(
     null
   );
+  const resultDisplay = getSubmissionStatusDisplay(data);
+  const ResultIcon = resultDisplay.Icon;
+  const resultIconColorClass = resultDisplay.spins
+    ? resultDisplay.surfaceTextClass
+    : resultDisplay.standaloneClass;
 
   return (
     <div className="mt-3">
       <div className="pb-3">
-        <div className="flex items-center font-medium theme-text theme-border space-x-2">
+        <div className="theme-text theme-border flex items-center space-x-2 font-medium">
           <span>
-            {!['error', 'resolved'].includes(data.statusCode) && (
-              <FontAwesomeIcon
-                icon={{ prefix: 'fas', iconName: 'gear' }}
-                className="w-3.5 h-3.5 inline theme-text-muted animate-spin-slow"
-              />
-            )}
-            {data.statusCode === 'error' && (
-              <FontAwesomeIcon
-                icon={{ prefix: 'fas', iconName: 'exclamation-triangle' }}
-                className="text-yellow-500 inline w-3.5 h-3.5"
-              />
-            )}
-            {data.statusCode === 'resolved' &&
-              data.message?.toLowerCase() === 'correct answer' && (
-                <FontAwesomeIcon
-                  icon={{ prefix: 'fas', iconName: 'check' }}
-                  className="text-green-500 inline w-3.5 h-3.5"
-                />
-              )}
-            {data.statusCode === 'resolved' &&
-              data.message?.toLowerCase() !== 'correct answer' &&
-              data.message?.toLowerCase()?.includes('partially') && (
-                <FontAwesomeIcon
-                  icon={{ prefix: 'fas', iconName: 'check' }}
-                  className="text-yellow-500 inline w-3.5 h-3.5"
-                />
-              )}
-            {data.statusCode === 'resolved' &&
-              data.message?.toLowerCase() !== 'correct answer' &&
-              !data.message?.toLowerCase()?.includes('partially') && (
-                <FontAwesomeIcon
-                  icon={{ prefix: 'fas', iconName: 'xmark' }}
-                  className="w-3.5 h-3.5 inline text-red-500"
-                />
-              )}
+            <ResultIcon
+              className={`inline h-6 w-6 ${resultDisplay.colorClass} ${resultIconColorClass} ${resultDisplay.spins ? 'animate-spin' : ''}`}
+            />
           </span>
           <span className="break-words overflow-hidden text-[0.92rem] leading-[1.5rem]">
             <span className="font-semibold">
               {data.message ? capitalize(data.message) : null}
-              {!['error', 'resolved'].includes(data.statusCode) && '...'}
+              {resultDisplay.spins && '...'}
             </span>
             {(data.time || data.memory) && ' ('}
             {data.time && '' + data.time}
@@ -410,7 +376,7 @@ export default function USACOResults({
           </span>
         </div>
         {submissionTime && (
-          <div className="text-sm theme-text-muted">
+          <div className="theme-text-muted text-sm">
             {startTime ? (
               <span>
                 Time:{' '}
