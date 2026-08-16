@@ -1,0 +1,66 @@
+.success {
+  --status-color: var(--success);
+  --status-bg: theme('colors.green.950');
+  --status-text: theme('colors.green.100');
+}
+
+.danger {
+  --status-color: var(--danger);
+  --status-bg: theme('colors.red.950');
+  --status-text: theme('colors.red.100');
+}
+
+.warning {
+  --status-color: var(--warning);
+  --status-bg: theme('colors.amber.950');
+  --status-text: theme('colors.amber.100');
+}
+
+.accent {
+  --status-color: var(--accent);
+  --status-bg: theme('colors.indigo.950');
+  --status-text: theme('colors.indigo.100');
+}
+
+.muted {
+  --status-color: var(--text-muted);
+  --status-bg: var(--surface-bg-muted);
+  --status-text: var(--text-muted);
+}
+
+:global([data-theme='light']) .success {
+  --status-bg: theme('colors.green.100');
+  --status-text: theme('colors.green.800');
+}
+
+:global([data-theme='light']) .danger {
+  --status-bg: theme('colors.red.100');
+  --status-text: theme('colors.red.800');
+}
+
+:global([data-theme='light']) .warning {
+  --status-bg: theme('colors.amber.100');
+  --status-text: theme('colors.amber.800');
+}
+
+:global([data-theme='light']) .accent {
+  --status-bg: theme('colors.indigo.100');
+  --status-text: theme('colors.indigo.800');
+}
+
+.standalone {
+  color: var(--status-color);
+}
+
+.surfaceText {
+  color: var(--status-text);
+}
+
+.badgeSurface {
+  color: var(--status-text);
+  background-color: var(--status-bg);
+}
+
+.badgeBorder {
+  border-color: var(--status-color);
+}
