@@ -66,7 +66,7 @@ const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
 
 const secondaryButtonClass =
   'border theme-border text-[color:var(--text-primary)] hover:border-[color:var(--border-strong)] hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]';
-const tableBorderClass = 'border-[color:var(--border-muted)]';
+const tableBorderClass = 'divide-[color:var(--border-muted)]';
 const tableCellSurfaceClass = 'bg-[color:var(--table-row-bg)]';
 const tableCellAltSurfaceClass = 'bg-[color:var(--table-row-alt-bg)]';
 
