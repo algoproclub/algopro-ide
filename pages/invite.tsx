@@ -52,7 +52,7 @@ const PageContent = () => {
   return (
     <div className="max-w-7xl mx-auto px-2">
       <div className="mt-6 theme-surface-raised border theme-border p-4 flex flex-col space-y-4">
-        <div className="flex flex-col sm:flex-row justfiy-center sm:justify-start sm:items-center sm:space-x-3 space-y-3 sm:space-y-0">
+        <div className="flex flex-col sm:flex-row justify-center sm:justify-start sm:items-center sm:space-x-3 space-y-3 sm:space-y-0">
           <Dropdown
             items={schools.map(sc => sc.name)}
             selected={schoolInd}
