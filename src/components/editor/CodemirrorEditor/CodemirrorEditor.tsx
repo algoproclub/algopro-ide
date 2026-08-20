@@ -13,7 +13,6 @@ import { CodemirrorEditorHandle, EditorProps } from '../editor-types';
 import * as Y from 'yjs';
 import useLspClient from './lsp';
 
-import './codemirror-styles.css';
 import { useEffect, useMemo, useState } from 'react';
 import { yCollab } from 'y-codemirror.next';
 import { DEFAULT_FONT_SIZE_EDITOR } from '../../../constants/editorConstants';

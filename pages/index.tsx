@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { ConfirmOverrideModal } from '../src/components/ConfirmOverrideModal';
 import { useSetAtom } from 'jotai';
 import {
@@ -17,6 +17,8 @@ import { useNullableUserContext } from '../src/context/UserContext';
 import NoRegistrationMessage from '../src/NoRegistrationMessage';
 import { useConnectionContext } from '../src/context/ConnectionContext';
 
+const productName = process.env.NEXT_PUBLIC_PRODUCT_NAME ?? 'AlgoPro IDE';
+
 export default function DashboardPage(): JSX.Element {
   const { userData, logged, registered } = useNullableUserContext();
   const connectionContext = useConnectionContext();
@@ -24,16 +26,12 @@ export default function DashboardPage(): JSX.Element {
   const signInWithMicrosoft = useSetAtom(signInWithMicrosoftAtom);
   const signInWithGithub = useSetAtom(signInWithGithubAtom);
 
-  useEffect(() => {
-    document.title = 'AlgoPro IDE';
-  }, []);
-
   return (
     <div className="p-4 sm:p-6 md:p-8 lg:p-12 min-h-full flex flex-col max-w-6xl mx-auto theme-page">
       <ConfirmOverrideModal />
       <div className="flex-1 relative">
         <h1 className="theme-text text-2xl md:text-4xl font-black">
-          AlgoPro IDE
+          {productName}
         </h1>
         <div className="theme-text-muted mt-6 mb-2">
           Based on the{' '}

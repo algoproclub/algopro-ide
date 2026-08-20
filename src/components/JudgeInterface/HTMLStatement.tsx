@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react';
 import renderMathInElement from 'katex/contrib/auto-render';
 import katex from 'katex';
-import 'katex/dist/katex.min.css';
 
 export default function HTMLStatement({
   htmlContent,

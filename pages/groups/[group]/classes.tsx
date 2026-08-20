@@ -18,6 +18,7 @@ import { EditInlineTextModal } from '../../../src/components/EditTextModal';
 import { parseProblem } from '../../../src/scripts/parseProblem';
 import { Disclosure } from '@headlessui/react';
 import WithTeacherLogin from '../../../src/components/WithTeacherLogin';
+import PageTitle from '../../../src/components/PageTitle';
 
 const firestore = getFirestore();
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
@@ -328,8 +329,6 @@ const PageContent = () => {
   const [newID, setNewID] = useState('');
   const [unsaved, setUnsaved] = useState(new Set<string>());
 
-  document.title = `[${group}] class editor`;
-
   useEffect(() => {
     const initialize = async (group: string) => {
       const groupSnap = await getDoc(doc(firestore, 'groups', group));
@@ -392,6 +391,7 @@ const PageContent = () => {
 
   return (
     <div className="px-2">
+      <PageTitle>{group ? `[${group}] class editor` : undefined}</PageTitle>
       {group && (
         <div className="mx-auto max-w-7xl mt-4 space-y-3">
           <div className={`${panelClass} flex-col`}>

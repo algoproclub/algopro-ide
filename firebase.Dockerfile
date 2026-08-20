@@ -9,8 +9,7 @@ WORKDIR /app
 RUN --mount=type=cache,target=/root/.npm \
     npm install -g firebase-tools
 
-RUN --mount=type=cache,target=/root/.cache/firebase,sharing=locked \
-    firebase setup:emulators:database && \
+RUN firebase setup:emulators:database && \
     firebase setup:emulators:firestore && \
     firebase setup:emulators:storage && \
     firebase setup:emulators:ui

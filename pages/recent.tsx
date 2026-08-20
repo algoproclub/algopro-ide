@@ -14,6 +14,7 @@ import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import LoadingIndicator from '../src/components/LoadingIndicator';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
+import PageTitle from '../src/components/PageTitle';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -341,7 +342,6 @@ const PageContent = () => {
 
   useEffect(() => {
     updateFileList();
-    document.title = 'Teacher interface - AlgoPro IDE';
   }, []);
 
   useEffect(() => {
@@ -759,10 +759,13 @@ const PageContent = () => {
   );
 };
 
-export default function TeacherPage() {
+export default function RecentsPage() {
   return (
-    <WithTeacherLogin>
-      <PageContent />
-    </WithTeacherLogin>
+    <>
+      <PageTitle>Recent activity</PageTitle>
+      <WithTeacherLogin>
+        <PageContent />
+      </WithTeacherLogin>
+    </>
   );
 }

@@ -18,12 +18,11 @@ import Dropdown from '../src/components/Dropdown';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { EditGroupModal, TwoFieldValue } from '../src/components/EditTextModal';
 import Link from 'next/link';
+import PageTitle from '../src/components/PageTitle';
 
 const firestore = getFirestore();
 
 const PageContent = () => {
-  document.title = 'Edit groups';
-
   const { userRole } = useUserContext();
   const [groups, setGroups] = useState<GroupInfo[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
@@ -215,8 +214,11 @@ const PageContent = () => {
 
 export default function ClassGroupSelectPage() {
   return (
-    <WithTeacherLogin>
-      <PageContent />
-    </WithTeacherLogin>
+    <>
+      <PageTitle>Edit groups</PageTitle>
+      <WithTeacherLogin>
+        <PageContent />
+      </WithTeacherLogin>
+    </>
   );
 }

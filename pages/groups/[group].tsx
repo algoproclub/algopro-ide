@@ -14,6 +14,7 @@ import WithTeacherLogin from '../../src/components/WithTeacherLogin';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import PageTitle from '../../src/components/PageTitle';
 
 const firestore = getFirestore();
 
@@ -27,8 +28,6 @@ const PageContent = () => {
   const router = useRouter();
   const [group, setGroup] = useState<string | null>(null);
   const [groupName, setGroupName] = useState<string | null>(null);
-
-  document.title = `Manage group [${group}]`;
 
   useEffect(() => {
     if (typeof router.query.group === 'string') {
@@ -127,6 +126,7 @@ const PageContent = () => {
 
   return (
     <div className="px-2">
+      <PageTitle>{group ? `Manage group [${group}]` : undefined}</PageTitle>
       <div className="mx-auto max-w-7xl border theme-border theme-surface-raised mt-4">
         <div className="p-4 pl-5 border-b theme-border flex justify-between items-center truncate">
           <span className="flex items-center truncate">

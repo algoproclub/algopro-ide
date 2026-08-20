@@ -21,6 +21,7 @@ import {
 import Checkbox from '../src/components/Checkbox';
 import { useUserContext, type UserRole } from '../src/context/UserContext';
 import { get, getDatabase, ref } from 'firebase/database';
+import PageTitle from '../src/components/PageTitle';
 
 const firestore = getFirestore();
 const database = getDatabase();
@@ -451,8 +452,11 @@ const PageContent = () => {
 
 export default function ProblemsetPage() {
   return (
-    <WithTeacherLogin>
-      <PageContent />
-    </WithTeacherLogin>
+    <>
+      <PageTitle>Problemset</PageTitle>
+      <WithTeacherLogin>
+        <PageContent />
+      </WithTeacherLogin>
+    </>
   );
 }
