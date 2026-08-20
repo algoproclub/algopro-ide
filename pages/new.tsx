@@ -89,15 +89,18 @@ function PageContent() {
 
   return (
     <div className="min-h-full flex flex-col max-w-6xl mx-auto lg:mt-6">
-      <form className="border border-gray-700" onSubmit={handleSubmit}>
-        <div className="text-white font-semibold py-2 px-4 lg:px-8 bg-gray-800">
+      <form
+        className="theme-surface border theme-border"
+        onSubmit={handleSubmit}
+      >
+        <div className="theme-surface-raised theme-text font-semibold py-2 px-4 lg:px-8">
           <h1 className="text-lg">Create New File</h1>
         </div>
-        <div className="border-t border-gray-700 space-y-4 sm:space-y-6 p-4 lg:p-8">
+        <div className="border-t theme-border space-y-4 sm:space-y-6 p-4 lg:p-8">
           <div>
             <label
               htmlFor="filename"
-              className="block text-sm font-medium leading-6 text-gray-100"
+              className="block text-sm font-medium leading-6 theme-text"
             >
               File Name
             </label>
@@ -119,7 +122,6 @@ function PageContent() {
               className="text-sm"
               onChange={setDefaultPermission}
               isOwner={true}
-              lightMode={false}
             />
           </div>
           <RadioGroupContents
@@ -131,7 +133,7 @@ function PageContent() {
           <div>
             <label
               htmlFor="compilerOptions"
-              className="block text-sm font-medium leading-6 text-gray-100"
+              className="block text-sm font-medium leading-6 theme-text"
             >
               Compiler Options
             </label>
@@ -150,13 +152,13 @@ function PageContent() {
             <button
               type="submit"
               disabled={isPageLoading || isSubmitting}
-              className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--app-bg)] focus:ring-[color:var(--accent)]"
             >
               {isSubmitting ? 'Creating...' : 'Create File'}
             </button>
             <Link
               href="/"
-              className="inline-flex items-center px-4 py-2 border border-gray-700 shadow-sm text-[0.92rem] font-medium rounded-md text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="inline-flex items-center px-4 py-2 border shadow-sm text-[0.92rem] font-medium rounded-md theme-button-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
             >
               Cancel
             </Link>

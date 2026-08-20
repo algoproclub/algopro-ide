@@ -29,14 +29,14 @@ export const PreBox = ({
     <div
       className={classNames(
         // overflow-x-hidden allows overflow-auto below to function properly
-        'mx-0 rounded-md bg-[#121212] border border-t-0 border-gray-700 flex flex-col overflow-x-hidden',
+        'mx-0 rounded-md theme-surface-muted border border-t-0 theme-border flex flex-col overflow-x-hidden',
         roundedBottom ? '' : 'rounded-b-none',
         roundedTop ? '' : 'rounded-t-none'
       )}
     >
       <div
         className={classNames(
-          'py-2.5 px-4 bg-gray-800 border-b border-t rounded-t-md border-gray-700 font-semibold text-sm',
+          'py-2.5 px-4 theme-surface-raised border-b border-t rounded-t-md theme-border font-semibold text-sm',
           roundedTop ? '' : 'rounded-t-none'
         )}
       >
@@ -67,14 +67,14 @@ export default function Samples({
 
   return (
     <div className="text-sm">
-      <div className="border-b border-[#363636] -mx-4 px-4 pb-4">
+      <div className="border-b border-[color:var(--border-muted)] -mx-4 px-4 pb-4">
         <button
           type="button"
           title={
             readOnly ? "You can't run code in a view-only document." : undefined
           }
           disabled={readOnly || isCodeRunActive}
-          className="rounded-md relative flex-shrink-0 inline-flex items-center px-4 py-2.5 w-40 shadow-sm text-sm font-medium text-white bg-indigo-900 hover:bg-indigo-800 focus:bg-indigo-800 focus:outline-none disabled:text-indigo-300/50 disabled:bg-indigo-900/50 disabled:cursor-not-allowed"
+          className="rounded-md relative flex-shrink-0 inline-flex items-center px-4 py-2.5 w-40 shadow-sm text-sm font-medium theme-button-primary focus:outline-none disabled:cursor-not-allowed"
           onClick={handleRunCode}
         >
           {isCodeRunActive ? (

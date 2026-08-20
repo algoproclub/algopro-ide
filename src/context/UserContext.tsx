@@ -162,8 +162,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       );
   }, [user]);
 
+  const lightMode = userData?.lightMode;
+
   useEffect(() => {
-    const activeTheme = userData?.lightMode ? 'light' : 'dark';
+    if (lightMode === undefined) return;
+
+    const activeTheme = lightMode ? 'light' : 'dark';
     const root = document.documentElement;
 
     root.dataset.theme = activeTheme;
@@ -173,7 +177,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       document.body.dataset.theme = activeTheme;
       document.body.style.colorScheme = activeTheme;
     }
-  }, [userData?.lightMode]);
+
+    try {
+      window.localStorage.setItem('algopro-theme', activeTheme);
+    } catch {
+      // The active theme still works when persistent browser storage is blocked.
+    }
+  }, [lightMode]);
 
   const updateUsername = useCallback(
     (newName: string) => {

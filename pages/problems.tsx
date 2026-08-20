@@ -26,6 +26,14 @@ import PageTitle from '../src/components/PageTitle';
 const firestore = getFirestore();
 const database = getDatabase();
 
+const cellBorderClass = 'border-x border-[color:var(--border-muted)]';
+const iconButtonClass =
+  'px-2 py-1 rounded-md hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]';
+const inputClass =
+  'font-mono theme-input border h-8 resize-none p-2 rounded text-sm';
+const selectClass =
+  'theme-input border h-8 px-2 pr-8 rounded text-sm disabled:opacity-50';
+
 const Tag = ({
   tag,
   tagToggle,
@@ -34,13 +42,10 @@ const Tag = ({
   tagToggle?: (arg0: ProblemTag) => void;
 }) => {
   return (
-    <div className="rounded-md border border-gray-600 bg-gray-900 px-2 py-1 m-1 whitespace-nowrap inline-block">
+    <div className="rounded-md border theme-border theme-surface px-2 py-1 m-1 whitespace-nowrap inline-block">
       {tag}
       {tagToggle && (
-        <button
-          className="px-2 py-1 rounded-md hover:bg-gray-700"
-          onClick={() => tagToggle(tag)}
-        >
+        <button className={iconButtonClass} onClick={() => tagToggle(tag)}>
           <FontAwesomeIcon
             icon={{ prefix: 'fas', iconName: 'trash' }}
             className="inline w-3.5 h-3.5"
@@ -232,10 +237,10 @@ const PageContent = () => {
 
   return (
     <div className="space-y-2 m-10 mx-20">
-      <table className="bg-gray-900 px-3 py-2 border border-gray-600 text-sm space-x-2 w-full">
+      <table className="theme-table px-3 py-2 border theme-border text-sm space-x-2 w-full">
         <tbody>
           <tr>
-            <td className="px-3 py-1.5 w-[20rem] border-x border-gray-700">
+            <td className={`px-3 py-1.5 w-[20rem] ${cellBorderClass}`}>
               {platforms.map(platform => (
                 <div
                   className="inline-block mx-3 my-2"
@@ -251,12 +256,12 @@ const PageContent = () => {
                 </div>
               ))}
             </td>
-            <td className="px-3 py-1.5 border-x border-gray-700 w-[10rem]">
+            <td className={`px-3 py-1.5 ${cellBorderClass} w-[10rem]`}>
               <div className="m-2">
                 <input
                   type="text"
                   placeholder="Search problem name"
-                  className="font-mono bg-gray-900 border-gray-700 h-8 resize-none p-2 rounded text-sm"
+                  className={inputClass}
                   autoFocus={true}
                   value={problemNameFilter}
                   onChange={e => setProblemNameFilter(e.target.value)}
@@ -271,17 +276,17 @@ const PageContent = () => {
                 <input
                   type="text"
                   placeholder="Filter tag"
-                  className="font-mono bg-gray-900 border-gray-700 h-8 resize-none p-2 rounded text-sm"
+                  className={inputClass}
                   value={tagFilterInput}
                   onChange={e => setTagFilterInput(e.target.value)}
                   onKeyDown={handleKeyDownTagInput}
                 />
                 {tagFilterFocus && (
-                  <ul className="border border-gray-700 rounded-md bg-gray-900 absolute m-0.5 max-h-[30rem] overflow-auto">
+                  <ul className="border theme-border rounded-md theme-surface absolute m-0.5 max-h-[30rem] overflow-auto">
                     {tagFilterInputOptions.length > 0 &&
                       tagFilterInputOptions.map((option, index) => (
                         <li
-                          className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700 flex justify-between items-center min-w-[10rem]"
+                          className="px-3 py-2 hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)] flex justify-between items-center min-w-[10rem]"
                           key={index}
                           onMouseDown={() => {
                             toggleTag(option);
@@ -304,18 +309,20 @@ const PageContent = () => {
                 )}
               </div>
             </td>
-            <td className="py-1 px-3 border-x border-gray-700">
+            <td className={`py-1 px-3 ${cellBorderClass}`}>
               {tagFilters.map((item, index) => (
                 <Tag tag={item} key={index} tagToggle={toggleTag} />
               ))}
             </td>
-            <td className="px-3 py-1.5 border-x border-gray-700 w-[22rem]">
+            <td className={`px-3 py-1.5 ${cellBorderClass} w-[22rem]`}>
               <div className="flex flex-col space-y-3 py-2">
                 <div className="flex flex-col">
-                  <label className="text-xs text-gray-400 mb-1">School</label>
+                  <label className="text-xs theme-text-muted mb-1">
+                    School
+                  </label>
                   <select
                     aria-label="School"
-                    className="bg-gray-900 border border-gray-700 h-8 px-2 pr-8 rounded text-sm"
+                    className={selectClass}
                     value={selectedSchoolId ?? ''}
                     onChange={e =>
                       setSelectedSchoolId(e.target.value || undefined)
@@ -330,10 +337,10 @@ const PageContent = () => {
                   </select>
                 </div>
                 <div className="flex flex-col">
-                  <label className="text-xs text-gray-400 mb-1">Group</label>
+                  <label className="text-xs theme-text-muted mb-1">Group</label>
                   <select
                     aria-label="Group"
-                    className="bg-gray-900 border border-gray-700 h-8 px-2 pr-8 rounded text-sm disabled:opacity-50"
+                    className={selectClass}
                     value={selectedGroupId ?? ''}
                     onChange={e =>
                       setSelectedGroupId(e.target.value || undefined)
@@ -357,9 +364,9 @@ const PageContent = () => {
           </tr>
         </tbody>
       </table>
-      <div className="border border-gray-600 bg-gray-800 overflow-y-auto mt-5">
-        <table className="text-sm bg-gray-900 border-collapse w-full">
-          <tbody className="divide-y divide-gray-700">
+      <div className="border theme-border theme-surface-raised overflow-y-auto mt-5">
+        <table className="text-sm theme-table border-collapse w-full">
+          <tbody className="divide-y divide-[color:var(--border-muted)]">
             {problemset
               .filter(({ platform, title, tags }) => {
                 return (
@@ -380,17 +387,23 @@ const PageContent = () => {
                   className="h-[3.5rem]"
                   key={platform && id ? `${platform}:${id}` : index}
                 >
-                  <td className="py-2 px-3 w-[10.0rem] border-x border-gray-700 bg-gray-800 font-bold">
+                  <td
+                    className={`py-2 px-3 w-[10.0rem] ${cellBorderClass} theme-table-header font-bold`}
+                  >
                     {platform && getPlatformName(platform)} {title}
                   </td>
-                  <td className="space-x-1 px-3 py-1.5 w-[30rem] border-x border-gray-700">
+                  <td
+                    className={`space-x-1 px-3 py-1.5 w-[30rem] ${cellBorderClass}`}
+                  >
                     {tags &&
                       tags.map((tag, index) => (
                         <Tag key={index} tag={tag}></Tag>
                       ))}
                   </td>
                   {selectedGroupId && platform && id && (
-                    <td className="px-3 py-1.5 w-[8rem] border-x border-gray-700 text-center">
+                    <td
+                      className={`px-3 py-1.5 w-[8rem] ${cellBorderClass} text-center`}
+                    >
                       <span className="whitespace-nowrap">
                         Solved:{' '}
                         {solvedCounts.problems[`${platform}:${id}`] ?? 0}/
@@ -398,11 +411,13 @@ const PageContent = () => {
                       </span>
                     </td>
                   )}
-                  <td className="space-x-1 px-2 py-1.5 w-[1.5rem] border-x border-gray-700 bg-gray-800">
+                  <td
+                    className={`space-x-1 px-2 py-1.5 w-[1.5rem] ${cellBorderClass} theme-table-header`}
+                  >
                     {platform && id && (
                       <a
                         title="Edit problem"
-                        className="px-2 py-1 rounded-md hover:bg-gray-700 inline-block"
+                        className={`${iconButtonClass} inline-block`}
                         href={`/edit/${platform}/${id}`}
                         target="_blank"
                         rel="noreferrer"
@@ -415,7 +430,7 @@ const PageContent = () => {
                     )}
                     <a
                       title="Open original problem"
-                      className="px-2 py-1 rounded-md hover:bg-gray-700 inline-block"
+                      className={`${iconButtonClass} inline-block`}
                       href={url}
                       target="_blank"
                       rel="noreferrer"

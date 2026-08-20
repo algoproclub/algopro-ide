@@ -65,6 +65,12 @@ const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   { ssr: false }
 );
 
+const secondaryButtonClass =
+  'border theme-border text-[color:var(--text-primary)] hover:border-[color:var(--border-strong)] hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]';
+const tableBorderClass = 'divide-[color:var(--border-muted)]';
+const tableCellSurfaceClass = 'bg-[color:var(--table-row-bg)]';
+const tableCellAltSurfaceClass = 'bg-[color:var(--table-row-alt-bg)]';
+
 const getVerdictType = ({
   message,
   statusCode,
@@ -232,12 +238,12 @@ export const fetchClasses = async (groupID: string) => {
 const RefreshButton = ({ onRefresh }: { onRefresh: () => void }) => {
   return (
     <button
-      className="flex items-center justify-center border border-gray-600 px-4 py-3.5 -mb-1 rounded-lg hover:border-gray-500 bg-gray-900 hover:bg-gray-800 active:bg-gray-700"
+      className={`flex items-center justify-center px-4 py-3.5 -mb-1 rounded-lg ${secondaryButtonClass}`}
       onClick={onRefresh}
     >
       <FontAwesomeIcon
         icon={{ prefix: 'fas', iconName: 'arrows-rotate' }}
-        className="w-4 h-4 inline text-gray-100"
+        className="w-4 h-4 inline"
       />
     </button>
   );
@@ -275,7 +281,7 @@ const Controls = ({
   onRefresh: () => void;
 }) => {
   return (
-    <div className="bg-gray-800 w-full space-y-2.5 px-5 py-3.5 border border-gray-600">
+    <div className="theme-surface-raised w-full space-y-2.5 px-5 py-3.5 border theme-border">
       <div className="w-full flex space-x-2 items-end">
         <Dropdown
           items={schoolNames}
@@ -350,8 +356,10 @@ const ControlDropdown = ({
           <div className="w-full flex items-stretch space-x-2">
             <Disclosure.Button className="w-full">
               <div
-                className={`flex items-center justify-center w-full border px-4 py-2.5 rounded-md border-gray-600 hover:border-gray-500 text-[0.95rem] ${
-                  open ? 'bg-gray-800' : 'bg-gray-900 hover:bg-gray-800'
+                className={`flex items-center justify-center w-full border px-4 py-2.5 rounded-md text-[0.95rem] ${
+                  open
+                    ? 'theme-border bg-[color:var(--surface-hover)]'
+                    : secondaryButtonClass
                 }`}
               >
                 Filter
@@ -362,16 +370,16 @@ const ControlDropdown = ({
               </div>
             </Disclosure.Button>
             <button
-              className="flex items-center justify-center border border-gray-600 px-4 py-1 rounded-lg hover:border-gray-500 bg-gray-900 hover:bg-gray-800 active:bg-gray-700"
+              className={`flex items-center justify-center px-4 py-1 rounded-lg ${secondaryButtonClass}`}
               onClick={onRefresh}
             >
               <FontAwesomeIcon
                 icon={{ prefix: 'fas', iconName: 'arrows-rotate' }}
-                className="w-4 h-4 inline text-gray-100"
+                className="w-4 h-4 inline"
               />
             </button>
           </div>
-          <Disclosure.Panel className="px-5 py-6 relative space-y-4 border border-gray-600">
+          <Disclosure.Panel className="px-5 py-6 relative space-y-4 border theme-border theme-surface-raised">
             <Dropdown
               items={schoolNames}
               label="School"
@@ -431,20 +439,20 @@ const GroupData = ({
     return Math.max(...data[i].map(item => item?.lastEdit ?? 0));
   });
   return (
-    <div className="border border-gray-600 overflow-auto max-h-[40rem]">
-      <table className="table-auto data-table text-sm w-full !border-separate !border-spacing-0 divide-y divide-gray-600">
+    <div className="border theme-border overflow-auto max-h-[40rem]">
+      <table className="table-auto data-table text-sm w-full !border-separate !border-spacing-0 divide-y divide-[color:var(--border-color)] theme-table">
         <thead>
-          <tr className="divide-x divide-gray-700 bg-gray-800">
-            <th className="!sticky !top-0 !left-0 !z-40 bg-gray-800 border-r border-gray-700 border-b"></th>
+          <tr className="divide-x divide-[color:var(--border-muted)] theme-table-header">
+            <th className="!sticky !top-0 !left-0 !z-40 theme-table-header border-r border-[color:var(--border-muted)] border-b"></th>
             <>
               {problems.map((problem, index) => (
                 <th
                   key={index}
-                  className={`w-60 ${index == 0 ? '!border-l-0' : ''} !sticky top-0 !z-30 bg-gray-800 border-b`}
+                  className={`w-60 ${index == 0 ? '!border-l-0' : ''} !sticky top-0 !z-30 theme-table-header border-b`}
                 >
                   <a
                     href={problem.url}
-                    className="hover:text-indigo-200 underline underline-offset-2 truncate"
+                    className="text-[color:var(--accent-hover)] hover:text-[color:var(--accent)] underline underline-offset-2 truncate"
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -459,15 +467,19 @@ const GroupData = ({
             </>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-600">
+        <tbody className="divide-y divide-[color:var(--border-color)]">
           {students.map((student, i) => (
-            <tr key={i} className="divide-x divide-gray-600">
-              <td className="bg-gray-800 sticky left-0 !z-20 border-r border-b border-gray-600">
-                <div className="relative flex flex-col divide-y divide-[#2d2d2d]">
+            <tr key={i} className="divide-x divide-[color:var(--border-color)]">
+              <td className="theme-table-header sticky left-0 !z-20 border-r border-b border-[color:var(--border-color)]">
+                <div
+                  className={`relative flex flex-col divide-y ${tableBorderClass}`}
+                >
                   <div className="truncate w-full px-4 py-1.5 h-[4rem] flex items-center">
                     {student.name}
                   </div>
-                  <div className="truncate w-full bg-gray-900  px-4 py-1.5">
+                  <div
+                    className={`truncate w-full px-4 py-1.5 ${tableCellSurfaceClass}`}
+                  >
                     <TimeAgoLabel date={new Date(mostRecent[i])} />
                   </div>
                 </div>
@@ -482,12 +494,12 @@ const GroupData = ({
                       <>
                         {data[i][j]?.lastEdit === mostRecent[i] &&
                           highlight && (
-                            <div className="absolute bg-indigo-700 inset-0" />
+                            <div className="absolute bg-[color:var(--accent)] inset-0" />
                           )}
                         <div
-                          className={`relative z-10 bg-gray-900 flex flex-col divide-y divide-[#2d2d2d] ${
+                          className={`relative z-10 ${tableCellSurfaceClass} flex flex-col divide-y ${tableBorderClass} ${
                             data[i][j]?.lastEdit === mostRecent[i] && highlight
-                              ? 'border border-indigo-900 -m-[1px] opacity-90'
+                              ? 'border border-[color:var(--accent)] -m-[1px] opacity-90'
                               : (data[i][j]?.lastEdit ?? 0) >= fromTime
                                 ? ''
                                 : 'opacity-50'
@@ -495,7 +507,7 @@ const GroupData = ({
                         >
                           <div className="truncate w-full px-4 py-1.5">
                             <a
-                              className="underline hover:text-indigo-200 mr-2"
+                              className="underline text-[color:var(--accent-hover)] hover:text-[color:var(--accent)] mr-2"
                               href={`/${data[i][j].fileID.slice(1)}`}
                               target="_blank"
                               rel="noreferrer"
@@ -527,7 +539,9 @@ const GroupData = ({
                               )}
                             </span>
                           </div>
-                          <div className="truncate w-full px-4 py-1.5 bg-[#202020]">
+                          <div
+                            className={`truncate w-full px-4 py-1.5 ${tableCellAltSurfaceClass}`}
+                          >
                             {data[i][j].codeSize} char
                           </div>
                           <div className="truncate w-full px-4 py-1.5">
@@ -539,7 +553,7 @@ const GroupData = ({
                       </>
                     )}
                     {!data[i][j] && (
-                      <div className="absolute inset-0 bg-gray-900 flex items-center w-full text-gray-400 px-4 py-3">
+                      <div className="absolute inset-0 bg-[color:var(--table-row-bg)] flex items-center w-full theme-text-muted px-4 py-3">
                         No corresponding file
                       </div>
                     )}

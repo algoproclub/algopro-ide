@@ -29,7 +29,7 @@ const Solutions = ({
 
   return (
     <>
-      <div className="border-b border-[#363636] -mx-4 px-4 pb-4 mb-4 space-y-2">
+      <div className="border-b border-[color:var(--border-muted)] -mx-4 px-4 pb-4 mb-4 space-y-2">
         <div className="flex items-center space-x-2">
           <span className="font-semibold space-x-2">
             Congratulations on solving the task!
@@ -53,7 +53,7 @@ const Solutions = ({
             </g>
           </svg>
         </div>
-        <div className="text-gray-400 text-sm">
+        <div className="theme-text-muted text-sm">
           Below you can see the model solutions.
         </div>
       </div>
@@ -65,7 +65,7 @@ const Solutions = ({
           setSelected={(k: number) => setSelected(k)}
         />
       </div>
-      <div className="h-full mt-4 -mx-4 border-y border-gray-700">
+      <div className="h-full mt-4 -mx-4 border-y theme-border">
         <CodeEditor
           value={solutions[languages[selected]]}
           language={
