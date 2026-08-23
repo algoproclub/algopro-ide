@@ -32,6 +32,8 @@
   --table-row-alt-bg: var(--surface-bg-muted);
   --button-secondary-bg: transparent;
   --button-secondary-hover: var(--surface-hover);
+  --button-primary-disabled-bg: var(--surface-active);
+  --button-primary-disabled-text: var(--text-primary);
 }
 
 [data-theme='light'] {
@@ -198,7 +200,12 @@ body,
   background-color: var(--button-secondary-hover);
 }
 
-.theme-button-primary:disabled,
+.theme-button-primary:disabled {
+  background-color: var(--button-primary-disabled-bg);
+  color: var(--button-primary-disabled-text);
+  cursor: not-allowed;
+}
+
 .theme-button-secondary:disabled {
   color: var(--text-disabled);
   cursor: not-allowed;
@@ -303,7 +310,10 @@ body,
     margin-left: 1.5rem;
   }
   & pre {
-    @apply rounded-md my-2 px-3.5 py-2.5 border border-gray-700 bg-[#121212] overflow-x-auto;
+    @apply rounded-md my-2 px-3.5 py-2.5 border overflow-x-auto;
+    background-color: var(--surface-bg-muted);
+    border-color: var(--border-color);
+    color: var(--text-primary);
   }
   .section-title,
   & h1,
