@@ -27,23 +27,23 @@ export default function DashboardPage(): JSX.Element {
   const signInWithGithub = useSetAtom(signInWithGithubAtom);
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 lg:p-12 min-h-full flex flex-col max-w-6xl mx-auto theme-page">
+    <div className="mx-auto flex min-h-full max-w-7xl flex-col px-4 py-5 theme-page sm:px-6 sm:py-6 lg:px-8">
       <ConfirmOverrideModal />
       <div className="flex-1 relative">
-        <h1 className="theme-text text-2xl md:text-4xl font-black">
+        <h1 className="theme-text text-2xl font-bold tracking-tight md:text-3xl">
           {productName}
         </h1>
-        <div className="theme-text-muted mt-6 mb-2">
+        <div className="mb-5 mt-1.5 max-w-3xl text-sm leading-6 theme-text-muted">
           Based on the{' '}
           <a
-            className="underline text-[color:var(--text-secondary)] hover:text-[color:var(--accent-hover)]"
+            className="underline decoration-line-strong underline-offset-4 hover:text-content"
             href="https://github.com/cpinitiative/ide"
           >
             Real-Time Collaborative Online IDE
           </a>{' '}
           by{' '}
           <a
-            className="underline text-[color:var(--text-secondary)] hover:text-[color:var(--accent-hover)]"
+            className="underline decoration-line-strong underline-offset-4 hover:text-content"
             href="https://joincpi.org/"
           >
             Competitive Programming Initiative
@@ -72,7 +72,7 @@ export default function DashboardPage(): JSX.Element {
             </div>
           </>
         ) : !userData ? (
-          <div className="theme-text-muted">Loading...</div>
+          <div className="theme-text-muted">Loading&hellip;</div>
         ) : !registered ? (
           <NoRegistrationMessage />
         ) : (

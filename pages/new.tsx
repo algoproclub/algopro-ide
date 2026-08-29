@@ -88,15 +88,15 @@ function PageContent() {
   };
 
   return (
-    <div className="min-h-full flex flex-col max-w-6xl mx-auto lg:mt-6">
+    <div className="mx-auto flex min-h-full max-w-3xl flex-col px-4 py-6 sm:px-6">
       <form
-        className="theme-surface border theme-border"
+        className="theme-surface theme-border overflow-hidden rounded-lg border shadow-sm"
         onSubmit={handleSubmit}
       >
-        <div className="theme-surface-raised theme-text font-semibold py-2 px-4 lg:px-8">
-          <h1 className="text-lg">Create New File</h1>
+        <div className="theme-surface-raised theme-text theme-border border-b px-5 py-4 sm:px-6">
+          <h1 className="text-lg font-semibold">Create New File</h1>
         </div>
-        <div className="border-t theme-border space-y-4 sm:space-y-6 p-4 lg:p-8">
+        <div className="space-y-5 p-5 sm:p-6">
           <div>
             <label
               htmlFor="filename"
@@ -104,19 +104,19 @@ function PageContent() {
             >
               File Name
             </label>
-            <div className="mt-0">
+            <div className="mt-1.5">
               <input
                 type="text"
                 name="filename"
                 id="filename"
                 value={fileName}
                 onChange={e => setFileName(e.target.value)}
-                className="text-input"
+                className="theme-input w-full rounded-md border px-3 py-2 text-sm"
                 autoFocus
               />
             </div>
           </div>
-          <div className="mb-4">
+          <div>
             <SharingPermissions
               value={defaultPerimssion}
               className="text-sm"
@@ -137,24 +137,24 @@ function PageContent() {
             >
               Compiler Options
             </label>
-            <div className="mt-2">
+            <div className="mt-1.5">
               <input
                 type="text"
                 name="compilerOptions"
                 id="compilerOptions"
                 value={compilerOptions}
                 onChange={e => setCompilerOptions(e.target.value)}
-                className="text-input font-mono !text-[0.85rem]"
+                className="theme-input w-full rounded-md border px-3 py-2 font-mono text-sm"
               />
             </div>
           </div>
-          <div className="mt-6 space-x-2.5">
+          <div className="flex justify-end gap-2.5 border-t border-line pt-5">
             <button
               type="submit"
               disabled={isPageLoading || isSubmitting}
               className="inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--app-bg)] focus:ring-[color:var(--accent)]"
             >
-              {isSubmitting ? 'Creating...' : 'Create File'}
+              {isSubmitting ? 'Creating\u2026' : 'Create File'}
             </button>
             <Link
               href="/"
