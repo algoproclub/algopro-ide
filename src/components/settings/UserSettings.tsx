@@ -44,7 +44,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`name`}
-          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
+          className="block text-[0.92rem] text-content-secondary"
         >
           Username
         </label>
@@ -64,7 +64,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`cf-username`}
-          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
+          className="block text-[0.92rem] text-content-secondary"
         >
           Codeforces username
         </label>
@@ -84,7 +84,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`atcoder-username`}
-          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
+          className="block text-[0.92rem] text-content-secondary"
         >
           AtCoder username
         </label>
@@ -104,7 +104,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`discord-username`}
-          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
+          className="block text-[0.92rem] text-content-secondary"
         >
           Discord user ID
         </label>
@@ -182,17 +182,16 @@ export default function UserSettings({
 }): JSX.Element {
   const [submenu, setSubmenu] = useState<Submenu>('userdata');
   const sectionButtonClass =
-    'flex items-center justify-between bg-[var(--panel-bg)] py-2 px-3 border border-[var(--border-color)] text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] text-sm';
+    'flex items-center justify-between border border-line bg-panel px-3 py-2 text-sm text-content hover:bg-surface-hover';
   const joinedSectionButtonClass =
-    'flex items-center justify-between bg-[var(--panel-bg)] py-2 px-3 border border-t-0 border-[var(--border-color)] text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] text-sm';
-  const sectionContentClass =
-    'p-4 border border-t-0 border-[var(--border-color)]';
+    'flex items-center justify-between border border-t-0 border-line bg-panel px-3 py-2 text-sm text-content hover:bg-surface-hover';
+  const sectionContentClass = 'border border-t-0 border-line p-4';
   const spacedSectionContentClass =
-    'space-y-4 p-4 border border-t-0 border-[var(--border-color)]';
+    'space-y-4 border border-t-0 border-line p-4';
 
   return (
     <div>
-      <div className="flex flex-col text-sm text-[color:var(--text-primary)] bg-[var(--panel-bg-alt)]">
+      <div className="flex flex-col bg-panel-muted text-sm text-content">
         <button
           className={sectionButtonClass}
           onClick={() =>
@@ -327,7 +326,7 @@ export default function UserSettings({
             <div>
               <label
                 htmlFor={`fontSize`}
-                className="block text-[0.92rem] text-[color:var(--text-secondary)]"
+                className="block text-[0.92rem] text-content-secondary"
               >
                 Font size (pixels)
               </label>

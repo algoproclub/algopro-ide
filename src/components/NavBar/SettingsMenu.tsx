@@ -27,6 +27,7 @@ export const SettingsMenu = (props: {
   const [popperElement, setPopperElement] = useState<HTMLElement | null>(null);
   const { styles, attributes } = usePopper(referenceElement, popperElement, {
     placement: 'bottom-end',
+    modifiers: [{ name: 'offset', options: { offset: [0, 6] } }],
   });
 
   const [mounted, setMounted] = useState(false);
@@ -38,23 +39,13 @@ export const SettingsMenu = (props: {
     return null;
   }
 
-  const menuButtonClass = (open: boolean) =>
-    `relative inline-flex items-center px-4 py-1.5 shadow-sm text-sm font-medium text-[color:var(--text-primary)] focus:outline-none ${
-      open
-        ? 'bg-[var(--hover-bg)]'
-        : 'hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]'
-    }`;
-  const menuPanelClass =
-    'origin-top-right absolute z-10 right-0 w-56 shadow-lg bg-[var(--panel-bg)] border border-[var(--border-color)] focus:outline-none';
   const menuItemClass = (active: boolean) =>
     classNames(
-      active
-        ? 'bg-[var(--hover-bg)] text-[color:var(--text-primary)]'
-        : 'text-[color:var(--text-primary)]',
-      'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
+      active ? 'bg-surface-hover text-content' : 'text-content',
+      'ui-menu-item group py-1.5'
     );
   const menuIconClass =
-    'mr-3 h-5 w-5 text-[color:var(--text-secondary)] group-hover:text-[color:var(--text-primary)]';
+    'mr-2.5 h-4 w-4 text-content-muted group-hover:text-content';
 
   return (
     <Menu as="div" className="relative inline-block text-left">
@@ -62,7 +53,11 @@ export const SettingsMenu = (props: {
         <>
           <div data-testid="settings-menu-button">
             <Menu.Button
-              className={menuButtonClass(open)}
+              className={`ui-focus m-0.5 inline-flex h-8 items-center gap-1 rounded-md border px-1.5 text-sm font-medium transition-colors ${
+                open
+                  ? 'border-line-strong bg-surface-active'
+                  : 'border-transparent hover:border-line hover:bg-surface-hover'
+              }`}
               ref={setReferenceElement}
             >
               {firebaseUser?.photoURL ? (
@@ -73,12 +68,12 @@ export const SettingsMenu = (props: {
                 />
               ) : (
                 <UserCircleIcon
-                  className="h-6 w-6 text-[color:var(--text-secondary)]"
+                  className="h-6 w-6 text-content-secondary"
                   aria-hidden="true"
                 />
               )}
               <ChevronDownIcon
-                className="h-5 w-5 text-[color:var(--text-secondary)] ml-2"
+                className="h-4 w-4 text-content-muted"
                 aria-hidden="true"
               />
             </Menu.Button>
@@ -103,9 +98,9 @@ export const SettingsMenu = (props: {
                         leaveFrom="transform opacity-100 scale-100"
                         leaveTo="transform opacity-0 scale-95"
                       >
-                        <div className={menuPanelClass}>
+                        <div className="ui-menu absolute right-0 z-10 w-56 origin-top-right">
                           <div className="py-1">
-                            <div className="px-4 py-2 text-sm text-[color:var(--text-primary)]">
+                            <div className="px-4 py-2 text-sm text-content">
                               Signed in as{' '}
                               <strong>{firebaseUser.displayName}</strong>
                             </div>

@@ -73,7 +73,7 @@ export default {};
 //   }, [classroomID, fileID, classroomDataListener.value]);
 
 //   if (classroomDataListener.isLoading || !firebaseUser || !router.isReady) {
-//     return <MessagePage message="Loading..." showHomeButton={false} />;
+//     return <MessagePage message="Loading…" showHomeButton={false} />;
 //   }
 
 //   if (!classroomDataListener.value) {

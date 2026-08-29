@@ -43,6 +43,7 @@ export const FileMenu = (props: {
   const [popperElement, setPopperElement] = useState<HTMLElement | null>(null);
   const { styles, attributes } = usePopper(referenceElement, popperElement, {
     placement: 'bottom-start',
+    modifiers: [{ name: 'offset', options: { offset: [0, 6] } }],
   });
   const canWrite = permission === 'OWNER' || permission === 'READ_WRITE';
 
@@ -51,23 +52,13 @@ export const FileMenu = (props: {
     setMounted(true);
   }, []);
 
-  const menuButtonClass = (open: boolean) =>
-    `w-full relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-[color:var(--text-primary)] focus:outline-none ${
-      open
-        ? 'bg-[var(--hover-bg)]'
-        : 'hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]'
-    }`;
-  const menuPanelClass =
-    'origin-top-left absolute z-10 left-0 w-56 shadow-lg bg-[var(--panel-bg)] border border-[var(--border-color)] focus:outline-none';
   const menuItemClass = (active: boolean) =>
     classNames(
-      active
-        ? 'bg-[var(--hover-bg)] text-[color:var(--text-primary)]'
-        : 'text-[color:var(--text-primary)]',
-      'group flex items-center px-4 py-2 text-sm w-full focus:outline-none'
+      active ? 'bg-surface-hover text-content' : 'text-content',
+      'ui-menu-item group py-1.5'
     );
   const menuIconClass =
-    'mr-3 h-5 w-5 text-[color:var(--text-secondary)] group-hover:text-[color:var(--text-primary)]';
+    'mr-2.5 h-4 w-4 text-content-muted group-hover:text-content';
 
   /* ======= BEGIN DROPDOWN ACTIONS ======= */
   const handleDownloadFile = () => {
@@ -129,20 +120,19 @@ export const FileMenu = (props: {
   /* ======= END DROPDOWN ACTIONS ======= */
 
   return (
-    <Menu
-      as="div"
-      className="relative inline-block text-left flex-grow min-w-[7rem]"
-    >
+    <Menu as="div" className="relative inline-block text-left">
       {({ open }) => (
         <>
           <div>
             <Menu.Button
-              className={menuButtonClass(open)}
+              className={`workspace-toolbar-button ${
+                open ? 'border-line-strong bg-surface-active' : ''
+              }`}
               ref={setReferenceElement}
             >
               File
               <ChevronDownIcon
-                className="absolute right-3 h-[1.3rem] w-[1.3rem]"
+                className="h-4 w-4 text-content-muted"
                 aria-hidden="true"
               />
             </Menu.Button>
@@ -167,7 +157,7 @@ export const FileMenu = (props: {
                         leaveFrom="transform opacity-100 scale-100"
                         leaveTo="transform opacity-0 scale-95"
                       >
-                        <div className={menuPanelClass}>
+                        <div className="ui-menu absolute left-0 z-10 w-56 origin-top-left">
                           <div className="py-1">
                             <Menu.Item>
                               {({ active }) => (

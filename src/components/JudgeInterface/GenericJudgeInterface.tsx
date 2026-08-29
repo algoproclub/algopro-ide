@@ -30,7 +30,7 @@ export default function GenericJudgeInterface({
   const translation = translations[language];
 
   return (
-    <div className="relative h-full flex flex-col text-[0.92rem]">
+    <div className="relative flex h-full flex-col text-sm leading-6">
       <div className="flex-1 overflow-y-auto pb-4">
         <header className="items-center">
           {languages.length > 1 && (
@@ -43,13 +43,13 @@ export default function GenericJudgeInterface({
             </div>
           )}
         </header>
-        <section className="px-4 pt-2 h-full">
-          <h3 className="flex-1">
+        <section className="h-full px-4 pt-2">
+          <h3 className="flex-1 text-pretty">
             <a
               href={problem.url}
               target="_blank"
               rel="noreferrer"
-              className="font-bold text-lg hover:underline"
+              className="text-lg font-semibold tracking-tight hover:underline"
             >
               {problem.title}
               <ArrowTopRightOnSquareIcon
@@ -66,7 +66,7 @@ export default function GenericJudgeInterface({
             ))}
           {(problem.timeLimit || problem.memoryLimit) && (
             <div>
-              <h4 className="text-base font-semibold mt-[0.6rem] mb-[0.25rem]">
+              <h4 className="mb-1 mt-4 text-base font-semibold leading-6">
                 Limits
               </h4>
               <ul className="list-disc ml-6">

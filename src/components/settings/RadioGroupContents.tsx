@@ -30,7 +30,7 @@ export function RadioGroupContents<T>({
         as="div"
         className={classNames(
           lightMode ? '' : 'mb-1',
-          'text-[color:var(--text-secondary)]',
+          'text-content-secondary',
           'text-sm',
           className
         )}
@@ -51,13 +51,13 @@ export function RadioGroupContents<T>({
             {({ checked }) => (
               <>
                 <span
-                  className="h-4 w-4 mt-0.5 cursor-pointer rounded-full flex items-center justify-center bg-[var(--border-color)]"
+                  className="mt-0.5 flex h-4 w-4 cursor-pointer items-center justify-center rounded-full bg-line"
                   aria-hidden="true"
                 >
-                  <span className="flex items-center justify-center bg-[var(--panel-bg)] w-3.5 h-3.5 rounded-full">
+                  <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-panel">
                     <span
                       className={`rounded-full ${
-                        checked ? 'bg-[var(--accent)] scale-100' : 'scale-0'
+                        checked ? 'scale-100 bg-accent' : 'scale-0'
                       } transition w-2.5 h-2.5`}
                     />
                   </span>
@@ -66,9 +66,7 @@ export function RadioGroupContents<T>({
                   <RadioGroup.Label
                     as="span"
                     className={classNames(
-                      checked
-                        ? 'text-[color:var(--text-primary)]'
-                        : 'text-[color:var(--text-secondary)]',
+                      checked ? 'text-content' : 'text-content-secondary',
                       'block text-sm'
                     )}
                   >

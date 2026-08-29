@@ -44,31 +44,31 @@ export default function EditorConnectionStatusIndicator({
   switch (connectionStatus) {
     case 'connected':
       if (syncStatus === 'initializing' || showSyncIndicator) {
-        connectionText = 'Synchronizing...';
-        statusIndicatorClass = 'bg-yellow-500';
+        connectionText = 'Synchronizing…';
+        statusIndicatorClass = 'bg-status-warning';
       } else {
         connectionText = 'Connected';
-        statusIndicatorClass = 'bg-green-500';
+        statusIndicatorClass = 'bg-status-success';
       }
       break;
     case 'connecting':
-      connectionText = isSyncing ? 'Reconnecting to save...' : 'Connecting...';
-      statusIndicatorClass = 'bg-yellow-500';
+      connectionText = isSyncing ? 'Reconnecting to save…' : 'Connecting…';
+      statusIndicatorClass = 'bg-status-warning';
       break;
     case 'disconnected':
       connectionText = isSyncing
         ? 'Disconnected — changes not saved'
         : 'Disconnected';
-      statusIndicatorClass = 'bg-red-500';
+      statusIndicatorClass = 'bg-status-danger';
       break;
   }
 
   return (
-    <div className="absolute z-10 bg-[var(--panel-bg-alt)] text-[color:var(--text-primary)] border border-[var(--border-color)] rounded-md py-1.5 px-2 right-[1.25rem] top-[0.25rem] flex items-center opacity-90 hover:opacity-0 transition">
+    <div className="absolute right-3 top-2 z-10 flex items-center rounded-full border border-line-strong bg-surface-raised px-2.5 py-1 text-content shadow-md transition-opacity hover:opacity-0">
       <span
-        className={`inline-block h-1.5 w-1.5 rounded-full mr-1 ${statusIndicatorClass}`}
+        className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${statusIndicatorClass}`}
       ></span>
-      <span className="text-xs">{connectionText}</span>
+      <span className="text-xs font-medium">{connectionText}</span>
     </div>
   );
 }

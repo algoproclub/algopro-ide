@@ -63,7 +63,7 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
         Chat
       </div>
       <div
-        className="flex-1 space-y-1 min-h-0 overflow-y-auto theme-border border border-t-0 p-2 theme-surface-muted"
+        className="flex-1 space-y-1 min-h-0 overflow-y-auto border border-t-0 border-line bg-canvas p-2"
         ref={chatRef}
       >
         {chatMessages &&

@@ -99,7 +99,7 @@ function ExecutionOutputPanel({
       <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
       {result && (
         <div
-          className="px-4 py-1 text-right font-mono text-sm text-[color:var(--text-secondary)]"
+          className="border-t border-line-muted bg-panel-muted px-3 py-1.5 text-right font-mono text-xs tabular-nums text-content-muted"
           data-test-id="code-execution-output-status"
         >
           {[getJudgeStatusDescription(result), executionTime, memory]
@@ -118,11 +118,8 @@ function OutputHistory({
 }): JSX.Element {
   return (
     <div className="h-full w-full overflow-y-auto">
-      <table className="table-tasks w-full space-x-2 border-b border-[var(--border-color)] text-[color:var(--text-primary)]">
-        <thead
-          className="border-b border-[var(--border-color)] text-left text-sm"
-          style={{ backgroundColor: 'var(--panel-bg-alt)' }}
-        >
+      <table className="table-tasks w-full border-b border-line text-content">
+        <thead className="border-b border-line bg-panel-muted text-left text-xs uppercase tracking-wide text-content-muted">
           <tr>
             <th></th>
             <th>Verdict</th>
@@ -131,16 +128,13 @@ function OutputHistory({
             <th>Testcases</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[var(--border-color)] text-sm">
+        <tbody className="divide-y divide-line text-sm">
           {entries
             .slice()
             .reverse()
             .map((item, index) => (
               <tr
-                style={{
-                  backgroundColor:
-                    index % 2 ? 'var(--panel-bg-alt)' : 'var(--panel-bg)',
-                }}
+                className="transition-colors hover:bg-surface-hover"
                 key={item.submissionTime ?? entries.length - index}
               >
                 <td>{entries.length - index}</td>
@@ -154,12 +148,12 @@ function OutputHistory({
                     {item.message?.toLowerCase() === 'correct answer' ? (
                       <FontAwesomeIcon
                         icon={{ prefix: 'fas', iconName: 'check' }}
-                        className="mr-1.5 inline h-3.5 w-3.5 text-green-500"
+                        className="mr-1.5 inline h-3.5 w-3.5 text-status-success"
                       />
                     ) : (
                       <FontAwesomeIcon
                         icon={{ prefix: 'fas', iconName: 'xmark' }}
-                        className="mr-1.5 inline h-3.5 w-3.5 text-red-500"
+                        className="mr-1.5 inline h-3.5 w-3.5 text-status-danger"
                       />
                     )}
                     {item.message}
@@ -194,7 +188,9 @@ function OutputHistory({
                           title={testCase.title}
                           icon={{ prefix: timedOut ? 'far' : 'fas', iconName }}
                           className={`mr-0.5 inline h-3.5 w-3.5 ${
-                            passed ? 'text-green-500' : 'text-red-500'
+                            passed
+                              ? 'text-status-success'
+                              : 'text-status-danger'
                           }`}
                           key={index}
                         />
@@ -255,7 +251,7 @@ export const Output = ({
         }));
       }}
       ariaLabel="Program output"
-      panelsClassName="min-h-0 flex-1 overflow-hidden bg-[var(--panel-bg)] text-[color:var(--text-primary)]"
+      panelsClassName="min-h-0 flex-1 overflow-hidden bg-canvas text-content shadow-inner"
     >
       <TabBar.Item
         id="stdout"

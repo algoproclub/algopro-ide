@@ -11,7 +11,6 @@ import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
 import { useAtom } from 'jotai';
 import { problemAtom, statusDataAtom } from '../../atoms/workspaceUI';
 import { useEditorContext } from '../../context/EditorContext';
-import classNames from 'classnames';
 import {
   mainMonacoEditorAtom,
   mainCodemirrorEditorAtom,
@@ -38,30 +37,26 @@ type SimpleButtonProps = {
 
 const SimpleButton = ({
   Icon,
+  className,
   disabled,
   onClick,
   ...buttonProps
 }: SimpleButtonProps): JSX.Element => {
-  const enabledButtonClass =
-    'text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] focus:bg-[var(--hover-bg)] focus:outline-none';
-  const disabledButtonClass =
-    'text-[color:var(--text-secondary)] cursor-not-allowed';
-
   return (
     <button
       disabled={disabled}
-      className={classNames(
-        'relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium',
-        !disabled && enabledButtonClass,
-        disabled && disabledButtonClass
-      )}
+      className={`workspace-toolbar-button relative px-2 text-sm font-medium ${className ?? ''}`}
       onClick={onClick}
       {...buttonProps}
     >
-      <Icon className="h-5 w-5" />
+      <Icon className="h-4 w-4" />
     </button>
   );
 };
+
+const ToolbarSeparator = (): JSX.Element => (
+  <span aria-hidden="true" className="mx-0.5 h-5 w-px shrink-0 bg-line" />
+);
 
 export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
   const onlineUsers = useOnlineUsers();
@@ -94,35 +89,47 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
     }
   };
 
-  const navButtonClass =
-    'relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] focus:bg-[var(--hover-bg)] focus:outline-none';
-  const secondaryIconClass =
-    '-ml-1 mr-2 h-5 w-5 text-[color:var(--text-secondary)]';
+  const secondaryIconClass = '-ml-0.5 mr-1.5 h-4 w-4 text-content-muted';
 
   return (
-    <div className="flex items-center overflow-x-auto border-b border-[var(--border-color)] bg-[var(--panel-bg-alt)] text-[color:var(--text-primary)]">
-      <div className="flex w-full lg:w-auto items-center divide-x divide-[var(--border-color)]">
+    <div className="flex min-h-[2.25rem] items-center gap-0.5 overflow-x-auto border-b border-line bg-panel-muted px-0.5 py-1 text-content shadow-sm">
+      <div className="flex w-full items-center gap-0.5 lg:w-auto">
         <Tooltip label="Home">
-          <Link href="/" aria-label="Home" className={navButtonClass}>
+          <Link
+            href="/"
+            aria-label="Home"
+            className="workspace-toolbar-nav-button relative"
+          >
             <Logo className="h-5 w-5 object-contain" alt="Home" />
           </Link>
         </Tooltip>
+        <ToolbarSeparator />
         <EditorNavigationMenu />
         {props.fileMenu}
-        <Tooltip label="Undo">
-          <SimpleButton
-            onClick={handleUndo}
-            Icon={ArrowUturnLeftIcon}
-            disabled={props.showViewOnly}
-          />
-        </Tooltip>
-        <Tooltip label="Redo">
-          <SimpleButton
-            onClick={handleRedo}
-            Icon={ArrowUturnRightIcon}
-            disabled={props.showViewOnly}
-          />
-        </Tooltip>
+        <ToolbarSeparator />
+        <div
+          role="group"
+          aria-label="Edit history"
+          className="inline-flex rounded-md shadow-sm"
+        >
+          <Tooltip label="Undo">
+            <SimpleButton
+              className="rounded-r-none shadow-none focus-visible:z-10"
+              onClick={handleUndo}
+              Icon={ArrowUturnLeftIcon}
+              disabled={props.showViewOnly}
+            />
+          </Tooltip>
+          <Tooltip label="Redo">
+            <SimpleButton
+              className="-ml-px rounded-l-none shadow-none focus-visible:z-10"
+              onClick={handleRedo}
+              Icon={ArrowUturnRightIcon}
+              disabled={props.showViewOnly}
+            />
+          </Tooltip>
+        </div>
+        <ToolbarSeparator />
       </div>
       {props.runButton}
       {problem?.submittable && problem.id === fileData.problem?.id && (
@@ -132,9 +139,9 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
           setStatusData={setStatusData}
         />
       )}
-      <div className="flex items-center divide-x divide-[var(--border-color)]">
+      <div className="flex items-center">
         {props.showViewOnly && (
-          <span className="px-4 py-2 text-[color:var(--text-secondary)] text-sm font-medium whitespace-nowrap hidden sm:inline">
+          <span className="hidden whitespace-nowrap px-2.5 py-1 text-xs font-medium text-content-muted sm:inline">
             View Only
           </span>
         )}
@@ -144,7 +151,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
         <div>
           <button
             type="button"
-            className={`${navButtonClass} whitespace-nowrap`}
+            className="workspace-toolbar-nav-button relative whitespace-nowrap"
             onClick={() => props.onToggleSidebar()}
           >
             {props.isSidebarOpen ? (

@@ -18,7 +18,7 @@ export default function WithTeacherLogin({
     );
 
   if (!userData)
-    return <MessagePage message="Loading..." showHomeButton={false} />;
+    return <MessagePage message="Loading…" showHomeButton={false} />;
 
   if (!isTeacher(userRole)) {
     return (
