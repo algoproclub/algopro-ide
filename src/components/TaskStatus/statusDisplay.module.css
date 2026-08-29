@@ -1,51 +1,31 @@
 .success {
-  --status-color: var(--success);
-  --status-bg: theme('colors.green.950');
-  --status-text: theme('colors.green.100');
+  --status-color: var(--color-status-success);
+  --status-bg: var(--color-status-success-surface);
+  --status-text: var(--color-status-success-content);
 }
 
 .danger {
-  --status-color: var(--danger);
-  --status-bg: theme('colors.red.950');
-  --status-text: theme('colors.red.100');
+  --status-color: var(--color-status-danger);
+  --status-bg: var(--color-status-danger-surface);
+  --status-text: var(--color-status-danger-content);
 }
 
 .warning {
-  --status-color: var(--warning);
-  --status-bg: theme('colors.amber.950');
-  --status-text: theme('colors.amber.100');
+  --status-color: var(--color-status-warning);
+  --status-bg: var(--color-status-warning-surface);
+  --status-text: var(--color-status-warning-content);
 }
 
 .accent {
-  --status-color: var(--accent);
-  --status-bg: theme('colors.indigo.950');
-  --status-text: theme('colors.indigo.100');
+  --status-color: var(--color-status-accent);
+  --status-bg: var(--color-status-accent-surface);
+  --status-text: var(--color-status-accent-content);
 }
 
 .muted {
-  --status-color: var(--text-muted);
-  --status-bg: var(--surface-bg-muted);
-  --status-text: var(--text-muted);
-}
-
-:global([data-theme='light']) .success {
-  --status-bg: theme('colors.green.100');
-  --status-text: theme('colors.green.800');
-}
-
-:global([data-theme='light']) .danger {
-  --status-bg: theme('colors.red.100');
-  --status-text: theme('colors.red.800');
-}
-
-:global([data-theme='light']) .warning {
-  --status-bg: theme('colors.amber.100');
-  --status-text: theme('colors.amber.800');
-}
-
-:global([data-theme='light']) .accent {
-  --status-bg: theme('colors.indigo.100');
-  --status-text: theme('colors.indigo.800');
+  --status-color: var(--color-status-neutral);
+  --status-bg: var(--color-status-neutral-surface);
+  --status-text: var(--color-status-neutral-content);
 }
 
 .standalone {
