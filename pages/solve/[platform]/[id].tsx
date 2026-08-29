@@ -18,7 +18,7 @@ function PageContent(): JSX.Element {
       showHomeButton={true}
     />
   );
-  const loadingUI = <MessagePage message="Loading..." showHomeButton={false} />;
+  const loadingUI = <MessagePage message="Loading…" showHomeButton={false} />;
 
   const createdRef = useRef<boolean>(false);
 

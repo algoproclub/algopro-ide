@@ -110,7 +110,7 @@ export const CompilerOutput = ({
     <pre
       className="px-4 pt-2 h-full overflow-auto"
       style={{
-        color: 'var(--terminal-white)',
+        color: 'var(--color-terminal-foreground)',
         fontSize: `${fontSize ?? DEFAULT_FONT_SIZE_EDITOR}px`,
         lineHeight: `${(fontSize ?? DEFAULT_FONT_SIZE_EDITOR) / 0.75}px`,
       }}

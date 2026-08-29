@@ -33,21 +33,23 @@ export const PreBox = ({
     <div
       className={classNames(
         // overflow-x-hidden allows overflow-auto below to function properly
-        'mx-0 rounded-md theme-surface-muted border border-t-0 theme-border flex flex-col overflow-x-hidden',
+        'mx-0 flex flex-col overflow-x-hidden rounded-md border border-t-0 border-line bg-canvas text-content',
         roundedBottom ? '' : 'rounded-b-none',
         roundedTop ? '' : 'rounded-t-none'
       )}
     >
       <div
         className={classNames(
-          'py-2.5 px-4 theme-surface-raised border-b border-t rounded-t-md theme-border font-semibold text-sm',
+          'rounded-t-md border-b border-t border-line bg-panel-muted px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-content-secondary',
           roundedTop ? '' : 'rounded-t-none'
         )}
       >
         <span>{title}</span>
       </div>
       <div className="overflow-auto">
-        <pre className="px-4 py-3">{text}</pre>
+        <pre className="px-4 py-3 font-mono text-sm leading-6 tabular-nums">
+          {text}
+        </pre>
       </div>
     </div>
   );
@@ -71,7 +73,7 @@ export default function Samples({
 
   return (
     <div className="relative h-full overflow-y-auto p-4 pb-0 text-sm">
-      <div className="border-b border-[color:var(--border-muted)] -mx-4 px-4 pb-4">
+      <div className="-mx-4 border-b border-line-muted px-4 pb-4">
         <button
           type="button"
           title={
@@ -84,7 +86,7 @@ export default function Samples({
           {isCodeRunActive ? (
             <>
               <LoadingIndicator className="h-5 w-5 p-0.5 mr-1.5" />
-              <span className="text-center flex-1">Running...</span>
+              <span className="flex-1 text-center">Running…</span>
             </>
           ) : (
             <>

@@ -134,7 +134,7 @@ function PanelResizeHandle({
   return (
     <Separator
       className={classNames(
-        'items-center justify-center bg-[var(--gutter)] transition focus:outline-none',
+        'items-center justify-center bg-gutter transition focus:outline-none',
         orientation === 'horizontal'
           ? isTouchDevice
             ? 'w-0.5 cursor-col-resize'
@@ -142,7 +142,7 @@ function PanelResizeHandle({
           : isTouchDevice
             ? 'h-0.5 cursor-row-resize'
             : 'h-px cursor-row-resize',
-        'hover:bg-[var(--gutter-hover)] focus:bg-[var(--gutter-hover)]',
+        'hover:bg-gutter-hover focus:bg-gutter-hover',
         'relative z-10 flex',
         isTouchDevice &&
           classNames(
@@ -155,10 +155,10 @@ function PanelResizeHandle({
     >
       <span
         className={classNames(
-          'pointer-events-none flex items-center justify-center text-[color:var(--text-secondary)]',
+          'pointer-events-none flex items-center justify-center text-content-secondary',
           isTouchDevice
             ? classNames(
-                'workspace-touch-resize-grip rounded-full bg-[var(--gutter-hover)] transition-[width,height]',
+                'workspace-touch-resize-grip rounded-full bg-gutter-hover transition-[width,height]',
                 orientation === 'horizontal'
                   ? 'workspace-touch-column-grip h-8 w-3.5'
                   : 'workspace-touch-row-grip h-3.5 w-8'
@@ -297,7 +297,7 @@ function InputPane({
         selectedId={inputTab}
         onSelectionChange={setInputTab}
         ariaLabel="Workspace input"
-        panelsClassName="min-h-0 min-w-0 flex-1 overflow-hidden bg-[var(--panel-bg)] text-[color:var(--text-primary)]"
+        panelsClassName="min-h-0 min-w-0 flex-1 overflow-hidden bg-canvas text-content"
       >
         <TabBar.Item id="input" label="Input" unmount={false}>
           <WorkspaceInputPanel />
@@ -367,7 +367,7 @@ function OutputPane(): JSX.Element {
 
 function SidebarPane(): JSX.Element {
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-auto bg-[var(--panel-bg)] text-[color:var(--text-primary)]">
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-auto bg-canvas text-content">
       <UserList className="max-h-64 max-w-full lg:mt-3" />
       <Chat className="min-h-0 flex-1" />
     </div>

@@ -231,7 +231,7 @@ function EditorPage() {
     <div className="h-full">
       <PageTitle>{pageTitle}</PageTitle>
       <div className="h-full flex flex-col">
-        <div className="flex-shrink-0 bg-[var(--panel-bg)] text-[color:var(--text-primary)]">
+        <div className="flex-shrink-0 bg-panel text-content">
           <NavBar
             fileMenu={
               <FileMenu
@@ -295,19 +295,19 @@ function PageContent() {
       showHomeButton={true}
     />
   );
-  const loadingUI = <MessagePage message="Loading..." showHomeButton={false} />;
+  const loadingUI = <MessagePage message="Loading…" showHomeButton={false} />;
   const fileNotFoundUI = (
     <div className="p-8 sm:p-16">
       <div className="max-w-prose mx-auto">
-        <div className="text-3xl sm:text-4xl text-white font-bold">
+        <div className="text-3xl font-bold text-content sm:text-4xl">
           File Not Found
         </div>
-        <p className="sm:text-lg mt-3 text-gray-200 max-w-prose mx-auto text-left">
+        <p className="mx-auto mt-3 max-w-prose text-left text-content-secondary sm:text-lg">
           Please check that the entered file ID is correct.
         </p>
         <Link
           href="/"
-          className="mt-4 sm:mt-6 inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-[#1E1E1E]"
+          className="ui-button-primary mt-4 px-4 py-2 text-base sm:mt-6"
         >
           Go Home
         </Link>

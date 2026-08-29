@@ -18,7 +18,7 @@ export default function WithAdminLogin({
     );
 
   if (!userData)
-    return <MessagePage message="Loading..." showHomeButton={false} />;
+    return <MessagePage message="Loading…" showHomeButton={false} />;
 
   if (userRole?.admin !== true) {
     return (

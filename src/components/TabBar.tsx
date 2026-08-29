@@ -4,7 +4,7 @@ import React from 'react';
 
 export interface TabBarItemProps<Id extends string> {
   id: Id;
-  label: string;
+  label: React.ReactNode;
   highlight?: boolean;
   unmount?: boolean;
   children: React.ReactNode;
@@ -39,11 +39,11 @@ function TabBarRoot<Id extends string>({
   onSelectionChange,
   ariaLabel,
   children,
-  listClassName = 'border-b border-[var(--border-color)] bg-[var(--panel-bg-alt)]',
+  listClassName = 'border-b border-line bg-panel-muted px-1',
   tabClassName,
-  activeTabClassName = 'bg-[var(--panel-bg)] text-[color:var(--text-primary)]',
-  inactiveTabClassName = 'text-[color:var(--text-secondary)] hover:bg-[var(--hover-bg)] hover:text-[color:var(--text-primary)] active:bg-[var(--hover-bg)]',
-  highlightedTabClassName = 'font-bold text-yellow-400',
+  activeTabClassName = 'border-content-secondary bg-surface-raised text-content',
+  inactiveTabClassName = 'border-transparent text-content-muted hover:border-line-strong hover:bg-surface-hover hover:text-content',
+  highlightedTabClassName = 'border-transparent font-semibold text-warning',
   panelsClassName,
 }: TabBarProps<Id>): JSX.Element {
   const items = React.Children.toArray(children).filter(
@@ -85,7 +85,7 @@ function TabBarRoot<Id extends string>({
                   : item.props.highlight
                     ? highlightedTabClassName
                     : inactiveTabClassName,
-                'px-4 py-1 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent)]',
+                '-mb-px border-b-2 px-3 py-1.5 text-xs font-medium transition-colors outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus',
                 tabClassName
               )
             }

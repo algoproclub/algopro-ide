@@ -26,7 +26,7 @@ const Solutions = ({
 
   return (
     <>
-      <div className="border-b border-[color:var(--border-muted)] -mx-4 px-4 pb-4 mb-4 space-y-2">
+      <div className="-mx-4 mb-4 space-y-2 border-b border-line-muted px-4 pb-4">
         <div className="flex items-center space-x-2">
           <span className="font-semibold space-x-2">
             Congratulations on solving the task!
@@ -34,7 +34,7 @@ const Solutions = ({
           <svg
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
-            className="text-lime-300 w-5 h-5"
+            className="h-5 w-5 text-status-success"
           >
             <g strokeWidth="0" />
             <g strokeLinecap="round" strokeLinejoin="round" />

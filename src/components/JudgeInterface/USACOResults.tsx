@@ -55,10 +55,9 @@ const TestCaseInfoModal = ({
   const [outputDownloadURL, setOutputDownloadURL] = useState<string | null>(
     null
   );
-  const [inputPreviewText, setInputPreviewText] =
-    useState<string>('Loading...');
+  const [inputPreviewText, setInputPreviewText] = useState<string>('Loading…');
   const [outputPreviewText, setOutputPreviewText] =
-    useState<string>('Loading...');
+    useState<string>('Loading…');
 
   useEffect(() => {
     if (problem === null) return;
@@ -333,17 +332,17 @@ export default function USACOResults({
   );
   const resultDisplay = getSubmissionStatusDisplay(data);
   const ResultIcon = resultDisplay.Icon;
-  const resultIconColorClass = resultDisplay.spins
-    ? resultDisplay.surfaceTextClass
-    : resultDisplay.standaloneClass;
-
   return (
     <div className="mt-3">
       <div className="pb-3">
         <div className="theme-text theme-border flex items-center space-x-2 font-medium">
           <span>
             <ResultIcon
-              className={`inline h-6 w-6 ${resultDisplay.colorClass} ${resultIconColorClass} ${resultDisplay.spins ? 'animate-spin' : ''}`}
+              className={`inline h-6 w-6 ${resultDisplay.colorClass} ${
+                resultDisplay.spins
+                  ? resultDisplay.surfaceTextClass
+                  : resultDisplay.standaloneClass
+              } ${resultDisplay.spins ? 'animate-spin' : ''}`}
             />
           </span>
           <span className="break-words overflow-hidden text-[0.92rem] leading-[1.5rem]">

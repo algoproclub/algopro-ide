@@ -29,7 +29,7 @@ export default function TemplateCodeSettings({
           />
           <button
             type="button"
-            className="flex-shrink-0 px-4 py-2 bg-red-600 shadow-sm text-sm font-medium rounded-md text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="ui-button flex-shrink-0 border-transparent bg-danger px-4 py-2 text-white hover:brightness-90"
             onClick={() => {
               onTemplateCodeChange({
                 ...templateCode,
@@ -51,7 +51,7 @@ export default function TemplateCodeSettings({
        *   still wouldn't solve the undo/redo issue, and the UI would flash when
        *   a new editor is rendered.
        */}
-      <div className="h-[18em] sm:h-50vh border border-[var(--border-color)] focus:border-[var(--accent)]">
+      <div className="h-[18em] border border-line focus-within:border-line-strong sm:h-50vh">
         <LazyCodeMirrorEditor
           theme={lightMode ? 'light' : 'dark'}
           language={{ cpp: 'cpp', java: 'java', py: 'python' }[language]}

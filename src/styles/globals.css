@@ -52,6 +52,7 @@
   --terminal-magenta: #de73ff;
   --terminal-cyan: #4cdee0;
   --terminal-white: #d4d4d4;
+  --color-terminal-foreground: var(--terminal-white);
 }
 
 [data-theme='light'] {
@@ -99,15 +100,16 @@
   --color-warning: var(--color-status-warning);
   --color-gutter: theme('colors.zinc.300');
   --color-gutter-hover: theme('colors.zinc.400');
-  /* Reserved for a future light-theme ANSI palette. */
-  --terminal-black: #4f5666;
-  --terminal-red: #f85757;
-  --terminal-green: #50d750;
-  --terminal-yellow: #f9e131;
-  --terminal-blue: #3396ff;
-  --terminal-magenta: #de73ff;
-  --terminal-cyan: #4cdee0;
-  --terminal-white: #d4d4d4;
+  /* Tomorrow color scheme */
+  --terminal-black: #000000;
+  --terminal-red: #c82829;
+  --terminal-green: #718c00;
+  --terminal-yellow: #eab700;
+  --terminal-blue: #4271ae;
+  --terminal-magenta: #8959a8;
+  --terminal-cyan: #3e999f;
+  --terminal-white: #ffffff;
+  --color-terminal-foreground: var(--terminal-black);
 }
 
 /* Compatibility aliases for screens that have not migrated to the canonical

@@ -19,10 +19,10 @@ export default function RefreshButton({
         aria-label={title}
         onClick={onClick}
         disabled={disabled || isLoading}
-        className="inline-flex items-center justify-center rounded-md border p-2 transition-colors theme-button-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] enabled:hover:border-[color:var(--border-strong)] enabled:active:bg-[color:var(--surface-active)] disabled:border-transparent disabled:ring-1 disabled:ring-inset disabled:ring-[color:var(--border-color)]"
+        className="ui-icon-button border-line bg-control shadow-sm"
       >
         <ArrowPathIcon
-          className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`}
+          className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`}
         />
       </button>
     </Tooltip>

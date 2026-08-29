@@ -58,10 +58,8 @@ export default function Dropdown<Value extends string | number>({
             )}
             <div className="relative w-full flex flex-col">
               <Listbox.Button
-                className={`relative w-full rounded-md border py-2 pl-3 text-left text-sm theme-input disabled:cursor-not-allowed disabled:bg-[var(--surface-bg-muted)] disabled:text-[color:var(--text-disabled)] ${canClear ? 'pr-16' : 'pr-9'} ${
-                  open
-                    ? 'ring-2 ring-[color:var(--accent)] border-transparent'
-                    : 'enabled:hover:bg-[var(--surface-hover)] enabled:active:bg-[var(--surface-active)] enabled:hover:border-[color:var(--border-strong)]'
+                className={`relative w-full rounded-md border border-line bg-input py-2 pl-3 text-left text-sm text-content shadow-sm outline-none enabled:hover:border-line-strong enabled:active:bg-surface-hover focus-visible:border-line-strong focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-content-disabled ${canClear ? 'pr-16' : 'pr-9'} ${
+                  open ? 'border-line-strong ring-2 ring-focus' : ''
                 }`}
               >
                 <span
@@ -75,14 +73,14 @@ export default function Dropdown<Value extends string | number>({
                       ? (disabledPlaceholder ?? placeholder)
                       : placeholder)}
                 </span>
-                <ChevronUpDownIcon className="pointer-events-none absolute inset-y-0 right-2 my-auto h-4 w-4 text-[color:var(--text-muted)]" />
+                <ChevronUpDownIcon className="pointer-events-none absolute inset-y-0 right-2 my-auto h-4 w-4 text-content-muted" />
               </Listbox.Button>
               {canClear && (
                 <div className="absolute inset-y-0 right-7 flex items-center">
                   <Tooltip label="Clear selection">
                     <button
                       type="button"
-                      className="rounded p-0.5 text-[color:var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[color:var(--text-primary)]"
+                      className="rounded p-0.5 text-content-muted hover:bg-surface-hover hover:text-content"
                       onClick={event => {
                         event.stopPropagation();
                         onClear();
@@ -102,7 +100,7 @@ export default function Dropdown<Value extends string | number>({
                   leaveFrom="transform scale-100 opacity-100"
                   leaveTo="transform scale-95 opacity-0"
                 >
-                  <Listbox.Options className="absolute top-2 max-h-60 min-h-[2rem] w-full overflow-hidden overflow-y-auto rounded-md border theme-border theme-surface divide-y divide-[color:var(--border-muted)] focus:outline-none">
+                  <Listbox.Options className="ui-menu absolute top-2 max-h-60 min-h-[2rem] w-full overflow-y-auto">
                     {options.length === 0 ? (
                       <li className="px-3 py-2 theme-text-muted">
                         {emptyLabel}
@@ -112,10 +110,10 @@ export default function Dropdown<Value extends string | number>({
                         <Listbox.Option
                           className={({ active, selected }) =>
                             classNames(
-                              'relative flex cursor-pointer select-none items-center py-2 pl-3 pr-9',
+                              'relative flex cursor-pointer select-none items-center rounded-md py-2 pl-3 pr-9 outline-none',
                               active
-                                ? 'bg-[var(--surface-hover)]'
-                                : selected && 'bg-[var(--surface-active)]'
+                                ? 'bg-surface-active'
+                                : selected && 'bg-surface-hover'
                             )
                           }
                           key={item.value}
@@ -132,7 +130,7 @@ export default function Dropdown<Value extends string | number>({
                                 {item.label}
                               </span>
                               {selected && (
-                                <CheckIcon className="absolute right-3 h-4 w-4 text-[color:var(--accent)]" />
+                                <CheckIcon className="absolute right-3 h-4 w-4 text-accent" />
                               )}
                             </>
                           )}

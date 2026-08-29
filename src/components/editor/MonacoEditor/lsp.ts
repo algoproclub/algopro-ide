@@ -77,7 +77,7 @@ export default function useLSP(
       return disposePromise;
     };
 
-    notifyLsp('Connecting to server...');
+    notifyLsp('Connecting to server…');
 
     void ensureMonacoServices()
       .then(async () => {

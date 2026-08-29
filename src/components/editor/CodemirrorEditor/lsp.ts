@@ -171,7 +171,7 @@ export default function useLspClient(
     }
 
     async function connect() {
-      notifyLsp('Connecting to server...');
+      notifyLsp('Connecting to server…');
 
       try {
         const transport = await simpleWebSocketTransport(

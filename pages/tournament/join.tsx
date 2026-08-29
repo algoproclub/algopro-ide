@@ -69,7 +69,7 @@ export default function JoinTournament() {
     <div className="p-8 sm:p-16 text-center h-full theme-page">
       <div className="text-3xl sm:text-4xl theme-text font-bold">
         {start == null ? (
-          <span>Loading...</span>
+          <span>Loading…</span>
         ) : (
           <span>
             Tournament starts in <CountdownTimer deadline={start} />
