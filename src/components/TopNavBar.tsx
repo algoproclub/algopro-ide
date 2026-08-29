@@ -5,18 +5,8 @@ import {
   isTeacher,
   type UserData,
 } from '../context/UserContext';
-import {
-  HomeIcon,
-  FolderIcon,
-  ClockIcon,
-  UserGroupIcon,
-  AcademicCapIcon,
-  TrophyIcon,
-  UserPlusIcon,
-  PlusIcon,
-  Bars3Icon,
-  XMarkIcon,
-} from '@heroicons/react/20/solid';
+import * as SolidIcons from '@heroicons/react/20/solid';
+import * as OutlineIcons from '@heroicons/react/24/outline';
 import { SettingsMenu } from './NavBar/SettingsMenu';
 import ProfileSettings from './settings/ProfileSettings';
 import React, { useState } from 'react';
@@ -24,10 +14,20 @@ import Logo from './Logo';
 
 const productName = process.env.NEXT_PUBLIC_PRODUCT_NAME ?? 'AlgoPro IDE';
 
+const navigationIcons = {
+  Home: [OutlineIcons.HomeIcon, SolidIcons.HomeIcon],
+  'New File': [OutlineIcons.PlusIcon, SolidIcons.PlusIcon],
+  Recent: [OutlineIcons.ClockIcon, SolidIcons.ClockIcon],
+  Dashboard: [OutlineIcons.AcademicCapIcon, SolidIcons.AcademicCapIcon],
+  Groups: [OutlineIcons.UserGroupIcon, SolidIcons.UserGroupIcon],
+  Invite: [OutlineIcons.UserPlusIcon, SolidIcons.UserPlusIcon],
+  Problems: [OutlineIcons.FolderIcon, SolidIcons.FolderIcon],
+  Tournament: [OutlineIcons.TrophyIcon, SolidIcons.TrophyIcon],
+} as const;
+
 interface NavLinkProps {
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
+  label: keyof typeof navigationIcons;
   isActive: boolean;
   className: string;
   onNavigate?: () => void;
@@ -35,27 +35,32 @@ interface NavLinkProps {
 
 const NavLink = ({
   href,
-  icon: Icon,
   label,
   isActive,
   className,
   onNavigate,
-}: NavLinkProps) => (
-  <Link
-    href={href}
-    className={`${className} ${
-      isActive
-        ? 'bg-[color:var(--surface-active)] text-[color:var(--text-primary)]'
-        : 'text-[color:var(--text-secondary)] hover:bg-[color:var(--surface-hover)] hover:text-[color:var(--text-primary)]'
-    }`}
-    onClick={onNavigate}
-  >
-    <div className="flex items-center">
-      <Icon className="h-4 w-4 mr-1.5" />
-      {label}
-    </div>
-  </Link>
-);
+}: NavLinkProps) => {
+  const [OutlineIcon, SolidIcon] = navigationIcons[label];
+  const Icon = isActive ? SolidIcon : OutlineIcon;
+
+  return (
+    <Link
+      href={href}
+      className={`${className} ${
+        isActive
+          ? 'bg-surface text-content'
+          : 'text-content-secondary hover:bg-surface-hover hover:text-content'
+      }`}
+      onClick={onNavigate}
+      aria-current={isActive ? 'page' : undefined}
+    >
+      <div className="flex items-center">
+        <Icon className="mr-1.5 h-4 w-4" aria-hidden="true" />
+        {label}
+      </div>
+    </Link>
+  );
+};
 
 interface NavLinksProps {
   router: ReturnType<typeof useRouter>;
@@ -79,7 +84,6 @@ const NavLinks = ({
   <>
     <NavLink
       href="/"
-      icon={HomeIcon}
       label="Home"
       isActive={router.pathname === '/'}
       className={className}
@@ -89,7 +93,6 @@ const NavLinks = ({
     {userData && registered && (
       <NavLink
         href="/new"
-        icon={PlusIcon}
         label="New File"
         isActive={router.pathname === '/new'}
         className={className}
@@ -101,7 +104,6 @@ const NavLinks = ({
       <>
         <NavLink
           href="/recent"
-          icon={ClockIcon}
           label="Recent"
           isActive={router.pathname === '/recent'}
           className={className}
@@ -109,7 +111,6 @@ const NavLinks = ({
         />
         <NavLink
           href="/teacher"
-          icon={AcademicCapIcon}
           label="Dashboard"
           isActive={router.pathname === '/teacher'}
           className={className}
@@ -117,7 +118,6 @@ const NavLinks = ({
         />
         <NavLink
           href="/groups"
-          icon={UserGroupIcon}
           label="Groups"
           isActive={router.pathname.startsWith('/groups')}
           className={className}
@@ -125,7 +125,6 @@ const NavLinks = ({
         />
         <NavLink
           href="/invite"
-          icon={UserPlusIcon}
           label="Invite"
           isActive={router.pathname === '/invite'}
           className={className}
@@ -138,7 +137,6 @@ const NavLinks = ({
       <>
         <NavLink
           href="/problems"
-          icon={FolderIcon}
           label="Problems"
           isActive={router.pathname === '/problems'}
           className={className}
@@ -146,7 +144,6 @@ const NavLinks = ({
         />
         <NavLink
           href="/tournament/view"
-          icon={TrophyIcon}
           label="Tournament"
           isActive={router.pathname.startsWith('/tournament')}
           className={className}
@@ -176,33 +173,28 @@ export const TopNavBar = (): JSX.Element => {
   const isAdmin = userRole?.admin === true;
   const isTeacherUser = isTeacher(userRole);
 
-  const navItemClass =
-    'px-3 py-2 text-sm font-medium rounded-md transition-colors';
-  const mobileNavItemClass =
-    'block px-3 py-2 text-base font-medium rounded-md transition-colors';
-
   return (
-    <nav className="theme-surface-muted border-b theme-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-2 flex-1 min-w-0">
+    <nav className="border-b border-line bg-surface-muted text-content">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex min-w-0 flex-1 items-center space-x-2">
             <Link
               href="/"
-              className="flex items-center px-3 py-2 text-base font-semibold theme-text hover:text-[color:var(--accent-hover)] whitespace-nowrap"
+              className="flex items-center whitespace-nowrap px-3 py-2 text-base font-semibold hover:text-accent-hover theme-text"
             >
-              <Logo className="w-7 h-7 mr-2 object-contain" />
+              <Logo className="mr-2 h-7 w-7 object-contain" />
               {productName}
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden xl:flex items-center space-x-1 ml-8 flex-shrink-0">
+            <div className="ml-8 hidden flex-shrink-0 items-center space-x-1 xl:flex">
               <NavLinks
                 router={router}
                 userData={userData}
                 registered={registered}
                 isTeacherUser={isTeacherUser}
                 isAdmin={isAdmin}
-                className={navItemClass}
+                className="rounded-md px-3 py-2 text-sm font-medium transition-colors"
               />
             </div>
           </div>
@@ -212,15 +204,21 @@ export const TopNavBar = (): JSX.Element => {
             {/* Mobile menu button */}
             <button
               type="button"
-              className="xl:hidden inline-flex items-center justify-center p-2 rounded-md text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[color:var(--surface-hover)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[color:var(--accent)]"
+              className="ui-focus inline-flex items-center justify-center rounded-md p-2 text-content-secondary hover:bg-surface-hover hover:text-content xl:hidden"
               aria-controls="mobile-menu"
               aria-expanded={isMobileMenuOpen}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? (
-                <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
+                <SolidIcons.XMarkIcon
+                  className="block h-6 w-6"
+                  aria-hidden="true"
+                />
               ) : (
-                <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
+                <SolidIcons.Bars3Icon
+                  className="block h-6 w-6"
+                  aria-hidden="true"
+                />
               )}
             </button>
             <SettingsMenu setIsProfileSettingsOpen={setIsProfileSettingsOpen} />
@@ -230,15 +228,15 @@ export const TopNavBar = (): JSX.Element => {
 
       {/* Mobile menu */}
       {isMobileMenuOpen && (
-        <div className="xl:hidden border-t theme-border theme-surface">
-          <div className="px-2 pt-2 pb-3 space-y-1">
+        <div className="border-t theme-border theme-surface xl:hidden">
+          <div className="space-y-1 px-2 pb-3 pt-2">
             <NavLinks
               router={router}
               userData={userData}
               registered={registered}
               isTeacherUser={isTeacherUser}
               isAdmin={isAdmin}
-              className={mobileNavItemClass}
+              className="block rounded-md px-3 py-2 text-base font-medium transition-colors"
               onNavigate={() => setIsMobileMenuOpen(false)}
             />
           </div>

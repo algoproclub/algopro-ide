@@ -13,12 +13,18 @@ import FilesList, { File } from './FilesList';
 import { useUserContext } from '../../context/UserContext';
 import Link from 'next/link';
 import { TabBar } from '../TabBar';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   AcademicCapIcon,
+  ComputerDesktopIcon,
   PlusIcon,
   ArrowTopRightOnSquareIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from '@heroicons/react/20/solid';
+import {
+  AcademicCapIcon as AcademicCapOutlineIcon,
+  ComputerDesktopIcon as ComputerDesktopOutlineIcon,
+} from '@heroicons/react/24/outline';
 import Checkbox from '../Checkbox';
 import Dropdown from '../Dropdown';
 import TimeAgoLabel from '../TimeStamp';
@@ -50,37 +56,38 @@ const Pagination = ({
   minPage,
   maxPage,
   label,
+  pageDirection = 1,
 }: {
   page: number;
   setPage: (_: number) => void;
   minPage: number;
   maxPage: number;
   label: string;
+  pageDirection?: 1 | -1;
 }) => {
+  const clampPage = (value: number) =>
+    Math.max(minPage, Math.min(value, maxPage));
+  const previousPage = clampPage(page - pageDirection);
+  const nextPage = clampPage(page + pageDirection);
+
   return (
-    <div className="px-3.5 py-3 flex items-center space-x-2 text-sm theme-surface-raised">
+    <div className="flex items-center gap-2 border-t border-line bg-panel-muted px-4 py-3 text-sm text-content">
       <button
-        className="flex items-center px-2.5 py-1.5 rounded-md border theme-button-secondary enabled:hover:border-[color:var(--border-strong)] enabled:active:bg-[color:var(--surface-active)] disabled:text-[color:var(--text-disabled)]"
-        disabled={page === minPage}
-        onClick={() => setPage(Math.max(minPage, page - 1))}
+        className="ui-button-secondary"
+        disabled={previousPage === page}
+        onClick={() => setPage(previousPage)}
       >
-        <FontAwesomeIcon
-          icon={{ prefix: 'fas', iconName: 'chevron-left' }}
-          className="mr-1.5 inline w-3.5 h-3.5"
-        />
-        Next
+        <ChevronLeftIcon className="h-4 w-4" />
+        Previous
       </button>
       <span className="px-2 theme-text-muted">{label}</span>
       <button
-        className="flex items-center px-2.5 py-1.5 rounded-md border theme-button-secondary enabled:hover:border-[color:var(--border-strong)] enabled:active:bg-[color:var(--surface-active)] disabled:text-[color:var(--text-disabled)]"
-        disabled={page === maxPage}
-        onClick={() => setPage(Math.min(page + 1, maxPage))}
+        className="ui-button-secondary"
+        disabled={nextPage === page}
+        onClick={() => setPage(nextPage)}
       >
-        Previous
-        <FontAwesomeIcon
-          icon={{ prefix: 'fas', iconName: 'chevron-right' }}
-          className="ml-1.5 inline w-3.5 h-3.5"
-        />
+        Next
+        <ChevronRightIcon className="h-4 w-4" />
       </button>
     </div>
   );
@@ -152,15 +159,15 @@ const RecentTab = ({
   }, [allFiles, currentPage]);
 
   return (
-    <div className="border theme-border divide-y divide-[color:var(--border-muted)] theme-surface">
-      <div className="theme-text px-3.5 py-3">
+    <div className="overflow-hidden rounded-b-lg border-x border-b border-line bg-panel-muted text-content">
+      <div className="border-b border-line bg-panel-muted px-4 py-3 text-content">
         <Checkbox
           label="Show hidden files"
           checked={showHidden}
           toggleChecked={toggleShowHidden}
         />
       </div>
-      {files && <FilesList files={files} showPerms={false} />}
+      {files && <FilesList files={files} />}
       <Pagination
         page={currentPage}
         setPage={(val: number) => setPage(val)}
@@ -218,8 +225,8 @@ const ClassesTab = () => {
   }));
 
   return (
-    <div className="divide-y divide-[color:var(--border-muted)] border theme-border theme-surface">
-      <div className="flex items-end px-3.5 py-3 space-x-3">
+    <div className="overflow-hidden rounded-b-lg border-x border-b border-line bg-panel-muted text-content">
+      <div className="flex items-end gap-3 border-b border-line bg-panel-muted px-4 py-3">
         <Dropdown
           items={groupOptions}
           label={'Group'}
@@ -256,35 +263,29 @@ const ClassesTab = () => {
       </div>
       {(groupsResource.status === 'error' ||
         classesResource.status === 'error') && (
-        <p className="px-3.5 py-2 text-sm text-[color:var(--danger)]">
+        <p className="px-3.5 py-2 text-sm text-danger">
           Groups or classes could not be loaded.
         </p>
       )}
       <div className="w-full max-w-full overflow-x-auto">
-        <table className="table-tasks w-full table-fixed text-sm divide-y divide-[color:var(--border-muted)] theme-table">
-          <thead className="theme-table-header">
+        <table className="table-tasks w-full table-fixed border-line bg-canvas text-sm text-content">
+          <thead className="border-b border-line bg-panel-muted text-content">
             <tr>
-              <th className="w-10 text-left text-sm font-bold theme-text sm:w-12">
-                #
-              </th>
-              <th className="text-left text-sm font-bold theme-text">
-                Problem
-              </th>
-              <th className="hidden w-[18rem] text-left text-sm font-bold theme-text xl:table-cell">
+              <th className="ui-table-heading w-10 sm:w-12">#</th>
+              <th className="ui-table-heading">Problem</th>
+              <th className="ui-table-heading hidden w-[18rem] xl:table-cell">
                 Source
               </th>
-              <th className="w-36 text-left text-sm font-bold theme-text sm:w-44">
-                Verdict
-              </th>
-              <th className="hidden w-[9rem] text-left text-sm font-bold theme-text xl:table-cell">
+              <th className="ui-table-heading w-36 sm:w-44">Verdict</th>
+              <th className="ui-table-heading hidden w-[9rem] xl:table-cell">
                 Last edit
               </th>
-              <th className="hidden w-[7rem] whitespace-nowrap text-right text-sm font-bold theme-text xl:table-cell">
+              <th className="ui-table-heading hidden w-[7rem] whitespace-nowrap text-right xl:table-cell">
                 Code size
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[color:var(--border-muted)] theme-table theme-surface-muted">
+          <tbody className="divide-y divide-line-muted bg-canvas text-content">
             {tasks.map((task, index) => {
               const solutionState = solutions[task.key] ?? {
                 status: 'loading',
@@ -299,13 +300,13 @@ const ClassesTab = () => {
               return (
                 <tr
                   key={task.key}
-                  className="relative group hover:bg-[color:var(--surface-hover)] focus-within:bg-[color:var(--surface-hover)] transition"
+                  className="group relative transition-colors hover:bg-panel-muted focus-within:bg-panel-muted active:bg-surface-hover"
                 >
                   <td className="whitespace-nowrap text-sm tabular-nums theme-text-muted">
                     {solutionState.status === 'ready' && (
                       <Link
                         href={tempFileIDhref}
-                        className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent)]"
+                        className="ui-focus absolute inset-0 z-0 focus-visible:ring-inset"
                         target="_blank"
                         prefetch={false}
                       >
@@ -323,7 +324,7 @@ const ClassesTab = () => {
                         {task.title ?? task.source}
                       </span>
                       {isNewFile && (
-                        <span className="inline-flex shrink-0 items-center rounded-full bg-[color:var(--accent)] px-2 py-0.5 text-xs font-medium text-[color:var(--text-inverted)]">
+                        <span className="inline-flex shrink-0 items-center rounded-full border border-line-strong bg-surface-raised px-2 py-0.5 text-xs font-medium text-content-secondary">
                           <PlusIcon className="mr-1 h-3 w-3" />
                           New file
                         </span>
@@ -331,7 +332,7 @@ const ClassesTab = () => {
                     </div>
                     <Link
                       href={task.url}
-                      className="relative z-10 mt-1 block truncate text-xs theme-text-muted hover:text-[color:var(--accent-hover)] hover:underline xl:hidden"
+                      className="relative z-10 mt-1 block truncate text-xs theme-text-muted hover:text-accent-hover hover:underline xl:hidden"
                       target="_blank"
                       rel="noopener noreferrer"
                       prefetch={false}
@@ -343,7 +344,7 @@ const ClassesTab = () => {
                   <td className="hidden min-w-0 theme-text-muted xl:table-cell">
                     <Link
                       href={task.url}
-                      className="relative z-10 hover:text-[color:var(--accent-hover)] hover:underline"
+                      className="relative z-10 hover:text-accent-hover hover:underline"
                       target="_blank"
                       rel="noopener noreferrer"
                       prefetch={false}
@@ -413,6 +414,7 @@ const ClassesTab = () => {
         minPage={0}
         maxPage={Math.max(0, classes.length - 1)}
         label={`Class: ${classID ?? '-'}`}
+        pageDirection={-1}
       />
     </div>
   );
@@ -423,45 +425,61 @@ export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState<'classes' | 'recent'>(
     'classes'
   );
+  const ClassesIcon =
+    selectedTab === 'classes' ? AcademicCapIcon : AcademicCapOutlineIcon;
+  const WorkspacesIcon =
+    selectedTab === 'recent' ? ComputerDesktopIcon : ComputerDesktopOutlineIcon;
 
   return (
-    <div className="theme-page">
-      <div className="flex items-center space-x-4">
-        <Link
-          href="/new"
-          className="inline-flex items-center px-4 py-2 border text-base font-medium rounded-md shadow-sm theme-button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--app-bg)] focus:ring-[color:var(--accent)]"
-        >
+    <section className="theme-page" aria-labelledby="workspaces-heading">
+      <div className="mb-3 flex items-center justify-between gap-4">
+        <div>
+          <h2 id="workspaces-heading" className="theme-text text-xl font-bold">
+            Your workspaces
+          </h2>
+          <p className="mt-1 text-sm theme-text-muted">
+            Pick up a class task or return to a recent file.
+          </p>
+        </div>
+        <Link href="/new" className="ui-button-primary">
+          <PlusIcon className="h-4 w-4" aria-hidden="true" />
           Create New File
         </Link>
       </div>
-
-      <div className="h-8"></div>
-
-      <h2 className="theme-text text-xl font-black mb-5 flex items-center">
-        Your workspaces
-        <FontAwesomeIcon
-          icon={{ prefix: 'fas', iconName: 'computer' }}
-          className="ml-2 inline w-6 h-6"
-        />
-      </h2>
       <TabBar
         selectedId={selectedTab}
         ariaLabel="Dashboard views"
         onSelectionChange={setSelectedTab}
-        listClassName="space-x-1"
-        tabClassName="rounded-t-md"
-        activeTabClassName="bg-[var(--surface-active)] text-[color:var(--text-primary)]"
+        listClassName="gap-5 border-b border-line px-1"
+        tabClassName="px-1 py-2.5 text-sm font-semibold"
+        activeTabClassName="border-content-secondary text-content"
       >
-        <TabBar.Item id="classes" label="Classes">
+        <TabBar.Item
+          id="classes"
+          label={
+            <span className="inline-flex items-center gap-2">
+              <ClassesIcon className="h-4 w-4" aria-hidden="true" />
+              Classes
+            </span>
+          }
+        >
           <ClassesTab />
         </TabBar.Item>
-        <TabBar.Item id="recent" label="Recent">
+        <TabBar.Item
+          id="recent"
+          label={
+            <span className="inline-flex items-center gap-2">
+              <WorkspacesIcon className="h-4 w-4" aria-hidden="true" />
+              Workspaces
+            </span>
+          }
+        >
           <RecentTab
             showHidden={showHidden}
             toggleShowHidden={() => setShowHidden(value => !value)}
           />
         </TabBar.Item>
       </TabBar>
-    </div>
+    </section>
   );
 }
