@@ -1,18 +1,20 @@
-import { Menu, Transition } from '@headlessui/react';
+import { Menu } from '@headlessui/react';
 import {
   ChevronDownIcon,
   UserCircleIcon,
   CogIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/20/solid';
-import React, { Fragment, useState, useEffect } from 'react';
-import classNames from 'classnames';
-import ReactDOM from 'react-dom';
-import { usePopper } from 'react-popper';
+import React, { useState } from 'react';
 import { useNullableUserContext } from '../../context/UserContext';
 import { useSetAtom } from 'jotai';
 import { signOutAtom } from '../../atoms/firebaseUserAtoms';
 import { useConnectionContext } from '../../context/ConnectionContext';
+import {
+  AnchoredMenuItems,
+  anchoredMenuIconClass,
+  getAnchoredMenuItemClass,
+} from '../AnchoredMenuItems';
 
 export const SettingsMenu = (props: {
   setIsProfileSettingsOpen: (isOpen: boolean) => void;
@@ -24,28 +26,9 @@ export const SettingsMenu = (props: {
   const [referenceElement, setReferenceElement] = useState<HTMLElement | null>(
     null
   );
-  const [popperElement, setPopperElement] = useState<HTMLElement | null>(null);
-  const { styles, attributes } = usePopper(referenceElement, popperElement, {
-    placement: 'bottom-end',
-    modifiers: [{ name: 'offset', options: { offset: [0, 6] } }],
-  });
-
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   if (!firebaseUser) {
     return null;
   }
-
-  const menuItemClass = (active: boolean) =>
-    classNames(
-      active ? 'bg-surface-hover text-content' : 'text-content',
-      'ui-menu-item group py-1.5'
-    );
-  const menuIconClass =
-    'mr-2.5 h-4 w-4 text-content-muted group-hover:text-content';
 
   return (
     <Menu as="div" className="relative inline-block text-left">
@@ -79,72 +62,49 @@ export const SettingsMenu = (props: {
             </Menu.Button>
           </div>
 
-          <Transition show={open}>
-            {mounted
-              ? ReactDOM.createPortal(
-                  <Menu.Items static as="div">
-                    <div
-                      ref={setPopperElement}
-                      style={styles.popper}
-                      {...attributes.popper}
-                      className="relative"
-                    >
-                      <Transition.Child
-                        as={Fragment}
-                        enter="transition ease-out duration-100"
-                        enterFrom="transform opacity-0 scale-95"
-                        enterTo="transform opacity-100 scale-100"
-                        leave="transition ease-in duration-75"
-                        leaveFrom="transform opacity-100 scale-100"
-                        leaveTo="transform opacity-0 scale-95"
-                      >
-                        <div className="ui-menu absolute right-0 z-10 w-56 origin-top-right">
-                          <div className="py-1">
-                            <div className="px-4 py-2 text-sm text-content">
-                              Signed in as{' '}
-                              <strong>{firebaseUser.displayName}</strong>
-                            </div>
-                            <Menu.Item>
-                              {({ active }) => (
-                                <button
-                                  type="button"
-                                  className={menuItemClass(active)}
-                                  onClick={() =>
-                                    props.setIsProfileSettingsOpen(true)
-                                  }
-                                >
-                                  <CogIcon
-                                    className={menuIconClass}
-                                    aria-hidden="true"
-                                  />
-                                  Profile Settings
-                                </button>
-                              )}
-                            </Menu.Item>
-                            <Menu.Item>
-                              {({ active }) => (
-                                <button
-                                  type="button"
-                                  className={menuItemClass(active)}
-                                  onClick={() => signOut(connectionContext)}
-                                >
-                                  <ArrowRightOnRectangleIcon
-                                    className={menuIconClass}
-                                    aria-hidden="true"
-                                  />
-                                  Sign Out
-                                </button>
-                              )}
-                            </Menu.Item>
-                          </div>
-                        </div>
-                      </Transition.Child>
-                    </div>
-                  </Menu.Items>,
-                  document.body
-                )
-              : null}
-          </Transition>
+          <AnchoredMenuItems
+            anchor={referenceElement}
+            className="w-56"
+            menuClassName="origin-top-right"
+            open={open}
+            placement="bottom-end"
+          >
+            <div className="py-1">
+              <div className="px-4 py-2 text-sm text-content">
+                Signed in as <strong>{firebaseUser.displayName}</strong>
+              </div>
+              <Menu.Item>
+                {({ active }) => (
+                  <button
+                    type="button"
+                    className={getAnchoredMenuItemClass(active)}
+                    onClick={() => props.setIsProfileSettingsOpen(true)}
+                  >
+                    <CogIcon
+                      className={anchoredMenuIconClass}
+                      aria-hidden="true"
+                    />
+                    Profile Settings
+                  </button>
+                )}
+              </Menu.Item>
+              <Menu.Item>
+                {({ active }) => (
+                  <button
+                    type="button"
+                    className={getAnchoredMenuItemClass(active)}
+                    onClick={() => signOut(connectionContext)}
+                  >
+                    <ArrowRightOnRectangleIcon
+                      className={anchoredMenuIconClass}
+                      aria-hidden="true"
+                    />
+                    Sign Out
+                  </button>
+                )}
+              </Menu.Item>
+            </div>
+          </AnchoredMenuItems>
         </>
       )}
     </Menu>
