@@ -43,6 +43,7 @@ export default function HTMLStatement({
   return (
     <>
       <div
+        key={htmlContent}
         className="html-statement-container"
         dangerouslySetInnerHTML={{ __html: htmlContent ?? '' }}
         ref={refCallback}
