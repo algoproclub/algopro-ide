@@ -20,7 +20,7 @@ import {
   problemAtom,
   showSidebarAtom,
 } from '../src/atoms/workspaceUI';
-import React, { useEffect, useState } from 'react';
+import React, { type ReactNode, useEffect, useState } from 'react';
 import { useMediaQuery } from '../src/hooks/useMediaQuery';
 import Workspace from '../src/components/Workspace/Workspace';
 import { MobileBottomNav } from '../src/components/NavBar/MobileBottomNav';
@@ -42,6 +42,12 @@ import useCodeRunActive from '../src/hooks/useCodeRunActive';
 import useServerTimeOffset from '../src/hooks/useServerTimeOffset';
 import { HocuspocusProviderWebsocketComponent } from '@hocuspocus/provider-react';
 import PageTitle from '../src/components/PageTitle';
+import {
+  getClassContext,
+  getTaskRef,
+  type ClassContext,
+} from '../src/scripts/getTaskRef';
+import { WorkspaceLaunchProvider } from '../src/context/WorkspaceLaunchContext';
 
 function runCodeErrorToResult(error: unknown): JudgeResult {
   const runCodeError = error instanceof RunCodeError ? error : undefined;
@@ -283,11 +289,44 @@ function EditorPage() {
   );
 }
 
+function WorkspaceLaunchBoundary({
+  children,
+  classContext,
+  fileID,
+  userID,
+}: {
+  children: ReactNode;
+  classContext: ClassContext | null;
+  fileID: string;
+  userID: string;
+}) {
+  const router = useRouter();
+  const { fileData } = useEditorContext();
+  const ownsFile = fileData.users[userID]?.permission === 'OWNER';
+
+  useEffect(() => {
+    if (classContext && !ownsFile) {
+      void router.replace(getTaskRef({ id: fileID }), undefined, {
+        shallow: true,
+      });
+    }
+  }, [classContext, fileID, ownsFile, router]);
+
+  return (
+    <WorkspaceLaunchProvider classContext={ownsFile ? classContext : null}>
+      {children}
+    </WorkspaceLaunchProvider>
+  );
+}
+
 function PageContent() {
   const router = useRouter();
   const queryId = router.query.id;
   const firebaseFileID = '-' + (queryId as string);
   const { userData, logged } = useNullableUserContext();
+  const classContext = router.isReady
+    ? getClassContext(router.query.group, router.query.class)
+    : null;
 
   const loginUI = (
     <MessagePage
@@ -321,17 +360,21 @@ function PageContent() {
   if (!userData) return loadingUI;
 
   return (
-    <>
-      <EditorProvider
-        fileId={firebaseFileID}
-        loadingUI={loadingUI}
-        fileNotFoundUI={fileNotFoundUI}
-        permissionDeniedUI={permissionDeniedUI}
+    <EditorProvider
+      fileId={firebaseFileID}
+      loadingUI={loadingUI}
+      fileNotFoundUI={fileNotFoundUI}
+      permissionDeniedUI={permissionDeniedUI}
+    >
+      <WorkspaceLaunchBoundary
+        classContext={classContext}
+        fileID={queryId as string}
+        userID={userData.id}
       >
         <EditorPage />
-      </EditorProvider>
-      <ConfirmOverrideModal />
-    </>
+        <ConfirmOverrideModal />
+      </WorkspaceLaunchBoundary>
+    </EditorProvider>
   );
 }
 

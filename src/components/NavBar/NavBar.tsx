@@ -20,6 +20,7 @@ import { SettingsMenu } from './SettingsMenu';
 import { EditorNavigationMenu } from './EditorNavigationMenu';
 import Logo from '../Logo';
 import Tooltip from '../Tooltip';
+import { WorkspaceTitleNavigation } from './WorkspaceTitleNavigation';
 
 export interface DesktopNavBarProps {
   fileMenu: JSX.Element;
@@ -92,7 +93,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
   const secondaryIconClass = '-ml-0.5 mr-1.5 h-4 w-4 text-content-muted';
 
   return (
-    <div className="flex min-h-[2.25rem] items-center gap-0.5 overflow-x-auto border-b border-line bg-panel-muted px-0.5 py-1 text-content shadow-sm">
+    <div className="relative flex min-h-[2.25rem] items-center gap-0.5 overflow-x-auto border-b border-line bg-panel-muted px-0.5 py-1 text-content shadow-sm">
       <div className="flex w-full items-center gap-0.5 lg:w-auto">
         <Tooltip label="Home">
           <Link
@@ -147,6 +148,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
         )}
       </div>
       <div className="flex-1" />
+      <WorkspaceTitleNavigation />
       {props.showSidebarButton && (
         <div>
           <button
