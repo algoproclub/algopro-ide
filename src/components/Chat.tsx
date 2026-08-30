@@ -6,7 +6,7 @@ import { ChatMessageItem } from './ChatMessageItem';
 import useUserPermission from '../hooks/useUserPermission';
 import { useEditorContext } from '../context/EditorContext';
 import { useUserContext } from '../context/UserContext';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { PaperAirplaneIcon } from '@heroicons/react/20/solid';
 
 export interface ChatMessage {
   timestamp: number;
@@ -93,11 +93,7 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
             ref={chatInputRef}
           />
           <button className="flex items-center justify-center rounded-b-md block w-full py-2.5 text-sm font-bold border border-transparent theme-button-primary active:bg-[color:var(--surface-active)] focus:outline-none">
-            Send{' '}
-            <FontAwesomeIcon
-              icon={{ prefix: 'fas', iconName: 'paper-plane' }}
-              className="ml-2 inline w-4 h-4"
-            />
+            Send <PaperAirplaneIcon className="ml-2 inline h-4 w-4" />
           </button>
         </form>
       )}

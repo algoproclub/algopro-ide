@@ -15,12 +15,12 @@ import Link from 'next/link';
 import { TabBar } from '../TabBar';
 import {
   AcademicCapIcon,
-  ComputerDesktopIcon,
-  PlusIcon,
   ArrowTopRightOnSquareIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-} from '@heroicons/react/20/solid';
+  ComputerDesktopIcon,
+  PlusIcon,
+} from '@heroicons/react/24/solid';
 import {
   AcademicCapIcon as AcademicCapOutlineIcon,
   ComputerDesktopIcon as ComputerDesktopOutlineIcon,
@@ -331,7 +331,6 @@ const ClassesTab = () => {
                       </span>
                       {isNewFile && (
                         <span className="inline-flex shrink-0 items-center rounded-full border border-line-strong bg-surface-raised px-2 py-0.5 text-xs font-medium text-content-secondary">
-                          <PlusIcon className="mr-1 h-3 w-3" />
                           New file
                         </span>
                       )}
@@ -356,7 +355,7 @@ const ClassesTab = () => {
                       prefetch={false}
                     >
                       {task.source}
-                      <ArrowTopRightOnSquareIcon className="ml-1 inline w-3 h-3" />
+                      <ArrowTopRightOnSquareIcon className="ml-1 inline h-3 w-3" />
                     </Link>
                   </td>
                   <td>

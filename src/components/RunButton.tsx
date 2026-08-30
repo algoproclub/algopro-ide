@@ -1,5 +1,5 @@
 import React from 'react';
-import { PlayCircleIcon } from '@heroicons/react/20/solid';
+import { PlayCircleIcon } from '@heroicons/react/24/solid';
 import LoadingIndicator from './LoadingIndicator';
 
 export interface RunButtonProps {

@@ -10,19 +10,24 @@ import {
 } from 'firebase/database';
 import { FileData } from '../src/context/EditorContext';
 import { StatusData } from '../src/types/problem';
-import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
-import dynamic from 'next/dynamic';
+import {
+  CheckIcon,
+  Cog6ToothIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon,
+} from '@heroicons/react/16/solid';
+import {
+  ArrowPathIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
+  ChevronDownIcon,
+  ChevronUpDownIcon,
+  ChevronUpIcon,
+  EllipsisHorizontalIcon,
+} from '@heroicons/react/20/solid';
 import LoadingIndicator from '../src/components/LoadingIndicator';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import PageTitle from '../src/components/PageTitle';
-
-const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
-  () =>
-    import('@fortawesome/react-fontawesome').then(mod => mod.FontAwesomeIcon),
-  {
-    ssr: false,
-  }
-);
 
 const editTimeList = [
   'In 5 minutes',
@@ -141,17 +146,11 @@ const Pagination = ({
         className={`px-3 py-1 rounded flex items-center justify-center ${secondaryButtonClass}`}
         onClick={() => onChange(1)}
       >
-        <FontAwesomeIcon
-          icon={{ prefix: 'fas', iconName: 'angles-left' }}
-          className="w-3 h-3 inline"
-        />
+        <ChevronDoubleLeftIcon className="inline h-4 w-4" />
       </button>
       {pageData.current >= 4 && (
         <div className="flex items-center">
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'ellipsis' }}
-            className="w-3 h-3 px-2 inline"
-          />
+          <EllipsisHorizontalIcon className="mx-2 inline h-4 w-4" />
         </div>
       )}
       <PageButton page={pageData.current - 2} />
@@ -161,20 +160,14 @@ const Pagination = ({
       <PageButton page={pageData.current + 2} />
       {pageData.current + 3 <= pageData.max && (
         <div className="flex items-center">
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'ellipsis' }}
-            className="w-3 h-3 px-2 inline"
-          />
+          <EllipsisHorizontalIcon className="mx-2 inline h-4 w-4" />
         </div>
       )}
       <button
         className={`px-3 py-1 rounded flex items-center justify-center ${secondaryButtonClass}`}
         onClick={() => onChange(pageData.max)}
       >
-        <FontAwesomeIcon
-          icon={{ prefix: 'fas', iconName: 'angles-right' }}
-          className="w-3 h-3 inline"
-        />
+        <ChevronDoubleRightIcon className="inline h-4 w-4" />
       </button>
     </>
   );
@@ -522,9 +515,8 @@ const PageContent = () => {
                     }`}
                   >
                     Filter
-                    <FontAwesomeIcon
-                      icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-                      className={`ml-2 w-3.5 h-3.5 inline transform duration-200 ${
+                    <ChevronDownIcon
+                      className={`ml-2 inline h-3.5 w-3.5 transform duration-200 ${
                         open ? 'rotate-180' : 'rotate-0'
                       }`}
                     />
@@ -534,10 +526,7 @@ const PageContent = () => {
                   className={`flex items-center justify-center px-3 py-1 rounded-lg ${secondaryButtonClass}`}
                   onClick={updateFileList}
                 >
-                  <FontAwesomeIcon
-                    className="w-4 h-4 inline"
-                    icon={{ prefix: 'fas', iconName: 'arrows-rotate' }}
-                  />
+                  <ArrowPathIcon className="inline h-4 w-4" />
                 </button>
               </div>
               <Disclosure.Panel>
@@ -621,28 +610,16 @@ const PageContent = () => {
                   >
                     <span>{val}</span>
                     {sortOptions.by !== ind && (
-                      <FontAwesomeIcon
-                        className="w-3 h-3 inline"
-                        icon={{ prefix: 'fas', iconName: 'sort' }}
-                      />
+                      <ChevronUpDownIcon className="inline h-4 w-4" />
                     )}
                     {sortOptions.by === ind && sortOptions.order === 0 && (
-                      <FontAwesomeIcon
-                        className="w-3 h-3 inline"
-                        icon={{ prefix: 'fas', iconName: 'sort' }}
-                      />
+                      <ChevronUpDownIcon className="inline h-4 w-4" />
                     )}
                     {sortOptions.by === ind && sortOptions.order === 1 && (
-                      <FontAwesomeIcon
-                        className="w-3 h-3 inline"
-                        icon={{ prefix: 'fas', iconName: 'sort-up' }}
-                      />
+                      <ChevronUpIcon className="inline h-4 w-4" />
                     )}
                     {sortOptions.by === ind && sortOptions.order === 2 && (
-                      <FontAwesomeIcon
-                        className="w-3 h-3 inline"
-                        icon={{ prefix: 'fas', iconName: 'sort-down' }}
-                      />
+                      <ChevronDownIcon className="inline h-4 w-4" />
                     )}
                   </th>
                 ))}
@@ -692,37 +669,19 @@ const PageContent = () => {
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="flex items-center">
                         {data.submissionStatus === 'pending' && (
-                          <FontAwesomeIcon
-                            icon={{ prefix: 'fas', iconName: 'cog' }}
-                            className="w-3.5 h-3.5 inline theme-text-muted animate-spin-slow"
-                          />
+                          <Cog6ToothIcon className="theme-text-muted inline h-3.5 w-3.5 animate-spin-slow" />
                         )}
                         {data.submissionStatus === 'untried' && (
-                          <FontAwesomeIcon
-                            icon={{ prefix: 'fas', iconName: 'ellipsis' }}
-                            className="w-3.5 h-3.5 inline text-[color:var(--text-disabled)]"
-                          />
+                          <EllipsisHorizontalIcon className="inline h-3.5 w-3.5 text-[color:var(--text-disabled)]" />
                         )}
                         {data.submissionStatus === 'error' && (
-                          <FontAwesomeIcon
-                            icon={{
-                              prefix: 'fas',
-                              iconName: 'exclamation-triangle',
-                            }}
-                            className="w-3.5 h-3.5 inline text-yellow-500"
-                          />
+                          <ExclamationTriangleIcon className="inline h-3.5 w-3.5 text-yellow-500" />
                         )}
                         {data.submissionStatus === 'accepted' && (
-                          <FontAwesomeIcon
-                            icon={{ prefix: 'fas', iconName: 'check' }}
-                            className="w-3.5 h-3.5 inline text-green-500"
-                          />
+                          <CheckIcon className="inline h-3.5 w-3.5 text-green-500" />
                         )}
                         {data.submissionStatus === 'incorrect' && (
-                          <FontAwesomeIcon
-                            icon={{ prefix: 'fas', iconName: 'xmark' }}
-                            className="w-3.5 h-3.5 inline text-red-500"
-                          />
+                          <XMarkIcon className="inline h-3.5 w-3.5 text-red-500" />
                         )}
                         <span className="ml-2">
                           {capitalize(data.lastVerdict)}

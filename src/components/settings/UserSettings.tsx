@@ -1,12 +1,24 @@
 import React, { useState } from 'react';
 import { EditorMode, Language, LANGUAGES } from '../../context/UserContext';
 import { RadioGroupContents } from './RadioGroupContents';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import TemplateCodeSettings from './TemplateCodeSettings';
 import {
   MAX_FONT_SIZE_EDITOR,
   MIN_FONT_SIZE_EDITOR,
 } from '../../constants/editorConstants';
+import {
+  ChevronDownIcon,
+  CodeBracketIcon as SolidCodeBracketIcon,
+  DocumentIcon as SolidDocumentIcon,
+  SparklesIcon as SolidSparklesIcon,
+  UserIcon as SolidUserIcon,
+} from '@heroicons/react/20/solid';
+import {
+  CodeBracketIcon as OutlineCodeBracketIcon,
+  DocumentIcon as OutlineDocumentIcon,
+  SparklesIcon as OutlineSparklesIcon,
+  UserIcon as OutlineUserIcon,
+} from '@heroicons/react/24/outline';
 
 const EDITOR_MODES = ['Normal', 'Vim' /*'Emacs'*/];
 
@@ -188,6 +200,13 @@ export default function UserSettings({
   const sectionContentClass = 'border border-t-0 border-line p-4';
   const spacedSectionContentClass =
     'space-y-4 border border-t-0 border-line p-4';
+  const UserDataIcon = submenu === 'userdata' ? SolidUserIcon : OutlineUserIcon;
+  const CodeSettingsIcon =
+    submenu === 'codesettings' ? SolidCodeBracketIcon : OutlineCodeBracketIcon;
+  const VisualSettingsIcon =
+    submenu === 'visualsettings' ? SolidSparklesIcon : OutlineSparklesIcon;
+  const FileTemplatesIcon =
+    submenu === 'templates' ? SolidDocumentIcon : OutlineDocumentIcon;
 
   return (
     <div>
@@ -199,17 +218,13 @@ export default function UserSettings({
           }
         >
           <span className="flex items-center">
-            <FontAwesomeIcon
-              icon={{ prefix: 'fas', iconName: 'user' }}
-              className="w-3.5 h-3.5 inline mr-2"
-            />
+            <UserDataIcon className="mr-2 inline h-4 w-4" />
             User data
           </span>
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-            className={`w-3.5 h-3.5 inline ${
+          <ChevronDownIcon
+            className={`inline h-4 w-4 ${
               submenu !== 'userdata' ? 'rotate-0' : 'rotate-180'
-            } transition duration-200`}
+            } transition-transform duration-200`}
           />
         </button>
         {submenu === 'userdata' && (
@@ -233,17 +248,13 @@ export default function UserSettings({
           }
         >
           <span className="flex items-center">
-            <FontAwesomeIcon
-              icon={{ prefix: 'fas', iconName: 'code' }}
-              className="w-3.5 h-3.5 inline mr-2"
-            />
+            <CodeSettingsIcon className="mr-2 inline h-4 w-4" />
             Code settings
           </span>
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-            className={`w-3.5 h-3.5 inline ${
+          <ChevronDownIcon
+            className={`inline h-4 w-4 ${
               submenu !== 'codesettings' ? 'rotate-0' : 'rotate-180'
-            } transition duration-200`}
+            } transition-transform duration-200`}
           />
         </button>
         {submenu === 'codesettings' && (
@@ -274,17 +285,13 @@ export default function UserSettings({
           }
         >
           <span className="flex items-center">
-            <FontAwesomeIcon
-              icon={{ prefix: 'fas', iconName: 'wand-magic-sparkles' }}
-              className="w-3.5 h-3.5 inline mr-2"
-            />
+            <VisualSettingsIcon className="mr-2 inline h-4 w-4" />
             Visual settings
           </span>
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-            className={`w-3.5 h-3.5 inline ${
+          <ChevronDownIcon
+            className={`inline h-4 w-4 ${
               submenu !== 'visualsettings' ? 'rotate-0' : 'rotate-180'
-            } transition duration-200`}
+            } transition-transform duration-200`}
           />
         </button>
         {submenu === 'visualsettings' && (
@@ -356,17 +363,13 @@ export default function UserSettings({
           }
         >
           <span className="flex items-center">
-            <FontAwesomeIcon
-              icon={{ prefix: 'fas', iconName: 'file' }}
-              className="w-3.5 h-3.5 inline mr-2"
-            />
+            <FileTemplatesIcon className="mr-2 inline h-4 w-4" />
             File templates
           </span>
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-            className={`w-3.5 h-3.5 inline ${
+          <ChevronDownIcon
+            className={`inline h-4 w-4 ${
               submenu !== 'templates' ? 'rotate-0' : 'rotate-180'
-            } transition duration-200`}
+            } transition-transform duration-200`}
           />
         </button>
         {submenu === 'templates' && (

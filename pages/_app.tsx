@@ -17,17 +17,12 @@ import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
 import { UserProvider } from '../src/context/UserContext';
 import { SHOULD_USE_FIREBASE_EMULATOR } from '../src/dev_constants';
-import { library } from '@fortawesome/fontawesome-svg-core';
-import { fas } from '@fortawesome/free-solid-svg-icons';
-import { far } from '@fortawesome/free-regular-svg-icons';
 import en from 'javascript-time-ago/locale/en';
 import TimeAgo from 'javascript-time-ago';
 import { TopNavBar } from '../src/components/TopNavBar';
 import PageTitle from '../src/components/PageTitle';
 
 TimeAgo.addDefaultLocale(en);
-
-library.add(fas, far);
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,

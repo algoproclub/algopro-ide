@@ -147,7 +147,7 @@ const Controls = (props: ControlsProps) => {
                 <Disclosure.Button className="theme-button-secondary flex w-full items-center justify-center rounded-md border px-4 py-2 text-sm">
                   Filter
                   <ChevronDownIcon
-                    className={`ml-2 inline h-5 w-5 transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`}
+                    className={`ml-2 inline h-4 w-4 transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`}
                   />
                 </Disclosure.Button>
                 <RefreshButton

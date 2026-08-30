@@ -1,7 +1,12 @@
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import React, { Suspense, useEffect, useState } from 'react';
 import { getPlatformName } from '../src/scripts/getPlatformName';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  ArrowTopRightOnSquareIcon,
+  PencilSquareIcon,
+  PlusIcon,
+  TrashIcon,
+} from '@heroicons/react/20/solid';
 import { platforms, type ProblemTag, problemTags } from '../src/types/problem';
 import Checkbox from '../src/components/Checkbox';
 import { useUserContext } from '../src/context/UserContext';
@@ -41,10 +46,7 @@ const Tag = ({
           className={iconButtonClass}
           onClick={() => tagToggle(tag)}
         >
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'trash' }}
-            className="inline w-3.5 h-3.5"
-          />
+          <TrashIcon className="inline h-4 w-4" />
         </button>
       )}
     </div>
@@ -203,15 +205,11 @@ const PageContent = () => {
                           }}
                         >
                           <span className="mr-3">{option}</span>
-                          <FontAwesomeIcon
-                            className="inline w-3.5 h-3.5"
-                            icon={{
-                              prefix: 'fas',
-                              iconName: tagFilters.includes(option)
-                                ? 'trash'
-                                : 'plus',
-                            }}
-                          />
+                          {tagFilters.includes(option) ? (
+                            <TrashIcon className="inline h-4 w-4" />
+                          ) : (
+                            <PlusIcon className="inline h-4 w-4" />
+                          )}
                         </li>
                       ))}
                   </ul>
@@ -336,10 +334,7 @@ const PageContent = () => {
                         target="_blank"
                         rel="noreferrer"
                       >
-                        <FontAwesomeIcon
-                          icon={{ prefix: 'fas', iconName: 'edit' }}
-                          className="w-3.5 h-3.5 inline"
-                        />
+                        <PencilSquareIcon className="inline h-4 w-4" />
                       </a>
                     )}
                     <a
@@ -349,10 +344,7 @@ const PageContent = () => {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      <FontAwesomeIcon
-                        icon={{ prefix: 'fas', iconName: 'arrow-right' }}
-                        className="w-3.5 h-3.5 inline"
-                      />
+                      <ArrowTopRightOnSquareIcon className="inline h-4 w-4" />
                     </a>
                   </td>
                 </tr>

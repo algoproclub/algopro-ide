@@ -6,11 +6,15 @@ import USACOResults from './JudgeInterface/USACOResults';
 import { StatusData } from '../types/problem';
 import { useUserContext } from '../context/UserContext';
 import { CodeEditor } from './editor/CodeEditor';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CompilerOutput } from './CompilerOutput';
 import { mainMonacoEditorAtom } from '../atoms/workspace';
 import { StderrOutput } from './StderrOutput';
 import { getJudgeStatusDescription } from '../editorUtils';
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/16/solid';
+import {
+  getSubmissionStatusDisplay,
+  getTestCaseStatusDisplay,
+} from './TaskStatus/statusDisplay';
 
 type StatusHistoryEntry = StatusData & { submissionTime?: number };
 
@@ -132,74 +136,55 @@ function OutputHistory({
           {entries
             .slice()
             .reverse()
-            .map((item, index) => (
-              <tr
-                className="transition-colors hover:bg-surface-hover"
-                key={item.submissionTime ?? entries.length - index}
-              >
-                <td>{entries.length - index}</td>
-                <td style={{ whiteSpace: 'nowrap' }}>
-                  <a
-                    href={item.link || undefined}
-                    target="_blank"
-                    className={`${item.link ? 'hover:underline' : undefined} flex items-center`}
-                    rel="noreferrer"
-                  >
-                    {item.message?.toLowerCase() === 'correct answer' ? (
-                      <FontAwesomeIcon
-                        icon={{ prefix: 'fas', iconName: 'check' }}
-                        className="mr-1.5 inline h-3.5 w-3.5 text-status-success"
-                      />
-                    ) : (
-                      <FontAwesomeIcon
-                        icon={{ prefix: 'fas', iconName: 'xmark' }}
-                        className="mr-1.5 inline h-3.5 w-3.5 text-status-danger"
-                      />
-                    )}
-                    {item.message}
-                    {item.link && (
-                      <FontAwesomeIcon
-                        icon={{
-                          prefix: 'fas',
-                          iconName: 'up-right-from-square',
-                        }}
-                        className="ml-1.5 inline h-3.5 w-3.5"
-                      />
-                    )}
-                  </a>
-                </td>
-                <td style={{ whiteSpace: 'nowrap' }}>{item.time ?? '-'}</td>
-                <td style={{ whiteSpace: 'nowrap' }}>{item.memory ?? '-'}</td>
-                <td>
-                  <div className="flex flex-wrap">
-                    {item.testCases?.map((testCase, index) => {
-                      const passed = testCase.title === 'correct answer';
-                      const timedOut = testCase.title === 'time limit exceeded';
-                      const iconName = passed
-                        ? 'check'
-                        : timedOut
-                          ? 'clock'
-                          : testCase.title === 'runtime error'
-                            ? 'bug'
-                            : 'xmark';
+            .map((item, index) => {
+              const verdict = getSubmissionStatusDisplay(item);
+              const VerdictIcon = verdict.Icon;
 
-                      return (
-                        <FontAwesomeIcon
-                          title={testCase.title}
-                          icon={{ prefix: timedOut ? 'far' : 'fas', iconName }}
-                          className={`mr-0.5 inline h-3.5 w-3.5 ${
-                            passed
-                              ? 'text-status-success'
-                              : 'text-status-danger'
-                          }`}
-                          key={index}
-                        />
-                      );
-                    })}
-                  </div>
-                </td>
-              </tr>
-            ))}
+              return (
+                <tr
+                  className="transition-colors hover:bg-surface-hover"
+                  key={item.submissionTime ?? entries.length - index}
+                >
+                  <td>{entries.length - index}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <a
+                      href={item.link || undefined}
+                      target="_blank"
+                      className={`${item.link ? 'hover:underline' : undefined} flex items-center`}
+                      rel="noreferrer"
+                    >
+                      <VerdictIcon
+                        className={`mr-1.5 inline h-3.5 w-3.5 ${verdict.colorClass} ${verdict.standaloneClass}`}
+                      />
+                      {item.message}
+                      {item.link && (
+                        <ArrowTopRightOnSquareIcon className="ml-1.5 inline h-3.5 w-3.5" />
+                      )}
+                    </a>
+                  </td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{item.time ?? '-'}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{item.memory ?? '-'}</td>
+                  <td>
+                    <div className="flex flex-wrap">
+                      {item.testCases?.map((testCase, index) => {
+                        const display = getTestCaseStatusDisplay(
+                          testCase.title
+                        );
+                        const TestCaseIcon = display.Icon;
+
+                        return (
+                          <TestCaseIcon
+                            title={display.label}
+                            className={`mr-0.5 inline h-3.5 w-3.5 ${display.colorClass} ${display.standaloneClass}`}
+                            key={index}
+                          />
+                        );
+                      })}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
         </tbody>
       </table>
     </div>

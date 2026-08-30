@@ -1,10 +1,10 @@
 import { Menu } from '@headlessui/react';
 import {
   ChevronDownIcon,
-  UserCircleIcon,
   CogIcon,
-  ArrowRightOnRectangleIcon,
-} from '@heroicons/react/20/solid';
+  ArrowRightStartOnRectangleIcon as ArrowRightOnRectangleIcon,
+} from '@heroicons/react/24/solid';
+import { UserCircleIcon } from '@heroicons/react/24/solid';
 import React, { useState } from 'react';
 import { useNullableUserContext } from '../../context/UserContext';
 import { useSetAtom } from 'jotai';

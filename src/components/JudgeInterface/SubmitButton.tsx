@@ -3,12 +3,9 @@ import LoadingIndicator from '../LoadingIndicator';
 import { useEditorContext } from '../../context/EditorContext';
 import { get, getDatabase, ref, update } from 'firebase/database';
 import { Dialog, Transition } from '@headlessui/react';
-import {
-  ArrowUpTrayIcon,
-  EllipsisVerticalIcon,
-  NoSymbolIcon,
-  XMarkIcon,
-} from '@heroicons/react/24/outline';
+import { EllipsisVerticalIcon } from '@heroicons/react/20/solid';
+import { ArrowUpTrayIcon, NoSymbolIcon } from '@heroicons/react/20/solid';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import Checkbox from '../Checkbox';
 
 const SolvedStatusModal = ({
@@ -163,7 +160,7 @@ export default function SubmitButton({
       >
         {isLoading ? (
           <>
-            <LoadingIndicator className="h-4 w-4 p-0.5 !mx-1.5" />
+            <LoadingIndicator className="!mx-1.5 h-4 w-4 p-0.5" />
             <span>Waiting…</span>
           </>
         ) : isDisabled ? (

@@ -8,7 +8,13 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore';
-import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
+import {
+  ArrowsPointingInIcon,
+  ArrowsPointingOutIcon,
+  PencilSquareIcon,
+  PlusIcon,
+  TrashIcon,
+} from '@heroicons/react/20/solid';
 import {
   Hint,
   languages as codeLangs,
@@ -19,7 +25,6 @@ import {
   problemTags,
   Sample,
 } from '../../../src/types/problem';
-import dynamic from 'next/dynamic';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import {
@@ -35,14 +40,6 @@ import Checkbox from '../../../src/components/Checkbox';
 import { useUserContext } from '../../../src/context/UserContext';
 import PageTitle from '../../../src/components/PageTitle';
 import ConfirmationModal from '../../../src/components/ConfirmationModal';
-
-const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
-  () =>
-    import('@fortawesome/react-fontawesome').then(mod => mod.FontAwesomeIcon),
-  {
-    ssr: false,
-  }
-);
 
 const translate = httpsCallable<
   {
@@ -161,13 +158,11 @@ const HTMLEditor = ({
             className="flex items-center justify-center px-2.5 py-2 rounded-md mr-0.5 hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)] border theme-border"
             onClick={() => setFullscreen(value => !value)}
           >
-            <FontAwesomeIcon
-              className="w-4 h-4 inline"
-              icon={{
-                prefix: 'fas',
-                iconName: `${fullscreen ? 'compress' : 'expand'}`,
-              }}
-            />
+            {fullscreen ? (
+              <ArrowsPointingInIcon className="inline h-4 w-4" />
+            ) : (
+              <ArrowsPointingOutIcon className="inline h-4 w-4" />
+            )}
           </button>
           <ModeButton
             text="Code"
@@ -405,10 +400,7 @@ const RemovableTag = ({
     <div className="rounded-md border theme-border theme-surface px-2 py-1 m-1 whitespace-nowrap inline-block">
       {tag}
       <button className={iconButtonClass} onClick={removeTag}>
-        <FontAwesomeIcon
-          icon={{ prefix: 'fas', iconName: 'trash' }}
-          className="w-3.5 h-3.5 inline"
-        />
+        <TrashIcon className="inline h-4 w-4" />
       </button>
     </div>
   );
@@ -470,16 +462,10 @@ const PageContent = () => {
               >
                 <div className="flex items-center">
                   <button className={iconButtonClass} onClick={onEdit}>
-                    <FontAwesomeIcon
-                      icon={{ prefix: 'fas', iconName: 'edit' }}
-                      className="w-3.5 h-3.5 inline"
-                    />
+                    <PencilSquareIcon className="inline h-4 w-4" />
                   </button>
                   <button className={iconButtonClass} onClick={onDelete}>
-                    <FontAwesomeIcon
-                      icon={{ prefix: 'fas', iconName: 'trash' }}
-                      className="w-3.5 h-3.5 inline"
-                    />
+                    <TrashIcon className="inline h-4 w-4" />
                   </button>
                 </div>
               </td>
@@ -866,11 +852,8 @@ const PageContent = () => {
             className={`${secondaryButtonClass} px-2 py-1 flex items-center`}
             onClick={handleAddNewHint}
           >
+            <PlusIcon className="mr-2 inline h-4 w-4" />
             New
-            <FontAwesomeIcon
-              icon={{ prefix: 'fas', iconName: 'plus' }}
-              className="ml-2 w-4 h-4 inline"
-            />
           </button>
         </div>
         <div className="max-h-[16rem] border-b theme-border overflow-auto">
@@ -920,11 +903,8 @@ const PageContent = () => {
               className={`${secondaryButtonClass} px-2 py-1 flex items-center`}
               onClick={handleAddNewSample}
             >
+              <PlusIcon className="mr-2 inline h-4 w-4" />
               New
-              <FontAwesomeIcon
-                icon={{ prefix: 'fas', iconName: 'plus' }}
-                className="ml-2 w-4 h-4 inline"
-              />
             </button>
           </div>
           <div className="max-h-[16rem] border-b theme-border overflow-auto">
@@ -984,10 +964,7 @@ const PageContent = () => {
                             setIsSampleModalOpen(true);
                           }}
                         >
-                          <FontAwesomeIcon
-                            icon={{ prefix: 'fas', iconName: 'edit' }}
-                            className="w-3.5 h-3.5 inline"
-                          />
+                          <PencilSquareIcon className="inline h-4 w-4" />
                         </button>
                         <button
                           className={iconButtonClass}
@@ -1007,10 +984,7 @@ const PageContent = () => {
                             });
                           }}
                         >
-                          <FontAwesomeIcon
-                            icon={{ prefix: 'fas', iconName: 'trash' }}
-                            className="w-3.5 h-3.5 inline"
-                          />
+                          <TrashIcon className="inline h-4 w-4" />
                         </button>
                       </div>
                     </td>

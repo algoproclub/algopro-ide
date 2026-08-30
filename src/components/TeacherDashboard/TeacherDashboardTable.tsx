@@ -1,4 +1,5 @@
 import classNames from 'classnames';
+import { ArrowTopRightOnSquareIcon as SmallArrowTopRightOnSquareIcon } from '@heroicons/react/16/solid';
 import {
   ArrowTopRightOnSquareIcon,
   ChevronLeftIcon,
@@ -411,7 +412,7 @@ export default function TeacherDashboardTable({
                         className="theme-text-muted block truncate text-xs hover:text-[color:var(--accent-hover)] hover:underline"
                       >
                         {task.source}
-                        <ArrowTopRightOnSquareIcon className="ml-1 inline h-3 w-3" />
+                        <SmallArrowTopRightOnSquareIcon className="ml-1 inline h-3 w-3" />
                       </Link>
                     </th>
                   ))}
