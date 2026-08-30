@@ -33,6 +33,7 @@ import CodeSizeLabel from '../TaskStatus/CodeSizeLabel';
 import TaskStatusIndicator from '../TaskStatus/TaskStatusIndicator';
 import { useDashboardClassroom } from '../../hooks/useDashboardClassroom';
 import { useStudentTaskStatuses } from '../../hooks/useStudentTaskStatuses';
+import { getClassContext, getTaskRef } from '../../scripts/getTaskRef';
 
 const db = getDatabase();
 
@@ -42,7 +43,7 @@ const TaskFileLink = ({
   href,
   children,
 }: {
-  href: string;
+  href: React.ComponentProps<typeof Link>['href'];
   children: React.ReactNode;
 }) => (
   <Link href={href} className="relative z-10" target="_blank" prefetch={false}>
@@ -203,6 +204,7 @@ const ClassesTab = () => {
     targets: tasks,
   });
   const showSchoolName = new Set(groups.map(group => group.schoolID)).size > 1;
+  const classContext = getClassContext(groupID, classID);
   const groupOptions = groups.map(group => ({
     value: group.id,
     label: (
@@ -287,6 +289,7 @@ const ClassesTab = () => {
           </thead>
           <tbody className="divide-y divide-line-muted bg-canvas text-content">
             {tasks.map((task, index) => {
+              if (!classContext) return null;
               const solutionState = solutions[task.key] ?? {
                 status: 'loading',
               };
@@ -294,9 +297,12 @@ const ClassesTab = () => {
                 solutionState.status === 'ready' ? solutionState.data : null;
               const isNewFile =
                 solutionState.status === 'ready' && row === null;
-              const tempFileIDhref = row
-                ? `/${row.fileID.slice(1)}`
-                : `/solve/${task.platform}/${task.id}`;
+              const taskHref = getTaskRef(
+                row
+                  ? { id: row.fileID.slice(1) }
+                  : { platform: task.platform, problemID: task.id },
+                classContext
+              );
               return (
                 <tr
                   key={task.key}
@@ -305,7 +311,7 @@ const ClassesTab = () => {
                   <td className="whitespace-nowrap text-sm tabular-nums theme-text-muted">
                     {solutionState.status === 'ready' && (
                       <Link
-                        href={tempFileIDhref}
+                        href={taskHref}
                         className="ui-focus absolute inset-0 z-0 focus-visible:ring-inset"
                         target="_blank"
                         prefetch={false}
@@ -361,7 +367,7 @@ const ClassesTab = () => {
                     <div className="mt-1 space-y-0.5 text-xs font-normal xl:hidden">
                       <div>
                         {row && row.lastEdit ? (
-                          <TaskFileLink href={tempFileIDhref}>
+                          <TaskFileLink href={taskHref}>
                             <TimeAgoLabel date={new Date(row.lastEdit)} />
                           </TaskFileLink>
                         ) : (
@@ -370,7 +376,7 @@ const ClassesTab = () => {
                       </div>
                       <div className="font-mono tabular-nums">
                         {row ? (
-                          <TaskFileLink href={tempFileIDhref}>
+                          <TaskFileLink href={taskHref}>
                             <CodeSizeLabel size={row.codeSize} />
                           </TaskFileLink>
                         ) : (
@@ -381,7 +387,7 @@ const ClassesTab = () => {
                   </td>
                   <td className="hidden whitespace-nowrap theme-text-muted xl:table-cell">
                     {row && row.lastEdit ? (
-                      <TaskFileLink href={tempFileIDhref}>
+                      <TaskFileLink href={taskHref}>
                         <TimeAgoLabel date={new Date(row.lastEdit)} />
                       </TaskFileLink>
                     ) : (
@@ -390,7 +396,7 @@ const ClassesTab = () => {
                   </td>
                   <td className="hidden text-right font-mono tabular-nums theme-text-muted xl:table-cell">
                     {row ? (
-                      <TaskFileLink href={tempFileIDhref}>
+                      <TaskFileLink href={taskHref}>
                         <CodeSizeLabel size={row.codeSize} />
                       </TaskFileLink>
                     ) : (

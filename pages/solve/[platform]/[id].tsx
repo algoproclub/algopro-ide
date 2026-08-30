@@ -5,6 +5,7 @@ import { useNullableUserContext } from '../../../src/context/UserContext';
 import React, { useEffect, useRef, useState } from 'react';
 import invariant from 'tiny-invariant';
 import va from '@vercel/analytics';
+import { getClassContext, getTaskRef } from '../../../src/scripts/getTaskRef';
 
 function PageContent(): JSX.Element {
   const router = useRouter();
@@ -28,6 +29,10 @@ function PageContent(): JSX.Element {
     const platform = router.query.platform;
     const problemID = router.query.id;
     const tournamentID = router.query.tournamentID;
+    const classContext = getClassContext(
+      router.query.group,
+      router.query.class
+    );
     createdRef.current = true;
 
     invariant(
@@ -60,7 +65,8 @@ function PageContent(): JSX.Element {
           // error
           setError(data.message);
         } else {
-          router.replace(`/${data.fileID.substring(1)}`);
+          const fileID = data.fileID.substring(1);
+          router.replace(getTaskRef({ id: fileID }, classContext ?? undefined));
         }
       }
     })();
