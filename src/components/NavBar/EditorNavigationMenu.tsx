@@ -7,7 +7,7 @@ import {
   AcademicCapIcon,
   TrophyIcon,
   UserPlusIcon,
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/solid';
 import React, { useState } from 'react';
 import { useNullableUserContext, isTeacher } from '../../context/UserContext';
 import Link from 'next/link';

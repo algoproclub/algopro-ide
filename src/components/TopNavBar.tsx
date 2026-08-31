@@ -5,7 +5,7 @@ import {
   isTeacher,
   type UserData,
 } from '../context/UserContext';
-import * as SolidIcons from '@heroicons/react/20/solid';
+import * as SolidIcons from '@heroicons/react/24/solid';
 import * as OutlineIcons from '@heroicons/react/24/outline';
 import { SettingsMenu } from './NavBar/SettingsMenu';
 import ProfileSettings from './settings/ProfileSettings';
