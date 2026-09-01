@@ -52,12 +52,15 @@ function disposeLanguageClient(languageClientWrapper: LanguageClientWrapper) {
   });
 }
 
+let pendingLanguageClientTeardown = Promise.resolve();
+
 export default function useLSP(
   language: string | null,
   lspOptions: { compilerOptions: string | null } | null,
   enabled: boolean
 ) {
-  const compilerOptions = lspOptions?.compilerOptions ?? null;
+  const compilerOptions =
+    language === 'cpp' ? (lspOptions?.compilerOptions ?? null) : null;
   const hasLspOptions = lspOptions !== null;
 
   useEffect(() => {
@@ -67,23 +70,16 @@ export default function useLSP(
 
     let disposed = false;
     let languageClientWrapper: LanguageClientWrapper | null = null;
-    let disposePromise: Promise<void> | null = null;
+    const previousLanguageClientTeardown = pendingLanguageClientTeardown;
 
-    const stopLanguageClient = (wrapper: LanguageClientWrapper) => {
-      if (!disposePromise) {
-        disposePromise = disposeLanguageClient(wrapper);
-      }
-
-      return disposePromise;
-    };
-
-    notifyLsp('Connecting to server…');
-
-    void ensureMonacoServices()
+    const lifecyclePromise = previousLanguageClientTeardown
+      .then(ensureMonacoServices)
       .then(async () => {
         if (disposed) {
           return;
         }
+
+        notifyLsp('Connecting to server…');
 
         const wrapper = new LanguageClientWrapper(
           createLanguageClientConfig(language, compilerOptions)
@@ -92,12 +88,9 @@ export default function useLSP(
 
         await wrapper.start();
 
-        if (disposed) {
-          await stopLanguageClient(wrapper);
-          return;
+        if (!disposed) {
+          notifyLsp('Connected');
         }
-
-        notifyLsp('Connected');
       })
       .catch(error => {
         console.error('Failed to start language client:', error);
@@ -109,12 +102,13 @@ export default function useLSP(
 
     return () => {
       disposed = true;
-
-      if (languageClientWrapper) {
-        const wrapper = languageClientWrapper;
-        languageClientWrapper = null;
-        void stopLanguageClient(wrapper);
-      }
+      // The next editor must not start until this client has finished both
+      // starting and disposing; the wrapper cannot dispose while starting.
+      pendingLanguageClientTeardown = lifecyclePromise.then(() =>
+        languageClientWrapper
+          ? disposeLanguageClient(languageClientWrapper)
+          : undefined
+      );
     };
   }, [compilerOptions, enabled, hasLspOptions, language]);
 }

@@ -104,14 +104,20 @@ export function EditorProvider({
 }): JSX.Element {
   const [fileData, setFileData] = useState<FileData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadedFileId, setLoadedFileId] = useState<string | null>(null);
   const [permissionDenied, setPermissionDenied] = useState<boolean>(false);
   const doNotInitializeTheseFileIdsRef = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
+    let active = true;
     setLoading(true);
 
     const handleDataChange = (snap: DataSnapshot) => {
+      if (!active) return;
+
+      setLoadedFileId(fileId);
       setLoading(false);
+      setPermissionDenied(false);
       setFileData(
         snap.exists()
           ? {
@@ -123,6 +129,9 @@ export function EditorProvider({
     };
 
     const handleNoPerms = (_err: Error) => {
+      if (!active) return;
+
+      setLoadedFileId(fileId);
       setLoading(false);
       setPermissionDenied(true);
     };
@@ -131,6 +140,7 @@ export function EditorProvider({
     const unsubscribe = onValue(fileRef, handleDataChange, handleNoPerms);
 
     return () => {
+      active = false;
       unsubscribe();
     };
   }, [fileId]);
@@ -146,7 +156,7 @@ export function EditorProvider({
     return { fileData, updateFileData, doNotInitializeTheseFileIdsRef };
   }, [fileData, updateFileData, doNotInitializeTheseFileIdsRef]);
 
-  if (loading) {
+  if (loading || loadedFileId !== fileId) {
     return <>{loadingUI}</>;
   }
 

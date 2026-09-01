@@ -19,6 +19,10 @@ export const CodeInterface = ({
 }): JSX.Element => {
   const { fileData } = useEditorContext();
   const [problem] = useAtom(problemAtom);
+  const problemDataIsReady = fileData.problem
+    ? problem?.platform === fileData.problem.platform &&
+      problem.id === fileData.problem.id
+    : problem === null;
   const lang = fileData.settings.language;
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
@@ -66,7 +70,7 @@ export const CodeInterface = ({
       )}
     >
       <div className="flex-1 overflow-hidden">
-        {problem !== undefined && (
+        {problemDataIsReady && (
           <LazyRealtimeEditor
             theme={lightMode ? 'light' : 'dark'}
             rainbowIndent={rainbowIndent}

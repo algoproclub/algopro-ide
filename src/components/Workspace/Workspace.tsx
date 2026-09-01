@@ -617,18 +617,24 @@ export default function Workspace({
 
     return () => {
       cancelled = true;
+      setProblem(undefined);
     };
     // The RTDB object can change independently; only its identity triggers this load.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileData.problem?.platform, fileData.problem?.id]);
 
   useEffect(() => {
+    let active = true;
+    let unsubscribe: (() => void) | undefined;
+
     get(ref(db, `files/${fileData.id}/solvedStatus/solved`)).then(
       (snapshot: DataSnapshot) => {
+        if (!active) return;
+
         const initSolved = snapshot.val() ?? false;
         setSolved(initSolved);
         if (!initSolved && Object.keys(solutions).length > 0) {
-          onValue(
+          unsubscribe = onValue(
             ref(db, `files/${fileData.id}/solvedStatus/solved`),
             (snapshot: DataSnapshot) => {
               if (snapshot.val()) {
@@ -641,7 +647,8 @@ export default function Workspace({
       }
     );
     return () => {
-      off(ref(db, `files/${fileData.id}/solvedStatus/solved`));
+      active = false;
+      unsubscribe?.();
     };
   }, [solutions]);
 
