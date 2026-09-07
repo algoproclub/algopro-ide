@@ -1,13 +1,12 @@
 import Dropdown from '../Dropdown';
 import { CodeEditor } from '../editor/CodeEditor';
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
+import React from 'react';
 import { ProblemData } from '../../types/problem';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEditorContext } from '../../context/EditorContext';
+import { useUserContext, LANGUAGES } from '../../context/UserContext';
+import { useScopedSelection } from '../../hooks/useScopedSelection';
 
 const Solutions = ({
-  problem,
   solutions,
 }: {
   problem: ProblemData;
@@ -15,20 +14,19 @@ const Solutions = ({
 }) => {
   const { fileData } = useEditorContext();
   const languages = Object.keys(solutions);
-  const [selected, setSelected] = useState(0);
-
-  useEffect(() => {
-    if (fileData) {
-      const index = languages.findIndex(x => x == fileData.settings.language);
-      if (index !== -1) {
-        setSelected(index);
-      }
-    }
-  }, [fileData]);
+  const fileLanguage = fileData?.settings.language;
+  const [selected, setSelected] = useScopedSelection(
+    fileData ? `${fileData.id}\0${fileLanguage}` : 'solutions',
+    languages,
+    fileLanguage
+  );
+  const {
+    userData: { fontSize },
+  } = useUserContext();
 
   return (
     <>
-      <div className="border-b border-[#363636] -mx-4 px-4 pb-4 mb-4 space-y-2">
+      <div className="-mx-4 mb-4 space-y-2 border-b border-line-muted px-4 pb-4">
         <div className="flex items-center space-x-2">
           <span className="font-semibold space-x-2">
             Congratulations on solving the task!
@@ -36,7 +34,7 @@ const Solutions = ({
           <svg
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
-            className="text-lime-300 w-5 h-5"
+            className="h-5 w-5 text-status-success"
           >
             <g strokeWidth="0" />
             <g strokeLinecap="round" strokeLinejoin="round" />
@@ -52,51 +50,32 @@ const Solutions = ({
             </g>
           </svg>
         </div>
-        <div className="text-gray-400 text-sm">
+        <div className="theme-text-muted text-sm">
           Below you can see the model solutions.
         </div>
       </div>
-      {problem.platform === 'planets' && problem.topicID && false && (
-        <div className="border-b border-[#363636] -mx-4 px-4 pb-4 mb-4 space-y-2">
-          <Link
-            href={`https://planets.algopro.hu/map#${problem.topicID}`}
-            target="_blank"
-          >
-            <button className="inline-flex items-center whitespace-nowrap px-4 py-2.5 bg-indigo-900 hover:bg-indigo-800 active:bg-indigo-700 rounded-md text-sm font-medium">
-              <FontAwesomeIcon
-                className="mr-2 inline h-4 w-4"
-                aria-hidden="true"
-                icon={{ iconName: 'arrow-left', prefix: 'fas' }}
-              />
-              <span className="text-center flex-1">Back to the planet</span>
-            </button>
-          </Link>
-          <div className="text-gray-400 text-sm">
-            You can see the task on the roadmap, and the next steps.
-          </div>
-        </div>
-      )}
       <div className="flex items-end space-x-3">
         <Dropdown
-          items={languages}
+          items={languages.map(lang => ({
+            value: lang,
+            label: LANGUAGES.find(x => x.value === lang)?.label ?? lang,
+          }))}
           label="Language"
           selected={selected}
-          setSelected={(k: number) => setSelected(k)}
+          setSelected={setSelected}
         />
-        <Link href="#" target="_blank">
-          {/*<button className="px-4 py-2.5 bg-indigo-900 hover:bg-indigo-800 active:bg-indigo-700 rounded-md text-sm font-medium w-20">
-            Visit
-          </button>*/}
-        </Link>
       </div>
-      <div className="h-full mt-4 -mx-4 border-y border-gray-700">
+      <div className="h-full mt-4 -mx-4 border-y theme-border">
         <CodeEditor
-          value={solutions[languages[selected]]}
+          value={selected ? solutions[selected] : ''}
           language={
-            { cpp: 'cpp', py: 'python', java: 'java' }[languages[selected]]
+            selected
+              ? { cpp: 'cpp', py: 'python', java: 'java' }[selected]
+              : undefined
           }
           editorOptions={{
             readOnly: true,
+            fontSize,
           }}
         />
       </div>

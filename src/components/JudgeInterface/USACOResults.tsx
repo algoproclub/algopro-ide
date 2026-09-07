@@ -1,5 +1,4 @@
 import React, { Fragment, useEffect, useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { StatusData, TestCase } from '../../types/problem';
 import TimeAgoLabel from '../TimeStamp';
 import { Dialog, Transition } from '@headlessui/react';
@@ -8,6 +7,10 @@ import { useEditorContext } from '../../context/EditorContext';
 import classNames from 'classnames';
 import { PreBox } from './Samples';
 import fetchTestCase from './fetchTestCase';
+import {
+  getSubmissionStatusDisplay,
+  getTestCaseStatusDisplay,
+} from '../TaskStatus/statusDisplay';
 
 const capitalize = (text: string): string => {
   return text[0].toUpperCase() + text.substring(1);
@@ -52,10 +55,9 @@ const TestCaseInfoModal = ({
   const [outputDownloadURL, setOutputDownloadURL] = useState<string | null>(
     null
   );
-  const [inputPreviewText, setInputPreviewText] =
-    useState<string>('Loading...');
+  const [inputPreviewText, setInputPreviewText] = useState<string>('Loading…');
   const [outputPreviewText, setOutputPreviewText] =
-    useState<string>('Loading...');
+    useState<string>('Loading…');
 
   useEffect(() => {
     if (problem === null) return;
@@ -77,6 +79,7 @@ const TestCaseInfoModal = ({
         setDownloadURL(data.downloadURL);
         setPreviewText(data.previewText);
       } catch (e) {
+        setPreviewText('Failed to load');
         console.error(e);
       }
     }
@@ -124,7 +127,7 @@ const TestCaseInfoModal = ({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div className="bg-gray-800 rounded-lg shadow-xl transform transition-all w-full max-w-7xl mx-auto">
+            <div className="theme-surface-raised border theme-border rounded-lg shadow-xl transform transition-all w-full max-w-7xl mx-auto">
               <div className="px-4 sm:px-6 pt-4 pb-2">
                 <Dialog.Title
                   as="h3"
@@ -140,10 +143,10 @@ const TestCaseInfoModal = ({
                     <div className="flex flex-col gap-2">
                       <button
                         className={classNames(
-                          'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
+                          'inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none',
                           inputDownloadURL === null
-                            ? 'bg-gray-700'
-                            : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
+                            ? 'cursor-not-allowed'
+                            : 'focus:ring-2 focus:ring-[color:var(--accent)]'
                         )}
                         disabled={inputDownloadURL === null}
                         onClick={() => {
@@ -160,10 +163,10 @@ const TestCaseInfoModal = ({
                       </button>
                       <button
                         className={classNames(
-                          'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
+                          'inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none',
                           outputDownloadURL === null
-                            ? 'bg-gray-700'
-                            : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
+                            ? 'cursor-not-allowed'
+                            : 'focus:ring-2 focus:ring-[color:var(--accent)]'
                         )}
                         disabled={outputDownloadURL === null}
                         onClick={() => {
@@ -180,10 +183,10 @@ const TestCaseInfoModal = ({
                       </button>
                       <button
                         className={classNames(
-                          'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
+                          'inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none',
                           inputDownloadURL === null
-                            ? 'bg-gray-700'
-                            : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
+                            ? 'cursor-not-allowed'
+                            : 'focus:ring-2 focus:ring-[color:var(--accent)]'
                         )}
                         disabled={inputDownloadURL === null}
                         onClick={() => {
@@ -197,10 +200,10 @@ const TestCaseInfoModal = ({
                       </button>
                       <button
                         className={classNames(
-                          'inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none',
+                          'inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none',
                           outputDownloadURL === null
-                            ? 'bg-gray-700'
-                            : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500'
+                            ? 'cursor-not-allowed'
+                            : 'focus:ring-2 focus:ring-[color:var(--accent)]'
                         )}
                         disabled={outputDownloadURL === null}
                         onClick={() => {
@@ -223,7 +226,7 @@ const TestCaseInfoModal = ({
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
-                  className="rounded-md text-gray-200 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="rounded-md theme-text-muted hover:text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                   onClick={closeWithoutSaving}
                 >
                   <span className="sr-only">Close</span>
@@ -245,51 +248,24 @@ const USACOTestCase = ({
   data: TestCase;
   onClick?: () => void;
 }) => {
-  const containerClasses =
-    data.title?.toLowerCase() === 'correct answer'
-      ? 'bg-green-700 border-green-700'
-      : data.title === 'Did not run'
-        ? 'bg-gray-700 border-gray-700'
-        : data.title?.toLowerCase()?.includes('partially')
-          ? 'bg-yellow-700 border-yellow-700'
-          : 'bg-red-700 border-red-700';
-  const textColor =
-    data.title?.toLowerCase() === 'correct answer'
-      ? 'text-green-100'
-      : data.title?.toLowerCase()?.includes('partially')
-        ? 'text-yellow-100'
-        : 'text-red-100';
+  const display = getTestCaseStatusDisplay(data.title);
+  const StatusIcon = display.Icon;
   return (
     <div
       className={classNames(
-        `m-1 p-1 inline-block w-[5.5rem] bg-opacity-25 border-opacity-50 border relative rounded-[4px]`,
-        containerClasses,
+        'relative m-1 inline-block w-[5.5rem] rounded-[4px] border-[0.75px] p-1',
+        display.colorClass,
+        display.badgeSurfaceClass,
+        display.badgeBorderClass,
         onClick ? 'hover:cursor-pointer' : ''
       )}
       title={capitalize(data.title)}
       onClick={onClick ?? (() => {})}
     >
       <div
-        className={`font-semibold flex items-center justify-center ${textColor} pt-1`}
+        className={`flex items-center justify-center pt-1 font-semibold ${display.surfaceTextClass}`}
       >
-        {data.symbol === '✓' && (
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'check' }}
-            className="inline w-6 h-6"
-          />
-        )}
-        {data.symbol === 'x' && (
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'xmark' }}
-            className="inline w-6 h-6"
-          />
-        )}
-        {data.symbol === '~' && (
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'check' }}
-            className="inline w-6 h-6"
-          />
-        )}
+        <StatusIcon className="inline h-6 w-6" />
       </div>
       <div>
         <div className="flex justify-end">
@@ -298,7 +274,7 @@ const USACOTestCase = ({
           )}
         </div>
         <div className="flex items-center justify-between">
-          <span className={`${textColor} text-[0.8125rem] font-bold leading-3`}>
+          <span className="text-[0.8125rem] font-bold leading-3">
             {data.trialNum}
           </span>
           <span className={`text-[0.625rem] leading-3`}>{data.time}</span>
@@ -354,52 +330,25 @@ export default function USACOResults({
   const [selectedTestCase, setSelectedTestCase] = useState<TestCase | null>(
     null
   );
-
+  const resultDisplay = getSubmissionStatusDisplay(data);
+  const ResultIcon = resultDisplay.Icon;
   return (
     <div className="mt-3">
       <div className="pb-3">
-        <div className="flex items-center font-medium text-gray-200 border-gray-700 space-x-2">
+        <div className="theme-text theme-border flex items-center space-x-2 font-medium">
           <span>
-            {!['error', 'resolved'].includes(data.statusCode) && (
-              <FontAwesomeIcon
-                icon={{ prefix: 'fas', iconName: 'gear' }}
-                className="w-3.5 h-3.5 inline text-gray-400 animate-spin-slow"
-              />
-            )}
-            {data.statusCode === 'error' && (
-              <FontAwesomeIcon
-                icon={{ prefix: 'fas', iconName: 'exclamation-triangle' }}
-                className="text-yellow-500 inline w-3.5 h-3.5"
-              />
-            )}
-            {data.statusCode === 'resolved' &&
-              data.message?.toLowerCase() === 'correct answer' && (
-                <FontAwesomeIcon
-                  icon={{ prefix: 'fas', iconName: 'check' }}
-                  className="text-green-500 inline w-3.5 h-3.5"
-                />
-              )}
-            {data.statusCode === 'resolved' &&
-              data.message?.toLowerCase() !== 'correct answer' &&
-              data.message?.toLowerCase()?.includes('partially') && (
-                <FontAwesomeIcon
-                  icon={{ prefix: 'fas', iconName: 'check' }}
-                  className="text-yellow-500 inline w-3.5 h-3.5"
-                />
-              )}
-            {data.statusCode === 'resolved' &&
-              data.message?.toLowerCase() !== 'correct answer' &&
-              !data.message?.toLowerCase()?.includes('partially') && (
-                <FontAwesomeIcon
-                  icon={{ prefix: 'fas', iconName: 'xmark' }}
-                  className="w-3.5 h-3.5 inline text-red-500"
-                />
-              )}
+            <ResultIcon
+              className={`inline h-6 w-6 ${resultDisplay.colorClass} ${
+                resultDisplay.spins
+                  ? resultDisplay.surfaceTextClass
+                  : resultDisplay.standaloneClass
+              } ${resultDisplay.spins ? 'animate-spin' : ''}`}
+            />
           </span>
           <span className="break-words overflow-hidden text-[0.92rem] leading-[1.5rem]">
             <span className="font-semibold">
               {data.message ? capitalize(data.message) : null}
-              {!['error', 'resolved'].includes(data.statusCode) && '...'}
+              {resultDisplay.spins && '...'}
             </span>
             {(data.time || data.memory) && ' ('}
             {data.time && '' + data.time}
@@ -409,7 +358,7 @@ export default function USACOResults({
           </span>
         </div>
         {submissionTime && (
-          <div className="text-sm text-gray-300">
+          <div className="theme-text-muted text-sm">
             {startTime ? (
               <span>
                 Time:{' '}
@@ -431,7 +380,7 @@ export default function USACOResults({
         {data.link && (
           <a
             href={data.link}
-            className="text-indigo-300 hover:underline break-all"
+            className="text-[color:var(--accent-hover)] hover:text-[color:var(--accent)] hover:underline break-all"
             target="_blank"
             rel="noreferrer"
           >
@@ -449,19 +398,19 @@ export default function USACOResults({
       )}
 
       {(output || data.testCases) && (
-        <div className="border-t -mx-4 border-gray-700 " />
+        <div className="border-t -mx-4 theme-border " />
       )}
       {output && (
         <div className="pt-3">
-          <pre className="font-mono text-gray-300 leading-tight mt-2 text-sm bg-gray-900 rounded p-3 border border-gray-700 overflow-auto">
+          <pre className="font-mono theme-text leading-tight mt-2 text-sm theme-surface-muted rounded p-3 border theme-border overflow-auto">
             {output}
           </pre>
           {equalUpToTrim && (
-            <p className="font-bold text-gray-200 mt-3">
+            <p className="font-bold theme-text mt-3">
               Your output contains extra whitespace. This is an error; see{' '}
               <a
                 href="https://usaco.guide/general/io?lang=cpp#usaco-note---extra-whitespace"
-                className="text-indigo-300"
+                className="text-[color:var(--accent-hover)] hover:text-[color:var(--accent)]"
               >
                 here
               </a>{' '}

@@ -24,7 +24,7 @@ const TextInput = ({
     <div>
       <label
         htmlFor={id}
-        className="block text-[0.92rem] font-medium text-gray-300"
+        className="block text-[0.92rem] font-medium theme-text-muted"
       >
         {label}
       </label>
@@ -123,7 +123,7 @@ const LoadResultsModal = ({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div className="inline-block bg-gray-800 border border-gray-700 text-white md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
+            <div className="inline-block theme-surface-raised border theme-border md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
               <div className="px-4 sm:px-6 pt-4 pb-2">
                 <Dialog.Title
                   as="h3"
@@ -150,7 +150,7 @@ const LoadResultsModal = ({
                 <div className="flex items-center space-x-2.5">
                   <button
                     type="button"
-                    className="inline-flex items-center px-4 py-2 border border-gray-700 shadow-sm text-[0.92rem] font-medium rounded-md text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="inline-flex items-center px-4 py-2 border shadow-sm text-[0.92rem] font-medium rounded-md theme-button-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                     onClick={confirmedClose}
                   >
                     Cancel
@@ -158,7 +158,7 @@ const LoadResultsModal = ({
                   <CopyCodeButton />
                   <button
                     type="button"
-                    className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--surface-bg-raised)] focus:ring-[color:var(--accent)]"
                     onClick={() => {
                       registerSubmission(
                         fileData.id,
@@ -176,7 +176,7 @@ const LoadResultsModal = ({
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
-                  className="rounded-md text-gray-200 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="rounded-md theme-text-muted hover:text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                   onClick={onClose}
                 >
                   <span className="sr-only">Close</span>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { CheckIcon, DocumentDuplicateIcon } from '@heroicons/react/20/solid';
 
 export const CopyButton = ({
   btnLabel,
@@ -31,19 +31,13 @@ export const CopyButton = ({
     >
       {copied === 0 && (
         <>
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'copy' }}
-            className="mr-2 w-4 h-4 inline"
-          />
+          <DocumentDuplicateIcon className="mr-2 inline h-4 w-4" />
           {btnLabel}
         </>
       )}
       {copied > 0 && (
         <>
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'check' }}
-            className="mr-2 w-4 h-4 inline"
-          />
+          <CheckIcon className="mr-2 inline h-4 w-4" />
           {copiedLabel}
         </>
       )}

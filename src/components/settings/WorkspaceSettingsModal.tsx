@@ -16,15 +16,18 @@ import {
 import { FileSettings, useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { updateUserSettings } from '../../scripts/updateSettings';
+import { DEFAULT_FONT_SIZE_EDITOR } from '../../constants/editorConstants';
 
 export interface SettingsDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onResetLayout: () => void;
 }
 
 export const WorkspaceSettingsModal = ({
   isOpen,
   onClose,
+  onResetLayout,
 }: SettingsDialogProps): JSX.Element => {
   const {
     userData,
@@ -57,6 +60,7 @@ export const WorkspaceSettingsModal = ({
   const [defaultLanguage, setDefaultLanguage] = useState<Language>('cpp');
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
   const [tabSize, setTabSize] = useState<number>(-1);
+  const [fontSize, setFontSize] = useState<number>(DEFAULT_FONT_SIZE_EDITOR);
   const [lightMode, setLightMode] = useState<boolean>(false);
   const [rainbowIndent, setRainbowIndent] = useState<boolean>(false);
   const [manualSubmission, setManualSubmission] = useState<boolean>(false);
@@ -75,6 +79,7 @@ export const WorkspaceSettingsModal = ({
       setDefaultLanguage(userData.defaultLanguage ?? '');
       setEditorMode(userData.editorMode);
       setTabSize(userData.tabSize);
+      setFontSize(userData.fontSize);
       setLightMode(userData.lightMode);
       setRainbowIndent(userData.rainbowIndent);
       setManualSubmission(userData.manualSubmission);
@@ -138,6 +143,7 @@ export const WorkspaceSettingsModal = ({
       discordID,
       editorMode,
       tabSize,
+      fontSize,
       lightMode,
       rainbowIndent,
       manualSubmission,
@@ -185,7 +191,7 @@ export const WorkspaceSettingsModal = ({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div className="inline-block bg-[var(--panel-bg)] border border-[var(--border-color)] text-[color:var(--text-primary)] md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
+            <div className="ui-panel relative z-10 inline-block w-full overflow-hidden border text-left shadow-xl transition-all md:rounded-lg sm:my-8 sm:max-w-2xl">
               <div className="px-4 sm:px-6 pt-4 pb-2">
                 <Dialog.Title
                   as="h3"
@@ -200,17 +206,26 @@ export const WorkspaceSettingsModal = ({
                   onWorkspaceSettingsChange={onChange}
                   userPermission={userPermission || 'READ'}
                 />
-                <div className="flex items-center space-x-2.5">
+                <div className="border-t border-line pt-4">
                   <button
                     type="button"
-                    className="inline-flex items-center px-4 py-2 border border-[var(--border-color)] shadow-sm text-[0.92rem] font-medium rounded-md text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="ui-button-secondary px-4 py-2 text-[0.92rem]"
+                    onClick={onResetLayout}
+                  >
+                    Reset workspace layout
+                  </button>
+                </div>
+                <div className="flex items-center justify-end space-x-2.5">
+                  <button
+                    type="button"
+                    className="ui-button-secondary px-4 py-2 text-[0.92rem]"
                     onClick={closeWithoutSaving}
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
-                    className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="ui-button-primary px-4 py-2"
                     onClick={saveAndClose}
                   >
                     Save
@@ -220,7 +235,7 @@ export const WorkspaceSettingsModal = ({
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
-                  className="rounded-md text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="ui-icon-button"
                   onClick={closeWithoutSaving}
                 >
                   <span className="sr-only">Close</span>

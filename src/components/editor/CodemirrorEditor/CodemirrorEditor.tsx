@@ -13,9 +13,9 @@ import { CodemirrorEditorHandle, EditorProps } from '../editor-types';
 import * as Y from 'yjs';
 import useLspClient from './lsp';
 
-import './codemirror-styles.css';
 import { useEffect, useMemo, useState } from 'react';
 import { yCollab } from 'y-codemirror.next';
+import { DEFAULT_FONT_SIZE_EDITOR } from '../../../constants/editorConstants';
 
 function createEditorHandle(view: EditorView): CodemirrorEditorHandle {
   return {
@@ -119,7 +119,9 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
       theme={props.theme === 'light' ? githubLight : vscodeDark}
       onChange={(val: string, _) => props.onChange?.(val)}
       height="100%"
-      style={{ fontSize: '13px' }}
+      style={{
+        fontSize: `${props.editorOptions?.fontSize ?? DEFAULT_FONT_SIZE_EDITOR}px`,
+      }}
       readOnly={props.editorOptions?.readOnly ?? false}
       extensions={extensions}
       onCreateEditor={view => props.onReady?.(createEditorHandle(view))}

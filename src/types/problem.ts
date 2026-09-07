@@ -31,7 +31,9 @@ export const platforms = [
 
 export type Platform = (typeof platforms)[number];
 
-export type Language = 'cpp' | 'py' | 'java';
+export const languages = ['cpp', 'py', 'java'] as const;
+
+export type Language = (typeof languages)[number];
 
 export type Hint = string | Partial<Record<Language, string>>;
 

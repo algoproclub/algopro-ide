@@ -14,7 +14,7 @@ function createLspUrl(
   compilerOptions: string | null
 ) {
   const url = new URL(
-    `wss://thecodingwizard--lsp-server-main.modal.run:443/${
+    `${process.env.NEXT_PUBLIC_LSP_URL}/${
       language === 'cpp' ? 'clangd' : 'pyright'
     }`
   );
@@ -171,7 +171,7 @@ export default function useLspClient(
     }
 
     async function connect() {
-      notifyLsp('Connecting to server...');
+      notifyLsp('Connecting to server…');
 
       try {
         const transport = await simpleWebSocketTransport(

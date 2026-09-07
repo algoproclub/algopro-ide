@@ -33,9 +33,6 @@ yarn-error.log*
 .idea
 *.log
 .next
-/test-results/
-/playwright-report/
-/playwright/.cache/
 
 # firebase service account key
 serviceAccountKey.json
@@ -44,3 +41,5 @@ serviceAccountKey.json
 accounts.json
 
 tsconfig.tsbuildinfo
+
+next-env.d.ts

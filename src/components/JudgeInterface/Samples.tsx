@@ -5,9 +5,14 @@ import { useEditorContext } from '../../context/EditorContext';
 import LoadingIndicator from '../LoadingIndicator';
 import useUserPermission from '../../hooks/useUserPermission';
 import classNames from 'classnames';
+import useCodeRunActive from '../../hooks/useCodeRunActive';
 
 export function getSampleIndex(inputTab: string): number {
   return inputTab.length === 6 ? 1 : +inputTab.substring(7);
+}
+
+export function getSampleTabId(sampleCount: number, index: number): string {
+  return sampleCount === 1 ? 'Sample' : `Sample ${index + 1}`;
 }
 
 export const PreBox = ({
@@ -28,21 +33,23 @@ export const PreBox = ({
     <div
       className={classNames(
         // overflow-x-hidden allows overflow-auto below to function properly
-        'mx-0 rounded-md bg-[#121212] border border-t-0 border-gray-700 flex flex-col overflow-x-hidden',
+        'mx-0 flex flex-col overflow-x-hidden rounded-md border border-t-0 border-line bg-canvas text-content',
         roundedBottom ? '' : 'rounded-b-none',
         roundedTop ? '' : 'rounded-t-none'
       )}
     >
       <div
         className={classNames(
-          'py-2.5 px-4 bg-gray-800 border-b border-t rounded-t-md border-gray-700 font-semibold text-sm',
+          'rounded-t-md border-b border-t border-line bg-panel-muted px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-content-secondary',
           roundedTop ? '' : 'rounded-t-none'
         )}
       >
         <span>{title}</span>
       </div>
       <div className="overflow-auto">
-        <pre className="px-4 py-3">{text}</pre>
+        <pre className="px-4 py-3 font-mono text-sm leading-6 tabular-nums">
+          {text}
+        </pre>
       </div>
     </div>
   );
@@ -62,23 +69,24 @@ export default function Samples({
   const sample = samples[index - 1];
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
+  const isCodeRunActive = useCodeRunActive(fileData.codeRun);
 
   return (
-    <div className="text-sm">
-      <div className="border-b border-[#363636] -mx-4 px-4 pb-4">
+    <div className="relative h-full overflow-y-auto p-4 pb-0 text-sm">
+      <div className="-mx-4 border-b border-line-muted px-4 pb-4">
         <button
           type="button"
           title={
             readOnly ? "You can't run code in a view-only document." : undefined
           }
-          disabled={readOnly || fileData.isCodeRunning}
-          className="rounded-md relative flex-shrink-0 inline-flex items-center px-4 py-2.5 w-40 shadow-sm text-sm font-medium text-white bg-indigo-900 hover:bg-indigo-800 focus:bg-indigo-800 focus:outline-none disabled:text-indigo-300/50 disabled:bg-indigo-900/50 disabled:cursor-not-allowed"
+          disabled={readOnly || isCodeRunActive}
+          className="rounded-md relative flex-shrink-0 inline-flex items-center px-4 py-2.5 w-40 shadow-sm text-sm font-medium theme-button-primary focus:outline-none disabled:cursor-not-allowed"
           onClick={handleRunCode}
         >
-          {fileData.isCodeRunning ? (
+          {isCodeRunActive ? (
             <>
               <LoadingIndicator className="h-5 w-5 p-0.5 mr-1.5" />
-              <span className="text-center flex-1">Running...</span>
+              <span className="flex-1 text-center">Running…</span>
             </>
           ) : (
             <>

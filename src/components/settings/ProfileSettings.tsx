@@ -7,6 +7,7 @@ import ProfileStatus from './ProfileStatus';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import defaultCode from '../../scripts/defaultCode';
+import { DEFAULT_FONT_SIZE_EDITOR } from '../../constants/editorConstants';
 
 const ProfileSettings = ({
   isOpen,
@@ -22,6 +23,7 @@ const ProfileSettings = ({
   const [defaultLanguage, setDefaultLanguage] = useState<Language>('cpp');
   const [editorMode, setEditorMode] = useState<EditorMode>('Normal');
   const [tabSize, setTabSize] = useState<number>(-1);
+  const [fontSize, setFontSize] = useState<number>(DEFAULT_FONT_SIZE_EDITOR);
   const [lightMode, setLightMode] = useState<boolean>(false);
   const [rainbowIndent, setRainbowIndent] = useState<boolean>(false);
   const [manualSubmission, setManualSubmission] = useState<boolean>(false);
@@ -48,6 +50,7 @@ const ProfileSettings = ({
       setDefaultLanguage(userData?.defaultLanguage ?? 'cpp');
       setEditorMode(userData?.editorMode ?? 'Normal');
       setTabSize(userData?.tabSize ?? -1);
+      setFontSize(userData?.fontSize ?? DEFAULT_FONT_SIZE_EDITOR);
       setLightMode(userData?.lightMode ?? false);
       setRainbowIndent(userData?.rainbowIndent ?? false);
       setManualSubmission(userData?.manualSubmission ?? false);
@@ -126,6 +129,7 @@ const ProfileSettings = ({
       discordID,
       editorMode,
       tabSize,
+      fontSize,
       lightMode,
       rainbowIndent,
       manualSubmission,
@@ -170,7 +174,7 @@ const ProfileSettings = ({
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
             <div
-              className="inline-block bg-[var(--panel-bg)] text-[color:var(--text-primary)] md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 w-full"
+              className="relative z-10 inline-block w-full overflow-hidden bg-panel text-left text-content shadow-xl transition-all md:rounded-lg sm:my-8"
               style={{ maxWidth: '1100px' }}
             >
               <div className="px-4 sm:px-6 pt-4 pb-2">
@@ -184,7 +188,7 @@ const ProfileSettings = ({
               <div className="p-4 sm:p-6 space-y-3">
                 <div className="flex flex-col lg:flex-row gap-10">
                   {/* User Settings Section */}
-                  <div className="flex-1 bg-[var(--panel-bg-alt)] p-6 rounded-lg border border-[var(--border-color)] shadow-md overflow-auto">
+                  <div className="flex-1 overflow-auto rounded-lg border border-line bg-panel-muted p-6 shadow-md">
                     <UserSettings
                       name={name}
                       onNameChange={name => setName(name)}
@@ -218,6 +222,11 @@ const ProfileSettings = ({
                         setTabSize(size);
                         dirtyRef.current = true;
                       }}
+                      fontSize={fontSize}
+                      onFontSizeChange={size => {
+                        setFontSize(size);
+                        dirtyRef.current = true;
+                      }}
                       lightMode={lightMode}
                       onLightModeChange={lightMode => {
                         setLightMode(lightMode);
@@ -244,14 +253,14 @@ const ProfileSettings = ({
                     <div className="flex justify-end space-x-3 mt-6">
                       <button
                         type="button"
-                        className="px-4 py-2 border border-[var(--border-color)] rounded-md text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] focus:ring-2 focus:ring-indigo-500"
+                        className="ui-button-secondary px-4 py-2"
                         onClick={closeWithoutSaving}
                       >
                         Cancel
                       </button>
                       <button
                         type="button"
-                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md shadow-md focus:ring-2 focus:ring-indigo-500"
+                        className="ui-button-primary px-4 py-2"
                         onClick={saveAndClose}
                       >
                         Save
@@ -268,7 +277,7 @@ const ProfileSettings = ({
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
-                  className="rounded-md text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="ui-icon-button"
                   onClick={closeWithoutSaving}
                 >
                   <span className="sr-only">Close</span>

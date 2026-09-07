@@ -1,0 +1,46 @@
+.success {
+  --status-color: var(--color-status-success);
+  --status-bg: var(--color-status-success-surface);
+  --status-text: var(--color-status-success-content);
+}
+
+.danger {
+  --status-color: var(--color-status-danger);
+  --status-bg: var(--color-status-danger-surface);
+  --status-text: var(--color-status-danger-content);
+}
+
+.warning {
+  --status-color: var(--color-status-warning);
+  --status-bg: var(--color-status-warning-surface);
+  --status-text: var(--color-status-warning-content);
+}
+
+.accent {
+  --status-color: var(--color-status-accent);
+  --status-bg: var(--color-status-accent-surface);
+  --status-text: var(--color-status-accent-content);
+}
+
+.muted {
+  --status-color: var(--color-status-neutral);
+  --status-bg: var(--color-status-neutral-surface);
+  --status-text: var(--color-status-neutral-content);
+}
+
+.standalone {
+  color: var(--status-color);
+}
+
+.surfaceText {
+  color: var(--status-text);
+}
+
+.badgeSurface {
+  color: var(--status-text);
+  background-color: var(--status-bg);
+}
+
+.badgeBorder {
+  border-color: var(--status-color);
+}

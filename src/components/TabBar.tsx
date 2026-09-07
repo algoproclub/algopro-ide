@@ -1,59 +1,107 @@
+import { Tab } from '@headlessui/react';
 import classNames from 'classnames';
 import React from 'react';
 
-export interface TabBarProps {
-  tabs: {
-    label: string;
-    value: string;
-    highlight?: boolean;
-  }[];
-  activeTab: string;
-  onTabSelect?: (tab: { label: string; value: string }) => void;
-  homepage?: boolean;
+export interface TabBarItemProps<Id extends string> {
+  id: Id;
+  label: React.ReactNode;
+  highlight?: boolean;
+  unmount?: boolean;
+  children: React.ReactNode;
 }
 
-export const TabBar = ({
-  tabs,
-  activeTab,
-  onTabSelect,
-  homepage,
-}: TabBarProps): JSX.Element => {
-  tabs.find(tab => tab.value === activeTab)!.highlight = false;
-  const defaultTabBarClass =
-    'bg-[var(--panel-bg-alt)] border-b border-[var(--border-color)]';
-  const activeTabClass = homepage
-    ? 'bg-[var(--surface-active)] text-[color:var(--text-primary)]'
-    : 'bg-[var(--panel-bg)] text-[color:var(--text-primary)]';
-  const inactiveTabClass =
-    'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] active:bg-[var(--hover-bg)]';
+export interface TabBarProps<Id extends string> {
+  selectedId: Id;
+  onSelectionChange?: (id: Id) => void;
+  ariaLabel: string;
+  children: React.ReactNode;
+  listClassName?: string;
+  tabClassName?: string;
+  activeTabClassName?: string;
+  inactiveTabClassName?: string;
+  highlightedTabClassName?: string;
+  panelsClassName?: string;
+}
+
+function TabBarItem<Id extends string>({
+  children,
+  unmount,
+}: TabBarItemProps<Id>): JSX.Element {
+  return (
+    <Tab.Panel unmount={unmount} className="h-full">
+      {children}
+    </Tab.Panel>
+  );
+}
+
+function TabBarRoot<Id extends string>({
+  selectedId,
+  onSelectionChange,
+  ariaLabel,
+  children,
+  listClassName = 'border-b border-line bg-panel-muted px-1',
+  tabClassName,
+  activeTabClassName = 'border-content-secondary bg-surface-raised text-content',
+  inactiveTabClassName = 'border-transparent text-content-muted hover:border-line-strong hover:bg-surface-hover hover:text-content',
+  highlightedTabClassName = 'border-transparent font-semibold text-warning',
+  panelsClassName,
+}: TabBarProps<Id>): JSX.Element {
+  const items = React.Children.toArray(children).filter(
+    (child): child is React.ReactElement<TabBarItemProps<Id>> =>
+      React.isValidElement(child) && child.type === TabBarItem
+  );
+  const matchingIndex = items.findIndex(item => item.props.id === selectedId);
+  const selectedIndex = Math.max(0, matchingIndex);
+  const fallbackId = items[0]?.props.id;
+
+  React.useEffect(() => {
+    if (matchingIndex === -1 && fallbackId) {
+      onSelectionChange?.(fallbackId);
+    }
+  }, [fallbackId, matchingIndex, onSelectionChange]);
 
   return (
-    <div
-      className={`flex whitespace-nowrap overflow-auto ${
-        homepage ? '' : defaultTabBarClass
-      }`}
+    <Tab.Group
+      selectedIndex={selectedIndex}
+      onChange={index => {
+        const selectedItem = items[index];
+        if (selectedItem) onSelectionChange?.(selectedItem.props.id);
+      }}
     >
-      <div className={`flex-1 ${homepage ? 'space-x-1' : ''}`}>
-        {tabs.map(tab => (
-          <button
-            key={tab.value}
-            className={classNames(
-              tab.value === activeTab
-                ? activeTabClass
-                : `${tab.highlight ? 'text-yellow-400 font-bold' : inactiveTabClass}`,
-              `px-4 py-1 ${
-                homepage ? 'rounded-t-md' : ''
-              } text-sm focus:outline-none transition`
-            )}
-            onClick={() => {
-              tab.highlight = false;
-              if (onTabSelect) onTabSelect(tab);
-            }}
+      <Tab.List
+        aria-label={ariaLabel}
+        className={classNames(
+          'flex overflow-auto whitespace-nowrap',
+          listClassName
+        )}
+      >
+        {items.map(item => (
+          <Tab
+            key={item.props.id}
+            className={({ selected }) =>
+              classNames(
+                selected
+                  ? activeTabClassName
+                  : item.props.highlight
+                    ? highlightedTabClassName
+                    : inactiveTabClassName,
+                '-mb-px border-b-2 px-3 py-1.5 text-xs font-medium transition-colors outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-focus',
+                tabClassName
+              )
+            }
           >
-            {tab.label + (tab.highlight ? ' *' : '')}
-          </button>
+            {({ selected }) => (
+              <>
+                {item.props.label}
+                {item.props.highlight && !selected && ' *'}
+              </>
+            )}
+          </Tab>
         ))}
-      </div>
-    </div>
+      </Tab.List>
+      <Tab.Panels className={panelsClassName}>{items}</Tab.Panels>
+    </Tab.Group>
   );
-};
+}
+
+export const TabBar = Object.assign(TabBarRoot, { Item: TabBarItem });

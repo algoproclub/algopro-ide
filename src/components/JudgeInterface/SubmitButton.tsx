@@ -1,10 +1,10 @@
-import classNames from 'classnames';
 import React, { Fragment, useEffect, useState } from 'react';
 import LoadingIndicator from '../LoadingIndicator';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useEditorContext } from '../../context/EditorContext';
 import { get, getDatabase, ref, update } from 'firebase/database';
 import { Dialog, Transition } from '@headlessui/react';
+import { EllipsisVerticalIcon } from '@heroicons/react/20/solid';
+import { ArrowUpTrayIcon, NoSymbolIcon } from '@heroicons/react/20/solid';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import Checkbox from '../Checkbox';
 
@@ -70,7 +70,7 @@ const SolvedStatusModal = ({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div className="inline-block bg-gray-800 border border-gray-700 text-white md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
+            <div className="inline-block theme-surface-raised border theme-border md:rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-2xl w-full">
               <div className="px-4 sm:px-6 pt-4 pb-2">
                 <Dialog.Title
                   as="h3"
@@ -95,14 +95,14 @@ const SolvedStatusModal = ({
                 <div className="flex items-center space-x-2.5">
                   <button
                     type="button"
-                    className="inline-flex items-center px-4 py-2 border border-gray-700 shadow-sm text-[0.92rem] font-medium rounded-md text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="ui-button-secondary px-4 py-2 text-[0.92rem]"
                     onClick={onClose}
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
-                    className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="ui-button-primary px-4 py-2"
                     onClick={() => {
                       handleSave();
                       onClose();
@@ -115,7 +115,7 @@ const SolvedStatusModal = ({
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
-                  className="rounded-md text-gray-200 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="ui-icon-button"
                   onClick={onClose}
                 >
                   <span className="sr-only">Close</span>
@@ -139,10 +139,6 @@ export default function SubmitButton({
   isDisabled: boolean;
   onClick: React.MouseEventHandler<HTMLButtonElement>;
 }): JSX.Element {
-  const loadingClasses =
-    'cursor-not-allowed bg-opacity-80 text-white opacity-80';
-  const normalClasses =
-    'text-white bg-gray-800 border-x hover:bg-[#363636] active:bg-gray-700 active:border-gray-600';
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -150,42 +146,31 @@ export default function SubmitButton({
       <SolvedStatusModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
       {!isLoading && !isDisabled && (
         <button
-          className={`z-20 absolute -translate-y-1/2 top-1/2 right-2 p-1.5 rounded-full flex items-center justify-center hover:bg-[#363636] active:bg-gray-700`}
+          aria-label="Submission options"
+          className="ui-focus absolute right-0.5 top-1/2 z-20 flex h-7 w-8 -translate-y-1/2 items-center justify-center rounded-r border-l border-line-strong text-content-muted hover:bg-surface-hover hover:text-content active:bg-surface-active"
           onClick={() => setIsOpen(prevOpen => !prevOpen)}
         >
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'ellipsis-vertical' }}
-            className={`w-3.5 h-3.5 inline text-gray-200 transition duration-200`}
-          />
+          <EllipsisVerticalIcon className="h-4 w-4" />
         </button>
       )}
       <button
-        className={classNames(
-          'relative z-10 border-x border-gray-700 bg-gray-800 flex items-center justify-left pl-4 sm:pl-6 w-full py-2 text-sm focus:outline-none min-w-[8rem] sm:min-w-[9rem]',
-          isLoading || isDisabled ? loadingClasses : normalClasses
-        )}
+        className="ui-focus relative z-10 m-0.5 flex h-8 min-w-[7.5rem] items-center justify-start rounded-md border border-line-strong bg-surface-active pl-3 pr-10 text-sm font-semibold text-content shadow-sm transition-colors hover:bg-surface-hover active:bg-surface-active disabled:cursor-not-allowed disabled:text-content-disabled disabled:opacity-80 sm:min-w-[8.5rem]"
         disabled={isLoading || isDisabled}
         onClick={onClick}
       >
         {isLoading ? (
           <>
-            <LoadingIndicator className="h-4 w-4 p-0.5 !mx-1.5" />
-            <span>Waiting...</span>
+            <LoadingIndicator className="!mx-1.5 h-4 w-4 p-0.5" />
+            <span>Waiting…</span>
           </>
         ) : isDisabled ? (
           <>
-            <FontAwesomeIcon
-              icon={{ prefix: 'fas', iconName: 'ban' }}
-              className="mr-2.5 inline w-3.5 h-3.5"
-            />
+            <NoSymbolIcon className="mr-2 h-4 w-4" />
             Cannot Submit
           </>
         ) : (
           <>
-            <FontAwesomeIcon
-              icon={{ prefix: 'fas', iconName: 'paper-plane' }}
-              className="mr-2.5 inline w-3.5 h-3.5"
-            />
+            <ArrowUpTrayIcon className="mr-2 h-4 w-4" />
             <span>Submit</span>
           </>
         )}
