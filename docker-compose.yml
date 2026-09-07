@@ -83,6 +83,7 @@ services:
       - YJS_API_URL=http://yjs:1234
       - YJS_SECURITY_KEY=example-yjs-security-key
       - LOGIN_BOT_URL=http://login-bot:3100
+      - NEXT_PUBLIC_LSP_URL=${NEXT_PUBLIC_LSP_URL}
     ports:
       - '3000:3000'
       - '127.0.0.1:9229:9229'
