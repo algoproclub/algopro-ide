@@ -4,6 +4,7 @@ import 'tailwindcss/tailwind.css';
 import 'katex/dist/katex.min.css';
 import '../src/styles/globals.css';
 import '../src/styles/yjs.css';
+import '../src/styles/docs.css';
 import * as firebase from 'firebase/app';
 import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';

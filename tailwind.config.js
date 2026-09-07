@@ -9,6 +9,8 @@ module.exports = {
     './pages/**/*.js',
     './pages/**/*.ts',
     './pages/**/*.tsx',
+    './docs/**/*.mdx',
+    './docs/**/*.tsx',
   ],
   theme: {
     extend: {

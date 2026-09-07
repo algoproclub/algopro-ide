@@ -16,6 +16,6 @@
     "jsx": "react-jsx",
     "incremental": true
   },
-  "include": ["./src", "./pages"],
+  "include": ["./src", "./pages", "./docs/components"],
   "exclude": ["node_modules"]
 }

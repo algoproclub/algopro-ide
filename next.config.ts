@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import createMDX from '@next/mdx';
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
@@ -45,4 +46,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default createMDX({})(nextConfig);

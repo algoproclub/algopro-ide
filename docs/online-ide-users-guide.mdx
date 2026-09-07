@@ -1,0 +1,287 @@
+import { StatusLegend } from './components/StatusLegend';
+import { GuideCover } from './components/GuideCover';
+import { GuideFigure } from './components/GuideFigure';
+import { GuideLayout } from './components/GuideLayout';
+import { GuideToc } from './components/GuideToc';
+import studentDashboardStatuses from './img/student-dashboard-statuses.png';
+import studentWorkspace from './img/student-workspace.png';
+import studentFileMenu from './img/student-file-menu.png';
+import studentSampleInput from './img/student-sample-input.png';
+import studentCustomInput from './img/student-custom-input.png';
+import studentHints from './img/student-hints.png';
+import studentSolutions from './img/student-solutions.png';
+import studentTaskSwitcher from './img/student-task-switcher.png';
+import studentNewFile from './img/student-new-file.png';
+import studentTestcaseDetails from './img/student-testcase-details.png';
+import teacherGroupsList from './img/teacher-groups-list.png';
+import teacherInvite from './img/teacher-invite.png';
+import teacherGroupAddStudent from './img/teacher-group-add-student.png';
+import teacherGroupMembers from './img/teacher-group-members.png';
+import teacherGroupAddTasks from './img/teacher-group-add-tasks.png';
+import teacherClassEditor from './img/teacher-class-editor.png';
+import teacherDashboard from './img/teacher-dashboard.png';
+import teacherRecentActivity from './img/teacher-recent-activity.png';
+
+<GuideLayout>
+
+<GuideCover />
+
+# Online IDE felhasználói útmutató
+
+Az útmutató az Algo Pro és a MATFIN Online IDE legfontosabb tanulói és tanári munkafolyamatait mutatja be.
+
+## Tartalom
+
+<GuideToc>
+
+- [Tanulói útmutató](#tanuloi-utmutato)
+  - [Egy feladat megoldásának menete](#egy-feladat-megoldasanak-menete)
+  - [Feladat megnyitása és állapotai](#feladat-megnyitasa-es-allapotai)
+  - [A munkaterület, a bemenet és a kimenet](#a-munkaterulet-a-bemenet-es-a-kimenet)
+  - [Kódírás és nyelvválasztás](#kodiras-es-nyelvvalasztas)
+  - [Megjelenés és panelméretezés](#megjelenes-es-panelmeretezes)
+  - [Futtatás és Judge results](#futtatas-es-judge-results)
+  - [Hints, Solutions és feladatváltás](#hints-solutions-es-feladatvaltas)
+  - [Saját fájl létrehozása és megosztás](#sajat-fajl-letrehozasa-es-megosztas)
+- [Tanári útmutató](#tanari-utmutato)
+  - [Iskola, csoport és óra](#iskola-csoport-es-ora)
+  - [Meghívás és csoporttagság](#meghivas-es-csoporttagsag)
+  - [Feladatok hozzáadása egy órához](#feladatok-hozzaadasa-egy-orahoz)
+  - [Előrehaladás követése](#elorehaladas-kovetese)
+  - [Recent activity](#recent-activity)
+
+</GuideToc>
+
+---
+
+<h2 id="tanuloi-utmutato">Tanulói útmutató</h2>
+
+<h3 id="egy-feladat-megoldasanak-menete">Egy feladat megoldásának menete</h3>
+
+Egy feladat megoldásának szokásos menete: nyisd meg a [`Home`](/) oldalról, olvasd el a feladatleírást, írd meg a kódot, próbáld ki mintákon és saját adatokon, végül küldd be az online értékelőnek a `Submit` gombbal.
+
+<h3 id="feladat-megnyitasa-es-allapotai">Feladat megnyitása és állapotai</h3>
+
+A kódszerkesztő a `Home` oldal `Classes` listájában, az adott feladat nevére kattintva érhető el. Az oldal alapértelmezés szerint az aktuális óra feladatait jeleníti meg, azonban a `Class` szűrő segítségével a korábbi alkalmak feladatsorai is visszanézhetők.
+
+A Verdict oszlop az utolsó beadás eredményét mutatja: az "Accepted" érték a sikeres megoldást jelzi, de a rendszer itt tájékoztat az esetlegesen hibás kódokról, a még be nem küldött, illetve a még el sem kezdett feladatokról is.
+
+<GuideFigure
+  src={studentDashboardStatuses.src}
+  caption="Óra feladatlistája különféle beadási eredményekkel."
+/>
+
+<h3 id="a-munkaterulet-a-bemenet-es-a-kimenet">
+  A kódszerkesztő, a bemenet és a kimenet
+</h3>
+
+A munkaterületen balra a kódszerkesztő, jobb felül a feladat leírása és bemenetei, jobb alul pedig a program kimenete és az értékelés látható.
+
+A bemenet (`input`) a programnak átadott adat, a kimenet (`output`) pedig a program futtatásakor kiírt válasz. A feladatleírás meghatározza a formátumukat; az értékelő a választ, valamint az idő- és memóriakorlát betartását ellenőrzi.
+
+<h3 id="kodiras-es-nyelvvalasztas">Kódírás és nyelvválasztás</h3>
+
+A kód automatikusan mentődik, így később ugyanarról a linkről vagy a `Home` oldalról folytathatod. A kódodat és a beadás eredményét a tanárod is megtekintheti, illetve ha a `Workspace Settings` menüben a `Public Read & Write` jogosultság van kiválasztva, a fájlt társaid is szerkeszthetik, ha a linket megosztod velük.
+
+<GuideFigure
+  src={studentWorkspace.src}
+  caption="Teljes tanulói munkaterület."
+/>
+
+A fájl az első megnyitásakor a `Profile Settings` → `Code settings` → `Preferred language` alatt kiválasztott programozási nyelven jön létre. Ha Pythonban dolgozol, ezt még az első feladat előtt állítsd Pythonra.
+
+A `File` → `Workspace settings` alatt később is válthatsz nyelvet. A különböző nyelveken írt kódváltozatok megmaradnak, és visszaváltáskor újra megjelennek.
+
+<h3 id="megjelenes-es-panelmeretezes">Megjelenés és panelméretezés</h3>
+
+A panelek közötti elválasztókat húzva átméretezheted a kódszerkesztőt, a feladatrészt és a kimenetet.
+
+A `Profile Settings` → `Visual settings` alatt választhatsz `Dark` és `Light` megjelenés között, és a `Font size (pixels)` opcióval itt állítható a betűméret is. Ezek a beállítások a saját fiókodhoz tartoznak.
+
+<h3 id="futtatas-es-judge-results">Futtatás és Judge results</h3>
+
+A `Run Code` a szerkesztőben lévő kódot lefuttatja teszt-bemenettel.
+
+#### Task Overview
+
+A `Task Overview` (feladat áttekintése) fülről indított `Run Code` a feladatleírásban szereplő összes minta-bemenetre lefuttatja a kódot. Ha valamelyik hibás, nyisd meg a hozzá tartozó `Sample` fület a részletekért, ekkor a lenti `stdout` mezőben a hozzá tartozó kimenet jelenik meg.
+
+#### Sample tesztesetek
+
+A `Sample` füleken a nyilvános példák bemenete és elvárt kimenete látható. Innen a `Run Code` csak a megnyitott mintát futtatja; az `stdout` a tényleges kimenetet, az alsó állapotsor a futás eredményét mutatja. A kevés nyilvános minta sikere még nem bizonyítja, hogy a megoldás minden esetre helyes.
+
+<GuideFigure
+  src={studentSampleInput.src}
+  caption="A Sample 1 tényleges futási eredménye: az stdout megnyitva, a compile output sárga jelzése és az alsó futási állapotsor."
+/>
+
+#### Saját bemenet
+
+Az `Input` fülön a `Run Code` gombbal saját bemeneti adatokkal próbálhatod ki a kódodat. Mivel az egyedi tesztekhez nem tartozik hivatalos megoldás, a rendszer itt nem ellenőrzi a megoldásod helyességét: a program kimenetét (`stdout`) neked kell kézzel ellenőrizned.
+
+<GuideFigure
+  src={studentCustomInput.src}
+  caption="Saját bemenet futtatása az Input fülön."
+/>
+
+#### A futtatás kimenetei
+
+- `stdout`: a program által kiírt válasz. Mintánál ezt hasonlítja össze az Online IDE az elvárt kimenettel; saját inputnál neked kell ellenőrizned.
+- `stderr`: futás közbeni hiba- és diagnosztikai üzenetek. Ettől az `stdout` még külön tartalmazhat normál kimenetet.
+- `compile output`: a kód előkészítésekor vagy fordításakor keletkező hibák és figyelmeztetések. Ha a program el sem indul, először ezt nyisd meg. A sárga jelzés figyelmeztetést is jelenthet: ha a futás sikeres, a program elindult, de a fordító talált valamit, amit érdemes átnézni.
+- `results`: a legutóbbi online értékelés összegzése és tesztesetenkénti státuszai.
+- `history`: a korábbi beadások eredményei, ha az értékelő visszaad ilyen előzményeket.
+
+Hibakereséskor először ellenőrizd, hogy a kívánt bemenetet futtattad-e. Ha a program nem indult el, nézd meg a `compile output` tartalmát; ha elindult, az `stderr` és az `stdout` segíthet megtalálni a hibát.
+
+#### Submit és az online értékelő
+
+A megoldást a `Submit` gomb küldi el az online értékelőnek. Ez a mintáknál sokkal több, előre nem ismert bemeneten futtatja a kódot, és az idő- valamint memóriakorlátot is ellenőrzi. Emiatt lehet, hogy az összes mintára sikeresen működik a programod, azonban a beadás eredménye `Incorrect`, `Time limit`, `Memory limit` vagy `Runtime error`.
+
+A `Judge results` (értékelési eredmények) a beadáskor ellenőrzött teszteseteket listázza: a zöld pipa sikeres, a piros X hibás, a semleges jel le nem futott vagy még nem végleges tesztet jelent. A rejtett tesztek bemenete rendszerint nem látható.
+
+Ha az értékelő átadja egy teszt adatait, a `results` panel státuszkártyájára kattintva megnyílik a `Testcase Info`. Innen a bemenet és a kimenet megtekinthető, letölthető vagy másolható. Rejtett teszteknél ez gyakran nem érhető el.
+
+<GuideFigure
+  src={studentTestcaseDetails.src}
+  caption="Egy teszteset státuszkártyájáról megnyitott Testcase Info ablak bemenet- és kimenet-előnézettel."
+/>
+
+#### Státuszjelmagyarázat
+
+Az ikonok és színek jelentése:
+
+<StatusLegend />
+
+`Runtime error` futás közbeni hibát jelent. Ha a részletekben `killed by signal` szerepel, az operációs rendszer kényszerítette leállásra a programot, például érvénytelen memóriaelérés vagy tiltott művelet miatt. `Time limit` esetén gyorsabb algoritmusra, `Memory limit` esetén kisebb memóriahasználatra lehet szükség.
+
+<h3 id="hints-solutions-es-feladatvaltas">Hints, Solutions és feladatváltás</h3>
+
+A `Hints` fülön a gondolkodást segítő, megoldásra rávezető tippeket olvashatsz. Érdemes ezeket egyesével felfedni, és először segítség nélkül próbálni megoldani a feladatot.
+
+<GuideFigure src={studentHints.src} caption="Súgók a Hints fülön." />
+
+Megoldott feladatnál megjelenhet a `Solutions` fül az adott nyelvhez tartozó mintamegoldással.
+
+<GuideFigure
+  src={studentSolutions.src}
+  caption="Solutions fül mintamegoldással."
+/>
+
+A fejléc feladatválasztójával az óra előző, következő vagy tetszőleges feladatára léphetsz. Kisebb kijelzőn a navigátor nem jelenik meg; ilyenkor a `Home` listájából válassz másik feladatot.
+
+<GuideFigure
+  src={studentTaskSwitcher.src}
+  caption="A feladatválasztó lenyitott állapotban."
+/>
+
+<h3 id="sajat-fajl-letrehozasa-es-megosztas">
+  Saját fájl létrehozása és megosztás
+</h3>
+
+A `New File` önálló gyakorlófájlt hoz létre. Nincs hozzá feladatleírás, minta vagy online értékelés, de saját `Input` adatokkal futtatható; az eredmény az `stdout` fülön jelenik meg.
+
+A `Language` kezdőértékét a profil `Preferred language` beállítása adja, de létrehozás előtt módosíthatod.
+
+<GuideFigure
+  src={studentNewFile.src}
+  caption="A Create New File oldal: fájlnév, hozzáférési szint és nyelvválasztás."
+/>
+
+Az önálló fájl is automatikusan mentődik. A munkaterület linkje megosztható, és megfelelő jogosultsággal valós időben közösen szerkeszthető.
+
+---
+
+<h2 id="tanari-utmutato">Tanári útmutató</h2>
+
+Tanárként először meghívod a diákot az iskolába, majd a `Group editor` felületén hozzáadod a csoporthoz, végül létrehozod vagy szerkeszted a csoport `Class` feladatsorát. A mentett feladatok ezután jelennek meg a diák `Home` oldalán.
+
+A munkaterület, a futtatás, a kimenetek és a megjelenési beállítások használatához olvasd el a tanulói útmutatót is.
+
+<h3 id="iskola-csoport-es-ora">Iskola, csoport és óra</h3>
+
+- **School (iskola):** hozzáférési kör. Tanárként az iskola összes regisztrált diákjának fájljait eléred, csoporttagságtól függetlenül.
+- **Group (csoport):** kiosztási kör. Meghatározza, kik kapják meg ugyanazokat az órákat, és kiknek a haladása jelenik meg együtt a `Dashboard` felületén.
+- **Class (óra):** egy csoport rendezett feladatsora; nem naptári esemény.
+
+Az iskolai tagság nem jelent csoporttagságot, a Group és Class módosításai pedig csak a `Save changes` után lépnek életbe.
+
+<GuideFigure
+  src={teacherGroupsList.src}
+  caption="Csoportlista és a Group editor felépítése."
+/>
+
+<h3 id="meghivas-es-csoporttagsag">Meghívás és csoporttagság</h3>
+
+Mielőtt feladatot osztasz ki, az `Invite` oldalon válaszd ki az iskolát, állítsd be az `Expiration time` értékét, majd a `Generate` gombbal készíts meghívólinket és küldd el a diákoknak.
+
+A link az iskolához kapcsolja a fiókot, de nem ad automatikusan csoporttagságot. A diáknak azzal a fiókkal kell megnyitnia, amelyet később is használ.
+
+<GuideFigure
+  src={teacherInvite.src}
+  caption="Invite felület létrejött, kimásolható meghívólinkkel."
+/>
+
+Ezután a `Groups` oldalon válaszd ki az iskolát és a csoportot, majd a `Members` nézetben add hozzá a tanulót. Az `Add` csak előkészíti a módosítást; a tagság a `Save changes` után lép életbe.
+
+<GuideFigure
+  src={teacherGroupAddStudent.src}
+  caption="Group editor: új diák felvétele a Members nézetben."
+/>
+
+A Group editorban csak azok jelennek meg, akik már megnyitották az iskola meghívólinkjét és bejelentkeztek. Ha valaki hiányzik, ellenőrizd a használt fiókot, a link lejáratát és a kiválasztott iskolát.
+
+A `List all students` az iskola felvehető diákjait, a `List all members` a csoport tagjait mutatja. A csoporttagság a feladatok kiosztását szabályozza, nem a tanári fájlhozzáférést.
+
+<GuideFigure
+  src={teacherGroupMembers.src}
+  caption="Group editor: a csoport jelenlegi tagjainak kezelése."
+/>
+
+<h3 id="feladatok-hozzaadasa-egy-orahoz">Feladatok hozzáadása egy órához</h3>
+
+A csoport `Classes` nézetében nyiss meg egy órát, vagy hozz létre újat egyedi Class ID-val. A feladatokat elsősorban az `Add tasks with links` mezővel add hozzá; ha nem áll rendelkezésre feladatlink, használd az `Add from library` keresőt. A kiosztást a `Save changes` véglegesíti.
+
+<GuideFigure
+  src={teacherGroupAddTasks.src}
+  caption="Class editor: feladatok hozzáadása egy órához közvetlen linkek beillesztésével."
+/>
+
+Támogatottak az Online IDE saját megoldólinkjei (`/solve/[platform]/[task]`); a Codeforces problemset-, contest- és gym-linkjei; valamint az AtCoder task-, CSES task-, SPOJ problem-, Planets task overview-, oj.uz problem view- és Njudge problemset-linkek. Más cím nem kerül be az órába. Egyszerre több link is beilleszthető, akár egyéb szöveg társaságában is.
+
+MATFIN tanároknak: az óratervekben található feladatlinkek közvetlenül bemásolhatók ebbe a mezőbe.
+
+A fogantyúval átrendezheted a feladatokat; a külső nyíl az eredeti feladatoldalt, a lejátszás ikon saját Online IDE-megoldást nyit. A kuka csak az órából távolítja el a feladatot, a `Delete class` viszont az egész órát törli.
+
+<GuideFigure
+  src={teacherClassEditor.src}
+  caption="Class editor: rendezhető feladatlista és a feladatokhoz tartozó műveletek."
+/>
+
+Feladat közvetlenül, kiosztás nélkül is megoldható az Online IDE `/solve/[platform]/[task]` formájú linkjéről, például `/solve/cses/1068`. Ez gyakorláshoz vagy egyetlen feladat gyors megosztásához hasznos; ha az előrehaladást csoport és óra szerint szeretnéd követni, add hozzá a feladatot egy Classhoz.
+
+<h3 id="elorehaladas-kovetese">Előrehaladás követése</h3>
+
+A `Dashboard` a kiválasztott iskola, csoport és óra alapján mutatja a diákok beadási állapotát és utolsó szerkesztési idejét.
+
+A státusz és az utolsó módosítás ideje automatikusan frissül. Ha hiányzik egy diák, állítsd a `Last edit` szűrőt `All` értékre. A `Highlight last edited file` a diák által legutoljára szerkesztett fájlt emeli ki.
+
+A fájl dupla kattintással vagy az `Open File` gombbal külön lapon nyílik meg. Tanárként az iskola minden diákjának fájlját megnyithatod és szerkesztheted. A módosítás automatikusan mentődik és élőben megjelenik a diáknál, ezért beleírás előtt egyeztess vele.
+
+<GuideFigure
+  src={teacherDashboard.src}
+  caption="Dashboard: élő beadási státuszok és tanulói haladás."
+/>
+
+<h3 id="recent-activity">Recent activity</h3>
+
+A különálló `Recent activity` oldal a választott `Last edit` időszakban szerkesztett összes elérhető diákfájlt mutatja, a `Create new file` opcióval létrehozott fájlokat is.
+
+A `Last edit` időablak 5 perctől 7 napig állítható. Az `Owner`, `Workspace name` és `Submission status` szűrőkkel szűkítheted a listát; a `Show files with missing problem` a hiányzó feladatadattal rendelkező fájlokat is megjeleníti. A táblázat megfelelő fejlécére kattintva fájlnév, létrehozási idő, utolsó szerkesztés vagy kódméret szerint rendezhetsz.
+
+<GuideFigure
+  src={teacherRecentActivity.src}
+  caption="Recent activity: az elérhető tanulói fájlok időablakkal és részletes szűrőkkel."
+/>
+
+</GuideLayout>

@@ -6,7 +6,11 @@ import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 
-const typescriptFiles = ['src/**/*.{ts,tsx}', 'pages/**/*.{ts,tsx}'];
+const typescriptFiles = [
+  'src/**/*.{ts,tsx}',
+  'pages/**/*.{ts,tsx}',
+  'docs/components/**/*.{ts,tsx}',
+];
 
 export default defineConfig([
   globalIgnores([
