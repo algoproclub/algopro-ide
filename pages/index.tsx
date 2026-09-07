@@ -27,7 +27,7 @@ export default function DashboardPage(): JSX.Element {
   const signInWithGithub = useSetAtom(signInWithGithubAtom);
 
   return (
-    <div className="mx-auto flex min-h-full max-w-7xl flex-col px-4 py-5 theme-page sm:px-6 sm:py-6 lg:px-8">
+    <div className="mx-auto flex max-w-7xl flex-col px-4 py-5 theme-page sm:px-6 sm:py-6 lg:px-8">
       <ConfirmOverrideModal />
       <div className="flex-1 relative">
         <h1 className="theme-text text-2xl font-bold tracking-tight md:text-3xl">
