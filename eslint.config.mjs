@@ -2,17 +2,11 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import js from '@eslint/js';
 import globals from 'globals';
 import typescript from 'typescript-eslint';
-import jest from 'eslint-plugin-jest';
-import playwright from 'eslint-plugin-playwright';
 import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 
 const typescriptFiles = ['src/**/*.{ts,tsx}', 'pages/**/*.{ts,tsx}'];
-const jestFiles = [
-  '**/__tests__/**/*.{js,jsx,ts,tsx}',
-  '**/*.{test,spec}.{js,jsx,ts,tsx}',
-];
 
 export default defineConfig([
   globalIgnores([
@@ -37,16 +31,6 @@ export default defineConfig([
       sourceType: 'module',
       globals: globals.node,
     },
-  },
-  {
-    name: 'jest',
-    files: jestFiles,
-    extends: [jest.configs['flat/recommended']],
-  },
-  {
-    name: 'playwright',
-    files: ['e2e/**/*.{js,ts}'],
-    extends: [playwright.configs['flat/recommended']],
   },
   {
     name: 'TypeScript config files',

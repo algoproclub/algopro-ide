@@ -31,7 +31,7 @@ To check specific components:
 - targeted ESLint
 - `yarn tsc --noEmit`
 
-The Playwright tests in the `e2e` directory are very outdated and expected to fail. For user-visible changes, interact with the running front-end when browser tooling is available. If interaction is unavailable or blocked, provide precise manual verification steps. Do NOT run or fix the Playwright E2E tests unless explicitly instructed by the user.
+There is no automated test suite. For user-visible changes, interact with the running front-end when browser tooling is available. If interaction is unavailable or blocked, provide precise manual verification steps.
 
 ## Technology stack
 
