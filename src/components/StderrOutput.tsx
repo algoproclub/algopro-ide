@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   mainMonacoEditorAtom,
   isLineHighlightSetAtom,
   savedEditorValue as savedEditorValueAtom,
 } from '../atoms/workspace';
 import { useAtomValue, useSetAtom } from 'jotai';
-import type { SharedEditorProps } from './editor/editor-types';
 import { CodeEditor } from './editor/CodeEditor';
 import { editor } from 'monaco-editor';
+import { useUserContext } from '../context/UserContext';
 
 const ASAN_REGEX =
   /^([\s\S]*)={65}\s.+AddressSanitizer: (\S+) on address [\s\S]*?main\.cpp:(\d+)/;
@@ -128,16 +128,18 @@ function validateLine(
 export const StderrOutput = ({
   output,
   lightMode,
-  onReady,
 }: {
   output: string;
   lightMode: boolean;
-  onReady?: SharedEditorProps['onReady'];
 }): JSX.Element => {
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
   const isLineHighlightSet = useAtomValue(isLineHighlightSetAtom);
   const savedEditorValue = useAtomValue(savedEditorValueAtom);
   const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
+
+  const {
+    userData: { fontSize },
+  } = useUserContext();
 
   let decodedOutput = output;
   const editorValueLines = savedEditorValue
@@ -180,10 +182,17 @@ export const StderrOutput = ({
     decodedOutput += errorLine;
   }
 
-  if (!isLineHighlightSet && errorLineNumber) {
+  useEffect(() => {
+    if (isLineHighlightSet || !errorLineNumber) return;
+
     mainMonacoEditor?.setLineHighlight(errorLineNumber);
     setIsLineHighlightSet(true);
-  }
+  }, [
+    errorLineNumber,
+    isLineHighlightSet,
+    mainMonacoEditor,
+    setIsLineHighlightSet,
+  ]);
 
   return (
     <div
@@ -211,10 +220,9 @@ export const StderrOutput = ({
         path="output"
         editorOptions={{
           readOnly: true,
-          automaticLayout: false,
           insertSpaces: true,
+          fontSize,
         }}
-        onReady={onReady}
       />
     </div>
   );

@@ -59,7 +59,7 @@ const FileSearch = ({
           type="search"
           name={`problem-select`}
           id={`problem-select`}
-          className="mt-0 block w-full px-0 pt-0 pb-1 theme-input border-0 border-b-2 focus:ring-0 text-sm"
+          className="mt-0 block w-full border-0 border-b-2 border-line bg-transparent px-0 pb-1 pt-0 text-sm text-content focus:border-line-strong focus:ring-0"
           value={currentRefinement}
           placeholder={'e.g. Train Scheduling'}
           onChange={e => refine(e.target.value)}
@@ -71,10 +71,10 @@ const FileSearch = ({
       </div>
       {currentRefinement !== '' && (
         <div>
-          <div className="text-sm max-h-[20rem] overflow-y-auto border-t divide-y divide-[color:var(--border-muted)] theme-border">
+          <div className="max-h-[20rem] divide-y divide-line-muted overflow-y-auto border-t border-line text-sm">
             {hits.map(hit => (
               <button
-                className="block hover:bg-[color:var(--surface-hover)] py-3 px-5 transition focus:outline-none w-full text-left"
+                className="block w-full px-5 py-3 text-left transition hover:bg-surface-hover focus:outline-none"
                 key={hit.id}
                 onClick={() => {
                   refine(''); // clear

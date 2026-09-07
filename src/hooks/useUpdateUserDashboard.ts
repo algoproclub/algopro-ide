@@ -25,25 +25,11 @@ export default function useUpdateUserDashboard() {
       return data.permission === 'OWNER';
     })[0][1]?.name ?? '?';
 
-  useEffect(() => {
-    const suffix = 'AlgoPro IDE';
-    let prefix = undefined;
-
-    if (settings.workspaceName) {
-      if (isTeacher(userRole)) {
-        prefix = `[${owner}]: ${settings.workspaceName}`;
-      } else {
-        prefix = problem?.title ?? settings.workspaceName;
-      }
-    }
-
-    if (prefix) {
-      prefix += ' - ';
-    } else {
-      prefix = '';
-    }
-    document.title = `${prefix}${suffix}`;
-  }, [problem, settings.workspaceName]);
+  const pageTitle = settings.workspaceName
+    ? isTeacher(userRole)
+      ? `[${owner}]: ${settings.workspaceName}`
+      : (problem?.title ?? settings.workspaceName)
+    : undefined;
 
   const fileOwner = useMemo(() => {
     const user = onlineUsers?.find(user => user.permission === 'OWNER');
@@ -92,4 +78,6 @@ export default function useUpdateUserDashboard() {
     fileOwner?.name,
     fileData.id,
   ]);
+
+  return { pageTitle };
 }

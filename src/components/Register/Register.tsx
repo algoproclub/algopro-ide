@@ -12,7 +12,7 @@ import {
 } from '../../context/ConnectionContext';
 import { useRouter } from 'next/router';
 import React, { useEffect } from 'react';
-import { ConfirmOverrideModal } from '../ConfirmOverrideModal';
+import ConfirmOverrideModal from '../ConfirmOverrideModal';
 import {
   SignInButton,
   GoogleIcon,

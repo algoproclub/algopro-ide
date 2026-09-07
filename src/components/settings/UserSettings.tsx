@@ -1,8 +1,24 @@
 import React, { useState } from 'react';
 import { EditorMode, Language, LANGUAGES } from '../../context/UserContext';
 import { RadioGroupContents } from './RadioGroupContents';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import TemplateCodeSettings from './TemplateCodeSettings';
+import {
+  MAX_FONT_SIZE_EDITOR,
+  MIN_FONT_SIZE_EDITOR,
+} from '../../constants/editorConstants';
+import {
+  ChevronDownIcon,
+  CodeBracketIcon as SolidCodeBracketIcon,
+  DocumentIcon as SolidDocumentIcon,
+  SparklesIcon as SolidSparklesIcon,
+  UserIcon as SolidUserIcon,
+} from '@heroicons/react/20/solid';
+import {
+  CodeBracketIcon as OutlineCodeBracketIcon,
+  DocumentIcon as OutlineDocumentIcon,
+  SparklesIcon as OutlineSparklesIcon,
+  UserIcon as OutlineUserIcon,
+} from '@heroicons/react/24/outline';
 
 const EDITOR_MODES = ['Normal', 'Vim' /*'Emacs'*/];
 
@@ -40,7 +56,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`name`}
-          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
+          className="block text-[0.92rem] text-content-secondary"
         >
           Username
         </label>
@@ -60,7 +76,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`cf-username`}
-          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
+          className="block text-[0.92rem] text-content-secondary"
         >
           Codeforces username
         </label>
@@ -80,7 +96,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`atcoder-username`}
-          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
+          className="block text-[0.92rem] text-content-secondary"
         >
           AtCoder username
         </label>
@@ -100,7 +116,7 @@ const UserDataSettings = ({
       <div>
         <label
           htmlFor={`discord-username`}
-          className="block text-[0.92rem] text-[color:var(--text-secondary)]"
+          className="block text-[0.92rem] text-content-secondary"
         >
           Discord user ID
         </label>
@@ -136,6 +152,8 @@ export default function UserSettings({
   onEditorModeChange,
   tabSize,
   onTabSizeChange,
+  fontSize,
+  onFontSizeChange,
   lightMode,
   onLightModeChange,
   rainbowIndent,
@@ -161,6 +179,8 @@ export default function UserSettings({
   onEditorModeChange: (mode: EditorMode) => void;
   tabSize: number;
   onTabSizeChange: (tabSize: number) => void;
+  fontSize: number;
+  onFontSizeChange: (fontSize: number) => void;
   lightMode: boolean;
   onLightModeChange: (lightMode: boolean) => void;
   rainbowIndent: boolean;
@@ -174,17 +194,23 @@ export default function UserSettings({
 }): JSX.Element {
   const [submenu, setSubmenu] = useState<Submenu>('userdata');
   const sectionButtonClass =
-    'flex items-center justify-between bg-[var(--panel-bg)] py-2 px-3 border border-[var(--border-color)] text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] text-sm';
+    'flex items-center justify-between border border-line bg-panel px-3 py-2 text-sm text-content hover:bg-surface-hover';
   const joinedSectionButtonClass =
-    'flex items-center justify-between bg-[var(--panel-bg)] py-2 px-3 border border-t-0 border-[var(--border-color)] text-[color:var(--text-primary)] hover:bg-[var(--hover-bg)] text-sm';
-  const sectionContentClass =
-    'p-4 border border-t-0 border-[var(--border-color)]';
+    'flex items-center justify-between border border-t-0 border-line bg-panel px-3 py-2 text-sm text-content hover:bg-surface-hover';
+  const sectionContentClass = 'border border-t-0 border-line p-4';
   const spacedSectionContentClass =
-    'space-y-4 p-4 border border-t-0 border-[var(--border-color)]';
+    'space-y-4 border border-t-0 border-line p-4';
+  const UserDataIcon = submenu === 'userdata' ? SolidUserIcon : OutlineUserIcon;
+  const CodeSettingsIcon =
+    submenu === 'codesettings' ? SolidCodeBracketIcon : OutlineCodeBracketIcon;
+  const VisualSettingsIcon =
+    submenu === 'visualsettings' ? SolidSparklesIcon : OutlineSparklesIcon;
+  const FileTemplatesIcon =
+    submenu === 'templates' ? SolidDocumentIcon : OutlineDocumentIcon;
 
   return (
     <div>
-      <div className="flex flex-col text-sm text-[color:var(--text-primary)] bg-[var(--panel-bg-alt)]">
+      <div className="flex flex-col bg-panel-muted text-sm text-content">
         <button
           className={sectionButtonClass}
           onClick={() =>
@@ -192,17 +218,13 @@ export default function UserSettings({
           }
         >
           <span className="flex items-center">
-            <FontAwesomeIcon
-              icon={{ prefix: 'fas', iconName: 'user' }}
-              className="w-3.5 h-3.5 inline mr-2"
-            />
+            <UserDataIcon className="mr-2 inline h-4 w-4" />
             User data
           </span>
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-            className={`w-3.5 h-3.5 inline ${
+          <ChevronDownIcon
+            className={`inline h-4 w-4 ${
               submenu !== 'userdata' ? 'rotate-0' : 'rotate-180'
-            } transition duration-200`}
+            } transition-transform duration-200`}
           />
         </button>
         {submenu === 'userdata' && (
@@ -226,17 +248,13 @@ export default function UserSettings({
           }
         >
           <span className="flex items-center">
-            <FontAwesomeIcon
-              icon={{ prefix: 'fas', iconName: 'code' }}
-              className="w-3.5 h-3.5 inline mr-2"
-            />
+            <CodeSettingsIcon className="mr-2 inline h-4 w-4" />
             Code settings
           </span>
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-            className={`w-3.5 h-3.5 inline ${
+          <ChevronDownIcon
+            className={`inline h-4 w-4 ${
               submenu !== 'codesettings' ? 'rotate-0' : 'rotate-180'
-            } transition duration-200`}
+            } transition-transform duration-200`}
           />
         </button>
         {submenu === 'codesettings' && (
@@ -267,17 +285,13 @@ export default function UserSettings({
           }
         >
           <span className="flex items-center">
-            <FontAwesomeIcon
-              icon={{ prefix: 'fas', iconName: 'wand-magic-sparkles' }}
-              className="w-3.5 h-3.5 inline mr-2"
-            />
+            <VisualSettingsIcon className="mr-2 inline h-4 w-4" />
             Visual settings
           </span>
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-            className={`w-3.5 h-3.5 inline ${
+          <ChevronDownIcon
+            className={`inline h-4 w-4 ${
               submenu !== 'visualsettings' ? 'rotate-0' : 'rotate-180'
-            } transition duration-200`}
+            } transition-transform duration-200`}
           />
         </button>
         {submenu === 'visualsettings' && (
@@ -316,6 +330,30 @@ export default function UserSettings({
                 return { label: val + ' chars', value: val };
               })}
             />
+            <div>
+              <label
+                htmlFor={`fontSize`}
+                className="block text-[0.92rem] text-content-secondary"
+              >
+                Font size (pixels)
+              </label>
+              <input
+                type="number"
+                name={`fontSize`}
+                id={`fontSize`}
+                className="text-input"
+                min={MIN_FONT_SIZE_EDITOR}
+                max={MAX_FONT_SIZE_EDITOR}
+                value={fontSize}
+                onChange={e => {
+                  const value = e.currentTarget.valueAsNumber;
+                  if (Number.isNaN(value)) {
+                    return;
+                  }
+                  onFontSizeChange(Math.round(value));
+                }}
+              />
+            </div>
           </div>
         )}
         <button
@@ -325,17 +363,13 @@ export default function UserSettings({
           }
         >
           <span className="flex items-center">
-            <FontAwesomeIcon
-              icon={{ prefix: 'fas', iconName: 'file' }}
-              className="w-3.5 h-3.5 inline mr-2"
-            />
+            <FileTemplatesIcon className="mr-2 inline h-4 w-4" />
             File templates
           </span>
-          <FontAwesomeIcon
-            icon={{ prefix: 'fas', iconName: 'chevron-down' }}
-            className={`w-3.5 h-3.5 inline ${
+          <ChevronDownIcon
+            className={`inline h-4 w-4 ${
               submenu !== 'templates' ? 'rotate-0' : 'rotate-180'
-            } transition duration-200`}
+            } transition-transform duration-200`}
           />
         </button>
         {submenu === 'templates' && (

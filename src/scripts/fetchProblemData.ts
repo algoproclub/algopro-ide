@@ -4,6 +4,7 @@ import { ElementType } from 'domelementtype';
 import * as domhandler from 'domhandler';
 import * as cheerio from 'cheerio';
 import { getFirestore } from 'firebase-admin/firestore';
+import firebaseApp from '../firebaseAdmin';
 import {
   CODEFORCES_TITLE_REGEX,
   buildCodeforcesUrl,
@@ -78,8 +79,8 @@ export async function fetchProblemData({
 }
 
 const db = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
-  ? getFirestore('planets')
-  : getFirestore();
+  ? getFirestore(firebaseApp, 'planets')
+  : getFirestore(firebaseApp);
 
 async function fetchProblemDataPlanets(
   problemID: string

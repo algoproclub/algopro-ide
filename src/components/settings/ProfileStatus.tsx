@@ -69,13 +69,13 @@ export default function ProfileStatus({
               {Object.values(settings).map((setting, index) => (
                 <li
                   key={index}
-                  className={`flex items-center rounded-md theme-surface-muted hover:bg-[color:var(--surface-hover)] border gap-2 theme-border transition-all duration-300 ${
+                  className={`flex items-center gap-2 rounded-md border border-line bg-surface-muted transition-colors hover:bg-surface-hover ${
                     setting.filled
                       ? 'opacity-0 max-h-0 overflow-hidden pt-0 pb-0 '
                       : 'opacity-100 max-h-10 mb-2'
                   } p-2`}
                 >
-                  <div className="h-2 w-2 rounded-full bg-[color:var(--accent)] flex-shrink-0" />
+                  <div className="h-2 w-2 flex-shrink-0 rounded-full bg-accent" />
                   <span className="theme-text-muted text-sm">
                     {setting.suggestion}
                   </span>

@@ -13,9 +13,11 @@ type Participation = {
 
 const colorForStatus = (statusCode: string, message: string) => {
   if (statusCode == 'resolved')
-    return message == 'correct answer' ? 'bg-green-800' : 'bg-red-800';
+    return message == 'correct answer'
+      ? 'bg-[color:var(--success)] text-[color:var(--text-inverted)]'
+      : 'bg-[color:var(--danger)] text-[color:var(--text-inverted)]';
 
-  return '';
+  return 'theme-table-row';
 };
 
 const PageContent = () => {
@@ -100,26 +102,26 @@ const PageContent = () => {
   }, [tournamentID, startDate]);
 
   return (
-    <div className="mx-auto max-w-7xl mt-4 space-y-4 px-2">
-      <div className="border border-gray-600 overflow-auto max-h-[40rem]">
+    <div className="mx-auto max-w-7xl mt-4 space-y-4 px-2 theme-page">
+      <div className="border theme-border overflow-auto max-h-[40rem]">
         {startDate === null ? (
           <LoadingIndicator className="h-4 w-4" />
         ) : (
-          <table className="table-auto data-table text-sm w-full !border-separate !border-spacing-0 divide-y divide-gray-600">
+          <table className="table-auto data-table theme-table text-sm w-full !border-separate !border-spacing-0 divide-y divide-[color:var(--border-color)]">
             <thead>
-              <tr className="divide-x divide-gray-700 bg-gray-800">
+              <tr className="divide-x divide-[color:var(--border-muted)] theme-table-header">
                 <th className="px-4 py-2 w-1/6">Rank</th>
                 <th className="px-4 py-2">Name</th>
                 <th className="px-4 py-2">Status</th>
                 <th className="px-4 py-2">Time</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-600">
+            <tbody className="divide-y divide-[color:var(--border-color)]">
               {data.map((row, index) => (
                 <tr
                   className={classNames(
                     'divide-x',
-                    'divide-gray-600',
+                    'divide-[color:var(--border-color)]',
                     colorForStatus(row.statusCode, row.message)
                   )}
                   key={index}
@@ -129,7 +131,7 @@ const PageContent = () => {
                   </td>
                   <td className="px-4 py-2">
                     <a
-                      className="underline hover:text-indigo-200 mr-2"
+                      className="underline text-[color:var(--accent)] hover:text-[color:var(--accent-hover)] mr-2"
                       href={`/${row.fileID.slice(1)}`}
                     >
                       {row.name}
@@ -147,7 +149,7 @@ const PageContent = () => {
                           .padStart(2, '0')}
                       </span>
                     ) : (
-                      <span className="text-gray-300">no submission</span>
+                      <span className="theme-text-muted">no submission</span>
                     )}
                   </td>
                 </tr>

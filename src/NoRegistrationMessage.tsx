@@ -1,6 +1,18 @@
 import React from 'react';
 
 export default function NoRegistrationMessage() {
+  if (process.env.NEXT_PUBLIC_PRODUCT_NAME === 'MATFIN IDE') {
+    return (
+      <div className="mt-3 sm:mt-6">
+        <p>
+          Ez az alkalmazás oktatási intézmények programozás óráira járó diákok
+          számára érhető el. A fiókod nincs iskolához kapcsolva. Kérd meg a
+          tanárodat, hogy küldjön meghívó linket.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-2 theme-text-muted">
       <p>

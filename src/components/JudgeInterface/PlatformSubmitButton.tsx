@@ -8,7 +8,6 @@ import { useEditorContext } from '../../context/EditorContext';
 import { ProblemSolution, SubmissionData } from '../../types/problem';
 import { useUserContext } from '../../context/UserContext';
 import LoadResultsModal from './LoadResultsModal';
-import 'katex/dist/katex.min.css';
 import { problemAtom } from '../../atoms/workspaceUI';
 
 const submitProblemSolution = httpsCallable<ProblemSolution, SubmissionData>(
@@ -83,7 +82,7 @@ export const GenericSubmitButton = ({
         testCases: null,
       });
       const lastAllowedTime = performance.now() + 5000;
-      // eslint-disable-next-line no-constant-condition
+
       while (true) {
         try {
           const submissionData = await submitProblemSolution({

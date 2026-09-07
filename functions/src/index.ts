@@ -2,6 +2,7 @@ import { defineString } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import { initializeApp } from 'firebase-admin/app';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getDatabase, ServerValue } from 'firebase-admin/database';
 import {
   FileSubmission,
@@ -33,6 +34,7 @@ import {
   onValueDeleted,
   onValueUpdated,
 } from 'firebase-functions/v2/database';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 
 import { randomUUID } from 'crypto';
 import {
@@ -285,6 +287,35 @@ const app = initializeApp(
     : undefined
 );
 const db = getDatabase(app);
+const firestore = getFirestore(app);
+
+export const updateProblemLibraryRevision = onDocumentWritten(
+  {
+    document: 'problemsets/{platform}/problems/{problem}',
+    region: 'europe-west1',
+  },
+  async event => {
+    const metadata = (data: Record<string, unknown> | undefined) =>
+      JSON.stringify({
+        title: data?.title ?? null,
+        url: data?.url ?? null,
+        tags: data?.tags ?? null,
+      });
+    if (
+      metadata(event.data?.before.data()) === metadata(event.data?.after.data())
+    ) {
+      return;
+    }
+
+    await firestore.doc('metadata/problemLibrary').set(
+      {
+        revision: FieldValue.increment(1),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }
+);
 
 const accountData: { [key in Platform]: AccountData } = {
   atcoder: {
@@ -367,10 +398,15 @@ const updateStatusData = async (
     try {
       const [ownerID, problem] = await Promise.all([
         getFileOwner(id),
-        db.ref(`files/${id}/problem`).get().then(s => s.val() as { platform: string; id: string } | null),
+        db
+          .ref(`files/${id}/problem`)
+          .get()
+          .then(s => s.val() as { platform: string; id: string } | null),
       ]);
       if (ownerID && problem?.platform && problem?.id) {
-        updates[`users/${ownerID}/platform-${problem.platform}/solved/${problem.id}`] = true;
+        updates[
+          `users/${ownerID}/platform-${problem.platform}/solved/${problem.id}`
+        ] = true;
       }
     } catch (e) {
       console.error('Failed to denormalize solved status for file', id, e);
@@ -682,10 +718,7 @@ const updateStatus = async () => {
   }
 };
 
-const region =
-  process.env.IS_TEST_ENV || process.env.FUNCTIONS_EMULATOR
-    ? 'us-central1'
-    : 'europe-west1';
+const region = process.env.FUNCTIONS_EMULATOR ? 'us-central1' : 'europe-west1';
 
 exports.onlockdeleted = onValueDeleted(
   { ref: 'submissions/lock', region },
