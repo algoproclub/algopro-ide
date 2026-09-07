@@ -47,13 +47,8 @@ export const CodeInterface = ({
 
     setMainCodemirrorEditor(editorHandle.raw);
 
-    // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the main codemirror editor
-    window['TEST_mainCodemirrorEditor'] = editorHandle.raw;
-
     return () => {
       setMainCodemirrorEditor(null);
-      // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the main codemirror editor
-      window['TEST_mainCodemirrorEditor'] = null;
     };
   }, [editorHandle, setMainCodemirrorEditor, setMainMonacoEditor]);
 

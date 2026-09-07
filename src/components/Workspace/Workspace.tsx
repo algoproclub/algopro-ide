@@ -206,13 +206,9 @@ function WorkspaceInputPanel(): JSX.Element {
     }
 
     setCodemirrorInputEditor(inputEditorHandle.raw);
-    // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the input codemirror editor
-    window['TEST_inputCodemirrorEditor'] = inputEditorHandle.raw;
 
     return () => {
       setCodemirrorInputEditor(null);
-      // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the input codemirror editor
-      window['TEST_inputCodemirrorEditor'] = null;
     };
   }, [inputEditorHandle, setCodemirrorInputEditor, setInputEditor]);
 

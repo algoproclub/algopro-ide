@@ -123,4 +123,4 @@ TODO: currently undocumented
 
 Commits must pass `yarn lint:ci` and `yarn build` to be accepted. The regular `yarn lint` command is available for automatically fixing supported lint and formatting issues. Pre-commit hooks are available through [Husky](https://typicode.github.io/husky/#/) for running the configured checks automatically.
 
-The Playwright tests in the `e2e` directory are very outdated and expected to fail. Do not rely on them for smoke testing or verification. User-visible changes should be verified through the running local application; when that is not possible, document precise manual verification steps.
+There is no automated test suite. User-visible changes should be verified through the running local application; when that is not possible, document precise manual verification steps.
