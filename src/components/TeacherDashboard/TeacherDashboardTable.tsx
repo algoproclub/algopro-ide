@@ -299,6 +299,26 @@ export default function TeacherDashboardTable({
     ])
   );
 
+  const scrollCellIntoView = (cell: HTMLButtonElement) => {
+    cell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+
+    const container = scrollContainer.current;
+    if (!container) return;
+
+    const cellRect = cell.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const headerBottom =
+      container.querySelector('thead')?.getBoundingClientRect().bottom ??
+      containerRect.top;
+    const visibleTop = Math.max(containerRect.top, headerBottom);
+
+    if (cellRect.top < visibleTop) {
+      container.scrollTop += cellRect.top - visibleTop;
+    } else if (cellRect.bottom > containerRect.bottom) {
+      container.scrollTop += cellRect.bottom - containerRect.bottom;
+    }
+  };
+
   const moveSelection = (
     event: KeyboardEvent<HTMLButtonElement>,
     row: number,
@@ -321,7 +341,7 @@ export default function TeacherDashboardTable({
       `[data-cell-row="${nextRow}"][data-cell-column="${nextColumn}"]`
     );
     nextCell?.focus({ preventScroll: true });
-    nextCell?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (nextCell) scrollCellIntoView(nextCell);
   };
 
   return (
