@@ -4,7 +4,6 @@ import {
   useEditorContext,
 } from '../../src/context/EditorContext';
 import React, { useEffect, useState } from 'react';
-import classNames from 'classnames';
 import { LazyRealtimeEditor } from '../../src/components/RealtimeEditor/LazyRealtimeEditor';
 import {
   DataSnapshot,
@@ -17,8 +16,9 @@ import {
 import { useNullableUserContext } from '../../src/context/UserContext';
 import { StatusData } from '../../src/types/problem';
 import USACOResults from '../../src/components/JudgeInterface/USACOResults';
-import Split from 'react-split-grid';
+import { Group, Panel, Separator } from 'react-resizable-panels';
 import WithAdminLogin from '../../src/components/WithAdminLogin';
+import { HocuspocusProviderWebsocketComponent } from '@hocuspocus/provider-react';
 
 const db = getDatabase();
 
@@ -29,6 +29,7 @@ const CodeView = () => {
     <div className="h-full w-full relative">
       <div className="absolute inset-0">
         {fileData && lang && (
+          // The spectator editor intentionally keeps its dark syntax theme.
           <LazyRealtimeEditor
             theme={'dark'}
             language={{ cpp: 'cpp', java: 'java', py: 'python' }[lang]}
@@ -50,7 +51,7 @@ const CodeView = () => {
           />
         )}
       </div>
-      <p className="text-sm font-mono text-gray-200 pl-4 status-node" />
+      <p className="text-sm font-mono theme-text pl-4 status-node" />
     </div>
   );
 };
@@ -73,7 +74,7 @@ const ResultView = ({ startTime }: { startTime: number }) => {
   }, []);
 
   return (
-    <div className="px-4 overflow-y-auto bg-gray-900">
+    <div className="px-4 overflow-y-auto theme-surface-muted">
       {statusData ? (
         <USACOResults
           data={statusData}
@@ -81,7 +82,7 @@ const ResultView = ({ startTime }: { startTime: number }) => {
           startTime={startTime}
         />
       ) : (
-        <div className="font-semibold text-gray-400 p-4 text-[0.92rem]">
+        <div className="font-semibold theme-text-muted p-4 text-[0.92rem]">
           No submission yet.
         </div>
       )}
@@ -101,11 +102,11 @@ const SolutionViewContent = ({
   onFileChange: (fileID: string) => void;
 }) => {
   return (
-    <div className="flex flex-col min-h-0 overflow-hidden w-full">
-      <div className="px-4 py-2 border-b border-gray-600 font-semibold text-gray-400 bg-gray-900 min-h-0 truncate flex items-center justify-between">
+    <div className="flex flex-col min-h-0 overflow-hidden w-full theme-surface">
+      <div className="px-4 py-2 border-b theme-border font-semibold theme-text-muted theme-surface-muted min-h-0 truncate flex items-center justify-between">
         <div className="relative w-full">
           <select
-            className="appearance-none bg-gray-800 border border-gray-600 rounded-md p-2 text-sm text-white hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition w-full"
+            className="appearance-none theme-input border rounded-md p-2 text-sm hover:border-[color:var(--accent)] focus:outline-none focus:ring-2 transition w-full"
             value={selectedFileID}
             onChange={e => onFileChange(e.target.value)}
           >
@@ -117,30 +118,19 @@ const SolutionViewContent = ({
           </select>
         </div>
       </div>
-      <Split
-        render={({ getGridProps, getGutterProps }) => (
-          <div
-            className={`grid grid-rows-[2fr,3px,1fr] w-full h-full min-h-0`}
-            {...getGridProps()}
-          >
-            <CodeView />
-            <div
-              className={classNames(
-                'cursor-[row-resize] group relative z-10 my-[-6px]'
-              )}
-              {...getGutterProps('row', 1)}
-            >
-              <div
-                className={classNames(
-                  'absolute w-full bg-gray-700 group-hover:bg-gray-600 group-active:bg-gray-600 group-focus:bg-gray-600 pointer-events-none transition',
-                  'top-[7px] bottom-[7px]'
-                )}
-              ></div>
-            </div>
-            <ResultView startTime={startTime} />
-          </div>
-        )}
-      />
+      <Group
+        orientation="vertical"
+        className="min-h-0"
+        defaultLayout={{ code: 67, results: 33 }}
+      >
+        <Panel id="code" minSize="10%" className="min-h-0">
+          <CodeView />
+        </Panel>
+        <Separator className="h-[3px] cursor-row-resize bg-[color:var(--gutter)] transition hover:bg-[color:var(--gutter-hover)] focus:bg-[color:var(--gutter-hover)] focus:outline-none" />
+        <Panel id="results" minSize="10%" className="min-h-0">
+          <ResultView startTime={startTime} />
+        </Panel>
+      </Group>
     </div>
   );
 };
@@ -241,32 +231,36 @@ const SpectatePage = () => {
 
   return (
     <WithAdminLogin>
-      <div className="h-full w-full flex divide-x divide-gray-700">
-        <SolutionView
-          fileID={files?.[0]}
-          startTime={startTime}
-          participants={participants}
-          onFileChange={newFileID =>
-            setFiles(prev => [newFileID, prev[1], prev[2]])
-          }
-        />
-        <SolutionView
-          fileID={files?.[1]}
-          startTime={startTime}
-          participants={participants}
-          onFileChange={newFileID =>
-            setFiles(prev => [prev[0], newFileID, prev[2]])
-          }
-        />
-        <SolutionView
-          fileID={files?.[2]}
-          startTime={startTime}
-          participants={participants}
-          onFileChange={newFileID =>
-            setFiles(prev => [prev[0], prev[1], newFileID])
-          }
-        />
-      </div>
+      <HocuspocusProviderWebsocketComponent
+        url={process.env.NEXT_PUBLIC_YJS_URL!}
+      >
+        <div className="h-full w-full flex divide-x divide-[color:var(--border-muted)] theme-page">
+          <SolutionView
+            fileID={files?.[0]}
+            startTime={startTime}
+            participants={participants}
+            onFileChange={newFileID =>
+              setFiles(prev => [newFileID, prev[1], prev[2]])
+            }
+          />
+          <SolutionView
+            fileID={files?.[1]}
+            startTime={startTime}
+            participants={participants}
+            onFileChange={newFileID =>
+              setFiles(prev => [prev[0], newFileID, prev[2]])
+            }
+          />
+          <SolutionView
+            fileID={files?.[2]}
+            startTime={startTime}
+            participants={participants}
+            onFileChange={newFileID =>
+              setFiles(prev => [prev[0], prev[1], newFileID])
+            }
+          />
+        </div>
+      </HocuspocusProviderWebsocketComponent>
     </WithAdminLogin>
   );
 };

@@ -1,72 +1,156 @@
 :root,
 [data-theme='dark'] {
-  --app-bg: #1e1e1e;
-  --panel-bg: #1e1e1e;
-  --panel-bg-alt: #121212;
-  --border-color: #374151;
-  --text-primary: #f3f4f6;
-  --text-secondary: #d1d5db;
-  --hover-bg: #1f2937;
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
-  --gutter: #374151;
-  --gutter-hover: #4b5563;
-
-  --surface-bg: var(--panel-bg);
-  --surface-bg-muted: var(--panel-bg-alt);
-  --surface-bg-raised: #27272a;
-  --surface-hover: var(--hover-bg);
-  --surface-active: #374151;
-  --border-muted: #2d3748;
-  --border-strong: #4b5563;
-  --text-muted: #9ca3af;
-  --text-disabled: #6b7280;
-  --text-inverted: #ffffff;
-  --danger: #dc2626;
-  --danger-hover: #b91c1c;
-  --success: #16a34a;
-  --warning: #f59e0b;
-  --input-bg: transparent;
-  --table-header-bg: var(--surface-bg-raised);
-  --table-row-bg: var(--surface-bg);
-  --table-row-alt-bg: var(--surface-bg-muted);
-  --button-secondary-bg: transparent;
-  --button-secondary-hover: var(--surface-hover);
+  /* Matches Monaco's configured Default Dark+ editor background. */
+  --color-canvas: #1e1e1e;
+  --color-panel: theme('colors.zinc.900');
+  --color-panel-muted: theme('colors.zinc.800');
+  --color-surface: var(--color-panel);
+  --color-surface-muted: theme('colors.zinc.950');
+  --color-surface-raised: theme('colors.zinc.800');
+  --color-surface-hover: theme('colors.zinc.700');
+  --color-surface-active: theme('colors.zinc.600');
+  --color-line: theme('colors.zinc.700');
+  --color-line-muted: theme('colors.zinc.800');
+  --color-line-strong: theme('colors.zinc.600');
+  --color-content: theme('colors.zinc.100');
+  --color-content-secondary: theme('colors.zinc.300');
+  --color-content-muted: theme('colors.zinc.400');
+  --color-content-disabled: theme('colors.zinc.500');
+  --color-content-inverted: theme('colors.white');
+  --color-accent: theme('colors.indigo.600');
+  --color-accent-hover: theme('colors.indigo.400');
+  --color-accent-strong: theme('colors.indigo.700');
+  --color-focus: theme('colors.zinc.400');
+  --color-control: theme('colors.zinc.800');
+  --color-input: theme('colors.zinc.900');
+  --color-status-success: theme('colors.green.500');
+  --color-status-success-surface: theme('colors.green.950');
+  --color-status-success-content: theme('colors.green.100');
+  --color-status-warning: theme('colors.amber.500');
+  --color-status-warning-surface: theme('colors.amber.950');
+  --color-status-warning-content: theme('colors.amber.100');
+  --color-status-danger: theme('colors.red.500');
+  --color-status-danger-surface: theme('colors.red.950');
+  --color-status-danger-content: theme('colors.red.100');
+  --color-status-info: theme('colors.cyan.400');
+  --color-status-accent: theme('colors.indigo.400');
+  --color-status-accent-surface: theme('colors.indigo.950');
+  --color-status-accent-content: theme('colors.indigo.100');
+  --color-status-neutral: theme('colors.zinc.400');
+  --color-status-neutral-surface: var(--color-surface-muted);
+  --color-status-neutral-content: var(--color-content-muted);
+  --color-danger: var(--color-status-danger);
+  --color-success: var(--color-status-success);
+  --color-warning: var(--color-status-warning);
+  --color-gutter: theme('colors.zinc.700');
+  --color-gutter-hover: theme('colors.zinc.600');
+  --terminal-black: #4f5666;
+  --terminal-red: #f85757;
+  --terminal-green: #50d750;
+  --terminal-yellow: #f9e131;
+  --terminal-blue: #3396ff;
+  --terminal-magenta: #de73ff;
+  --terminal-cyan: #4cdee0;
+  --terminal-white: #d4d4d4;
+  --color-terminal-foreground: var(--terminal-white);
 }
 
 [data-theme='light'] {
-  --app-bg: #f8fafc;
-  --panel-bg: #ffffff;
-  --panel-bg-alt: #f1f5f9;
-  --border-color: #cbd5e1;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --hover-bg: #e2e8f0;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --gutter: #cbd5e1;
-  --gutter-hover: #94a3b8;
+  /* Matches Monaco's configured Default Light+ editor background. */
+  --color-canvas: theme('colors.white');
+  --color-panel: theme('colors.white');
+  --color-panel-muted: theme('colors.zinc.50');
+  --color-surface: var(--color-panel);
+  --color-surface-muted: theme('colors.zinc.100');
+  --color-surface-raised: theme('colors.white');
+  --color-surface-hover: theme('colors.zinc.100');
+  --color-surface-active: theme('colors.zinc.200');
+  --color-line: theme('colors.zinc.300');
+  --color-line-muted: theme('colors.zinc.200');
+  --color-line-strong: theme('colors.zinc.400');
+  --color-content: theme('colors.zinc.900');
+  --color-content-secondary: theme('colors.zinc.600');
+  --color-content-muted: theme('colors.zinc.500');
+  --color-content-disabled: theme('colors.zinc.400');
+  --color-content-inverted: theme('colors.white');
+  --color-accent: theme('colors.indigo.600');
+  --color-accent-hover: theme('colors.indigo.700');
+  --color-accent-strong: theme('colors.indigo.700');
+  --color-focus: theme('colors.zinc.600');
+  --color-control: theme('colors.white');
+  --color-input: theme('colors.white');
+  --color-status-success: theme('colors.green.700');
+  --color-status-success-surface: theme('colors.green.100');
+  --color-status-success-content: theme('colors.green.800');
+  --color-status-warning: theme('colors.amber.700');
+  --color-status-warning-surface: theme('colors.amber.100');
+  --color-status-warning-content: theme('colors.amber.800');
+  --color-status-danger: theme('colors.red.600');
+  --color-status-danger-surface: theme('colors.red.100');
+  --color-status-danger-content: theme('colors.red.800');
+  --color-status-info: theme('colors.cyan.700');
+  --color-status-accent: theme('colors.indigo.700');
+  --color-status-accent-surface: theme('colors.indigo.100');
+  --color-status-accent-content: theme('colors.indigo.800');
+  --color-status-neutral: theme('colors.zinc.500');
+  --color-status-neutral-surface: var(--color-surface-muted);
+  --color-status-neutral-content: var(--color-content-muted);
+  --color-danger: var(--color-status-danger);
+  --color-success: var(--color-status-success);
+  --color-warning: var(--color-status-warning);
+  --color-gutter: theme('colors.zinc.300');
+  --color-gutter-hover: theme('colors.zinc.400');
+  /* Tomorrow color scheme */
+  --terminal-black: #000000;
+  --terminal-red: #c82829;
+  --terminal-green: #718c00;
+  --terminal-yellow: #eab700;
+  --terminal-blue: #4271ae;
+  --terminal-magenta: #8959a8;
+  --terminal-cyan: #3e999f;
+  --terminal-white: #ffffff;
+  --color-terminal-foreground: var(--terminal-black);
+}
 
-  --surface-bg: var(--panel-bg);
-  --surface-bg-muted: var(--panel-bg-alt);
-  --surface-bg-raised: #ffffff;
-  --surface-hover: var(--hover-bg);
-  --surface-active: #cbd5e1;
-  --border-muted: #e2e8f0;
-  --border-strong: #94a3b8;
-  --text-muted: #64748b;
-  --text-disabled: #94a3b8;
-  --text-inverted: #ffffff;
-  --danger: #dc2626;
-  --danger-hover: #b91c1c;
-  --success: #16a34a;
-  --warning: #d97706;
-  --input-bg: #ffffff;
-  --table-header-bg: var(--surface-bg-muted);
-  --table-row-bg: var(--surface-bg);
-  --table-row-alt-bg: var(--surface-bg-muted);
-  --button-secondary-bg: transparent;
-  --button-secondary-hover: var(--surface-hover);
+/* Compatibility aliases for screens that have not migrated to the canonical
+   semantic --color-* tokens yet. */
+:root {
+  --app-bg: var(--color-canvas);
+  --panel-bg: var(--color-panel);
+  --panel-bg-alt: var(--color-panel-muted);
+  --surface-bg: var(--color-surface);
+  --surface-bg-muted: var(--color-surface-muted);
+  --surface-bg-raised: var(--color-surface-raised);
+  --surface-hover: var(--color-surface-hover);
+  --surface-active: var(--color-surface-active);
+  --hover-bg: var(--color-surface-hover);
+  --border-color: var(--color-line);
+  --border-muted: var(--color-line-muted);
+  --border-strong: var(--color-line-strong);
+  --text-primary: var(--color-content);
+  --text-secondary: var(--color-content-secondary);
+  --text-muted: var(--color-content-muted);
+  --text-disabled: var(--color-content-disabled);
+  --text-inverted: var(--color-content-inverted);
+  --accent: var(--color-accent);
+  --accent-hover: var(--color-accent-hover);
+  --button-primary-hover: var(--color-accent-strong);
+  --focus-ring: var(--color-focus);
+  --button-secondary-bg: var(--color-control);
+  --input-bg: var(--color-input);
+  --danger: var(--color-danger);
+  --danger-hover: var(--color-status-danger);
+  --success: var(--color-success);
+  --success-hover: var(--color-status-success);
+  --warning: var(--color-warning);
+  --gutter: var(--color-gutter);
+  --gutter-hover: var(--color-gutter-hover);
+  --table-header-bg: var(--color-surface-raised);
+  --table-row-bg: var(--color-surface);
+  --table-row-alt-bg: var(--color-surface-muted);
+  --button-secondary-hover: var(--color-surface-hover);
+  --button-primary-disabled-bg: var(--color-surface-active);
+  --button-primary-disabled-text: var(--color-content);
 }
 
 html,
@@ -76,6 +160,24 @@ body,
   background-color: var(--app-bg);
   color: var(--text-primary);
   @apply overflow-auto;
+}
+
+.tooltip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
+}
+
+[data-popper-placement^='top'] > .tooltip-arrow {
+  bottom: -4px;
+  border-top: 4px solid var(--surface-bg-raised);
+}
+
+[data-popper-placement^='bottom'] > .tooltip-arrow {
+  top: -4px;
+  border-bottom: 4px solid var(--surface-bg-raised);
 }
 
 #__next {
@@ -112,56 +214,48 @@ body,
 }
 
 .theme-page {
-  background-color: var(--app-bg);
-  color: var(--text-primary);
+  @apply bg-canvas text-content;
 }
 
 .theme-surface {
-  background-color: var(--surface-bg);
-  color: var(--text-primary);
+  @apply bg-surface text-content;
 }
 
 .theme-surface-muted {
-  background-color: var(--surface-bg-muted);
-  color: var(--text-primary);
+  @apply bg-surface-muted text-content;
 }
 
 .theme-surface-raised {
-  background-color: var(--surface-bg-raised);
-  color: var(--text-primary);
+  @apply bg-surface-raised text-content;
 }
 
 .theme-border {
-  border-color: var(--border-color);
+  @apply border-line;
 }
 
 .theme-text {
-  color: var(--text-primary);
+  @apply text-content;
 }
 
 .theme-text-muted {
-  color: var(--text-muted);
+  @apply text-content-muted;
 }
 
 .theme-input {
-  background-color: var(--input-bg);
-  border-color: var(--border-color);
-  color: var(--text-primary);
+  @apply border-line bg-input text-content shadow-sm transition-colors outline-none hover:border-line-strong focus-visible:border-line-strong focus-visible:ring-2 focus-visible:ring-focus;
 }
 
 .theme-input::placeholder {
   color: var(--text-muted);
 }
 
-.theme-input:focus {
+.theme-input:focus-visible {
   border-color: var(--accent);
   --tw-ring-color: var(--accent);
 }
 
 .theme-button-primary {
-  background-color: var(--accent);
-  border-color: transparent;
-  color: var(--text-inverted);
+  @apply border-transparent bg-accent text-content-inverted;
 }
 
 .theme-button-primary:hover:not(:disabled),
@@ -170,37 +264,97 @@ body,
 }
 
 .theme-button-secondary {
-  background-color: var(--button-secondary-bg);
-  border-color: var(--border-color);
-  color: var(--text-primary);
+  @apply border-line bg-control text-content;
 }
 
 .theme-button-secondary:hover:not(:disabled),
-.theme-button-secondary:focus:not(:disabled) {
+.theme-button-secondary:focus-visible:not(:disabled) {
   background-color: var(--button-secondary-hover);
 }
 
-.theme-button-primary:disabled,
+.theme-button-primary:disabled {
+  background-color: var(--button-primary-disabled-bg);
+  color: var(--button-primary-disabled-text);
+  cursor: not-allowed;
+}
+
 .theme-button-secondary:disabled {
   color: var(--text-disabled);
   cursor: not-allowed;
   opacity: 0.65;
 }
 
+.ui-focus {
+  @apply outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-canvas;
+}
+
+.ui-button,
+.ui-button-primary,
+.ui-button-secondary {
+  @apply inline-flex items-center justify-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium shadow-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.ui-button-primary {
+  @apply border-transparent bg-accent text-content-inverted enabled:hover:bg-accent-strong;
+}
+
+.ui-button-secondary {
+  @apply border-line bg-control text-content enabled:hover:border-line-strong enabled:hover:bg-surface-hover enabled:active:bg-surface-active;
+}
+
+.ui-icon-button {
+  @apply inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent text-content-secondary transition-colors outline-none hover:border-line hover:bg-surface-hover hover:text-content active:bg-surface-active focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40;
+}
+
+.workspace-toolbar-button {
+  @apply inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-surface-raised px-2.5 text-sm font-medium text-content shadow-sm transition-colors outline-none hover:border-line-strong hover:bg-surface-hover active:bg-surface-active focus-visible:ring-2 focus-visible:ring-focus;
+}
+
+.workspace-toolbar-icon-button {
+  @apply m-0.5 inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent text-content-secondary transition-colors outline-none hover:border-line hover:bg-surface-hover hover:text-content focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:text-content-disabled;
+}
+
+.workspace-toolbar-nav-button {
+  @apply m-0.5 inline-flex h-8 items-center rounded-md border border-transparent px-2.5 text-sm font-medium text-content-secondary transition-colors outline-none hover:border-line hover:bg-surface-hover hover:text-content focus-visible:ring-2 focus-visible:ring-focus;
+}
+
+.ui-panel {
+  @apply border-line bg-surface text-content;
+}
+
+.ui-table-heading {
+  @apply text-left text-xs font-semibold uppercase tracking-wide text-content-muted;
+}
+
+.ui-menu {
+  @apply rounded-lg border border-line-strong bg-surface-raised p-1 shadow-md focus:outline-none;
+}
+
+.ui-menu-item {
+  @apply flex w-full items-center rounded-md px-2.5 py-2 text-sm text-content-secondary outline-none hover:bg-surface-hover hover:text-content focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-focus;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .theme-table {
-  background-color: var(--table-row-bg);
-  border-color: var(--border-color);
-  color: var(--text-primary);
+  @apply border-line bg-surface text-content;
 }
 
 .theme-table-header {
-  background-color: var(--table-header-bg);
-  color: var(--text-primary);
+  @apply bg-surface-raised text-content;
 }
 
 .theme-table-row {
-  background-color: var(--table-row-bg);
-  border-color: var(--border-muted);
+  @apply border-line-muted bg-surface;
 }
 
 .theme-table-row:nth-child(even) {
@@ -233,6 +387,11 @@ body,
   display: none !important;
 }
 
+/* react-resizable-panels sets display via inline styles; restore hidden behavior. */
+[data-panel][hidden] {
+  display: none !important;
+}
+
 /* This is vim normal input */
 .status-node > span + span {
   padding-left: 0.75rem;
@@ -256,7 +415,7 @@ body,
 }
 
 .text-input {
-  @apply px-1 block w-full pb-1 border-0 border-b-2 focus:ring-0 text-sm bg-transparent;
+  @apply block w-full border-0 border-b-2 bg-transparent px-1 pb-1 text-sm focus:ring-0;
   border-color: var(--border-color);
   color: var(--text-primary);
 }
@@ -277,30 +436,23 @@ body,
 
 .html-statement-container {
   & ul {
-    list-style-type: disc;
-    margin-left: 1.5rem;
+    @apply ml-6 list-disc leading-6;
   }
   & ol {
-    list-style-type: decimal;
-    margin-left: 1.5rem;
+    @apply ml-6 list-decimal leading-6;
   }
   & pre {
-    @apply rounded-md my-2 px-3.5 py-2.5 border border-gray-700 bg-[#121212] overflow-x-auto;
+    @apply my-2 overflow-x-auto rounded-md border border-line bg-canvas px-3.5 py-2.5 font-mono text-sm leading-6 text-content tabular-nums;
   }
   .section-title,
   & h1,
   & h2,
   & h3,
   & h4 {
-    font-size: 1rem;
-    line-height: 1.3rem;
-    margin-bottom: 0.25rem;
-    margin-top: 0.6rem;
-    font-weight: 600;
+    @apply mb-1 mt-4 text-base font-semibold leading-6;
   }
   & p {
-    margin-bottom: 0.5rem;
-    line-height: 1.4em;
+    @apply mb-2 leading-6;
   }
   & .tex-span {
     font-family:
@@ -346,21 +498,26 @@ body,
   background-color: rgba(255, 255, 0, 0.1);
 }
 
-body {
-  --terminal-black: #4f5666;
-  --terminal-red: #f85757;
-  --terminal-green: #50d750;
-  --terminal-yellow: #f9e131;
-  --terminal-blue: #3396ff;
-  --terminal-magenta: #de73ff;
-  --terminal-cyan: #4cdee0;
-  --terminal-white: #d4d4d4;
-}
-
 .terminal-linked-line {
   cursor: default;
 
   & > span {
     color: var(--terminal-blue);
   }
+}
+
+.cm-theme {
+  height: 100%;
+}
+
+.workspace-touch-resize-handle[data-separator='active']
+  .workspace-touch-row-grip {
+  height: 1rem;
+  width: 2.5rem;
+}
+
+.workspace-touch-resize-handle[data-separator='active']
+  .workspace-touch-column-grip {
+  height: 2.5rem;
+  width: 1rem;
 }

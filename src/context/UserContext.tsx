@@ -23,8 +23,10 @@ import {
 import animals from '../scripts/animals';
 import { Platform } from '../types/problem';
 import defaultCode from '../scripts/defaultCode';
+import { DEFAULT_FONT_SIZE_EDITOR } from '../constants/editorConstants';
 
 export type Language = 'cpp' | 'java' | 'py';
+
 export const LANGUAGES: { label: string; value: Language }[] = [
   {
     label: 'C++',
@@ -35,7 +37,7 @@ export const LANGUAGES: { label: string; value: Language }[] = [
     value: 'java',
   },
   {
-    label: 'Python 3.8.1',
+    label: 'Python',
     value: 'py',
   },
 ];
@@ -48,6 +50,7 @@ export type UserData = {
   id: string;
   editorMode: EditorMode;
   tabSize: number;
+  fontSize: number;
   lightMode: boolean;
   rainbowIndent: boolean;
   defaultPermission: 'READ_WRITE' | 'READ' | 'PRIVATE';
@@ -139,6 +142,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         id: user.uid,
         editorMode: data.editorMode ?? 'Normal',
         tabSize: data.tabSize ?? 4,
+        fontSize: data.fontSize ?? DEFAULT_FONT_SIZE_EDITOR,
         lightMode: data.lightMode ?? false,
         rainbowIndent: data.rainbowIndent ?? false,
         defaultPermission: data.defaultPermission ?? 'READ_WRITE',
@@ -159,8 +163,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       );
   }, [user]);
 
+  const lightMode = userData?.lightMode;
+
   useEffect(() => {
-    const activeTheme = userData?.lightMode ? 'light' : 'dark';
+    if (lightMode === undefined) return;
+
+    const activeTheme = lightMode ? 'light' : 'dark';
     const root = document.documentElement;
 
     root.dataset.theme = activeTheme;
@@ -170,7 +178,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       document.body.dataset.theme = activeTheme;
       document.body.style.colorScheme = activeTheme;
     }
-  }, [userData?.lightMode]);
+
+    try {
+      window.localStorage.setItem('algopro-theme', activeTheme);
+    } catch {
+      // The active theme still works when persistent browser storage is blocked.
+    }
+  }, [lightMode]);
 
   const updateUsername = useCallback(
     (newName: string) => {

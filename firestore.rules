@@ -32,10 +32,7 @@ service cloud.firestore {
       function isValidGroup(schoolID, id) {
         return schoolID is string && id is string && id.matches('^' + schoolID + '~[a-z0-9_-]+$');
       }
-      allow read: if resource == null
-                  || request.auth.token.admin == true
-                  || resource.data.school in request.auth.token.teacher
-                  || resource.data.school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
+      allow read: if true;
 
       allow create: if (
                         request.auth.token.admin == true ||

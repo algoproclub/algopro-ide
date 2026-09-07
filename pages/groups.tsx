@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   collection,
   getDocs,
@@ -13,59 +13,38 @@ import {
 } from 'firebase/firestore';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import { useUserContext } from '../src/context/UserContext';
-import { fetchTeacherSchools, GroupInfo, School } from './teacher';
 import Dropdown from '../src/components/Dropdown';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { EditGroupModal, TwoFieldValue } from '../src/components/EditTextModal';
 import Link from 'next/link';
+import PageTitle from '../src/components/PageTitle';
+import {
+  useManagedSchools,
+  useSchoolGroups,
+} from '../src/hooks/useClassroomMetadata';
+import { useScopedSelection } from '../src/hooks/useScopedSelection';
 
 const firestore = getFirestore();
 
 const PageContent = () => {
-  document.title = 'Edit groups';
-
   const { userRole } = useUserContext();
-  const [groups, setGroups] = useState<GroupInfo[]>([]);
-  const [schools, setSchools] = useState<School[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [schoolInd, setSchoolInd] = useState(0);
-  const schoolNames = schools.map(s => s.name);
-
-  useEffect(() => {
-    const initSchools = async () => {
-      const schools = await fetchTeacherSchools(userRole);
-      setSchools(schools);
-    };
-    initSchools();
-  }, [userRole]);
-
-  const fetchGroups = async () => {
-    if (!schools[schoolInd]) {
-      return;
-    }
-    const groupsSnap = await getDocs(
-      query(
-        collection(firestore, 'groups'),
-        where('school', '==', schools[schoolInd].id)
-      )
-    );
-    setGroups(
-      groupsSnap.docs.map(docu => {
-        return {
-          id: docu.id,
-          name: docu.get('name') || docu.id,
-          schoolID: docu.get('school'),
-        };
-      })
-    );
-  };
-
-  useEffect(() => {
-    fetchGroups();
-  }, [schoolInd, schools]);
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  const schoolsResource = useManagedSchools(userRole);
+  const schools = schoolsResource.data;
+  const [schoolID, setSchoolID] = useScopedSelection(
+    'group-editor-schools',
+    schools.map(school => school.id)
+  );
+  const groupsResource = useSchoolGroups(schoolID, {
+    includeInactive: true,
+    refreshVersion,
+  });
+  const groups = groupsResource.data;
 
   const onSave = async (group: TwoFieldValue) => {
-    const groupID = `${schools[schoolInd].id}~${group.left}`;
+    if (!schoolID) return;
+    const groupID = `${schoolID}~${group.left}`;
     const groupName = group.right;
     let success = true;
     try {
@@ -86,7 +65,7 @@ const PageContent = () => {
     try {
       await setDoc(doc(firestore, 'groups', groupID), {
         name: groupName,
-        school: schools[schoolInd].id,
+        school: schoolID,
       });
     } catch (e) {
       alert(
@@ -95,14 +74,15 @@ const PageContent = () => {
       console.error(e);
       return;
     }
-    await fetchGroups();
+    setRefreshVersion(version => version + 1);
     setIsOpen(false);
   };
   const deleteGroup = (id: string) => {
     const doDelete = async () => {
+      if (!schoolID) return;
       const q = query(
         collection(firestore, 'userdata'),
-        where('schools', 'array-contains', schools[schoolInd].id)
+        where('schools', 'array-contains', schoolID)
       );
       const snap = await getDocs(q);
       const batch = writeBatch(firestore);
@@ -122,7 +102,7 @@ const PageContent = () => {
         }
       });
       await batch.commit();
-      await fetchGroups();
+      setRefreshVersion(version => version + 1);
       setIsOpen(false);
     };
     if (
@@ -136,25 +116,30 @@ const PageContent = () => {
 
   return (
     <div className="px-2">
-      {schools[schoolInd] && (
+      {schoolID && (
         <EditGroupModal
           isOpen={isOpen}
-          schoolID={schools[schoolInd].id}
+          schoolID={schoolID}
           value={{ left: '', right: '' }}
           onSave={onSave}
           onClose={() => setIsOpen(false)}
         />
       )}
-      <div className="mx-auto max-w-7xl border border-gray-600 bg-gray-800 mt-4">
-        <div className="p-4 border-b border-gray-600 flex items-center">
+      <div className="mx-auto max-w-7xl border theme-border theme-surface-raised mt-4">
+        <div className="p-4 border-b theme-border flex items-center">
           <Dropdown
-            items={schoolNames}
+            items={schools.map(school => ({
+              value: school.id,
+              label: school.name,
+            }))}
             label="School"
-            selected={schoolInd}
-            setSelected={setSchoolInd}
+            selected={schoolID}
+            setSelected={setSchoolID}
+            disabled={schoolsResource.status === 'loading'}
+            disabledPlaceholder="Loading schools…"
           />
           <button
-            className="flex-shrink-0 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-md mt-4 ml-3 flex items-center"
+            className="flex-shrink-0 px-4 py-2.5 theme-button-primary rounded-md mt-4 ml-3 flex items-center"
             onClick={() => setIsOpen(true)}
           >
             New group
@@ -164,10 +149,10 @@ const PageContent = () => {
             />
           </button>
         </div>
-        <div className="bg-gray-900 divide-y divide-gray-700 min-h-4">
+        <div className="theme-surface divide-y divide-[color:var(--border-muted)] min-h-4">
           {groups.map(group => (
             <div
-              className="flex items-center justify-between divide-x divide-gray-700"
+              className="flex items-center justify-between divide-x divide-[color:var(--border-muted)]"
               key={group.id}
             >
               <div className="px-4 py-2 flex items-center truncate">
@@ -177,24 +162,25 @@ const PageContent = () => {
                 />
                 <span className="truncate">
                   <span className="font-semibold">{group.name} </span>
-                  <span className="text-gray-300">({group.id})</span>
+                  <span className="theme-text-muted">({group.id})</span>
                 </span>
               </div>
               <div className="px-3 py-2 flex-shrink-0">
-                <Link href={`groups/${group.id}`}>
-                  <button
-                    title="Jump to group edit page"
-                    className="px-2 py-1 rounded-md hover:bg-gray-700"
-                  >
-                    <FontAwesomeIcon
-                      icon={{ prefix: 'fas', iconName: 'arrow-right' }}
-                      className="w-3.5 h-3.5 inline"
-                    />
-                  </button>
+                <Link
+                  href={`groups/${group.id}`}
+                  aria-label={`Edit ${group.name}`}
+                  title="Jump to group edit page"
+                  className="px-2 py-1 rounded-md hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]"
+                >
+                  <FontAwesomeIcon
+                    icon={{ prefix: 'fas', iconName: 'arrow-right' }}
+                    className="w-3.5 h-3.5 inline"
+                  />
                 </Link>
                 <button
+                  aria-label={`Delete ${group.name}`}
                   title="Delete group"
-                  className="px-2 py-1 rounded-md hover:bg-gray-700"
+                  className="px-2 py-1 rounded-md hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]"
                   onClick={() => {
                     deleteGroup(group.id);
                   }}
@@ -215,8 +201,11 @@ const PageContent = () => {
 
 export default function ClassGroupSelectPage() {
   return (
-    <WithTeacherLogin>
-      <PageContent />
-    </WithTeacherLogin>
+    <>
+      <PageTitle>Edit groups</PageTitle>
+      <WithTeacherLogin>
+        <PageContent />
+      </WithTeacherLogin>
+    </>
   );
 }

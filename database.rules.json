@@ -14,11 +14,10 @@
     },
     "files": {
       ".read": "auth != null && auth.token.registered === true",
-      ".write": "auth != null && auth.token.registered === true",
       ".indexOn": "teacher/editTime",
 
       "$secretid": {
-        ".write": "auth != null && auth.token.registered === true && !root.child('files').child($secretid).exists()",
+        ".write": "auth != null && auth.token.registered === true && (!data.exists() || newData.child('codeRun').val() === data.child('codeRun').val())",
         ".read": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ')",
         "users": {
           "$user": {
@@ -62,9 +61,19 @@
           ".write": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE')"
         },
 
-        "isCodeRunning": {
+        "codeRun": {
           ".read": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() !== 'PRIVATE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ')",
-          ".write": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE')"
+          ".write": "auth != null && auth.token.registered === true && (root.child('files').child($secretid).child('settings').child('defaultPermission').val() === 'READ_WRITE' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'OWNER' || root.child('files').child($secretid).child('users').child(auth.uid).child('permission').val() === 'READ_WRITE')",
+          ".validate": "!newData.exists() || newData.hasChildren(['runID', 'startedAt'])",
+          "runID": {
+            ".validate": "newData.isString() && newData.val().length > 0"
+          },
+          "startedAt": {
+            ".validate": "newData.isNumber() && newData.val() === now"
+          },
+          "$other": {
+            ".validate": false
+          }
         },
 
         "state": {

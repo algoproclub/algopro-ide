@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAtomValue, useSetAtom } from 'jotai';
-import { isLineHighlightSetAtom } from '../atoms/workspace';
+import { DEFAULT_FONT_SIZE_EDITOR } from '../constants/editorConstants';
+import { useUserContext } from '../context/UserContext';
 
 /* eslint-disable no-control-regex */
 const ERASE_LINE = '\x1b[K';
@@ -22,34 +22,23 @@ const STYLES: Record<number, React.CSSProperties> = {
   37: { color: 'var(--terminal-white)' },
 };
 
-const OutputLine = ({
-  line,
-  highlightLine,
-  clearLineHighlight,
-}: {
-  line: string;
-  highlightLine?: (line: number) => void;
-  clearLineHighlight?: () => void;
-}): JSX.Element => {
-  const isLineHighlightSet = useAtomValue(isLineHighlightSetAtom);
-  const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
-
+function parseOutputLine(line: string): {
+  spans: JSX.Element[];
+  linkedLine: number | undefined;
+} {
   line = line.replaceAll(ERASE_LINE, '');
   const chunks = line.split(SET_COLOR_REGEX);
-
   let plaintext = '';
-
   const spans: JSX.Element[] = [];
+
   if (chunks[0] !== '') {
     spans.push(<span key={0}>{chunks[0]}</span>);
     plaintext += chunks[0];
   }
   for (let i = 1; i < chunks.length; i += 2) {
     const idx = Math.ceil(i / 2);
-
     const styles = chunks[i].split(';').map(n => STYLES[Number(n)] ?? {});
     const hyperlinkMatch = chunks[i + 1].match(HYPERLINK_REGEX);
-
     const text = hyperlinkMatch?.groups?.text ?? chunks[i + 1];
     plaintext += text;
 
@@ -61,9 +50,7 @@ const OutputLine = ({
       text
     );
 
-    if (hyperlinkMatch) {
-      styles.push({ textDecoration: 'underline dotted' });
-    }
+    if (hyperlinkMatch) styles.push({ textDecoration: 'underline dotted' });
 
     spans.push(
       <span key={idx} style={Object.assign({}, ...styles)}>
@@ -73,15 +60,23 @@ const OutputLine = ({
   }
 
   const locationMatch = plaintext.match(LOCATION_REGEX);
-  const linkedLine = locationMatch
-    ? Number(locationMatch.groups?.line)
-    : undefined;
+  return {
+    spans,
+    linkedLine: locationMatch ? Number(locationMatch.groups?.line) : undefined,
+  };
+}
 
-  if (linkedLine !== undefined && !isLineHighlightSet) {
-    highlightLine?.(linkedLine);
-    setIsLineHighlightSet(true);
-  }
-
+const OutputLine = ({
+  spans,
+  linkedLine,
+  highlightLine,
+  clearLineHighlight,
+}: {
+  spans: JSX.Element[];
+  linkedLine: number | undefined;
+  highlightLine?: (line: number) => void;
+  clearLineHighlight?: () => void;
+}): JSX.Element => {
   if (linkedLine !== undefined && highlightLine) {
     return (
       <div
@@ -89,12 +84,12 @@ const OutputLine = ({
         onMouseOver={() => highlightLine && highlightLine(linkedLine)}
         onMouseLeave={clearLineHighlight}
       >
-        {...spans}
+        {spans}
       </div>
     );
   }
 
-  return <div>{...spans}</div>;
+  return <div>{spans}</div>;
 };
 
 export const CompilerOutput = ({
@@ -106,17 +101,25 @@ export const CompilerOutput = ({
   highlightLine?: (line: number) => void;
   clearLineHighlight?: () => void;
 }): JSX.Element => {
-  const lines = output.split('\n');
+  const lines = output.split('\n').map(parseOutputLine);
+  const {
+    userData: { fontSize },
+  } = useUserContext();
 
   return (
     <pre
-      className="text-xs px-4 pt-2 h-full overflow-auto"
-      style={{ color: 'var(--terminal-white)' }}
+      className="px-4 pt-2 h-full overflow-auto"
+      style={{
+        color: 'var(--color-terminal-foreground)',
+        fontSize: `${fontSize ?? DEFAULT_FONT_SIZE_EDITOR}px`,
+        lineHeight: `${(fontSize ?? DEFAULT_FONT_SIZE_EDITOR) / 0.75}px`,
+      }}
     >
-      {lines.map((line, idx) => (
+      {lines.map(({ spans, linkedLine }, idx) => (
         <OutputLine
           key={idx}
-          line={line}
+          spans={spans}
+          linkedLine={linkedLine}
           highlightLine={highlightLine}
           clearLineHighlight={clearLineHighlight}
         />

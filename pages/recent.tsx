@@ -14,6 +14,7 @@ import { FontAwesomeIconProps } from '@fortawesome/react-fontawesome';
 import dynamic from 'next/dynamic';
 import LoadingIndicator from '../src/components/LoadingIndicator';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
+import PageTitle from '../src/components/PageTitle';
 
 const FontAwesomeIcon = dynamic<FontAwesomeIconProps>(
   () =>
@@ -88,6 +89,21 @@ type ShowVerdict = {
 const db = getDatabase();
 const maxPageLength = 16;
 
+const secondaryButtonClass =
+  'border theme-border text-[color:var(--text-primary)] hover:border-[color:var(--border-strong)] hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]';
+const activeButtonClass =
+  'border-transparent bg-[color:var(--accent)] text-[color:var(--text-inverted)] hover:bg-[color:var(--accent-hover)]';
+const dropdownButtonClass =
+  'bg-[color:var(--input-bg)] border-[color:var(--border-color)] hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]';
+const openDropdownButtonClass =
+  'ring-2 ring-[color:var(--accent)] border-transparent bg-[color:var(--surface-hover)]';
+const dropdownPanelClass =
+  'border theme-border rounded-md theme-surface divide-y divide-[color:var(--border-muted)] absolute top-2 w-full cursor-pointer overflow-hidden';
+const dropdownOptionClass =
+  'px-3 py-2 hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]';
+const checkboxClass =
+  'w-4 h-4 bg-[color:var(--input-bg)] border-[color:var(--border-color)] checked:bg-[color:var(--accent)] checked:focus:bg-[color:var(--accent)] checked:hover:bg-[color:var(--accent-hover)] focus:ring-0 focus:ring-offset-0';
+
 const unixToDate = (timestamp: number) => {
   const date = new Date(timestamp);
   return date.toLocaleString('hu-HU');
@@ -111,9 +127,7 @@ const Pagination = ({
     return (
       <button
         className={`px-3 py-1.5 rounded border ${
-          page === pageData.current
-            ? 'bg-indigo-600 border-indigo-600'
-            : 'border-gray-600 hover:border-gray-500 hover:bg-gray-800 active:bg-gray-700'
+          page === pageData.current ? activeButtonClass : secondaryButtonClass
         }`}
         onClick={() => onChange(page)}
       >
@@ -124,7 +138,7 @@ const Pagination = ({
   return (
     <>
       <button
-        className="px-3 py-1 rounded border border-gray-600 flex items-center justify-center hover:border-gray-500 hover:bg-gray-800 active:bg-gray-700"
+        className={`px-3 py-1 rounded flex items-center justify-center ${secondaryButtonClass}`}
         onClick={() => onChange(1)}
       >
         <FontAwesomeIcon
@@ -154,7 +168,7 @@ const Pagination = ({
         </div>
       )}
       <button
-        className="px-3 py-1 rounded border border-gray-600 flex items-center justify-center hover:border-gray-500 hover:bg-gray-800 active:bg-gray-700"
+        className={`px-3 py-1 rounded flex items-center justify-center ${secondaryButtonClass}`}
         onClick={() => onChange(pageData.max)}
       >
         <FontAwesomeIcon
@@ -185,9 +199,7 @@ const TimeDropdown = ({
               <div className="w-full text-sm relative z-20">
                 <Listbox.Button
                   className={`relative w-full px-3 py-2 text-left rounded-md border truncate ${
-                    open
-                      ? 'ring-2 ring-indigo-500 border-transparent bg-gray-800'
-                      : 'bg-gray-900 hover:bg-gray-800 active:bg-gray-700 border-gray-500 hover:border-gray-500'
+                    open ? openDropdownButtonClass : dropdownButtonClass
                   }`}
                 >
                   {editTimeList[selected]}
@@ -200,10 +212,10 @@ const TimeDropdown = ({
                   leaveFrom="transform scale-100 opacity-100"
                   leaveTo="transform scale-95 opacity-0"
                 >
-                  <Listbox.Options className="border border-gray-600 rounded-md bg-gray-900 divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden">
+                  <Listbox.Options className={dropdownPanelClass}>
                     {editTimeList.map((val, ind) => (
                       <Listbox.Option
-                        className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700"
+                        className={dropdownOptionClass}
                         key={ind}
                         value={ind}
                       >
@@ -245,10 +257,8 @@ const SubmissionStatusDropdown = ({
             <div className="w-full flex space-x-2">
               <div className="w-full text-sm relative z-20">
                 <Listbox.Button
-                  className={`w-full px-3 py-2 text-left rounded-md border text-gray-300 truncate ${
-                    open
-                      ? 'ring-2 ring-indigo-500 border-transparent bg-gray-800'
-                      : 'bg-gray-900 hover:bg-gray-800 active:bg-gray-700 border-gray-500 hover:border-gray-500'
+                  className={`w-full px-3 py-2 text-left rounded-md border theme-text truncate ${
+                    open ? openDropdownButtonClass : dropdownButtonClass
                   }`}
                 >
                   {text}
@@ -263,11 +273,11 @@ const SubmissionStatusDropdown = ({
                 >
                   <Listbox.Options
                     static
-                    className="z-20 border border-gray-600 rounded-md bg-gray-900 divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden"
+                    className={`z-20 ${dropdownPanelClass}`}
                   >
                     {SUBMISSION_STATUS.map(val => (
                       <Listbox.Option
-                        className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700 select-none"
+                        className={`${dropdownOptionClass} select-none`}
                         onClick={e => {
                           e.preventDefault();
                           setShowVerdict(prev => ({
@@ -278,12 +288,12 @@ const SubmissionStatusDropdown = ({
                         key={val}
                         value={val}
                       >
-                        <label className="cursor-pointer text-[0.85rem] text-white flex items-center select-none">
+                        <label className="cursor-pointer text-[0.85rem] theme-text flex items-center select-none">
                           <input
                             disabled
                             checked={showVerdict[val]}
                             type="checkbox"
-                            className="cursor-pointer w-4 h-4 bg-gray-900 checked:bg-indigo-600 checked:focus:bg-indigo-600 checked:focus:hover:bg-indigo-700 checked:hover:bg-indigo-700 focus:ring-0 focus:ring-offset-0"
+                            className={`cursor-pointer ${checkboxClass}`}
                           />{' '}
                           <span className="ml-2 mb-0.5">{val}</span>
                         </label>
@@ -332,7 +342,6 @@ const PageContent = () => {
 
   useEffect(() => {
     updateFileList();
-    document.title = 'Teacher interface - AlgoPro IDE';
   }, []);
 
   useEffect(() => {
@@ -498,7 +507,7 @@ const PageContent = () => {
   );
 
   return (
-    <div className="w-full text-white mx-auto pt-4 pb-4 max-w-7xl">
+    <div className="w-full theme-text mx-auto pt-4 pb-4 max-w-7xl">
       <div className="mx-4">
         <Disclosure>
           {({ open }) => (
@@ -506,10 +515,10 @@ const PageContent = () => {
               <div className="w-full flex items-stretch space-x-2">
                 <Disclosure.Button className="w-full">
                   <div
-                    className={`flex items-center justify-center w-full border px-4 py-2 rounded-md ${
+                    className={`flex items-center justify-center w-full px-4 py-2 rounded-md ${
                       open
-                        ? 'bg-gray-800 border-gray-500'
-                        : 'border-gray-600 hover:border-gray-500'
+                        ? 'border theme-border bg-[color:var(--surface-hover)]'
+                        : secondaryButtonClass
                     }`}
                   >
                     Filter
@@ -522,7 +531,7 @@ const PageContent = () => {
                   </div>
                 </Disclosure.Button>
                 <button
-                  className="flex items-center justify-center border border-gray-600 px-3 py-1 rounded-lg hover:border-gray-500 hover:bg-gray-800 active:bg-gray-700"
+                  className={`flex items-center justify-center px-3 py-1 rounded-lg ${secondaryButtonClass}`}
                   onClick={updateFileList}
                 >
                   <FontAwesomeIcon
@@ -532,7 +541,7 @@ const PageContent = () => {
                 </button>
               </div>
               <Disclosure.Panel>
-                <div className="mt-2 space-y-3 px-6 py-5 border bg-gray-800 border-gray-600 z-10 relative">
+                <div className="mt-2 space-y-3 px-6 py-5 border theme-border theme-surface-raised z-10 relative">
                   <TimeDropdown
                     selected={lastEditOption}
                     setSelected={setLastEditOption}
@@ -546,7 +555,7 @@ const PageContent = () => {
                     <input
                       id="owner"
                       type="text"
-                      className="mt-1 w-full bg-gray-900 text-sm focus:ring-indigo-500 rounded-md"
+                      className="mt-1 w-full theme-input text-sm focus:ring-[color:var(--accent)] rounded-md"
                       value={filterInput.owner}
                       onChange={e =>
                         setFilterInput(prev => {
@@ -560,7 +569,7 @@ const PageContent = () => {
                     <input
                       id="workspace"
                       type="text"
-                      className="mt-1 w-full bg-gray-900 text-sm focus:ring-indigo-500 rounded-md"
+                      className="mt-1 w-full theme-input text-sm focus:ring-[color:var(--accent)] rounded-md"
                       value={filterInput.workspaceName}
                       onChange={e =>
                         setFilterInput(prev => {
@@ -569,12 +578,12 @@ const PageContent = () => {
                       }
                     />
                   </label>
-                  <label className="text-[0.85rem] text-white flex items-center select-none">
+                  <label className="text-[0.85rem] theme-text flex items-center select-none">
                     <input
                       checked={showNoProblem}
                       onChange={() => setShowNoProblem(val => !val)}
                       type="checkbox"
-                      className="w-4 h-4 bg-gray-900 checked:bg-indigo-600 checked:focus:bg-indigo-600 checked:focus:hover:bg-indigo-700 checked:hover:bg-indigo-700 focus:ring-0 focus:ring-offset-0"
+                      className={checkboxClass}
                     />
                     <span className="ml-2 mb-0.5">
                       Show files with missing problem
@@ -586,7 +595,7 @@ const PageContent = () => {
           )}
         </Disclosure>
         <div
-          className={`mt-3 border border-gray-600 overflow-x-auto bg-gray-900 ${
+          className={`mt-3 border theme-border overflow-x-auto theme-surface ${
             loading ? 'border-opacity-75' : 'border-opacity-100'
           } relative z-0`}
         >
@@ -598,16 +607,16 @@ const PageContent = () => {
             <LoadingIndicator />
           </div>
           <table
-            className={`table-auto w-full bg-gray-800 divide-y divide-gray-600 text-sm ${
+            className={`table-auto w-full theme-table divide-y divide-[color:var(--border-color)] text-sm ${
               loading ? 'opacity-60 pointer-events-none' : 'opacity-100'
             } transition duration-200`}
           >
             <thead>
-              <tr className="divide-x divide-gray-600 select-none">
+              <tr className="theme-table-header divide-x divide-[color:var(--border-color)] select-none">
                 {headers.map((val, ind) => (
                   <th
                     key={ind}
-                    className="px-4 py-3 text-left whitespace-nowrap cursor-pointer hover:bg-gray-700 active:bg-gray-600 space-x-2"
+                    className="px-4 py-3 text-left whitespace-nowrap cursor-pointer hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)] space-x-2"
                     onClick={() => changeSorting(ind)}
                   >
                     <span>{val}</span>
@@ -639,16 +648,17 @@ const PageContent = () => {
                 ))}
               </tr>
             </thead>
-            <tbody
-              className={`bg-gray-900 divide-y divide-gray-700 min-h-[10rem]`}
-            >
+            <tbody className="theme-surface divide-y divide-[color:var(--border-muted)] min-h-[10rem]">
               {!pageContent?.length && (
                 <tr>
                   <td colSpan={5} className="h-6"></td>
                 </tr>
               )}
               {pageContent?.map((data, ind) => (
-                <tr className="divide-x divide-gray-600" key={ind}>
+                <tr
+                  className="theme-table-row divide-x divide-[color:var(--border-muted)]"
+                  key={ind}
+                >
                   <>
                     <td className="relative p-0 whitespace-nowrap">
                       <span className="invisible block px-4 py-2">
@@ -659,7 +669,7 @@ const PageContent = () => {
 
                       <a
                         href={`/${data.fileID.slice(1)}`}
-                        className="absolute inset-0 flex items-center px-4 py-2 text-sm font-medium text-indigo-300 hover:underline"
+                        className="absolute inset-0 flex items-center px-4 py-2 text-sm font-medium text-[color:var(--accent-hover)] hover:text-[color:var(--accent)] hover:underline"
                         target="_blank"
                         rel="noreferrer"
                         aria-label={
@@ -684,13 +694,13 @@ const PageContent = () => {
                         {data.submissionStatus === 'pending' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'cog' }}
-                            className="w-3.5 h-3.5 inline text-gray-400 animate-spin-slow"
+                            className="w-3.5 h-3.5 inline theme-text-muted animate-spin-slow"
                           />
                         )}
                         {data.submissionStatus === 'untried' && (
                           <FontAwesomeIcon
                             icon={{ prefix: 'fas', iconName: 'ellipsis' }}
-                            className="w-3.5 h-3.5 inline text-gray-500"
+                            className="w-3.5 h-3.5 inline text-[color:var(--text-disabled)]"
                           />
                         )}
                         {data.submissionStatus === 'error' && (
@@ -749,10 +759,13 @@ const PageContent = () => {
   );
 };
 
-export default function TeacherPage() {
+export default function RecentsPage() {
   return (
-    <WithTeacherLogin>
-      <PageContent />
-    </WithTeacherLogin>
+    <>
+      <PageTitle>Recent activity</PageTitle>
+      <WithTeacherLogin>
+        <PageContent />
+      </WithTeacherLogin>
+    </>
   );
 }

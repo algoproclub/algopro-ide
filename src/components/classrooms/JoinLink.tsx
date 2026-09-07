@@ -17,14 +17,14 @@ export default function JoinLink({ link }: { link: string }) {
 
   return (
     <div>
-      <h4 className="font-medium text-white px-4">Join Link</h4>
+      <h4 className="font-medium theme-text px-4">Join Link</h4>
       <div className="mt-2 flex">
-        <span className="block pl-4 pr-2 py-1.5 bg-gray-800 rounded text-gray-300 w-full overflow-ellipsis overflow-hidden">
+        <span className="block pl-4 pr-2 py-1.5 theme-surface-muted rounded theme-text-muted w-full overflow-ellipsis overflow-hidden">
           {window.location.origin}
           {link}
         </span>
         <button
-          className="text-gray-300 hover:text-white hover:bg-gray-700 bg-gray-800 px-2 text-sm font-medium"
+          className="theme-text-muted hover:text-[color:var(--text-primary)] hover:bg-[color:var(--surface-hover)] bg-[color:var(--surface-bg-muted)] px-2 text-sm font-medium"
           onClick={handleCopy}
         >
           {copied ? 'Copied!' : 'Copy'}

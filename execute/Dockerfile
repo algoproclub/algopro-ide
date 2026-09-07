@@ -9,9 +9,6 @@ RUN --mount=type=cache,target=/var/lib/apt/lists \
 
 COPY go.mod go.sum ./
 
-RUN --mount=type=cache,target=/go/pkg/mod \
-    go mod download && go mod verify
-
-RUN mkdir /tmp/pch
+RUN go mod download && go mod verify
 
 CMD ["go", "run", "."]

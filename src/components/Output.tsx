@@ -1,8 +1,7 @@
 import { TabBar } from './TabBar';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAtomValue } from 'jotai';
 import JudgeResult from '../types/judge';
-import type { SharedEditorProps } from './editor/editor-types';
 import USACOResults from './JudgeInterface/USACOResults';
 import { StatusData } from '../types/problem';
 import { useUserContext } from '../context/UserContext';
@@ -11,267 +10,309 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { CompilerOutput } from './CompilerOutput';
 import { mainMonacoEditorAtom } from '../atoms/workspace';
 import { StderrOutput } from './StderrOutput';
+import { getJudgeStatusDescription } from '../editorUtils';
 
 type StatusHistoryEntry = StatusData & { submissionTime?: number };
 
 export interface OutputProps {
   result: JudgeResult | null;
   statusData: StatusData | null;
-  statusDataHistory: StatusHistoryEntry[];
-  onReady?: SharedEditorProps['onReady'];
+  statusDataHistory: StatusHistoryEntry[] | null;
 }
 
 type OutputTab = 'stdout' | 'stderr' | 'compile_output' | 'results' | 'history';
+
+type OutputSelection = {
+  result: JudgeResult | null;
+  statusData: StatusData | null;
+  selectedId: OutputTab;
+  acknowledged: OutputTab[];
+};
+function isSameOutput(
+  previous: JudgeResult | null,
+  current: JudgeResult | null
+): boolean {
+  return (
+    previous?.status === current?.status &&
+    previous?.stdout === current?.stdout &&
+    previous?.stderr === current?.stderr &&
+    previous?.message === current?.message &&
+    previous?.compilationMessage === current?.compilationMessage &&
+    previous?.signal === current?.signal &&
+    previous?.debugData?.source === current?.debugData?.source
+  );
+}
+
+function getDefaultOutputTab(result: JudgeResult | null): OutputTab {
+  if (
+    result?.status === 'compile_error' ||
+    result?.status === 'internal_error'
+  ) {
+    return 'compile_output';
+  }
+  if (result?.stdout) return 'stdout';
+  if (result?.stderr) return 'stderr';
+  return 'stdout';
+}
+
+function getOutputText(result: JudgeResult | null, tab: OutputTab): string {
+  if (result?.status === 'internal_error') {
+    return result.debugData?.source === 'run_code'
+      ? `Run Code Error: ${result.message}`
+      : `Internal Error: ${result.message}\n\nPlease report this as a GitHub issue.`;
+  }
+
+  if (tab === 'compile_output') {
+    return result?.status === 'compile_error'
+      ? (result.message ?? '')
+      : (result?.compilationMessage ?? '');
+  }
+
+  if (tab === 'stdout' || tab === 'stderr') return result?.[tab] ?? '';
+  return '';
+}
+
+function ExecutionOutputPanel({
+  children,
+  result,
+}: {
+  children: React.ReactNode;
+  result: JudgeResult | null;
+}): JSX.Element {
+  const executionTime =
+    result?.status === 'time_limit_exceeded'
+      ? '∞ms'
+      : result?.time === undefined
+        ? null
+        : `${Math.round(result.time * 1000)}ms`;
+  const memory =
+    result?.status === 'memory_limit_exceeded'
+      ? '∞MB'
+      : result?.memory === undefined
+        ? null
+        : result.memory < 1000
+          ? `${result.memory}kB`
+          : `${Math.round(result.memory / 100) / 10}MB`;
+
+  return (
+    <div className="tw-forms-disable tw-forms-disable-all-descendants flex h-full min-h-0 flex-col">
+      <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+      {result && (
+        <div
+          className="border-t border-line-muted bg-panel-muted px-3 py-1.5 text-right font-mono text-xs tabular-nums text-content-muted"
+          data-test-id="code-execution-output-status"
+        >
+          {[getJudgeStatusDescription(result), executionTime, memory]
+            .filter(Boolean)
+            .join(', ')}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OutputHistory({
+  entries,
+}: {
+  entries: StatusHistoryEntry[];
+}): JSX.Element {
+  return (
+    <div className="h-full w-full overflow-y-auto">
+      <table className="table-tasks w-full border-b border-line text-content">
+        <thead className="border-b border-line bg-panel-muted text-left text-xs uppercase tracking-wide text-content-muted">
+          <tr>
+            <th></th>
+            <th>Verdict</th>
+            <th>Time</th>
+            <th>Memory</th>
+            <th>Testcases</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-line text-sm">
+          {entries
+            .slice()
+            .reverse()
+            .map((item, index) => (
+              <tr
+                className="transition-colors hover:bg-surface-hover"
+                key={item.submissionTime ?? entries.length - index}
+              >
+                <td>{entries.length - index}</td>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  <a
+                    href={item.link || undefined}
+                    target="_blank"
+                    className={`${item.link ? 'hover:underline' : undefined} flex items-center`}
+                    rel="noreferrer"
+                  >
+                    {item.message?.toLowerCase() === 'correct answer' ? (
+                      <FontAwesomeIcon
+                        icon={{ prefix: 'fas', iconName: 'check' }}
+                        className="mr-1.5 inline h-3.5 w-3.5 text-status-success"
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        icon={{ prefix: 'fas', iconName: 'xmark' }}
+                        className="mr-1.5 inline h-3.5 w-3.5 text-status-danger"
+                      />
+                    )}
+                    {item.message}
+                    {item.link && (
+                      <FontAwesomeIcon
+                        icon={{
+                          prefix: 'fas',
+                          iconName: 'up-right-from-square',
+                        }}
+                        className="ml-1.5 inline h-3.5 w-3.5"
+                      />
+                    )}
+                  </a>
+                </td>
+                <td style={{ whiteSpace: 'nowrap' }}>{item.time ?? '-'}</td>
+                <td style={{ whiteSpace: 'nowrap' }}>{item.memory ?? '-'}</td>
+                <td>
+                  <div className="flex flex-wrap">
+                    {item.testCases?.map((testCase, index) => {
+                      const passed = testCase.title === 'correct answer';
+                      const timedOut = testCase.title === 'time limit exceeded';
+                      const iconName = passed
+                        ? 'check'
+                        : timedOut
+                          ? 'clock'
+                          : testCase.title === 'runtime error'
+                            ? 'bug'
+                            : 'xmark';
+
+                      return (
+                        <FontAwesomeIcon
+                          title={testCase.title}
+                          icon={{ prefix: timedOut ? 'far' : 'fas', iconName }}
+                          className={`mr-0.5 inline h-3.5 w-3.5 ${
+                            passed
+                              ? 'text-status-success'
+                              : 'text-status-danger'
+                          }`}
+                          key={index}
+                        />
+                      );
+                    })}
+                  </div>
+                </td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export const Output = ({
   result,
   statusData,
   statusDataHistory,
-  onReady,
 }: OutputProps): JSX.Element => {
-  const [option, setOption] = useState<OutputTab>('stdout');
-  const [tabs, setTabs] = useState<
-    Array<{ label: string; value: string; highlight: boolean }>
-  >([
-    { label: 'stdout', value: 'stdout', highlight: false },
-    { label: 'stderr', value: 'stderr', highlight: false },
-    { label: 'compile output', value: 'compile_output', highlight: false },
-    { label: 'results', value: 'results', highlight: false },
-    { label: 'history', value: 'history', highlight: false },
-  ]);
+  const [selection, setSelection] = useState<OutputSelection>(() => {
+    const selectedId = statusData ? 'results' : getDefaultOutputTab(result);
+    return { result, statusData, selectedId, acknowledged: [selectedId] };
+  });
+  const resultChanged = !isSameOutput(selection.result, result);
+  const statusChanged = selection.statusData !== statusData;
+  let currentSelection = selection;
 
-  useEffect(() => {
-    setOption('stdout');
-    let option = null;
-    const updatedTabs = tabs.map(tab => ({ ...tab, highlight: false }));
-
-    if (result?.stderr) {
-      option = 'stderr';
-      const stderrTab = updatedTabs.find(tab => tab.value === 'stderr');
-      if (stderrTab) stderrTab.highlight = true;
-    }
-    if (result?.stdout) {
-      option = 'stdout';
-      const stdoutTab = updatedTabs.find(tab => tab.value === 'stdout');
-      if (stdoutTab) stdoutTab.highlight = true;
-    }
-    if (result?.compilationMessage) {
-      const compileTab = updatedTabs.find(
-        tab => tab.value === 'compile_output'
-      );
-      if (compileTab) compileTab.highlight = true;
-    }
-    if (
-      result?.status === 'compile_error' ||
-      result?.status === 'internal_error'
-    ) {
-      option = 'compile_output';
-    }
-
-    setTabs(updatedTabs);
-    if (option) setOption(option as OutputTab);
-  }, [result?.status, result?.stdout, result?.stderr]);
-
-  useEffect(() => {
-    if (statusData) setOption('results');
-  }, [statusData]);
-
-  let outputText;
-  if (option !== 'results' && option !== 'history') {
-    if (result?.status === 'internal_error') {
-      outputText =
-        'Internal Error: ' +
-        result.message +
-        '\n\nPlease report this as a Github issue.';
-    } else {
-      if (option === 'compile_output') {
-        if (result?.status === 'compile_error') {
-          outputText = result.message ?? '';
-        } else {
-          outputText = result?.compilationMessage ?? '';
-        }
-      } else {
-        outputText = result?.[option] ?? '';
-      }
-    }
+  if (resultChanged || statusChanged) {
+    const selectedId =
+      statusChanged && statusData ? 'results' : getDefaultOutputTab(result);
+    currentSelection = {
+      result,
+      statusData,
+      selectedId,
+      acknowledged: resultChanged ? [selectedId] : selection.acknowledged,
+    };
+    setSelection(currentSelection);
   }
 
+  const history = statusDataHistory ?? [];
+  const isHighlighted = (id: OutputTab, hasOutput: boolean): boolean =>
+    hasOutput && !currentSelection.acknowledged.includes(id);
+
   const { userData } = useUserContext();
-  const lightMode = userData.lightMode;
   const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
 
   return (
-    <>
-      <TabBar
-        tabs={
-          statusDataHistory
-            ? tabs
-            : statusData
-              ? tabs.slice(0, -1)
-              : tabs.slice(0, -2)
-        }
-        activeTab={option}
-        onTabSelect={tab => {
-          setOption(tab.value as OutputTab);
-        }}
-      />
-      <div className="flex-1 bg-[var(--panel-bg)] text-[color:var(--text-primary)] min-h-0 overflow-hidden tw-forms-disable tw-forms-disable-all-descendants">
-        {option === 'results' && (
-          <div className="px-4 h-full overflow-y-auto">
-            {statusData && <USACOResults data={statusData} />}
-          </div>
-        )}
-        {option === 'history' && (
-          <div className="h-full overflow-y-auto w-full">
-            <table
-              className={
-                'text-[color:var(--text-primary)] table-tasks space-x-2 w-full border-b border-[var(--border-color)]'
-              }
-            >
-              <thead
-                className="border-b border-[var(--border-color)] text-left text-sm"
-                style={{ backgroundColor: 'var(--panel-bg-alt)' }}
-              >
-                <tr>
-                  <th></th>
-                  <th>Verdict</th>
-                  <th>Time</th>
-                  <th>Memory</th>
-                  <th>Testcases</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--border-color)] text-sm">
-                {statusDataHistory
-                  .slice()
-                  .reverse()
-                  .map((item, index) => (
-                    <tr
-                      style={{
-                        backgroundColor:
-                          index % 2 ? 'var(--panel-bg-alt)' : 'var(--panel-bg)',
-                      }}
-                      key={
-                        item.submissionTime ?? statusDataHistory.length - index
-                      }
-                    >
-                      <td>{statusDataHistory.length - index}</td>
-                      <td style={{ whiteSpace: 'nowrap' }}>
-                        <a
-                          href={item.link || undefined}
-                          target="_blank"
-                          className={`${item.link ? 'hover:underline' : undefined} flex items-center`}
-                          rel="noreferrer"
-                        >
-                          {item.message?.toLowerCase() === 'correct answer' ? (
-                            <FontAwesomeIcon
-                              icon={{ prefix: 'fas', iconName: 'check' }}
-                              className="text-green-500 w-3.5 h-3.5 mr-1.5 inline"
-                            />
-                          ) : (
-                            <FontAwesomeIcon
-                              icon={{ prefix: 'fas', iconName: 'xmark' }}
-                              className="w-3.5 h-3.5 text-red-500 mr-1.5 inline"
-                            />
-                          )}
-                          {item.message}
-                          {item.link && (
-                            <FontAwesomeIcon
-                              icon={{
-                                prefix: 'fas',
-                                iconName: 'up-right-from-square',
-                              }}
-                              className="w-3.5 h-3.5 ml-1.5 inline"
-                            />
-                          )}
-                        </a>
-                      </td>
-                      <td style={{ whiteSpace: 'nowrap' }}>
-                        {item.time ?? '-'}
-                      </td>
-                      <td style={{ whiteSpace: 'nowrap' }}>
-                        {item.memory ?? '-'}
-                      </td>
-                      <td>
-                        <div className="flex flex-wrap">
-                          {item.testCases &&
-                            item.testCases.map((tc, index) =>
-                              tc.title == 'correct answer' ? (
-                                <FontAwesomeIcon
-                                  title={tc.title}
-                                  icon={{ prefix: 'fas', iconName: 'check' }}
-                                  className="text-green-500 w-3.5 h-3.5 mr-0.5 inline"
-                                  key={index}
-                                />
-                              ) : (
-                                <FontAwesomeIcon
-                                  title={tc.title}
-                                  icon={{
-                                    prefix: (() => {
-                                      if (tc.title === 'time limit exceeded')
-                                        return 'far';
-                                      return 'fas';
-                                    })(),
-
-                                    iconName: (() => {
-                                      if (tc.title === 'time limit exceeded')
-                                        return 'clock';
-                                      if (tc.title === 'runtime error')
-                                        return 'bug';
-                                      return 'xmark';
-                                    })(),
-                                  }}
-                                  className="mr-0.5 w-3.5 h-3.5 text-red-500 inline"
-                                  key={index}
-                                />
-                              )
-                            )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {option === 'stdout' && (
+    <TabBar
+      selectedId={currentSelection.selectedId}
+      onSelectionChange={selectedId => {
+        setSelection(current => ({
+          ...current,
+          selectedId,
+          acknowledged: current.acknowledged.includes(selectedId)
+            ? current.acknowledged
+            : [...current.acknowledged, selectedId],
+        }));
+      }}
+      ariaLabel="Program output"
+      panelsClassName="min-h-0 flex-1 overflow-hidden bg-canvas text-content shadow-inner"
+    >
+      <TabBar.Item
+        id="stdout"
+        label="stdout"
+        highlight={isHighlighted('stdout', Boolean(result?.stdout))}
+      >
+        <ExecutionOutputPanel result={result}>
           <CodeEditor
-            theme={lightMode ? 'light' : 'dark'}
-            language={'plaintext'}
-            value={outputText}
+            theme={userData.lightMode ? 'light' : 'dark'}
+            language="plaintext"
+            value={getOutputText(result, 'stdout')}
             saveViewState={false}
             path="output"
             editorOptions={{
               readOnly: true,
-              automaticLayout: false,
               insertSpaces: true,
+              fontSize: userData.fontSize,
             }}
-            onReady={onReady}
           />
-        )}
-        {option === 'stderr' && (
+        </ExecutionOutputPanel>
+      </TabBar.Item>
+      <TabBar.Item
+        id="stderr"
+        label="stderr"
+        highlight={isHighlighted('stderr', Boolean(result?.stderr))}
+      >
+        <ExecutionOutputPanel result={result}>
           <StderrOutput
-            output={outputText ?? ''}
-            lightMode={lightMode}
-            onReady={onReady}
+            output={getOutputText(result, 'stderr')}
+            lightMode={userData.lightMode}
           />
+        </ExecutionOutputPanel>
+      </TabBar.Item>
+      <TabBar.Item
+        id="compile_output"
+        label="compile output"
+        highlight={isHighlighted(
+          'compile_output',
+          Boolean(result?.compilationMessage)
         )}
-        {option === 'compile_output' && (
+      >
+        <ExecutionOutputPanel result={result}>
           <CompilerOutput
-            output={outputText ?? ''}
-            highlightLine={l => mainMonacoEditor?.setLineHighlight(l)}
+            output={getOutputText(result, 'compile_output')}
+            highlightLine={line => mainMonacoEditor?.setLineHighlight(line)}
             clearLineHighlight={() => mainMonacoEditor?.clearLineHighlight()}
           />
-        )}
-      </div>
-      {option !== 'results' && option !== 'history' && result && (
-        <div
-          className="text-sm font-mono text-right px-4 py-1 text-[color:var(--text-secondary)]"
-          data-test-id="code-execution-output-status"
-        >
-          {result.statusDescription}, {result.time ?? '-'}s,{' '}
-          {result.memory ?? '-'}KB
-        </div>
+        </ExecutionOutputPanel>
+      </TabBar.Item>
+      {statusData && (
+        <TabBar.Item id="results" label="results">
+          <div className="h-full overflow-y-auto px-4">
+            <USACOResults data={statusData} />
+          </div>
+        </TabBar.Item>
       )}
-    </>
+      {history.length > 0 && (
+        <TabBar.Item id="history" label="history">
+          <OutputHistory entries={history} />
+        </TabBar.Item>
+      )}
+    </TabBar>
   );
 };

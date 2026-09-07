@@ -192,6 +192,7 @@ export default async (
         language: data.language, //TODO think about how do we support other languages with this method?
         compilerOptions: DEFAULT_COMPILER_OPTIONS,
       },
+      teacher: { codeSize: 0, editTime: ServerValue.TIMESTAMP },
     });
 
     if (data.tournamentID) {
