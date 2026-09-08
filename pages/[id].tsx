@@ -29,7 +29,7 @@ import useUserPermission from '../src/hooks/useUserPermission';
 import { WorkspaceSettingsModal } from '../src/components/settings/WorkspaceSettingsModal';
 import { getSampleIndex } from '../src/components/JudgeInterface/Samples';
 import useJudgeResults from '../src/hooks/useJudgeResults';
-import { cleanJudgeResult } from '../src/editorUtils';
+import { cleanJudgeResult } from '../src/utils/editorUtils';
 import JudgeResult from '../src/types/judge';
 import useUserFileConnection from '../src/hooks/useUserFileConnection';
 import useUpdateUserDashboard from '../src/hooks/useUpdateUserDashboard';

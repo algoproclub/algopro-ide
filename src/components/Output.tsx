@@ -9,7 +9,7 @@ import { CodeEditor } from './editor/CodeEditor';
 import { CompilerOutput } from './CompilerOutput';
 import { mainMonacoEditorAtom } from '../atoms/workspace';
 import { StderrOutput } from './StderrOutput';
-import { getJudgeStatusDescription } from '../editorUtils';
+import { getJudgeStatusDescription } from '../utils/editorUtils';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/16/solid';
 import {
   getSubmissionStatusDisplay,

@@ -5523,6 +5523,13 @@ htmlparser2@^8.0.1:
     domutils "^3.0.1"
     entities "^4.4.0"
 
+http-message-sig@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/http-message-sig/-/http-message-sig-0.3.0.tgz#7bf6c0d460c3fc81f6cb386ab147f7ff3098dfdf"
+  integrity sha512-ossX5ZDDCRD+YtMzryp3gCg+5wqLFes1RVChEFmEE9Bzbd49Ts2IIIvFnTst/mYWx0ivrxrTTPsIIKKJ07s7+w==
+  dependencies:
+    structured-headers "2.0.3"
+
 http-parser-js@>=0.5.1:
   version "0.5.8"
   resolved "https://registry.npmjs.org/http-parser-js/-/http-parser-js-0.5.8.tgz"
@@ -6484,6 +6491,11 @@ jsonfile@^6.0.1:
     universalify "^2.0.0"
   optionalDependencies:
     graceful-fs "^4.1.6"
+
+jsonwebkey-thumbprint@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/jsonwebkey-thumbprint/-/jsonwebkey-thumbprint-0.1.0.tgz#9299a2cf9880a4bc594efaa1521a90534991955b"
+  integrity sha512-4m/gJEUQH8N2NfvZFjCL8/E+vlt0FlrmHoR4T93CEXQRkC64qwRi6oQri4/eqLVXqEqXYCss0+Q7pLx6vJBqzw==
 
 jsonwebtoken@^9.0.0:
   version "9.0.2"
@@ -8998,6 +9010,11 @@ strnum@^1.0.5:
   resolved "https://registry.npmjs.org/strnum/-/strnum-1.0.5.tgz"
   integrity sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA==
 
+structured-headers@2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/structured-headers/-/structured-headers-2.0.3.tgz#9757465dfbcb86cb232f4291b0e27e8bd1ccb6f6"
+  integrity sha512-4g5yxhlDMClRwCcfKfLeS7Z8yAVdOWGDADwm80Poh1iReU2KVKLGBlqwpHWJ2qovq0+ZIf1atAEO1eua2o9Rgg==
+
 stubs@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/stubs/-/stubs-3.0.0.tgz"
@@ -9608,6 +9625,15 @@ warning@^4.0.2:
   integrity sha512-rpJyN222KWIvHJ/F53XSZv0Zl/accqHR8et1kpaMTD/fLCRxtV8iX8czMzY7sVZupTI3zcUTg8eycS2kNF9l6w==
   dependencies:
     loose-envify "^1.0.0"
+
+web-bot-auth@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/web-bot-auth/-/web-bot-auth-0.2.0.tgz#bc7a309233096a2d484061f4ece8869427b7a1a7"
+  integrity sha512-3DJ72ZhWK4a3yCHCClF6q32g03X37DJlpyASYeBroGTRj/qFkHNcPwkESc3FLigjW6NOWF6MR+Hat9AfOqqtAQ==
+  dependencies:
+    http-message-sig "^0.3.0"
+    jsonwebkey-thumbprint "^0.1.0"
+    structured-headers "2.0.3"
 
 web-namespaces@^2.0.0:
   version "2.0.1"
