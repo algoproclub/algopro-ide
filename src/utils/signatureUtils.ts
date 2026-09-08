@@ -99,7 +99,7 @@ export async function rotateKeyIfNeeded() {
  * @returns A Promise that resolves to the active key directory
  */
 export async function getSignedKeyDirectory(
-  req: RequestDescriptor
+  authority: string
 ): Promise<SignedBotSignDirectory> {
   const keys = await db
     .ref('bot-signatures/key-directory')
@@ -110,6 +110,12 @@ export async function getSignedKeyDirectory(
     const keyPair = child.val() as BotSignKeyPair;
     directory.push(keyPair);
   });
+  const request: RequestDescriptor = {
+    kind: 'request',
+    method: 'GET',
+    targetUri: `https://${authority}/.well-known/http-message-signatures-directory`,
+    fields: [{ name: 'req', value: 'true' }],
+  };
   return {
     directory: {
       keys: directory.map(key => ({
@@ -132,7 +138,7 @@ export async function getSignedKeyDirectory(
             ['sign']
           )
         );
-        return await createSignature(req, {
+        return await createSignature(request, {
           label: `sig${idx + 1}`,
           components: ['@authority', 'req'],
           parameters: {

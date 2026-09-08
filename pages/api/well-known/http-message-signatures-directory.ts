@@ -3,7 +3,7 @@ import {
   getSignedKeyDirectory,
   rotateKeyIfNeeded,
 } from '../../../src/utils/signatureUtils';
-import { appendSignature, RequestDescriptor } from 'http-message-sig';
+import { appendSignature } from 'http-message-sig';
 
 export default async function handler(
   req: NextApiRequest,
@@ -16,13 +16,7 @@ export default async function handler(
   );
 
   if (method === 'GET') {
-    const request: RequestDescriptor = {
-      kind: 'request',
-      method: 'GET',
-      targetUri: `https://${req.headers.host}/.well-known/http-message-signatures-directory`,
-      fields: [{ name: 'req', value: 'true' }],
-    };
-    const signedDirectory = await getSignedKeyDirectory(request);
+    const signedDirectory = await getSignedKeyDirectory(req.headers.host ?? '');
     let headers = new Headers();
     signedDirectory.signatureData.forEach(
       fields => (headers = appendSignature(headers, fields))
