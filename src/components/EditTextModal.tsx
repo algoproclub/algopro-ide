@@ -25,14 +25,28 @@ export function EditModal<T>({
   isOpen: boolean;
   title: string;
   value: T;
-  onSave: (value: T) => void;
+  onSave: (value: T) => void | Promise<void>;
   onClose: () => void;
   renderEditor: RenderEditor<T>;
   saveLabel?: string;
   cancelLabel?: string;
 }) {
   const [draft, setDraft] = useState<T>(value);
-  const saveDraft = () => onSave(draft);
+  const [isSaving, setIsSaving] = useState(false);
+  const saveDraft = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await onSave(draft);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Saving failed.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  const closeModal = () => {
+    if (!isSaving) onClose();
+  };
 
   useEffect(() => {
     if (isOpen) setDraft(value);
@@ -45,7 +59,7 @@ export function EditModal<T>({
         static
         className="fixed z-10 inset-0 overflow-y-auto"
         open={isOpen}
-        onClose={onClose}
+        onClose={closeModal}
       >
         <div className="flex items-end justify-center min-h-full pt-4 pb-20 text-center sm:block sm:p-0">
           <Transition.Child
@@ -83,10 +97,10 @@ export function EditModal<T>({
                 className="space-y-6 p-4 sm:p-6"
                 onSubmit={event => {
                   event.preventDefault();
-                  saveDraft();
+                  void saveDraft();
                 }}
                 onKeyDown={event => {
-                  if (event.key === 'Escape') {
+                  if (event.key === 'Escape' && !isSaving) {
                     event.preventDefault();
                     onClose();
                   }
@@ -98,12 +112,17 @@ export function EditModal<T>({
                   <button
                     type="button"
                     className="ui-button-secondary px-4 py-2 text-[0.92rem]"
-                    onClick={onClose}
+                    onClick={closeModal}
+                    disabled={isSaving}
                   >
                     {cancelLabel}
                   </button>
-                  <button type="submit" className="ui-button-primary px-4 py-2">
-                    {saveLabel}
+                  <button
+                    type="submit"
+                    className="ui-button-primary px-4 py-2"
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Saving…' : saveLabel}
                   </button>
                 </div>
               </form>
@@ -112,7 +131,8 @@ export function EditModal<T>({
                 <button
                   type="button"
                   className="ui-icon-button text-content-muted hover:text-content"
-                  onClick={onClose}
+                  onClick={closeModal}
+                  disabled={isSaving}
                 >
                   <span className="sr-only">Close</span>
                   <XMarkIcon className="h-6 w-6" aria-hidden="true" />
@@ -150,7 +170,7 @@ export function EditTextAreaModal({
   title: string;
   text: string;
   setText: (text: string) => void;
-  onSave: (text: string) => void;
+  onSave: (text: string) => void | Promise<void>;
   onClose: () => void;
 }) {
   return (
