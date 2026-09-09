@@ -53,17 +53,38 @@ const resolveTaskLinks = async (text: string) => {
     library.map(problem => [`${problem.platform}:${problem.id}`, problem])
   );
 
-  return {
-    tasks: parsedTasks.flatMap(task => {
-      if (!task.platform || !task.id) return [];
-      return [
-        {
-          ...task,
-          title: libraryByKey.get(`${task.platform}:${task.id}`)?.title ?? null,
-        },
-      ];
-    }),
-  };
+  const resolvedTasks = await Promise.allSettled(
+    parsedTasks.map(task =>
+      (async () => {
+        if (!task.platform || !task.id) return null;
+        const libraryTask = libraryByKey.get(`${task.platform}:${task.id}`);
+        if (libraryTask) return { ...task, title: libraryTask.title };
+
+        const response = await fetch('/api/fetchProblemData', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ platform: task.platform, id: task.id }),
+        });
+        if (!response.ok) throw new Error('Problem data request failed.');
+        const problem = (await response.json()) as { title?: unknown } | null;
+        if (typeof problem?.title !== 'string')
+          throw new Error('Problem data is unavailable.');
+        return { ...task, title: problem.title };
+      })().catch(() => {
+        throw new Error(task.url);
+      })
+    )
+  );
+  const unfetchedUrls = resolvedTasks.flatMap(result =>
+    result.status === 'rejected' ? [result.reason.message] : []
+  );
+  if (unfetchedUrls.length)
+    throw new Error(
+      `Could not fetch problem data for:\n${unfetchedUrls.join('\n')}`
+    );
+  return resolvedTasks.flatMap(result =>
+    result.status === 'fulfilled' && result.value ? [result.value] : []
+  );
 };
 
 const TaskAdder = ({
@@ -91,7 +112,7 @@ const TaskAdder = ({
   const addPastedTasks = async (text: string) => {
     if (disabled) return;
     const requestID = ++pasteRequestID.current;
-    const { tasks } = await resolveTaskLinks(text);
+    const tasks = await resolveTaskLinks(text);
     if (requestID !== pasteRequestID.current) return;
     if (!tasks.length) {
       alert('No supported task links were found in the pasted text.');
@@ -109,7 +130,7 @@ const TaskAdder = ({
         text={pastedText}
         title="Add tasks from pasted links"
         setText={setPastedText}
-        onSave={text => void addPastedTasks(text)}
+        onSave={addPastedTasks}
         onClose={() => {
           pasteRequestID.current += 1;
           setIsPasteModalOpen(false);
