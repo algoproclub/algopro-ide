@@ -323,10 +323,16 @@ const ClassEditor = ({
       <header className="relative z-10 flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-2.5">
         <div>
           <h1 className="font-semibold">Class {classID}</h1>
-          <p className="text-sm text-content-muted">
-            {data.tasks.length} task{data.tasks.length === 1 ? '' : 's'}
-            {unsaved ? ' · unsaved changes' : ''}
-          </p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <p className="text-sm text-content-muted">
+              {data.tasks.length} task{data.tasks.length === 1 ? '' : 's'}
+            </p>
+            {unsaved && (
+              <span className="inline-flex rounded-full bg-status-warning-surface px-2 py-0.5 text-xs font-medium text-status-warning-content">
+                Unsaved changes
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button className="ui-button-secondary" onClick={copyContent}>
@@ -341,6 +347,14 @@ const ClassEditor = ({
               }))
             }
           />
+          <button
+            type="button"
+            className="ui-button-primary px-4 py-2"
+            onClick={onSave}
+            disabled={!unsaved || disabled}
+          >
+            {isMutating ? 'Saving…' : 'Save changes'}
+          </button>
         </div>
       </header>
       <div className="divide-y divide-line-muted bg-surface text-content">
@@ -393,7 +407,7 @@ const ClassEditor = ({
             onClick={onSave}
             disabled={!unsaved || disabled}
           >
-            {isMutating ? 'Working…' : 'Save changes'}
+            {isMutating ? 'Saving…' : 'Save changes'}
           </button>
         </div>
       </footer>
