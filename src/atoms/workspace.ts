@@ -7,19 +7,12 @@ export const loadingAtom = atom(true);
 
 export const mainMonacoEditorAtom = atom<AlgoProMonacoEditor | null>(null);
 export const inputMonacoEditorAtom = atom<AlgoProMonacoEditor | null>(null);
-export const outputMonacoEditorAtom = atom<AlgoProMonacoEditor | null>(null);
 
 export const mainCodemirrorEditorAtom = atom<EditorView | null>(null);
 export const inputCodemirrorEditorAtom = atom<EditorView | null>(null);
 
 export const isLineHighlightSetAtom = atom<boolean>(false);
 export const savedEditorValue = atom<string | null>(null);
-
-export const layoutEditorsAtom = atom(null, (get, _set, _arg) => {
-  get(mainMonacoEditorAtom)?.layout();
-  get(inputMonacoEditorAtom)?.layout();
-  get(outputMonacoEditorAtom)?.layout();
-});
 
 // returns a function that can be called to get the value of the editor
 export const mainEditorValueAtom = atom(get => {

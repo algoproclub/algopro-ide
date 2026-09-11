@@ -1,0 +1,41 @@
+.statusCell {
+  position: relative;
+  background-color: color-mix(
+    in srgb,
+    var(--status-color) 2%,
+    var(--surface-bg)
+  );
+}
+
+.highlighted::before {
+  position: absolute;
+  inset-block: 0.25rem;
+  inset-inline-start: 0.25rem;
+  width: 0.1875rem;
+  content: '';
+  pointer-events: none;
+  background: var(--warning);
+  border-radius: 9999px;
+}
+
+@keyframes statusFade {
+  from {
+    background-color: color-mix(
+      in srgb,
+      var(--status-color) 16%,
+      var(--surface-bg)
+    );
+  }
+  to {
+    background-color: color-mix(
+      in srgb,
+      var(--status-color) 8%,
+      var(--surface-bg)
+    );
+  }
+}
+
+.fading {
+  animation: statusFade var(--status-fade-duration)
+    steps(var(--status-fade-steps), end) var(--status-fade-delay) both;
+}

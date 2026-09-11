@@ -1,10 +1,9 @@
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  HomeIcon,
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
-} from '@heroicons/react/20/solid';
+} from '@heroicons/react/24/solid';
 import React from 'react';
 import { isUserOnline, useOnlineUsers } from '../../hooks/useOnlineUsers';
 import Link from 'next/link';
@@ -12,7 +11,6 @@ import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
 import { useAtom } from 'jotai';
 import { problemAtom, statusDataAtom } from '../../atoms/workspaceUI';
 import { useEditorContext } from '../../context/EditorContext';
-import classNames from 'classnames';
 import {
   mainMonacoEditorAtom,
   mainCodemirrorEditorAtom,
@@ -20,6 +18,9 @@ import {
 import { yUndoManagerKeymap } from 'y-codemirror.next';
 import { SettingsMenu } from './SettingsMenu';
 import { EditorNavigationMenu } from './EditorNavigationMenu';
+import Logo from '../Logo';
+import Tooltip from '../Tooltip';
+import { WorkspaceTitleNavigation } from './WorkspaceTitleNavigation';
 
 export interface DesktopNavBarProps {
   fileMenu: JSX.Element;
@@ -31,30 +32,32 @@ export interface DesktopNavBarProps {
   setIsProfileSettingsOpen: (isOpen: boolean) => void;
 }
 
+type SimpleButtonProps = {
+  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+} & React.ComponentPropsWithoutRef<'button'>;
+
 const SimpleButton = ({
   Icon,
+  className,
   disabled,
   onClick,
-}: {
-  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  disabled: boolean;
-  onClick: () => void;
-}): JSX.Element => {
+  ...buttonProps
+}: SimpleButtonProps): JSX.Element => {
   return (
     <button
       disabled={disabled}
-      className={classNames(
-        'relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium',
-        !disabled &&
-          'text-gray-200 hover:bg-gray-800 focus:bg-gray-800 focus:outline-none',
-        disabled && 'text-gray-400 cursor-not-allowed'
-      )}
+      className={`workspace-toolbar-button relative px-2 text-sm font-medium ${className ?? ''}`}
       onClick={onClick}
+      {...buttonProps}
     >
-      <Icon className="h-5 w-5" />
+      <Icon className="h-4 w-4" />
     </button>
   );
 };
+
+const ToolbarSeparator = (): JSX.Element => (
+  <span aria-hidden="true" className="mx-0.5 h-5 w-px shrink-0 bg-line" />
+);
 
 export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
   const onlineUsers = useOnlineUsers();
@@ -87,27 +90,47 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
     }
   };
 
+  const secondaryIconClass = '-ml-0.5 mr-1.5 h-4 w-4 text-content-muted';
+
   return (
-    <div className="flex items-center overflow-x-auto border-b border-gray-700 bg-gray-900">
-      <div className="flex w-full lg:w-auto items-center divide-x divide-gray-700">
-        <Link
-          href="/"
-          className="relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 hover:bg-gray-800 focus:bg-gray-800 focus:outline-none"
-        >
-          <HomeIcon className="h-5 w-5" />
-        </Link>
+    <div className="relative flex min-h-[2.25rem] items-center gap-0.5 overflow-x-auto border-b border-line bg-panel-muted px-0.5 py-1 text-content shadow-sm">
+      <div className="flex w-full items-center gap-0.5 lg:w-auto">
+        <Tooltip label="Home">
+          <Link
+            href="/"
+            aria-label="Home"
+            className="workspace-toolbar-nav-button relative"
+          >
+            <Logo className="h-5 w-5 object-contain" alt="Home" />
+          </Link>
+        </Tooltip>
+        <ToolbarSeparator />
         <EditorNavigationMenu />
         {props.fileMenu}
-        <SimpleButton
-          onClick={handleUndo}
-          Icon={ArrowUturnLeftIcon}
-          disabled={props.showViewOnly}
-        />
-        <SimpleButton
-          onClick={handleRedo}
-          Icon={ArrowUturnRightIcon}
-          disabled={props.showViewOnly}
-        />
+        <ToolbarSeparator />
+        <div
+          role="group"
+          aria-label="Edit history"
+          className="inline-flex rounded-md shadow-sm"
+        >
+          <Tooltip label="Undo">
+            <SimpleButton
+              className="rounded-r-none shadow-none focus-visible:z-10"
+              onClick={handleUndo}
+              Icon={ArrowUturnLeftIcon}
+              disabled={props.showViewOnly}
+            />
+          </Tooltip>
+          <Tooltip label="Redo">
+            <SimpleButton
+              className="-ml-px rounded-l-none shadow-none focus-visible:z-10"
+              onClick={handleRedo}
+              Icon={ArrowUturnRightIcon}
+              disabled={props.showViewOnly}
+            />
+          </Tooltip>
+        </div>
+        <ToolbarSeparator />
       </div>
       {props.runButton}
       {problem?.submittable && problem.id === fileData.problem?.id && (
@@ -117,29 +140,30 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
           setStatusData={setStatusData}
         />
       )}
-      <div className="flex items-center divide-x divide-gray-700">
+      <div className="flex items-center">
         {props.showViewOnly && (
-          <span className="px-4 py-2 text-gray-400 text-sm font-medium whitespace-nowrap hidden sm:inline">
+          <span className="hidden whitespace-nowrap px-2.5 py-1 text-xs font-medium text-content-muted sm:inline">
             View Only
           </span>
         )}
       </div>
       <div className="flex-1" />
+      <WorkspaceTitleNavigation />
       {props.showSidebarButton && (
         <div>
           <button
             type="button"
-            className="whitespace-nowrap relative inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium text-gray-200 hover:bg-gray-800 focus:bg-gray-800 focus:outline-none"
+            className="workspace-toolbar-nav-button relative whitespace-nowrap"
             onClick={() => props.onToggleSidebar()}
           >
             {props.isSidebarOpen ? (
               <ChevronRightIcon
-                className="-ml-1 mr-2 h-5 w-5 text-gray-400"
+                className={secondaryIconClass}
                 aria-hidden="true"
               />
             ) : (
               <ChevronLeftIcon
-                className="-ml-1 mr-2 h-5 w-5 text-gray-400"
+                className={secondaryIconClass}
                 aria-hidden="true"
               />
             )}

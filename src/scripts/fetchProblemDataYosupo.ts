@@ -279,11 +279,7 @@ export async function fetchProblemDataYosupo(
     ? parseYosupoInfoToml(infoToml)
     : { params: {}, tests: [] };
   const { examples, samples } = await fetchSamples(problemID, metadata, info);
-  const statementMarkdown = renderYosupoMarkdown(
-    taskMd,
-    info.params,
-    examples
-  );
+  const statementMarkdown = renderYosupoMarkdown(taskMd, info.params, examples);
 
   return {
     id: problemID,

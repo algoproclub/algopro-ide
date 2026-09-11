@@ -1,7 +1,10 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# version control
+**/.git
+
 # dependencies
-/node_modules
+**/node_modules
 /.pnp
 .pnp.js
 
@@ -12,7 +15,7 @@
 /dist
 
 # misc
-.DS_Store
+**/.DS_Store
 *.pem
 
 # debug
@@ -32,9 +35,6 @@ yarn-error.log*
 .idea
 *.log
 .next
-/test-results/
-/playwright-report/
-/playwright/.cache/
 
 # firebase service account key
 serviceAccountKey.json

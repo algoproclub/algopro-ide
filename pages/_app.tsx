@@ -1,7 +1,10 @@
 import { AppProps } from 'next/app';
 import Head from 'next/head';
 import 'tailwindcss/tailwind.css';
+import 'katex/dist/katex.min.css';
 import '../src/styles/globals.css';
+import '../src/styles/yjs.css';
+import '../src/styles/docs.css';
 import * as firebase from 'firebase/app';
 import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
@@ -14,16 +17,12 @@ import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
 import { UserProvider } from '../src/context/UserContext';
 import { SHOULD_USE_FIREBASE_EMULATOR } from '../src/dev_constants';
-import { library } from '@fortawesome/fontawesome-svg-core';
-import { fas } from '@fortawesome/free-solid-svg-icons';
-import { far } from '@fortawesome/free-regular-svg-icons';
 import en from 'javascript-time-ago/locale/en';
 import TimeAgo from 'javascript-time-ago';
 import { TopNavBar } from '../src/components/TopNavBar';
+import PageTitle from '../src/components/PageTitle';
 
 TimeAgo.addDefaultLocale(en);
-
-library.add(fas, far);
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -65,12 +64,29 @@ if (!firebase.getApps()?.length) {
 }
 
 function MyApp({ Component, pageProps }: AppProps) {
+  const isMatfin = process.env.NEXT_PUBLIC_PRODUCT_NAME === 'MATFIN IDE';
+
   return (
     <>
       <Head>
-        <meta name="color-scheme" content="dark" />
+        <meta name="color-scheme" content="light dark" />
+        {isMatfin && (
+          <>
+            <link
+              rel="icon"
+              href="/favicon-matfin.ico"
+              media="(prefers-color-scheme: light)"
+            />
+            <link
+              rel="icon"
+              href="/favicon-matfin-dark.ico"
+              media="(prefers-color-scheme: dark)"
+            />
+          </>
+        )}
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </Head>
+      <PageTitle />
       <Toaster position="bottom-right" />
       <UserProvider>
         <ConnectionProvider>

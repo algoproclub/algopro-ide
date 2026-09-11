@@ -1,7 +1,9 @@
 import { defineString } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { initializeApp } from 'firebase-admin/app';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { getDatabase, ServerValue } from 'firebase-admin/database';
 import {
   FileSubmission,
   Platform,
@@ -32,6 +34,7 @@ import {
   onValueDeleted,
   onValueUpdated,
 } from 'firebase-functions/v2/database';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 
 import { randomUUID } from 'crypto';
 import {
@@ -66,6 +69,14 @@ export const submitproblemsolution = onCall<
   { region: 'europe-west1', maxInstances: 1, concurrency: 1 },
   async request => {
     const problemSolution = request.data;
+    const userID = request.auth?.uid;
+    if (!(await canRegisterSubmissionForFile(problemSolution.fileID, userID))) {
+      throw new HttpsError(
+        'permission-denied',
+        'You do not have permission to submit from this file.'
+      );
+    }
+
     const { platform, language } = problemSolution;
     const comment = {
       cpp: '//',
@@ -109,7 +120,13 @@ export const submitproblemsolution = onCall<
         );
     }
     await submitter.login(db);
-    return await submitter.submit(problemSolution, uuid);
+    const submissionData = await submitter.submit(problemSolution, uuid);
+    await registerSubmission(
+      problemSolution.fileID,
+      submissionData.id,
+      submissionData.username
+    );
+    return submissionData;
   }
 );
 
@@ -261,7 +278,7 @@ export const enum Errors {
 
 export class IncorrectDataError extends Error {}
 
-admin.initializeApp(
+const app = initializeApp(
   process.env.FUNCTIONS_EMULATOR
     ? {
         projectId: 'algopro-app',
@@ -269,7 +286,36 @@ admin.initializeApp(
       }
     : undefined
 );
-const db = admin.database();
+const db = getDatabase(app);
+const firestore = getFirestore(app);
+
+export const updateProblemLibraryRevision = onDocumentWritten(
+  {
+    document: 'problemsets/{platform}/problems/{problem}',
+    region: 'europe-west1',
+  },
+  async event => {
+    const metadata = (data: Record<string, unknown> | undefined) =>
+      JSON.stringify({
+        title: data?.title ?? null,
+        url: data?.url ?? null,
+        tags: data?.tags ?? null,
+      });
+    if (
+      metadata(event.data?.before.data()) === metadata(event.data?.after.data())
+    ) {
+      return;
+    }
+
+    await firestore.doc('metadata/problemLibrary').set(
+      {
+        revision: FieldValue.increment(1),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }
+);
 
 const accountData: { [key in Platform]: AccountData } = {
   atcoder: {
@@ -349,6 +395,22 @@ const updateStatusData = async (
   }
   if (statusData.message === 'correct answer') {
     updates[`files/${id}/solvedStatus/solved`] = true;
+    try {
+      const [ownerID, problem] = await Promise.all([
+        getFileOwner(id),
+        db
+          .ref(`files/${id}/problem`)
+          .get()
+          .then(s => s.val() as { platform: string; id: string } | null),
+      ]);
+      if (ownerID && problem?.platform && problem?.id) {
+        updates[
+          `users/${ownerID}/platform-${problem.platform}/solved/${problem.id}`
+        ] = true;
+      }
+    } catch (e) {
+      console.error('Failed to denormalize solved status for file', id, e);
+    }
   }
   await db.ref().update(updates);
 
@@ -529,6 +591,22 @@ const updateResults = async (pending: PendingSubmissions | null) => {
   await Promise.all(promises);
 };
 
+const canRegisterSubmissionForFile = async (
+  fileID: string,
+  userID: string | undefined
+): Promise<boolean> => {
+  if (!userID) return false;
+
+  const userSnapshot = await db.ref(`files/${fileID}/users/${userID}`).get();
+  if (!userSnapshot.exists()) return false;
+
+  const permission =
+    userSnapshot.val()?.permission ??
+    (await db.ref(`files/${fileID}/settings/defaultPermission`).get()).val();
+
+  return ['OWNER', 'READ_WRITE'].includes(permission);
+};
+
 const registerSubmission = async (
   fileID: string,
   submissionID: string,
@@ -544,31 +622,33 @@ const registerSubmission = async (
     output: null,
     testCases: null,
   };
-  await db.ref(`files/${fileID}/submission`).update({
-    id: submissionID,
-    username: username,
-  });
   const submissionTime = Date.now();
-  await db.ref(`submissions/${fileID}`).update({
-    statusData: defaultStatusData,
-    submissionTime: submissionTime,
-  });
+
+  await Promise.all([
+    db.ref(`files/${fileID}/submission`).set({ id: submissionID, username }),
+    db.ref(`submissions/${fileID}`).update({
+      statusData: defaultStatusData,
+      submissionTime,
+    }),
+  ]);
+
   await db.ref('submissions/pending').update({
     [fileID]: {
-      creationTime: Date.now(),
+      creationTime: ServerValue.TIMESTAMP,
     },
   });
 
-  const tournamentID = (
-    await db.ref(`files/${fileID}/tournamentID`).get()
-  ).val();
-  if (tournamentID) {
+  void (async () => {
+    const tournamentID = (
+      await db.ref(`files/${fileID}/tournamentID`).get()
+    ).val();
+    if (!tournamentID) return;
     await updateTournamentResult(tournamentID, fileID, {
       message: defaultStatusData.message,
       statusCode: defaultStatusData.statusCode,
       submissionTime: submissionTime,
     });
-  }
+  })();
 };
 
 exports.registersubmission = onCall(
@@ -576,20 +656,7 @@ exports.registersubmission = onCall(
   async request => {
     const fileID = request.data.fileID;
     const userID = request.auth?.uid;
-    const fileData = (await db.ref(`files/${fileID}`).get()).val();
-    if (
-      !userID ||
-      !fileData ||
-      !fileData.users ||
-      !fileData.users.hasOwnProperty(userID)
-    ) {
-      return { success: false };
-    }
-    const permission =
-      fileData.users[userID].permission ??
-      fileData?.settings?.defaultPermission;
-
-    if (!['OWNER', 'READ_WRITE'].includes(permission)) {
+    if (!(await canRegisterSubmissionForFile(fileID, userID))) {
       return { success: false };
     }
     await registerSubmission(
@@ -651,10 +718,7 @@ const updateStatus = async () => {
   }
 };
 
-const region =
-  process.env.IS_TEST_ENV || process.env.FUNCTIONS_EMULATOR
-    ? 'us-central1'
-    : 'europe-west1';
+const region = process.env.FUNCTIONS_EMULATOR ? 'us-central1' : 'europe-west1';
 
 exports.onlockdeleted = onValueDeleted(
   { ref: 'submissions/lock', region },

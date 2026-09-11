@@ -19,6 +19,10 @@ export const CodeInterface = ({
 }): JSX.Element => {
   const { fileData } = useEditorContext();
   const [problem] = useAtom(problemAtom);
+  const problemDataIsReady = fileData.problem
+    ? problem?.platform === fileData.problem.platform &&
+      problem.id === fileData.problem.id
+    : problem === null;
   const lang = fileData.settings.language;
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
@@ -43,48 +47,40 @@ export const CodeInterface = ({
 
     setMainCodemirrorEditor(editorHandle.raw);
 
-    // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the main codemirror editor
-    window['TEST_mainCodemirrorEditor'] = editorHandle.raw;
-
     return () => {
       setMainCodemirrorEditor(null);
-      // @ts-expect-error: this is used by e2e/helpers.ts to set the value of the main codemirror editor
-      window['TEST_mainCodemirrorEditor'] = null;
     };
   }, [editorHandle, setMainCodemirrorEditor, setMainMonacoEditor]);
 
   const {
-    userData: { tabSize, lightMode, rainbowIndent },
+    userData: { tabSize, fontSize, lightMode, rainbowIndent },
     templateCode,
   } = useUserContext();
 
   return (
     <div
       className={classNames(
-        'bg-[#1E1E1E] text-gray-200 flex flex-col',
+        'flex flex-col bg-[var(--panel-bg)] text-[color:var(--text-primary)]',
         className
       )}
     >
       <div className="flex-1 overflow-hidden">
-        {problem !== undefined && (
+        {problemDataIsReady && (
           <LazyRealtimeEditor
             theme={lightMode ? 'light' : 'dark'}
             rainbowIndent={rainbowIndent}
             language={{ cpp: 'cpp', java: 'java', py: 'python' }[lang]}
             path={`myfile.${lang}`}
             editorOptions={{
-              automaticLayout: false,
               insertSpaces: false,
               readOnly,
               tabSize,
+              fontSize,
             }}
             onReady={handle => {
               setEditorHandle(handle);
               if (isMonacoEditorHandle(handle)) {
-                setTimeout(() => {
-                  handle.layout();
-                  handle.focus();
-                }, 0);
+                handle.focus();
               }
             }}
             defaultValue={problem?.templateCode?.[lang] ?? templateCode[lang]}
@@ -97,7 +93,7 @@ export const CodeInterface = ({
           />
         )}
       </div>
-      <p className="text-sm font-mono text-gray-200 pl-4 status-node" />
+      <p className="text-sm font-mono text-[color:var(--text-secondary)] pl-4 status-node" />
     </div>
   );
 };

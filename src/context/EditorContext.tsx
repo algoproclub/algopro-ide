@@ -17,6 +17,8 @@ import React, {
 } from 'react';
 import { ChatMessage } from '../components/Chat';
 import { FileSubmission, PlatformProblem, ProblemData } from '../types/problem';
+import type { CodeRun } from '../scripts/codeRun';
+import type JudgeResult from '../types/judge';
 
 export type Language = 'cpp' | 'java' | 'py';
 
@@ -41,11 +43,11 @@ export type FileData = {
   problem: ProblemData | PlatformProblem | null;
   tournamentID: string;
   settings: FileSettings;
-  isCodeRunning: boolean;
+  codeRun?: CodeRun | null;
   submission: FileSubmission;
   state: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    judge_resuts: any;
+    input_judge_result?: JudgeResult | null;
+    sample_judge_results?: Array<JudgeResult | null>;
   };
   chat: {
     [key: string]: Omit<ChatMessage, 'key'>;
@@ -56,9 +58,11 @@ export type FileData = {
   };
 };
 
+type FileUpdate = Partial<FileData> & Record<string, unknown>;
+
 export type EditorContextType = {
   fileData: FileData;
-  updateFileData: (firebaseUpdateData: Partial<FileData>) => Promise<void>;
+  updateFileData: (firebaseUpdateData: FileUpdate) => Promise<void>;
   /**
    * Maps YJS File ID ==> true / false
    * If file ID is not in the map, assume it's false
@@ -100,14 +104,20 @@ export function EditorProvider({
 }): JSX.Element {
   const [fileData, setFileData] = useState<FileData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadedFileId, setLoadedFileId] = useState<string | null>(null);
   const [permissionDenied, setPermissionDenied] = useState<boolean>(false);
   const doNotInitializeTheseFileIdsRef = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
+    let active = true;
     setLoading(true);
 
     const handleDataChange = (snap: DataSnapshot) => {
+      if (!active) return;
+
+      setLoadedFileId(fileId);
       setLoading(false);
+      setPermissionDenied(false);
       setFileData(
         snap.exists()
           ? {
@@ -119,6 +129,9 @@ export function EditorProvider({
     };
 
     const handleNoPerms = (_err: Error) => {
+      if (!active) return;
+
+      setLoadedFileId(fileId);
       setLoading(false);
       setPermissionDenied(true);
     };
@@ -127,12 +140,13 @@ export function EditorProvider({
     const unsubscribe = onValue(fileRef, handleDataChange, handleNoPerms);
 
     return () => {
+      active = false;
       unsubscribe();
     };
   }, [fileId]);
 
   const updateFileData = useCallback(
-    (firebaseUpdateData: object) => {
+    (firebaseUpdateData: FileUpdate) => {
       return update(ref(getDatabase(), 'files/' + fileId), firebaseUpdateData);
     },
     [fileId]
@@ -142,7 +156,7 @@ export function EditorProvider({
     return { fileData, updateFileData, doNotInitializeTheseFileIdsRef };
   }, [fileData, updateFileData, doNotInitializeTheseFileIdsRef]);
 
-  if (loading) {
+  if (loading || loadedFileId !== fileId) {
     return <>{loadingUI}</>;
   }
 

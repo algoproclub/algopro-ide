@@ -106,24 +106,32 @@ def display_user_claims(user: auth.UserRecord):
     print(tabulate(claims_info, headers=["Claim", "Type", "Value"], tablefmt="grid"))
 
 
-def list_users_with_claims(limit: int = 50):
+def list_users_with_claims(limit: int = 50, claim: Optional[str] = None, invert: bool = False):
     """List users that have custom claims"""
-    print(f"\n👥 Users with Custom Claims (limit: {limit}):")
-    
+    print(
+        f"\n👥 Users with Custom Claims (limit: {limit}{', claim: ' + ('!' if invert else '') + claim if claim else ''}):"
+    )
+
     users_with_claims = []
     page = auth.list_users(max_results=limit)
     
     while page:
         for user in page.users:
-            if user.custom_claims:
-                claim_keys = list(user.custom_claims.keys())
-                users_with_claims.append([
+            claims = user.custom_claims or {}
+            claim_keys = list(claims.keys())
+            has_claim = claim in claims if claim else len(claim_keys) > 0
+            if (invert and has_claim) or (not invert and not has_claim):
+                continue
+
+            users_with_claims.append(
+                [
                     user.uid[:10] + "...",
                     user.email or "N/A",
                     user.display_name or "N/A",
-                    ", ".join(claim_keys)
-                ])
-        
+                    ", ".join(claim_keys),
+                ]
+            )
+
         if len(users_with_claims) >= limit:
             break
             
@@ -231,7 +239,9 @@ def main():
     # List users command
     list_parser = subparsers.add_parser('list', help='List users with custom claims')
     list_parser.add_argument('--limit', type=int, default=50, help='Maximum number of users to display')
-    
+    list_parser.add_argument('--claim', type=str, help='Filter users by specific claim key')
+    list_parser.add_argument('--invert', action='store_true', help='Invert the claim filter to show users without the specified claim')
+
     # Set claims command
     set_parser = subparsers.add_parser('set', help='Set custom claims for a user')
     set_parser.add_argument('user', help='User UID or email')
@@ -259,7 +269,7 @@ def main():
     setup_firebase()
     
     if args.command == 'list':
-        list_users_with_claims(args.limit)
+        list_users_with_claims(args.limit, args.claim, args.invert)
         return
     
     # For all other commands, we need a user

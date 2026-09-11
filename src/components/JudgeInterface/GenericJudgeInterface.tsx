@@ -1,31 +1,8 @@
 import React from 'react';
 import { ProblemData, Translation } from '../../types/problem';
-import {
-  ArrowTopRightOnSquareIcon,
-  ChevronUpIcon,
-} from '@heroicons/react/20/solid';
-import { Listbox, Transition } from '@headlessui/react';
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
 import HTMLStatement from './HTMLStatement';
-
-// TODO: We should be getting this from some sort of library.
-const LANGUAGE_INFO: Record<string, { name: string; flag: string }> = {
-  '-': {
-    name: 'original',
-    flag: '—',
-  },
-  en: {
-    name: 'english',
-    flag: '🇺🇸',
-  },
-  hu: {
-    name: 'magyar',
-    flag: '🇭🇺',
-  },
-  es: {
-    name: 'español',
-    flag: '🇪🇸',
-  },
-};
+import { LanguageSelectorDropdown } from '../Dropdown';
 
 export const PDFDisplay = ({ url }: { url: string }) => {
   return (
@@ -34,76 +11,6 @@ export const PDFDisplay = ({ url }: { url: string }) => {
         Open problem statement
       </a>
     </object>
-  );
-};
-
-export const LanguageSelectorDropdown = ({
-  languages,
-  language,
-  setLanguage,
-}: {
-  languages: string[];
-  language: string;
-  setLanguage: (language: string) => void;
-}) => {
-  return (
-    <div className="relative z-20">
-      <Listbox value={language} onChange={setLanguage}>
-        {({ open }) => (
-          <>
-            <div className="w-full flex space-x-2">
-              <div className="w-full text-sm">
-                <Listbox.Button
-                  className={`w-full bg-[#121212] px-3.5 py-2.5 flex items-center justify-between truncate rounded-md border text-gray-300 ${
-                    open
-                      ? 'ring-2 ring-indigo-500 border-transparent bg-gray-800'
-                      : 'hover:bg-gray-900 active:bg-gray-700 border-gray-700'
-                  }`}
-                >
-                  <span className="space-x-2">
-                    <span>{LANGUAGE_INFO[language].flag}</span>
-                    <span>{LANGUAGE_INFO[language].name}</span>
-                  </span>
-                  <ChevronUpIcon
-                    className={`h-5 w-5 inline ml-2 ${
-                      open ? '' : 'rotate-180'
-                    } transition duration-200`}
-                  />
-                </Listbox.Button>
-                <div className="w-full text-sm relative z-20">
-                  <Transition
-                    enter="transition duration-100 ease-out"
-                    enterFrom="transform scale-95 opacity-0"
-                    enterTo="transform scale-100 opacity-100"
-                    leave="transition duration-75 ease-out"
-                    leaveFrom="transform scale-100 opacity-100"
-                    leaveTo="transform scale-95 opacity-0"
-                  >
-                    <Listbox.Options
-                      static
-                      className="border border-gray-700 rounded-md bg-[#121212] divide-y divide-gray-700 absolute top-2 w-full cursor-pointer overflow-hidden"
-                    >
-                      {languages.map(val => (
-                        <Listbox.Option
-                          className="px-3 py-2 hover:bg-gray-800 active:bg-gray-700 select-none"
-                          key={val}
-                          value={val}
-                        >
-                          <span className="space-x-2">
-                            <span>{LANGUAGE_INFO[val].flag}</span>
-                            <span>{LANGUAGE_INFO[val].name}</span>
-                          </span>
-                        </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </Transition>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </Listbox>
-    </div>
   );
 };
 
@@ -118,31 +25,31 @@ export default function GenericJudgeInterface({
   language: string;
   setLanguage: React.Dispatch<React.SetStateAction<string>>;
 }): JSX.Element {
-  const languages = Object.keys(translations);
-
+  // FIXME: Pass down well-typed languages list.
+  const languages = Object.keys(translations) as ('hu' | 'en' | 'es' | '-')[];
   const translation = translations[language];
 
   return (
-    <div className="relative h-full flex flex-col text-[0.92rem]">
+    <div className="relative flex h-full flex-col text-sm leading-6">
       <div className="flex-1 overflow-y-auto pb-4">
         <header className="items-center">
           {languages.length > 1 && (
-            <div className="p-4 border-b border-gray-700">
+            <div className="p-4 border-b theme-border">
               <LanguageSelectorDropdown
                 languages={languages}
-                language={language}
+                language={language as 'hu' | 'en' | 'es' | '-'}
                 setLanguage={setLanguage}
               />
             </div>
           )}
         </header>
-        <section className="px-4 pt-2 h-full">
-          <h3 className="flex-1">
+        <section className="h-full px-4 pt-2">
+          <h3 className="flex-1 text-pretty">
             <a
               href={problem.url}
               target="_blank"
               rel="noreferrer"
-              className="font-bold text-lg hover:underline"
+              className="text-lg font-semibold tracking-tight hover:underline"
             >
               {problem.title}
               <ArrowTopRightOnSquareIcon
@@ -159,7 +66,7 @@ export default function GenericJudgeInterface({
             ))}
           {(problem.timeLimit || problem.memoryLimit) && (
             <div>
-              <h4 className="text-base font-semibold mt-[0.6rem] mb-[0.25rem]">
+              <h4 className="mb-1 mt-4 text-base font-semibold leading-6">
                 Limits
               </h4>
               <ul className="list-disc ml-6">

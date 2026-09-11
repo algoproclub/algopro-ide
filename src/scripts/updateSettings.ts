@@ -1,3 +1,8 @@
+import {
+  DEFAULT_FONT_SIZE_EDITOR,
+  MAX_FONT_SIZE_EDITOR,
+  MIN_FONT_SIZE_EDITOR,
+} from '../constants/editorConstants';
 import { EditorMode, Language } from '../context/UserContext';
 import { getDatabase, ref, runTransaction } from 'firebase/database';
 
@@ -8,6 +13,7 @@ export const updateUserSettings = async ({
   discordID,
   editorMode,
   tabSize,
+  fontSize,
   lightMode,
   rainbowIndent,
   manualSubmission,
@@ -20,6 +26,7 @@ export const updateUserSettings = async ({
   discordID: string;
   editorMode: EditorMode;
   tabSize: number;
+  fontSize: number;
   lightMode: boolean;
   rainbowIndent: boolean;
   manualSubmission: boolean;
@@ -30,6 +37,13 @@ export const updateUserSettings = async ({
     const newData = {
       editorMode,
       tabSize,
+      fontSize: Math.min(
+        MAX_FONT_SIZE_EDITOR,
+        Math.max(
+          MIN_FONT_SIZE_EDITOR,
+          Number.isNaN(fontSize) ? DEFAULT_FONT_SIZE_EDITOR : fontSize
+        )
+      ),
       lightMode,
       rainbowIndent,
       manualSubmission,

@@ -1,10 +1,11 @@
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import Dropdown from '../src/components/Dropdown';
-import React, { useEffect, useState } from 'react';
-import { fetchTeacherSchools } from './teacher';
+import React, { useState } from 'react';
 import { useUserContext } from '../src/context/UserContext';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { CopyButton } from '../src/components/CopyButton';
+import PageTitle from '../src/components/PageTitle';
+import { useManagedSchools } from '../src/hooks/useClassroomMetadata';
 
 const generateToken = httpsCallable<
   { schoolID: string; expTime: number },
@@ -18,24 +19,23 @@ const expTimes = [
 ];
 
 const PageContent = () => {
-  const [schools, setSchools] = useState<{ id: string; name: string }[]>([]);
-  const [schoolInd, setSchoolInd] = useState(0);
-  const [expInd, setExpInd] = useState(0);
+  const [selectedSchoolID, setSelectedSchoolID] = useState<string | null>(null);
+  const [expTime, setExpTime] = useState(expTimes[0].time);
   const [link, setLink] = useState('');
   const { userRole } = useUserContext();
-
-  useEffect(() => {
-    const initSchools = async () => {
-      const schools = await fetchTeacherSchools(userRole);
-      setSchools(schools);
-    };
-    initSchools();
-  }, [userRole]);
-
+  const schoolsResource = useManagedSchools(userRole);
+  const schools = schoolsResource.data;
+  const schoolID = schools.some(school => school.id === selectedSchoolID)
+    ? selectedSchoolID
+    : (schools[0]?.id ?? null);
   const generateLink = () => {
+    if (!schoolID) {
+      alert('Please select a school');
+      return;
+    }
     generateToken({
-      schoolID: schools[schoolInd].id,
-      expTime: expTimes[expInd].time,
+      schoolID,
+      expTime,
     }).then(res => {
       if (res.data) {
         setLink(
@@ -51,33 +51,48 @@ const PageContent = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-2">
-      <div className="mt-6 bg-gray-800 border border-gray-700 p-4 flex flex-col space-y-4">
-        <div className="flex flex-col sm:flex-row justfiy-center sm:justify-start sm:items-center sm:space-x-3 space-y-3 sm:space-y-0">
+      <div className="mt-6 theme-surface-raised border theme-border p-4 flex flex-col space-y-4">
+        <div className="flex flex-col sm:flex-row justify-center sm:justify-start sm:items-center sm:space-x-3 space-y-3 sm:space-y-0">
           <Dropdown
-            items={schools.map(sc => sc.name)}
-            selected={schoolInd}
-            setSelected={i => setSchoolInd(i)}
+            items={schools.map(school => ({
+              value: school.id,
+              label: school.name,
+            }))}
+            selected={schoolID}
+            setSelected={setSelectedSchoolID}
             label="School"
+            disabled={schoolsResource.status === 'loading'}
+            disabledPlaceholder="Loading schools…"
           />
           <Dropdown
-            items={expTimes.map(e => e.label)}
-            selected={expInd}
-            setSelected={i => setExpInd(i)}
+            items={expTimes.map(expiration => ({
+              value: expiration.time,
+              label: expiration.label,
+            }))}
+            selected={expTime}
+            setSelected={setExpTime}
             label="Expiration time"
           />
           <div className="sm:pt-5 w-full sm:w-48 flex-shrink-0">
             <button
-              className="py-2 w-full sm:w-48 rounded-md text-sm bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800"
+              className="py-2 w-full sm:w-48 rounded-md text-sm theme-button-primary"
               onClick={generateLink}
             >
               Generate
             </button>
           </div>
         </div>
+        {schoolsResource.status === 'error' && (
+          <p className="text-sm text-[color:var(--danger)]">
+            Schools could not be loaded.
+          </p>
+        )}
         <div className="flex items-center space-x-3 w-full">
           <input
             value={link}
-            className="block h-8 bg-gray-800 border-0 border-b focus:outline-0 focus:ring-0 py-1 px-2 border-gray-600 w-full text-sm cursor-text"
+            readOnly
+            aria-label="Generated invite link"
+            className="block h-8 theme-input border-0 border-b focus:outline-0 focus:ring-0 py-1 px-2 w-full text-sm cursor-text"
           />
           <div className="flex-shrink-0 w-48">
             <CopyButton
@@ -95,8 +110,11 @@ const PageContent = () => {
 
 export default function InvitePage() {
   return (
-    <WithTeacherLogin>
-      <PageContent />
-    </WithTeacherLogin>
+    <>
+      <PageTitle>Invite students</PageTitle>
+      <WithTeacherLogin>
+        <PageContent />
+      </WithTeacherLogin>
+    </>
   );
 }

@@ -32,48 +32,101 @@ export const platforms = [
 
 export type Platform = (typeof platforms)[number];
 
-export type Language = 'cpp' | 'py' | 'java';
+export const languages = ['cpp', 'py', 'java'] as const;
+
+export type Language = (typeof languages)[number];
 
 export type Hint = string | Partial<Record<Language, string>>;
 
 export type ProblemTag = string;
 export const problemTags: ProblemTag[] = [
   '2-sat',
+  '2d array',
+  'ad hoc',
+  'backtracking',
+  'bellman-ford',
+  'bfs',
   'binary search',
+  'bitmask dp',
   'bitmasks',
+  'bitset',
+  'bitwise operations',
+  'bridges and articulation points',
   'brute force',
-  'chinese remainder theorem',
+  'class',
   'combinatorics',
-  'constructive algorithms',
-  'data structures',
-  'dfs and similar',
+  'constructive',
+  'coordinate compression',
+  'count',
+  'crt',
+  'dag',
+  'dfs',
+  'dijkstra',
   'divide and conquer',
   'dp',
+  'dp optimization',
   'dsu',
-  'expression parsing',
+  'euler',
+  'fenwick tree',
   'fft',
+  'floyd-warshall',
   'flows',
+  'for loop',
+  'function',
   'games',
+  'gaussian elimination',
   'geometry',
   'graph matchings',
   'graphs',
   'greedy',
   'hashing',
+  'heap',
+  'histogram',
+  'if',
   'implementation',
+  'inclusion-exclusion',
   'interactive',
+  'kmp and z-function',
+  'knapsack',
+  'lca',
+  'lcs',
+  'lis',
+  'map',
   'math',
   'matrices',
+  'maximum selection',
   'meet-in-the-middle',
+  'modular inverse',
+  'monoton deque',
+  'monoton stack',
+  'mst',
   'number theory',
+  'path dp',
+  'permutations',
+  'prefix sums',
+  'priority queue',
   'probabilities',
-  'schedules',
+  'queue',
+  'range dp',
+  'recursion',
+  'scc',
+  'search',
+  'segment tree',
+  'set',
   'shortest paths',
-  'sortings',
+  'sliding window',
+  'sorting',
+  'sparse table',
+  'sqrt decomposition',
   'string suffix structures',
   'strings',
+  'sum',
   'ternary search',
   'trees',
+  'trie',
   'two pointers',
+  'vector',
+  'while loop',
 ];
 
 export type ProblemData = {
@@ -96,6 +149,7 @@ export type ProblemData = {
 };
 
 export type ProblemSolution = {
+  fileID: string;
   problemID: string;
   platform: Platform;
   sourceCode: string;

@@ -9,6 +9,7 @@ import { SharingPermissions } from '../src/components/SharingPermissions';
 import va from '@vercel/analytics';
 import { RadioGroupContents } from '../src/components/settings/RadioGroupContents';
 import WithRegistration from '../src/components/WithRegistration';
+import PageTitle from '../src/components/PageTitle';
 
 export const DEFAULT_COMPILER_OPTIONS = {
   cpp: '-std=c++20 -O2 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -Wlogical-op -Wno-sign-compare -Wno-vla-cxx-extension',
@@ -40,7 +41,7 @@ function PageContent() {
     }
   }, [isPageLoading]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isPageLoading) {
       alert('Page is still loading, please try again later');
@@ -87,38 +88,40 @@ function PageContent() {
   };
 
   return (
-    <div className="min-h-full flex flex-col max-w-6xl mx-auto lg:mt-6">
-      <form className="border border-gray-700" onSubmit={handleSubmit}>
-        <div className="text-white font-semibold py-2 px-4 lg:px-8 bg-gray-800">
-          <h1 className="text-lg">Create New File</h1>
+    <div className="mx-auto flex max-w-3xl flex-col px-4 py-6 sm:px-6">
+      <form
+        className="theme-surface theme-border overflow-hidden rounded-lg border shadow-sm"
+        onSubmit={handleSubmit}
+      >
+        <div className="theme-surface-raised theme-text theme-border border-b px-5 py-4 sm:px-6">
+          <h1 className="text-lg font-semibold">Create New File</h1>
         </div>
-        <div className="border-t border-gray-700 space-y-4 sm:space-y-6 p-4 lg:p-8">
+        <div className="space-y-5 p-5 sm:p-6">
           <div>
             <label
               htmlFor="filename"
-              className="block text-sm font-medium leading-6 text-gray-100"
+              className="block text-sm font-medium leading-6 theme-text"
             >
               File Name
             </label>
-            <div className="mt-0">
+            <div className="mt-1.5">
               <input
                 type="text"
                 name="filename"
                 id="filename"
                 value={fileName}
                 onChange={e => setFileName(e.target.value)}
-                className="text-input"
+                className="theme-input w-full rounded-md border px-3 py-2 text-sm"
                 autoFocus
               />
             </div>
           </div>
-          <div className="mb-4">
+          <div>
             <SharingPermissions
               value={defaultPerimssion}
               className="text-sm"
               onChange={setDefaultPermission}
               isOwner={true}
-              lightMode={false}
             />
           </div>
           <RadioGroupContents
@@ -130,32 +133,32 @@ function PageContent() {
           <div>
             <label
               htmlFor="compilerOptions"
-              className="block text-sm font-medium leading-6 text-gray-100"
+              className="block text-sm font-medium leading-6 theme-text"
             >
               Compiler Options
             </label>
-            <div className="mt-2">
+            <div className="mt-1.5">
               <input
                 type="text"
                 name="compilerOptions"
                 id="compilerOptions"
                 value={compilerOptions}
                 onChange={e => setCompilerOptions(e.target.value)}
-                className="text-input font-mono !text-[0.85rem]"
+                className="theme-input w-full rounded-md border px-3 py-2 font-mono text-sm"
               />
             </div>
           </div>
-          <div className="mt-6 space-x-2.5">
+          <div className="flex justify-end gap-2.5 border-t border-line pt-5">
             <button
               type="submit"
               disabled={isPageLoading || isSubmitting}
-              className="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--app-bg)] focus:ring-[color:var(--accent)]"
             >
-              {isSubmitting ? 'Creating...' : 'Create File'}
+              {isSubmitting ? 'Creating\u2026' : 'Create File'}
             </button>
             <Link
               href="/"
-              className="inline-flex items-center px-4 py-2 border border-gray-700 shadow-sm text-[0.92rem] font-medium rounded-md text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="inline-flex items-center px-4 py-2 border shadow-sm text-[0.92rem] font-medium rounded-md theme-button-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
             >
               Cancel
             </Link>
@@ -168,8 +171,11 @@ function PageContent() {
 
 export default function NewFilePage() {
   return (
-    <WithRegistration>
-      <PageContent />
-    </WithRegistration>
+    <>
+      <PageTitle>Create new file</PageTitle>
+      <WithRegistration>
+        <PageContent />
+      </WithRegistration>
+    </>
   );
 }

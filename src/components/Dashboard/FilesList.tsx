@@ -8,6 +8,7 @@ import { permissionLabels } from '../UserList/UserListItem';
 import invariant from 'tiny-invariant';
 import { useUserContext } from '../../context/UserContext';
 import { update, ref, getDatabase } from 'firebase/database';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 export type File = {
   id: string;
@@ -27,7 +28,6 @@ export type File = {
 
 export interface FilesListProps {
   files: File[];
-  showPerms: boolean;
 }
 
 export const sharingPermissionLabels: Record<string, string> = {
@@ -63,44 +63,39 @@ export default function FilesList(props: FilesListProps): JSX.Element {
   };
 
   return (
-    <div className="flex flex-col overflow-x-auto">
-      <table className="table-filelist divide-y divide-gray-700">
-        <thead className="z-20 bg-gray-800">
+    <div className="w-full max-w-full overflow-x-auto">
+      <table className="table-filelist w-full border-line bg-canvas text-sm text-content">
+        <thead className="border-b border-line bg-panel-muted text-content">
           <tr className="truncate">
-            <th className="text-left text-sm font-bold text-gray-100 max-w-60 truncate">
-              Name
+            <th className="ui-table-heading max-w-60 truncate">Name</th>
+            <th className="ui-table-heading whitespace-nowrap">
+              Last accessed
             </th>
-            <th className="text-left text-sm font-bold text-gray-100">
-              Last Accessed
-            </th>
-            <th className="text-left text-sm font-bold text-gray-100">
-              Created
-            </th>
-            <th className="text-left text-sm font-bold text-gray-100">
-              Language
-            </th>
-            <th className="text-left text-sm font-bold text-gray-100">Owner</th>
-            <th className="text-left text-sm font-bold text-gray-100">
-              Permissions
-            </th>
+            <th className="ui-table-heading">Created</th>
+            <th className="ui-table-heading">Language</th>
+            <th className="ui-table-heading">Owner</th>
+            <th className="ui-table-heading">Permissions</th>
             <th className="relative">
-              <span className="sr-only">Edit</span>
+              <span className="sr-only">Visibility</span>
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-700 bg-gray-900">
+        <tbody className="divide-y divide-line-muted bg-canvas text-content">
           {props.files.map(file => (
-            <tr key={file.id}>
+            <tr
+              key={file.id}
+              className={`group relative transition-colors focus-within:bg-panel-muted ${
+                file.hidden
+                  ? ''
+                  : 'hover:bg-panel-muted active:bg-surface-hover'
+              }`}
+            >
               {file.hidden ? (
-                <td
-                  className={`text-sm font-medium truncate ${
-                    file.hidden ? 'text-gray-400' : 'text-white'
-                  }`}
-                >
+                <td className="truncate text-sm font-medium text-content-muted">
                   <span>(Hidden) {file.title || '(Unnamed File)'}</span>
                 </td>
               ) : (
-                <td className="relative px-4 py-2">
+                <td className="px-4 py-2">
                   <span className="invisible block">
                     {file.title && file.title.trim() !== ''
                       ? file.title
@@ -108,7 +103,7 @@ export default function FilesList(props: FilesListProps): JSX.Element {
                   </span>
                   <Link
                     href={`/${file.id.substring(1)}`}
-                    className="absolute inset-0 flex items-center text-sm font-medium text-gray-100 hover:bg-gray-800 transition whitespace-normal break-words px-4 py-2"
+                    className="absolute inset-0 flex items-center whitespace-normal break-words px-4 py-2 text-sm font-medium transition-colors theme-text"
                     aria-label={
                       file.title && file.title.trim() !== ''
                         ? file.title
@@ -123,32 +118,37 @@ export default function FilesList(props: FilesListProps): JSX.Element {
                   </Link>
                 </td>
               )}
-              <td className="whitespace-nowrap text-sm text-gray-400">
+              <td className="whitespace-nowrap text-sm theme-text-muted">
                 {dayjs(file.lastAccessTime).fromNow()}
               </td>
-              <td className="whitespace-nowrap text-sm text-gray-400">
+              <td className="whitespace-nowrap text-sm theme-text-muted">
                 {formatCreationTime(file.creationTime)}
               </td>
-              <td className="whitespace-nowrap text-sm text-gray-400">
+              <td className="whitespace-nowrap text-sm theme-text-muted">
                 {formatLanguage(file.language)}
               </td>
-              <td className="whitespace-nowrap text-sm text-gray-400">
+              <td className="whitespace-nowrap text-sm theme-text-muted">
                 {file.owner
                   ? file.owner.id === firebaseUser.uid
                     ? 'Me'
                     : file.owner.name
                   : ''}
               </td>
-              <td className="whitespace-nowrap text-sm text-gray-400">
+              <td className="whitespace-nowrap text-sm theme-text-muted">
                 {file.lastPermission && file.lastPermission in permissionLabels
                   ? permissionLabels[file.lastPermission]
                   : 'Unknown'}
               </td>
               <td className="relative whitespace-nowrap text-right text-sm font-medium">
                 <button
-                  className="text-indigo-400 hover:text-indigo-100"
+                  className="ui-focus relative z-10 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-content-muted transition-colors hover:bg-surface-active hover:text-content active:bg-surface-active"
                   onClick={() => handleToggleHideFile(file)}
                 >
+                  {file.hidden ? (
+                    <EyeIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                  ) : (
+                    <EyeSlashIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                  )}
                   {file.hidden ? 'Unhide' : 'Hide'}
                 </button>
               </td>
