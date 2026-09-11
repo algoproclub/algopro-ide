@@ -16,15 +16,6 @@ export default function HTMLStatement({
             { left: '$$$$$$', right: '$$$$$$', display: true },
             { left: '$$$', right: '$$$', display: false },
           ],
-          ignoredTags: [
-            'script',
-            'noscript',
-            'style',
-            'textarea',
-            'pre',
-            'code',
-            'option',
-          ],
         });
 
         const render = (element: HTMLElement, displayMode: boolean) => {

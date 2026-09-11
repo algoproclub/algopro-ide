@@ -5,6 +5,7 @@ import remarkMath from 'remark-math';
 import remarkRehype from 'remark-rehype';
 import rehypeKatex from 'rehype-katex';
 import rehypeStringify from 'rehype-stringify';
+import { Element, ElementContent, Root } from 'hast';
 import { ProblemData } from '../types/problem';
 import { Sample } from '../types/judge';
 import { buildYosupoUrl } from './problemUtils';
@@ -166,6 +167,8 @@ function renderYosupoMarkdown(
 ) {
   const output: string[] = [];
   let activeLang: string | null = null;
+  let inCodeBlock = false;
+  let sampleNumber = 0;
 
   for (const rawLine of markdown.split(/\r?\n/)) {
     const trimmed = rawLine.trim();
@@ -187,13 +190,29 @@ function renderYosupoMarkdown(
         continue;
       }
 
+      sampleNumber += 1;
+      output.push(`### Sample Input ${sampleNumber}`);
+      output.push('');
       output.push('```');
       output.push(sample.input);
       output.push('```');
       output.push('');
+      output.push(`### Sample Output ${sampleNumber}`);
+      output.push('');
       output.push('```');
       output.push(sample.output);
       output.push('```');
+      continue;
+    }
+
+    if (trimmed.startsWith('```')) {
+      if (!inCodeBlock) {
+        inCodeBlock = true;
+        output.push('```yosupo-format');
+        continue;
+      }
+      inCodeBlock = !inCodeBlock;
+      output.push(rawLine);
       continue;
     }
 
@@ -211,11 +230,66 @@ function renderYosupoMarkdown(
   return output.join('\n');
 }
 
+function renderMathInFormatBlocks() {
+  const splitInlineMath = (value: string): ElementContent[] => {
+    const children: ElementContent[] = [];
+    const regex = /\$([^$\n]+)\$/g;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(value))) {
+      if (match.index > lastIndex) {
+        children.push({
+          type: 'text',
+          value: value.slice(lastIndex, match.index),
+        });
+      }
+      children.push({
+        type: 'element',
+        tagName: 'span',
+        properties: { className: ['math-inline'] },
+        children: [{ type: 'text', value: match[1] }],
+      });
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < value.length) {
+      children.push({ type: 'text', value: value.slice(lastIndex) });
+    }
+    return children;
+  };
+
+  return (tree: Root) => {
+    const visit = (node: Root | Element) => {
+      if (
+        node.type === 'element' &&
+        node.tagName === 'code' &&
+        Array.isArray(node.properties.className) &&
+        node.properties.className.includes('language-yosupo-format')
+      ) {
+        const value = node.children
+          .filter(child => child.type === 'text')
+          .map(child => child.value)
+          .join('');
+        node.children = splitInlineMath(value);
+        return;
+      }
+
+      for (const child of node.children) {
+        if (child.type === 'element') visit(child);
+      }
+    };
+
+    visit(tree);
+  };
+}
+
 async function markdownToHtml(markdown: string) {
   const result = await unified()
     .use(remarkParse)
     .use(remarkMath)
     .use(remarkRehype)
+    .use(renderMathInFormatBlocks)
     .use(rehypeKatex)
     .use(rehypeStringify)
     .process(markdown);
