@@ -88,7 +88,7 @@ function PageContent() {
   };
 
   return (
-    <div className="mx-auto flex min-h-full max-w-3xl flex-col px-4 py-6 sm:px-6">
+    <div className="mx-auto flex max-w-3xl flex-col px-4 py-6 sm:px-6">
       <form
         className="theme-surface theme-border overflow-hidden rounded-lg border shadow-sm"
         onSubmit={handleSubmit}
