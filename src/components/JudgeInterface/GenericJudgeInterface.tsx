@@ -74,7 +74,10 @@ export default function GenericJudgeInterface({
           </h3>
           {translation &&
             ('statement' in translation ? (
-              <HTMLStatement htmlContent={translation.statement} />
+              <HTMLStatement
+                htmlContent={translation.statement}
+                renderYosupoMath={problem.platform === 'yosupo'}
+              />
             ) : (
               <PDFDisplay url={translation.statementURL} />
             ))}

@@ -1,11 +1,4 @@
-import { parse as parseToml, TomlTable, TomlValue } from 'smol-toml';
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkMath from 'remark-math';
-import remarkRehype from 'remark-rehype';
-import rehypeKatex from 'rehype-katex';
-import rehypeStringify from 'rehype-stringify';
-import { Element, ElementContent, Root } from 'hast';
+import showdown from 'showdown';
 import { ProblemData } from '../types/problem';
 import { Sample } from '../types/judge';
 import { buildYosupoUrl } from './problemUtils';
@@ -69,57 +62,86 @@ function trimTrailingNewlines(value: string) {
   return value.replace(/[\r\n]+$/, '');
 }
 
-function asTable(value: TomlValue | undefined): TomlTable | null {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as TomlTable)
-    : null;
+function parseStringValue(value: string) {
+  return value.trim().match(/^["'](.*)["']$/)?.[1] ?? value.trim();
 }
 
-function asNumber(value: TomlValue | undefined): number | undefined {
-  return typeof value === 'number' ? value : undefined;
-}
-
-function asString(value: TomlValue | undefined): string | undefined {
-  return typeof value === 'string' ? value : undefined;
-}
-
-function asIntegerBigInt(value: TomlValue | undefined): bigint | undefined {
-  if (typeof value === 'bigint') return value;
-  if (typeof value === 'number' && Number.isInteger(value)) {
-    return BigInt(value);
+function parseBigIntValue(value: string): bigint | null {
+  const sanitized = value.replace(/_/g, '').trim();
+  if (!/^-?\d+$/.test(sanitized)) {
+    return null;
   }
-  return undefined;
+
+  try {
+    return BigInt(sanitized);
+  } catch {
+    return null;
+  }
 }
 
 function parseYosupoInfoToml(raw: string): YosupoInfo {
-  const parsed = parseToml(raw);
-  const paramsTable = asTable(parsed.params);
-  const testsArray = Array.isArray(parsed.tests) ? parsed.tests : [];
+  const info: YosupoInfo = { params: {}, tests: [] };
+  let section: 'params' | 'tests' | null = null;
+  let currentTest: Partial<{ name: string; number: number }> | null = null;
 
-  const params = Object.fromEntries(
-    Object.entries(paramsTable ?? {}).flatMap(([key, value]) => {
-      const parsedValue = asIntegerBigInt(value);
-      return parsedValue === undefined ? [] : [[key, parsedValue]];
-    })
-  );
-
-  const tests = testsArray.flatMap(test => {
-    const testTable = asTable(test);
-    if (!testTable) return [];
-
-    const name = asString(testTable.name);
-    const number = asNumber(testTable.number);
-    return name && typeof number === 'number' ? [{ name, number }] : [];
-  });
-
-  return {
-    params,
-    tests,
-    ...(asString(parsed.title) ? { title: asString(parsed.title) } : {}),
-    ...(asNumber(parsed.timelimit) !== undefined
-      ? { timelimit: asNumber(parsed.timelimit) }
-      : {}),
+  const commitTest = () => {
+    if (currentTest?.name && typeof currentTest.number === 'number') {
+      info.tests.push({ name: currentTest.name, number: currentTest.number });
+    }
+    currentTest = null;
   };
+
+  for (const rawLine of raw.split(/\r?\n/)) {
+    const line = rawLine.split('#')[0].trim();
+    if (!line) continue;
+
+    if (line === '[[tests]]') {
+      commitTest();
+      section = 'tests';
+      currentTest = {};
+      continue;
+    }
+
+    if (line === '[params]') {
+      commitTest();
+      section = 'params';
+      continue;
+    }
+
+    if (line.startsWith('[')) {
+      commitTest();
+      section = null;
+      continue;
+    }
+
+    const match = line.match(/^([A-Za-z0-9_.-]+)\s*=\s*(.+)$/);
+    if (!match) continue;
+
+    const [, key, rawValue] = match;
+    if (section === 'tests' && currentTest) {
+      if (key === 'name') currentTest.name = parseStringValue(rawValue);
+      if (key === 'number') {
+        const parsed = Number(rawValue.replace(/_/g, ''));
+        if (!Number.isNaN(parsed)) currentTest.number = parsed;
+      }
+      continue;
+    }
+
+    if (section === 'params') {
+      const parsed = parseBigIntValue(rawValue);
+      if (parsed !== null) info.params[key] = parsed;
+      continue;
+    }
+
+    if (key === 'title') info.title = parseStringValue(rawValue);
+    if (key === 'timelimit') {
+      const parsed = Number(rawValue.replace(/_/g, ''));
+      if (!Number.isNaN(parsed)) info.timelimit = parsed;
+    }
+  }
+
+  commitTest();
+  return info;
 }
 
 function formatParam(value: bigint) {
@@ -230,71 +252,40 @@ function renderYosupoMarkdown(
   return output.join('\n');
 }
 
-function renderMathInFormatBlocks() {
-  const splitInlineMath = (value: string): ElementContent[] => {
-    const children: ElementContent[] = [];
-    const regex = /\$([^$\n]+)\$/g;
-    let lastIndex = 0;
-    let match: RegExpExecArray | null;
+const mathPlaceholderPrefix = 'YOSUPOMATHPLACEHOLDER';
 
-    while ((match = regex.exec(value))) {
-      if (match.index > lastIndex) {
-        children.push({
-          type: 'text',
-          value: value.slice(lastIndex, match.index),
-        });
-      }
-      children.push({
-        type: 'element',
-        tagName: 'span',
-        properties: { className: ['math-inline'] },
-        children: [{ type: 'text', value: match[1] }],
-      });
-      lastIndex = regex.lastIndex;
+function protectMath(markdown: string) {
+  const segments: string[] = [];
+  const protectedText = markdown.replace(
+    /\$\$(?:[\s\S]*?)\$\$|\$(?:[^$\n]|\\\$)*?\$/g,
+    segment => {
+      const placeholder = `${mathPlaceholderPrefix}${segments.length}X`;
+      segments.push(segment);
+      return placeholder;
     }
-
-    if (lastIndex < value.length) {
-      children.push({ type: 'text', value: value.slice(lastIndex) });
-    }
-    return children;
-  };
-
-  return (tree: Root) => {
-    const visit = (node: Root | Element) => {
-      if (
-        node.type === 'element' &&
-        node.tagName === 'code' &&
-        Array.isArray(node.properties.className) &&
-        node.properties.className.includes('language-yosupo-format')
-      ) {
-        const value = node.children
-          .filter(child => child.type === 'text')
-          .map(child => child.value)
-          .join('');
-        node.children = splitInlineMath(value);
-        return;
-      }
-
-      for (const child of node.children) {
-        if (child.type === 'element') visit(child);
-      }
-    };
-
-    visit(tree);
-  };
+  );
+  return { protectedText, segments };
 }
 
-async function markdownToHtml(markdown: string) {
-  const result = await unified()
-    .use(remarkParse)
-    .use(remarkMath)
-    .use(remarkRehype)
-    .use(renderMathInFormatBlocks)
-    .use(rehypeKatex)
-    .use(rehypeStringify)
-    .process(markdown);
+function restoreMath(html: string, segments: string[]) {
+  return segments.reduce(
+    (current, segment, index) =>
+      current.replace(`${mathPlaceholderPrefix}${index}X`, segment),
+    html
+  );
+}
 
-  return result.toString();
+function markdownToHtml(markdown: string) {
+  const { protectedText, segments } = protectMath(markdown);
+  const converter = new showdown.Converter({
+    ghCodeBlocks: true,
+    literalMidWordUnderscores: true,
+    simpleLineBreaks: true,
+    strikethrough: true,
+    tables: true,
+  });
+
+  return restoreMath(converter.makeHtml(protectedText), segments);
 }
 
 async function fetchSamples(
@@ -361,7 +352,7 @@ export async function fetchProblemDataYosupo(
     platform: 'yosupo',
     url: buildYosupoUrl(problemID),
     title: info.title ?? metadata.title,
-    statement: await markdownToHtml(statementMarkdown),
+    statement: markdownToHtml(statementMarkdown),
     input: 'stdin',
     output: 'stdout',
     source: `Yosupo Library Checker ${problemID}`,
