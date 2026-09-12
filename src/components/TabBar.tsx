@@ -71,7 +71,7 @@ function TabBarRoot<Id extends string>({
       <Tab.List
         aria-label={ariaLabel}
         className={classNames(
-          'flex overflow-auto whitespace-nowrap',
+          'flex overflow-x-auto overflow-y-hidden whitespace-nowrap',
           listClassName
         )}
       >
