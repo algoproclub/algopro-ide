@@ -18,6 +18,7 @@ import {
   CSESResultFetcher,
   getCFRequestURL,
   NJudgeResultFetcher,
+  YosupoResultFetcher,
   OjuzResultFetcher,
   PlanetsResultFetcher,
   ResultFetcher,
@@ -45,6 +46,7 @@ import {
   OjuzSubmitter,
   PlanetsSubmitter,
   SPOJSubmitter,
+  YosupoSubmitter,
   Submitter,
 } from './submit';
 import { JSDOM } from 'jsdom';
@@ -112,6 +114,9 @@ export const submitproblemsolution = onCall<
         break;
       case 'njudge':
         submitter = new NjudgeSubmitter();
+        break;
+      case 'yosupo':
+        submitter = new YosupoSubmitter();
         break;
       default:
         throw new HttpsError(
@@ -336,6 +341,7 @@ const accountData: { [key in Platform]: AccountData } = {
   },
   ojuz: {},
   njudge: {},
+  yosupo: {},
 };
 
 const updateTournamentResult = async (
@@ -461,6 +467,8 @@ const updateResultNonCF = async (submissionData: SubmissionData) => {
     fetcher = new OjuzResultFetcher(submissionData);
   } else if (submissionData.platform === 'njudge') {
     fetcher = new NJudgeResultFetcher(submissionData);
+  } else if (submissionData.platform === 'yosupo') {
+    fetcher = new YosupoResultFetcher(submissionData);
   } else {
     throw new Error(`invalid platform name (${submissionData.platform})`);
   }
@@ -582,6 +590,7 @@ const updateResults = async (pending: PendingSubmissions | null) => {
     'planets',
     'ojuz',
     'njudge',
+    'yosupo',
   ]) {
     pendingByPlatform[platform]?.forEach(obj => {
       promises.push(updateResultNonCF(obj));

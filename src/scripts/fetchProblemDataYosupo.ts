@@ -1,3 +1,4 @@
+import { parse as parseToml, TomlTable, TomlValue } from 'smol-toml';
 import showdown from 'showdown';
 import { ProblemData } from '../types/problem';
 import { Sample } from '../types/judge';
@@ -62,86 +63,57 @@ function trimTrailingNewlines(value: string) {
   return value.replace(/[\r\n]+$/, '');
 }
 
-function parseStringValue(value: string) {
-  return value.trim().match(/^["'](.*)["']$/)?.[1] ?? value.trim();
+function asTable(value: TomlValue | undefined): TomlTable | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as TomlTable)
+    : null;
 }
 
-function parseBigIntValue(value: string): bigint | null {
-  const sanitized = value.replace(/_/g, '').trim();
-  if (!/^-?\d+$/.test(sanitized)) {
-    return null;
-  }
+function asNumber(value: TomlValue | undefined): number | undefined {
+  return typeof value === 'number' ? value : undefined;
+}
 
-  try {
-    return BigInt(sanitized);
-  } catch {
-    return null;
+function asString(value: TomlValue | undefined): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function asIntegerBigInt(value: TomlValue | undefined): bigint | undefined {
+  if (typeof value === 'bigint') return value;
+  if (typeof value === 'number' && Number.isInteger(value)) {
+    return BigInt(value);
   }
+  return undefined;
 }
 
 function parseYosupoInfoToml(raw: string): YosupoInfo {
-  const info: YosupoInfo = { params: {}, tests: [] };
-  let section: 'params' | 'tests' | null = null;
-  let currentTest: Partial<{ name: string; number: number }> | null = null;
+  const parsed = parseToml(raw, { integersAsBigInt: 'asNeeded' });
+  const paramsTable = asTable(parsed.params);
+  const testsArray = Array.isArray(parsed.tests) ? parsed.tests : [];
 
-  const commitTest = () => {
-    if (currentTest?.name && typeof currentTest.number === 'number') {
-      info.tests.push({ name: currentTest.name, number: currentTest.number });
-    }
-    currentTest = null;
+  const params = Object.fromEntries(
+    Object.entries(paramsTable ?? {}).flatMap(([key, value]) => {
+      const parsedValue = asIntegerBigInt(value);
+      return parsedValue === undefined ? [] : [[key, parsedValue]];
+    })
+  );
+
+  const tests = testsArray.flatMap(test => {
+    const testTable = asTable(test);
+    if (!testTable) return [];
+
+    const name = asString(testTable.name);
+    const number = asNumber(testTable.number);
+    return name && number !== undefined ? [{ name, number }] : [];
+  });
+
+  return {
+    params,
+    tests,
+    ...(asString(parsed.title) ? { title: asString(parsed.title) } : {}),
+    ...(asNumber(parsed.timelimit) !== undefined
+      ? { timelimit: asNumber(parsed.timelimit) }
+      : {}),
   };
-
-  for (const rawLine of raw.split(/\r?\n/)) {
-    const line = rawLine.split('#')[0].trim();
-    if (!line) continue;
-
-    if (line === '[[tests]]') {
-      commitTest();
-      section = 'tests';
-      currentTest = {};
-      continue;
-    }
-
-    if (line === '[params]') {
-      commitTest();
-      section = 'params';
-      continue;
-    }
-
-    if (line.startsWith('[')) {
-      commitTest();
-      section = null;
-      continue;
-    }
-
-    const match = line.match(/^([A-Za-z0-9_.-]+)\s*=\s*(.+)$/);
-    if (!match) continue;
-
-    const [, key, rawValue] = match;
-    if (section === 'tests' && currentTest) {
-      if (key === 'name') currentTest.name = parseStringValue(rawValue);
-      if (key === 'number') {
-        const parsed = Number(rawValue.replace(/_/g, ''));
-        if (!Number.isNaN(parsed)) currentTest.number = parsed;
-      }
-      continue;
-    }
-
-    if (section === 'params') {
-      const parsed = parseBigIntValue(rawValue);
-      if (parsed !== null) info.params[key] = parsed;
-      continue;
-    }
-
-    if (key === 'title') info.title = parseStringValue(rawValue);
-    if (key === 'timelimit') {
-      const parsed = Number(rawValue.replace(/_/g, ''));
-      if (!Number.isNaN(parsed)) info.timelimit = parsed;
-    }
-  }
-
-  commitTest();
-  return info;
 }
 
 function formatParam(value: bigint) {
@@ -189,7 +161,7 @@ function renderYosupoMarkdown(
 ) {
   const output: string[] = [];
   let activeLang: string | null = null;
-  let inCodeBlock = false;
+  let formatFence: '`' | '~' | null = null;
   let sampleNumber = 0;
 
   for (const rawLine of markdown.split(/\r?\n/)) {
@@ -227,14 +199,20 @@ function renderYosupoMarkdown(
       continue;
     }
 
-    if (trimmed.startsWith('```')) {
-      if (!inCodeBlock) {
-        inCodeBlock = true;
-        output.push('```yosupo-format');
-        continue;
+    const fenceMatch = trimmed.match(/^(`{3,}|~{3,})/);
+    if (formatFence) {
+      if (trimmed.startsWith(formatFence.repeat(3))) {
+        formatFence = null;
+        output.push('```');
+      } else {
+        output.push(rawLine);
       }
-      inCodeBlock = !inCodeBlock;
-      output.push(rawLine);
+      continue;
+    }
+
+    if (fenceMatch) {
+      formatFence = fenceMatch[1][0] as '`' | '~';
+      output.push('```yosupo-format');
       continue;
     }
 
@@ -268,10 +246,11 @@ function protectMath(markdown: string) {
 }
 
 function restoreMath(html: string, segments: string[]) {
-  return segments.reduce(
-    (current, segment, index) =>
-      current.replace(`${mathPlaceholderPrefix}${index}X`, segment),
-    html
+  const placeholderPattern = new RegExp(`${mathPlaceholderPrefix}(\\d+)X`, 'g');
+
+  return html.replace(
+    placeholderPattern,
+    (_placeholder, index: string) => segments[Number(index)]
   );
 }
 
@@ -348,7 +327,7 @@ export async function fetchProblemDataYosupo(
 
   return {
     id: problemID,
-    submittable: false,
+    submittable: true,
     platform: 'yosupo',
     url: buildYosupoUrl(problemID),
     title: info.title ?? metadata.title,

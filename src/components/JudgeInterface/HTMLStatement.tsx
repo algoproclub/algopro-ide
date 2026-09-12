@@ -58,7 +58,10 @@ export default function HTMLStatement({
             { left: '$$$$$$', right: '$$$$$$', display: true },
             { left: '$$$', right: '$$$', display: false },
             ...(renderYosupoMath
-              ? [{ left: '$', right: '$', display: false }]
+              ? [
+                  { left: '$$', right: '$$', display: true },
+                  { left: '$', right: '$', display: false },
+                ]
               : []),
           ],
         });
