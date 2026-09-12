@@ -232,6 +232,17 @@ function renderYosupoMarkdown(
 
 const mathPlaceholderPrefix = 'YOSUPOMATHPLACEHOLDER';
 
+function escapeHtmlText(value: string) {
+  return value.replace(/[&<>]/g, character => {
+    const entities: Record<string, string> = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+    };
+    return entities[character];
+  });
+}
+
 function protectMath(markdown: string) {
   const segments: string[] = [];
   const protectedText = markdown.replace(
@@ -248,9 +259,8 @@ function protectMath(markdown: string) {
 function restoreMath(html: string, segments: string[]) {
   const placeholderPattern = new RegExp(`${mathPlaceholderPrefix}(\\d+)X`, 'g');
 
-  return html.replace(
-    placeholderPattern,
-    (_placeholder, index: string) => segments[Number(index)]
+  return html.replace(placeholderPattern, (_placeholder, index: string) =>
+    escapeHtmlText(segments[Number(index)])
   );
 }
 

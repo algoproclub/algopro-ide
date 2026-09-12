@@ -181,6 +181,9 @@ export class YosupoResultFetcher extends ResultFetcher {
 
   getTestCaseTitle(n: number): string {
     const code = this.submissionInfo?.case_results?.[n]?.status;
+    if (code === '-') {
+      return 'did not run';
+    }
     if (!code || !YosupoResultFetcher.isValidVerdict(code)) {
       return 'running';
     }
@@ -188,16 +191,22 @@ export class YosupoResultFetcher extends ResultFetcher {
   }
   getTestCaseSymbol(n: number): string {
     const verdict = this.getTestCaseTitle(n);
-    return verdict === 'correct answer' ? '✓' : 'x';
+    if (verdict === 'correct answer') return '✓';
+    if (verdict === 'did not run') return '?';
+    return 'x';
   }
   getTestCaseTime(n: number): string | null {
-    const time = this.submissionInfo?.case_results?.[n]?.time;
+    const result = this.submissionInfo?.case_results?.[n];
+    if (result?.status === '-') return null;
+    const time = result?.time;
     return time != undefined && time >= 0
       ? Math.round(time * 1000) + ' ms'
       : null;
   }
   getTestCaseMemory(n: number): string | null {
-    const mem = this.submissionInfo?.case_results?.[n]?.memory;
+    const result = this.submissionInfo?.case_results?.[n];
+    if (result?.status === '-') return null;
+    const mem = result?.memory;
     return mem != undefined && mem >= 0 ? this.formatMemory(mem) : null;
   }
 }

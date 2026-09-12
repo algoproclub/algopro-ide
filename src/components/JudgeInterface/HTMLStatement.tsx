@@ -43,13 +43,15 @@ export default function HTMLStatement({
     (node: HTMLDivElement) => {
       if (node !== null) {
         if (renderYosupoMath) {
-          node
-            .querySelectorAll('code.language-yosupo-format')
-            .forEach(element => {
-              if (element instanceof HTMLElement) {
-                renderYosupoFormatMath(element);
-              }
-            });
+          node.querySelectorAll('code').forEach(element => {
+            if (
+              element instanceof HTMLElement &&
+              (element.classList.contains('language-yosupo-format') ||
+                element.parentElement?.tagName !== 'PRE')
+            ) {
+              renderYosupoFormatMath(element);
+            }
+          });
         }
 
         renderMathInElement(node, {
