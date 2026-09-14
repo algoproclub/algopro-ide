@@ -2,6 +2,12 @@ import React, { useCallback } from 'react';
 import renderMathInElement from 'katex/contrib/auto-render';
 import katex from 'katex';
 
+function normalizeYosupoMath(math: string) {
+  // Some statements contain Markdown escapes inside their LaTeX formulas.
+  // Normalize only rendered formulas, leaving literal sample data untouched.
+  return math.replace(/\\\\#/g, '\\#').replace(/\\([[\]])/g, '$1');
+}
+
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, character => {
     const entities: Record<string, string> = {
@@ -24,7 +30,9 @@ function renderYosupoFormatMath(element: HTMLElement) {
 
   while ((match = mathPattern.exec(text))) {
     html += escapeHtml(text.slice(lastIndex, match.index));
-    html += katex.renderToString(match[1], { throwOnError: false });
+    html += katex.renderToString(normalizeYosupoMath(match[1]), {
+      throwOnError: false,
+    });
     lastIndex = mathPattern.lastIndex;
   }
 
@@ -55,6 +63,7 @@ export default function HTMLStatement({
         }
 
         renderMathInElement(node, {
+          ...(renderYosupoMath ? { preProcess: normalizeYosupoMath } : {}),
           delimiters: [
             // For Codeforces
             { left: '$$$$$$', right: '$$$$$$', display: true },
