@@ -412,7 +412,6 @@ const PageContent = () => {
     : listedSchoolID;
   const selectedSchool = schools.find(school => school.id === selectedSchoolID);
   const groupsResource = useSchoolGroups(selectedSchoolID || null, {
-    includeInactive: true,
     refreshVersion: groupsRefreshNonce,
   });
   const groups = groupsResource.data;

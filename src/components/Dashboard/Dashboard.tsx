@@ -205,26 +205,26 @@ const ClassesTab = () => {
   });
   const showSchoolName = new Set(groups.map(group => group.schoolID)).size > 1;
   const classContext = getClassContext(groupID, classID);
-  const groupOptions = groups.map(group => ({
-    value: group.id,
-    label: (
-      <span className="flex items-center truncate">
-        <span className={group.inactive ? 'theme-text-muted' : ''}>
+  const groupOptions = groups
+    .filter(group => group.inactive !== true)
+    .map(group => ({
+      value: group.id,
+      label: (
+        <span className="flex items-center truncate">
           {group.name}
+          {showSchoolName && (
+            <span className="ml-1.5 inline-flex items-center truncate text-xs theme-text-muted">
+              (
+              <AcademicCapIcon
+                className="mr-1 h-3.5 w-3.5 flex-shrink-0"
+                aria-hidden="true"
+              />
+              {group.schoolName ?? group.schoolID ?? 'unknown'})
+            </span>
+          )}
         </span>
-        {showSchoolName && (
-          <span className="ml-1.5 inline-flex items-center truncate text-xs theme-text-muted">
-            (
-            <AcademicCapIcon
-              className="mr-1 h-3.5 w-3.5 flex-shrink-0"
-              aria-hidden="true"
-            />
-            {group.schoolName ?? group.schoolID ?? 'unknown'})
-          </span>
-        )}
-      </span>
-    ),
-  }));
+      ),
+    }));
 
   return (
     <div className="overflow-hidden rounded-b-lg border-x border-b border-line bg-panel-muted text-content">
