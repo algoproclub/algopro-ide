@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { getDefaultStore } from 'jotai/vanilla';
-import type { URLProblem } from '../../types/problem';
+import type { Platform, ProblemData, URLProblem } from '../../types/problem';
 import { EditTextAreaModal } from '../EditTextModal';
+import ManualProblemDataModal from '../ManualProblemDataModal';
 import Tooltip from '../Tooltip';
 import {
   ArrowTopRightOnSquareIcon,
@@ -43,7 +44,9 @@ const extractTaskUrls = (text: string) =>
     )
   );
 
-const resolveTaskLinks = async (text: string) => {
+const resolveTaskLinks = async (
+  text: string
+): Promise<{ resolved: URLProblem[]; failed: URLProblem[] }> => {
   const taskUrls = extractTaskUrls(text);
   const parsedTasks = taskUrls.map(parseProblem);
   const library = await getDefaultStore()
@@ -53,50 +56,54 @@ const resolveTaskLinks = async (text: string) => {
     library.map(problem => [`${problem.platform}:${problem.id}`, problem])
   );
 
-  const resolvedTasks = await Promise.allSettled(
-    parsedTasks.map(task =>
-      (async () => {
-        if (!task.platform || !task.id) return null;
+  const results = await Promise.all(
+    parsedTasks.map(
+      async (task): Promise<{ ok: boolean; task: URLProblem }> => {
+        if (!task.platform || !task.id) return { ok: false, task };
         const libraryTask = libraryByKey.get(`${task.platform}:${task.id}`);
-        if (libraryTask) return { ...task, title: libraryTask.title };
+        if (libraryTask)
+          return { ok: true, task: { ...task, title: libraryTask.title } };
 
-        const response = await fetch('/api/fetchProblemData', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ platform: task.platform, id: task.id }),
-        });
-        if (!response.ok) throw new Error('Problem data request failed.');
-        const problem = (await response.json()) as { title?: unknown } | null;
-        if (typeof problem?.title !== 'string')
-          throw new Error('Problem data is unavailable.');
-        return { ...task, title: problem.title };
-      })().catch(() => {
-        throw new Error(task.url);
-      })
+        try {
+          const response = await fetch('/api/fetchProblemData', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ platform: task.platform, id: task.id }),
+          });
+          if (!response.ok) return { ok: false, task };
+          const problem = (await response.json()) as { title?: unknown } | null;
+          if (typeof problem?.title !== 'string') return { ok: false, task };
+          return { ok: true, task: { ...task, title: problem.title } };
+        } catch {
+          return { ok: false, task };
+        }
+      }
     )
   );
-  const unfetchedUrls = resolvedTasks.flatMap(result =>
-    result.status === 'rejected' ? [result.reason.message] : []
-  );
-  if (unfetchedUrls.length)
-    throw new Error(
-      `Could not fetch problem data for:\n${unfetchedUrls.join('\n')}`
-    );
-  return resolvedTasks.flatMap(result =>
-    result.status === 'fulfilled' && result.value ? [result.value] : []
-  );
+
+  return {
+    resolved: results.filter(result => result.ok).map(result => result.task),
+    failed: results.filter(result => !result.ok).map(result => result.task),
+  };
 };
 
 const TaskAdder = ({
   onAddTasks,
   disabled,
+  getIdToken,
 }: {
   onAddTasks: (tasks: URLProblem[]) => void;
   disabled: boolean;
+  getIdToken: () => Promise<string>;
 }) => {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isPasteModalOpen, setIsPasteModalOpen] = useState(false);
   const [pastedText, setPastedText] = useState('');
+  const [pendingManualEntry, setPendingManualEntry] = useState<{
+    platform: Platform;
+    id: string;
+    resolve: (problem: ProblemData | null) => void;
+  } | null>(null);
   const pasteRequestID = useRef(0);
 
   useEffect(
@@ -109,14 +116,44 @@ const TaskAdder = ({
     if (disabled) pasteRequestID.current += 1;
   }, [disabled]);
 
+  const promptManualEntry = (platform: Platform, id: string) =>
+    new Promise<ProblemData | null>(resolve => {
+      setPendingManualEntry({ platform, id, resolve });
+    });
+
   const addPastedTasks = async (text: string) => {
     if (disabled) return;
     const requestID = ++pasteRequestID.current;
-    const tasks = await resolveTaskLinks(text);
+    const { resolved, failed } = await resolveTaskLinks(text);
     if (requestID !== pasteRequestID.current) return;
+
+    // Ask about each task we couldn't fetch automatically, one at a time,
+    // so the user can paste its page HTML manually or skip it. Close this
+    // modal first: two Headless UI dialogs open at once (this one and the
+    // manual-entry one) confuses their focus traps and swallows clicks.
+    if (failed.some(task => task.platform && task.id)) {
+      setIsPasteModalOpen(false);
+    }
+    const manuallyResolved: URLProblem[] = [];
+    const skippedUrls: string[] = [];
+    for (const task of failed) {
+      if (!task.platform || !task.id) {
+        skippedUrls.push(task.url);
+        continue;
+      }
+      const problem = await promptManualEntry(task.platform, task.id);
+      if (requestID !== pasteRequestID.current) return;
+      if (problem) manuallyResolved.push({ ...task, title: problem.title });
+      else skippedUrls.push(task.url);
+    }
+
+    const tasks = [...resolved, ...manuallyResolved];
     if (!tasks.length) {
       alert('No supported task links were found in the pasted text.');
       return;
+    }
+    if (skippedUrls.length) {
+      alert(`Skipped these links:\n${skippedUrls.join('\n')}`);
     }
     onAddTasks(tasks);
     setPastedText('');
@@ -134,6 +171,20 @@ const TaskAdder = ({
         onClose={() => {
           pasteRequestID.current += 1;
           setIsPasteModalOpen(false);
+        }}
+      />
+      <ManualProblemDataModal
+        isOpen={pendingManualEntry !== null}
+        platform={pendingManualEntry?.platform ?? 'codeforces'}
+        problemID={pendingManualEntry?.id ?? ''}
+        getIdToken={getIdToken}
+        onSuccess={problem => {
+          pendingManualEntry?.resolve(problem);
+          setPendingManualEntry(null);
+        }}
+        onClose={() => {
+          pendingManualEntry?.resolve(null);
+          setPendingManualEntry(null);
         }}
       />
       <div className="flex flex-wrap gap-2">
@@ -283,6 +334,7 @@ const ClassEditor = ({
   isAdmin,
   disabled,
   isMutating,
+  getIdToken,
 }: {
   classID: string;
   group: string;
@@ -295,6 +347,7 @@ const ClassEditor = ({
   isAdmin: boolean;
   disabled: boolean;
   isMutating: boolean;
+  getIdToken: () => Promise<string>;
 }) => {
   const taskIDCounts = new Map<string, number>();
   const taskRows = data.tasks.map(task => {
@@ -355,6 +408,7 @@ const ClassEditor = ({
           </button>
           <TaskAdder
             disabled={disabled}
+            getIdToken={getIdToken}
             onAddTasks={tasks =>
               onUpdate(current => ({
                 ...current,
@@ -439,6 +493,7 @@ export default function GroupClassEditor({
   mutatingClassID,
   hasUnsavedChanges,
   onRefresh,
+  getIdToken,
 }: {
   group: string;
   selectedClassID: string | null;
@@ -456,6 +511,7 @@ export default function GroupClassEditor({
   mutatingClassID: string | null;
   hasUnsavedChanges: boolean;
   onRefresh: () => void;
+  getIdToken: () => Promise<string>;
 }) {
   const selectedClass = selectedClassID ? classes[selectedClassID] : undefined;
   const isEditingDisabled = isRefreshing || mutatingClassID !== null;
@@ -531,6 +587,7 @@ export default function GroupClassEditor({
           isAdmin={isAdmin}
           disabled={isEditingDisabled}
           isMutating={mutatingClassID === selectedClassID}
+          getIdToken={getIdToken}
         />
       ) : (
         <div className="rounded-lg border border-dashed border-line px-4 py-12 text-center text-sm text-content-muted">
