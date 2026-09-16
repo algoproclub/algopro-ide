@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MinusIcon, PlusIcon } from '@heroicons/react/20/solid';
 import { Combobox } from '@headlessui/react';
+import Link from 'next/link';
 import Fuse from 'fuse.js';
 import { useNullableUserContext } from '../../context/UserContext';
 import {
@@ -306,7 +307,12 @@ export default function GroupMemberEditor({
         {listStudents.map(data => (
           <div key={data.id} className="flex items-center justify-between">
             <div className="min-w-0 p-4">
-              <div className="truncate">{data.name}</div>
+              <Link
+                href={`/user/${data.id}`}
+                className="block truncate hover:text-accent-hover hover:underline"
+              >
+                {data.name}
+              </Link>
               {data.email && (
                 <div className="truncate text-sm text-content-muted">
                   {data.email}
