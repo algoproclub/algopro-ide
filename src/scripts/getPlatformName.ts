@@ -16,6 +16,8 @@ export const getPlatformName = (platform: Platform) => {
       return 'OJUZ';
     case 'njudge':
       return 'NJudge';
+    case 'usaco':
+      return 'USACO';
   }
   return 'Unknown';
 };
