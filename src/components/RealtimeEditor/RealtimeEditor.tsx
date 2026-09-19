@@ -28,6 +28,7 @@ const AUTHENTICATION_FAILURE_WINDOW_MS = 30_000;
 
 export interface RealtimeEditorProps extends EditorProps {
   defaultValue?: string;
+  initializationReady?: boolean;
   yjsDocumentId: string;
   useEditorWithVim?: boolean;
   dataTestId?: string;
@@ -35,6 +36,7 @@ export interface RealtimeEditorProps extends EditorProps {
 
 const RealtimeEditorRoom = ({
   defaultValue,
+  initializationReady = true,
   yjsDocumentId,
   useEditorWithVim = false,
   dataTestId = '',
@@ -48,7 +50,7 @@ const RealtimeEditorRoom = ({
   const [, setLoading] = useAtom(loadingAtom);
   const { editorMode: mode } = userData;
   const [yjsInfo, setYjsInfo] = useState<EditorYjsInfo | null>(null);
-  const [isRoomReady, setIsRoomReady] = useState(provider.synced);
+  const [isRoomReady, setIsRoomReady] = useState(false);
   const authenticationFailureWindowStartRef = useRef<number | null>(null);
   const authenticationRetryBlockedRef = useRef(false);
   const path = props.path;
@@ -210,6 +212,8 @@ const RealtimeEditorRoom = ({
       const monacoText = provider.document.getText('monaco');
 
       if (!isInitializedMap.get('isInitialized')) {
+        if (!initializationReady) return;
+
         isInitializedMap.set('isInitialized', true);
         if (monacoText.length === 0 && defaultValue) {
           monacoText.insert(0, defaultValue);
@@ -238,6 +242,7 @@ const RealtimeEditorRoom = ({
   }, [
     defaultValue,
     doNotInitializeTheseFileIdsRef,
+    initializationReady,
     isProviderOnActiveDocument,
     provider,
     setLoading,
@@ -245,12 +250,8 @@ const RealtimeEditorRoom = ({
   ]);
 
   useEffect(() => {
-    if (!isProviderOnActiveDocument) {
-      setIsRoomReady(false);
-      return;
-    }
+    if (!isProviderOnActiveDocument || !initializationReady) return;
 
-    setIsRoomReady(provider.synced);
     if (provider.synced) {
       initializeDocumentIfNeeded();
       return;
@@ -266,6 +267,7 @@ const RealtimeEditorRoom = ({
     };
   }, [
     initializeDocumentIfNeeded,
+    initializationReady,
     isProviderOnActiveDocument,
     provider,
     yjsDocumentId,

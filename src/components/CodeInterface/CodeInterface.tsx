@@ -65,33 +65,36 @@ export const CodeInterface = ({
       )}
     >
       <div className="flex-1 overflow-hidden">
-        {problemDataIsReady && (
-          <LazyRealtimeEditor
-            theme={lightMode ? 'light' : 'dark'}
-            rainbowIndent={rainbowIndent}
-            language={{ cpp: 'cpp', java: 'java', py: 'python' }[lang]}
-            path={`myfile.${lang}`}
-            editorOptions={{
-              insertSpaces: false,
-              readOnly,
-              tabSize,
-              fontSize,
-            }}
-            onReady={handle => {
-              setEditorHandle(handle);
-              if (isMonacoEditorHandle(handle)) {
-                handle.focus();
-              }
-            }}
-            defaultValue={problem?.templateCode?.[lang] ?? templateCode[lang]}
-            yjsDocumentId={`${fileData.id}.${lang}`}
-            useEditorWithVim={true}
-            lspOptions={{
-              compilerOptions: fileData.settings.compilerOptions[lang],
-            }}
-            dataTestId="code-editor"
-          />
-        )}
+        <LazyRealtimeEditor
+          theme={lightMode ? 'light' : 'dark'}
+          rainbowIndent={rainbowIndent}
+          language={{ cpp: 'cpp', java: 'java', py: 'python' }[lang]}
+          path={`myfile.${lang}`}
+          editorOptions={{
+            insertSpaces: false,
+            readOnly,
+            tabSize,
+            fontSize,
+          }}
+          onReady={handle => {
+            setEditorHandle(handle);
+            if (isMonacoEditorHandle(handle)) {
+              handle.focus();
+            }
+          }}
+          defaultValue={
+            problemDataIsReady
+              ? (problem?.templateCode?.[lang] ?? templateCode[lang])
+              : undefined
+          }
+          initializationReady={problemDataIsReady}
+          yjsDocumentId={`${fileData.id}.${lang}`}
+          useEditorWithVim={true}
+          lspOptions={{
+            compilerOptions: fileData.settings.compilerOptions[lang],
+          }}
+          dataTestId="code-editor"
+        />
       </div>
       <p className="text-sm font-mono text-[color:var(--text-secondary)] pl-4 status-node" />
     </div>

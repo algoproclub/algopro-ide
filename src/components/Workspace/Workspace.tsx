@@ -19,12 +19,12 @@ import {
   inputMonacoEditorAtom,
 } from '../../atoms/workspace';
 import {
+  hasSolutionsAtom,
   inputTabAtom,
   languageAtom,
   mobileActiveTabAtom,
   problemAtom,
   showSidebarAtom,
-  solutionsAtom,
   solvedAtom,
   statusDataAtom,
   statusDataHistoryAtom,
@@ -46,20 +46,7 @@ import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
 import { EditorHandle, isMonacoEditorHandle } from '../editor/editor-types';
-import {
-  DataSnapshot,
-  getDatabase,
-  onValue,
-  off,
-  ref,
-  get,
-} from 'firebase/database';
 import { Translation } from '../../types/problem';
-import {
-  fetchProblemFromDb,
-  fetchSolutionsFromDb,
-  fetchTranslationsFromDb,
-} from '../../scripts/fetchProblemFromDb';
 import Solutions from '../JudgeInterface/Solutions';
 
 const defaultDesktopPanelSizes = { code: 60, sidebar: 10 };
@@ -278,14 +265,13 @@ function InputPane({
   const loadedProblem = useAtomValue(problemAtom);
   const translations = useAtomValue(translationsAtom);
   const language = useAtomValue(languageAtom);
-  const solutions = useAtomValue(solutionsAtom);
   const solved = useAtomValue(solvedAtom);
   const problem =
     loadedProblem?.id === fileData.problem?.id ? loadedProblem : undefined;
   const hints = problem ? getHints(translations, language) : [];
+  const hasSolutions = useAtomValue(hasSolutionsAtom);
   const showSolutions =
-    solved &&
-    (Object.keys(solutions).length > 0 || problem?.platform === 'planets');
+    solved && (hasSolutions || problem?.platform === 'planets');
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
@@ -325,7 +311,7 @@ function InputPane({
           <TabBar.Item id="solutions" label="Solutions">
             <div className="h-full overflow-hidden">
               <div className="relative h-full p-4 pb-0">
-                <Solutions problem={problem} solutions={solutions} />
+                <Solutions problem={problem} />
               </div>
             </div>
           </TabBar.Item>
@@ -558,119 +544,35 @@ export default function Workspace({
   layoutResetKey: number;
 }): JSX.Element {
   const { fileData } = useEditorContext();
+  const permission = useUserPermission();
+
+  const fileSolved = fileData.solvedStatus?.solved ?? false;
+  const previousFileSolvedRef = useRef(fileSolved);
+  const hasSolutions = useAtomValue(hasSolutionsAtom);
+  const loadedProblem = useAtomValue(problemAtom);
   const setInputTab = useSetAtom(inputTabAtom);
-  const setProblem = useSetAtom(problemAtom);
-  const setTranslations = useSetAtom(translationsAtom);
-  const [solutions, setSolutions] = useAtom(solutionsAtom);
   const setSolved = useSetAtom(solvedAtom);
-  const setStatusData = useSetAtom(statusDataAtom);
-  const setStatusDataHistory = useSetAtom(statusDataHistoryAtom);
-  const setLanguage = useSetAtom(languageAtom);
-
-  const db = getDatabase();
-
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      setStatusData(null);
-      setTranslations({});
-      setSolutions({});
-
-      if (!fileData.problem) {
-        setProblem(null);
-        return;
-      }
-
-      setProblem(undefined);
-      const problemData = await fetchProblemFromDb(fileData.problem);
-
-      if (cancelled) return;
-
-      setProblem(problemData);
-      if (problemData) {
-        setInputTab('judge');
-        const translations = await fetchTranslationsFromDb(fileData.problem);
-
-        if (cancelled) return;
-
-        translations['en'] ??= {
-          hints: problemData.hints ?? [],
-          ...(problemData.statementURL
-            ? { statementURL: problemData.statementURL }
-            : { statement: problemData.statement! }),
-        };
-
-        setTranslations(translations);
-        const solutions = await fetchSolutionsFromDb(fileData.problem);
-
-        if (cancelled) return;
-
-        setSolutions(solutions);
-        setLanguage('hu' in translations ? 'hu' : 'en');
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      setProblem(undefined);
-    };
-    // The RTDB object can change independently; only its identity triggers this load.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fileData.problem?.platform, fileData.problem?.id]);
+  const problemIsReady =
+    !!fileData.problem &&
+    loadedProblem?.platform === fileData.problem.platform &&
+    loadedProblem.id === fileData.problem.id;
 
   useEffect(() => {
-    let active = true;
-    let unsubscribe: (() => void) | undefined;
-
-    get(ref(db, `files/${fileData.id}/solvedStatus/solved`)).then(
-      (snapshot: DataSnapshot) => {
-        if (!active) return;
-
-        const initSolved = snapshot.val() ?? false;
-        setSolved(initSolved);
-        if (!initSolved && Object.keys(solutions).length > 0) {
-          unsubscribe = onValue(
-            ref(db, `files/${fileData.id}/solvedStatus/solved`),
-            (snapshot: DataSnapshot) => {
-              if (snapshot.val()) {
-                setSolved(snapshot.val());
-                setInputTab('solutions');
-              }
-            }
-          );
-        }
-      }
-    );
-    return () => {
-      active = false;
-      unsubscribe?.();
-    };
-  }, [solutions]);
+    if (problemIsReady) setInputTab('judge');
+  }, [problemIsReady, setInputTab]);
 
   useEffect(() => {
-    onValue(
-      ref(db, `submissions/${fileData.id}/statusData`),
-      (snapshot: DataSnapshot) => {
-        setStatusData(snapshot.val());
-      }
-    );
-    return () => {
-      off(ref(db, `submissions/${fileData.id}/statusData`));
-    };
-  }, []);
-
-  useEffect(() => {
-    onValue(
-      ref(db, `submissions/${fileData.id}/statusDataHistory`),
-      (snapshot: DataSnapshot) => {
-        setStatusDataHistory(snapshot.val());
-      }
-    );
-    return () => {
-      off(ref(db, `submissions/${fileData.id}/statusDataHistory`));
-    };
-  }, []);
+    setSolved(fileSolved);
+    if (
+      !previousFileSolvedRef.current &&
+      fileSolved &&
+      hasSolutions &&
+      permission === 'OWNER'
+    ) {
+      setInputTab('solutions');
+    }
+    previousFileSolvedRef.current = fileSolved;
+  }, [fileSolved, hasSolutions, permission, setInputTab, setSolved]);
 
   return (
     <WorkspacePanels

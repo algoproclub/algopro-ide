@@ -1,18 +1,17 @@
 import Dropdown from '../Dropdown';
 import { CodeEditor } from '../editor/CodeEditor';
-import React from 'react';
+import React, { Suspense } from 'react';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { ProblemData } from '../../types/problem';
 import { useEditorContext } from '../../context/EditorContext';
 import { useUserContext, LANGUAGES } from '../../context/UserContext';
 import { useScopedSelection } from '../../hooks/useScopedSelection';
+import LoadingIndicator from '../LoadingIndicator';
+import { hasSolutionsAtom, solutionsAtomFamily } from '../../atoms/workspaceUI';
 
-const Solutions = ({
-  solutions,
-}: {
-  problem: ProblemData;
-  solutions: Record<string, string>;
-}) => {
+const SolutionsContent = ({ problem }: { problem: ProblemData }) => {
   const { fileData } = useEditorContext();
+  const solutions = useAtomValue(solutionsAtomFamily(problem));
   const languages = Object.keys(solutions);
   const fileLanguage = fileData?.settings.language;
   const [selected, setSelected] = useScopedSelection(
@@ -80,6 +79,49 @@ const Solutions = ({
         />
       </div>
     </>
+  );
+};
+
+class SolutionsErrorBoundary extends React.Component<
+  { onError: (error: unknown) => void; children: React.ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    this.props.onError(error);
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+const Solutions = ({ problem }: { problem: ProblemData }) => {
+  const setHasSolutions = useSetAtom(hasSolutionsAtom);
+
+  return (
+    <SolutionsErrorBoundary
+      onError={error => {
+        console.error('Failed to load model solutions.', error);
+        // Hides the Solutions tab
+        setHasSolutions(false);
+      }}
+    >
+      <Suspense
+        fallback={
+          <div className="flex h-full items-center justify-center text-content-muted">
+            <LoadingIndicator className="h-6 w-6" />
+          </div>
+        }
+      >
+        <SolutionsContent problem={problem} />
+      </Suspense>
+    </SolutionsErrorBoundary>
   );
 };
 

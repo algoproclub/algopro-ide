@@ -48,6 +48,7 @@ import {
   type ClassContext,
 } from '../src/scripts/getTaskRef';
 import { WorkspaceLaunchProvider } from '../src/context/WorkspaceLaunchContext';
+import ProblemDataLoader from '../src/components/Workspace/ProblemDataLoader';
 
 function runCodeErrorToResult(error: unknown): JudgeResult {
   const runCodeError = error instanceof RunCodeError ? error : undefined;
@@ -359,7 +360,9 @@ function PageContent() {
         fileID={queryId as string}
         userID={firebaseUser!.uid}
       >
-        {userData ? <EditorPage /> : loadingUI}
+        <ProblemDataLoader>
+          {userData ? <EditorPage /> : loadingUI}
+        </ProblemDataLoader>
         <ConfirmOverrideModal />
       </WorkspaceLaunchBoundary>
     </EditorProvider>

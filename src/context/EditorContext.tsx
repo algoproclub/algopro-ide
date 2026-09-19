@@ -56,6 +56,11 @@ export type FileData = {
     editTime: number;
     codeSize: number;
   };
+  solvedStatus?: {
+    solved?: boolean;
+    solvedInTheory?: boolean;
+    alreadyKnew?: boolean;
+  };
 };
 
 type FileUpdate = Partial<FileData> & Record<string, unknown>;
