@@ -5,12 +5,14 @@ import NoRegistrationMessage from '../NoRegistrationMessage';
 
 export default function WithRegistration({
   children,
+  waitForUserData = false,
 }: {
   children: JSX.Element;
+  waitForUserData?: boolean;
 }): JSX.Element {
   const { userData, logged, registered } = useNullableUserContext();
 
-  if (!logged)
+  if (logged === false)
     return (
       <MessagePage
         message="Please log in to access this page."
@@ -18,7 +20,7 @@ export default function WithRegistration({
       />
     );
 
-  if (!userData)
+  if (logged === null || registered === null || (waitForUserData && !userData))
     return <MessagePage message="Loading…" showHomeButton={false} />;
 
   if (!registered)

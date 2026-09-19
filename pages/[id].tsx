@@ -319,17 +319,11 @@ function PageContent() {
   const router = useRouter();
   const queryId = router.query.id;
   const firebaseFileID = '-' + (queryId as string);
-  const { userData, logged } = useNullableUserContext();
+  const { firebaseUser, userData } = useNullableUserContext();
   const classContext = router.isReady
     ? getClassContext(router.query.group, router.query.class)
     : null;
 
-  const loginUI = (
-    <MessagePage
-      message="Please login to view this file."
-      showHomeButton={true}
-    />
-  );
   const loadingUI = <MessagePage message="Loading…" showHomeButton={false} />;
   const fileNotFoundUI = (
     <div className="p-8 sm:p-16">
@@ -352,8 +346,6 @@ function PageContent() {
   const permissionDeniedUI = <MessagePage message="This file is private." />;
 
   if (!queryId) return null;
-  if (logged === false) return loginUI;
-  if (!userData) return loadingUI;
 
   return (
     <EditorProvider
@@ -365,9 +357,9 @@ function PageContent() {
       <WorkspaceLaunchBoundary
         classContext={classContext}
         fileID={queryId as string}
-        userID={userData.id}
+        userID={firebaseUser!.uid}
       >
-        <EditorPage />
+        {userData ? <EditorPage /> : loadingUI}
         <ConfirmOverrideModal />
       </WorkspaceLaunchBoundary>
     </EditorProvider>

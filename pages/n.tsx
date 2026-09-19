@@ -8,14 +8,8 @@ import va from '@vercel/analytics';
 
 function PageContent() {
   const router = useRouter();
-  const { userData, firebaseUser, logged } = useNullableUserContext();
+  const { userData, firebaseUser } = useNullableUserContext();
 
-  const loginUI = (
-    <MessagePage
-      message="Please login to create files."
-      showHomeButton={true}
-    />
-  );
   const loadingUI = (
     <MessagePage showHomeButton={false} message="Creating new file..." />
   );
@@ -49,15 +43,14 @@ function PageContent() {
         }
       })();
     }
-  }, [userData, firebaseUser]);
+  }, [userData, firebaseUser, router]);
 
-  if (logged === false) return loginUI;
   return loadingUI;
 }
 
 export default function NewFilePage() {
   return (
-    <WithRegistration>
+    <WithRegistration waitForUserData>
       <PageContent />
     </WithRegistration>
   );
