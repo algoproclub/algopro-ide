@@ -1,15 +1,21 @@
 import { useRouter } from 'next/router';
-import React, { useEffect } from 'react';
-import { LANGUAGES, useNullableUserContext } from '../src/context/UserContext';
+import React from 'react';
+import {
+  LANGUAGES,
+  UserData,
+  useNullableUserContext,
+} from '../src/context/UserContext';
 import { useState } from 'react';
 import { Language } from '../src/context/EditorContext';
 import Link from 'next/link';
 import { getDatabase, ref, update } from 'firebase/database';
+import { User } from 'firebase/auth';
 import { SharingPermissions } from '../src/components/SharingPermissions';
 import va from '@vercel/analytics';
 import { RadioGroupContents } from '../src/components/settings/RadioGroupContents';
 import WithRegistration from '../src/components/WithRegistration';
 import PageTitle from '../src/components/PageTitle';
+import { MessagePage } from '../src/components/MessagePage';
 
 export const DEFAULT_COMPILER_OPTIONS = {
   cpp: '-std=c++20 -O2 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -Wlogical-op -Wno-sign-compare -Wno-vla-cxx-extension',
@@ -17,36 +23,26 @@ export const DEFAULT_COMPILER_OPTIONS = {
   py: '',
 };
 
-function PageContent() {
-  const { userData, firebaseUser } = useNullableUserContext();
+function NewFileForm({
+  userData,
+  firebaseUser,
+}: {
+  userData: UserData;
+  firebaseUser: User;
+}) {
   const router = useRouter();
-  const [lang, setLang] = useState<Language>('cpp');
+  const [lang, setLang] = useState<Language>(userData.defaultLanguage);
   const [fileName, setFileName] = useState('');
   const [defaultPerimssion, setDefaultPermission] = useState<
-    'READ_WRITE' | 'READ' | 'PRIVATE' | null
-  >(null);
-  const [compilerOptions, setCompilerOptions] = useState('');
+    'READ_WRITE' | 'READ' | 'PRIVATE'
+  >(userData.defaultPermission);
+  const [compilerOptions, setCompilerOptions] = useState(
+    DEFAULT_COMPILER_OPTIONS[userData.defaultLanguage]
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const isPageLoading = !router.isReady || !userData || !firebaseUser;
-
-  useEffect(() => {
-    setCompilerOptions(DEFAULT_COMPILER_OPTIONS[lang]);
-  }, [lang]);
-
-  useEffect(() => {
-    if (!isPageLoading) {
-      setLang(userData.defaultLanguage);
-      setDefaultPermission(userData.defaultPermission);
-    }
-  }, [isPageLoading]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (isPageLoading) {
-      alert('Page is still loading, please try again later');
-      return;
-    }
     if (!fileName) {
       alert('Please enter a file name.');
       return;
@@ -127,7 +123,10 @@ function PageContent() {
           <RadioGroupContents
             title="Language"
             value={lang}
-            onChange={setLang}
+            onChange={language => {
+              setLang(language);
+              setCompilerOptions(DEFAULT_COMPILER_OPTIONS[language]);
+            }}
             options={LANGUAGES}
           />
           <div>
@@ -151,7 +150,7 @@ function PageContent() {
           <div className="flex justify-end gap-2.5 border-t border-line pt-5">
             <button
               type="submit"
-              disabled={isPageLoading || isSubmitting}
+              disabled={isSubmitting}
               className="inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--app-bg)] focus:ring-[color:var(--accent)]"
             >
               {isSubmitting ? 'Creating\u2026' : 'Create File'}
@@ -169,11 +168,21 @@ function PageContent() {
   );
 }
 
+function PageContent() {
+  const { userData, firebaseUser } = useNullableUserContext();
+  const router = useRouter();
+
+  if (!router.isReady || !userData || !firebaseUser)
+    return <MessagePage message="Loading…" showHomeButton={false} />;
+
+  return <NewFileForm userData={userData} firebaseUser={firebaseUser} />;
+}
+
 export default function NewFilePage() {
   return (
     <>
       <PageTitle>Create new file</PageTitle>
-      <WithRegistration>
+      <WithRegistration waitForUserData>
         <PageContent />
       </WithRegistration>
     </>
