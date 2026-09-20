@@ -320,7 +320,7 @@ function PageContent() {
   const router = useRouter();
   const queryId = router.query.id;
   const firebaseFileID = '-' + (queryId as string);
-  const { firebaseUser, userData } = useNullableUserContext();
+  const { firebaseUser, userData, registered } = useNullableUserContext();
   const classContext = router.isReady
     ? getClassContext(router.query.group, router.query.class)
     : null;
@@ -361,7 +361,7 @@ function PageContent() {
         userID={firebaseUser!.uid}
       >
         <ProblemDataLoader>
-          {userData ? <EditorPage /> : loadingUI}
+          {userData && registered ? <EditorPage /> : loadingUI}
         </ProblemDataLoader>
         <ConfirmOverrideModal />
       </WorkspaceLaunchBoundary>
