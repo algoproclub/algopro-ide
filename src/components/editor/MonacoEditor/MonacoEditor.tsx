@@ -187,13 +187,28 @@ function createEditorHandle(editor: AlgoProMonacoEditor): MonacoEditorHandle {
     getValue() {
       return editor.getValue();
     },
+    getLineContent(lineNumber) {
+      const model = editor.getModel();
+      if (!model || lineNumber <= 0 || lineNumber > model.getLineCount())
+        return undefined;
+      return model.getLineContent(lineNumber);
+    },
     kind: 'monaco',
     layout() {
       editor.layout();
     },
     raw: editor,
+    redo() {
+      editor.trigger('redo', 'redo', null);
+    },
     setLineHighlight(line: number) {
       editor.setLineHighlight(line);
+    },
+    setValue(value: string) {
+      editor.setValue(value);
+    },
+    undo() {
+      editor.trigger('undo', 'undo', null);
     },
   };
 }

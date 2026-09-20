@@ -8,14 +8,10 @@ import React from 'react';
 import { isUserOnline, useOnlineUsers } from '../../hooks/useOnlineUsers';
 import Link from 'next/link';
 import { PlatformSubmitButton } from '../JudgeInterface/PlatformSubmitButton';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { problemAtom, statusDataAtom } from '../../atoms/workspaceUI';
 import { useEditorContext } from '../../context/EditorContext';
-import {
-  mainMonacoEditorAtom,
-  mainCodemirrorEditorAtom,
-} from '../../atoms/workspace';
-import { yUndoManagerKeymap } from 'y-codemirror.next';
+import { mainEditorHandleAtom } from '../../atoms/workspace';
 import { SettingsMenu } from './SettingsMenu';
 import { EditorNavigationMenu } from './EditorNavigationMenu';
 import Logo from '../Logo';
@@ -67,28 +63,11 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
   const [problem] = useAtom(problemAtom);
   const [statusData, setStatusData] = useAtom(statusDataAtom);
 
-  const [mainMonacoEditor] = useAtom(mainMonacoEditorAtom);
-  const [mainCodemirrorEditor] = useAtom(mainCodemirrorEditorAtom);
+  const mainEditorHandle = useAtomValue(mainEditorHandleAtom);
 
-  const handleUndo = () => {
-    if (mainCodemirrorEditor) {
-      // This is completely ridiculous, but there is no way to access undo/redo directly
-      const undoAction = yUndoManagerKeymap.find(m => m.key == 'Mod-z')?.run;
-      undoAction?.(mainCodemirrorEditor);
-    } else if (mainMonacoEditor) {
-      mainMonacoEditor.trigger('undo', 'undo', null);
-    }
-  };
+  const handleUndo = () => mainEditorHandle?.undo();
 
-  const handleRedo = () => {
-    if (mainCodemirrorEditor) {
-      // This is completely ridiculous, but there is no way to access undo/redo directly
-      const redoAction = yUndoManagerKeymap.find(m => m.key == 'Mod-y')?.run;
-      redoAction?.(mainCodemirrorEditor);
-    } else if (mainMonacoEditor) {
-      mainMonacoEditor.trigger('redo', 'redo', null);
-    }
-  };
+  const handleRedo = () => mainEditorHandle?.redo();
 
   const secondaryIconClass = '-ml-0.5 mr-1.5 h-4 w-4 text-content-muted';
 

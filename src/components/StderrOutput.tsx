@@ -1,12 +1,11 @@
 import React, { useEffect } from 'react';
 import {
-  mainMonacoEditorAtom,
   isLineHighlightSetAtom,
+  mainEditorHandleAtom,
   savedEditorValue as savedEditorValueAtom,
 } from '../atoms/workspace';
 import { useAtomValue, useSetAtom } from 'jotai';
 import CodeEditor from './editor/CodeEditor';
-import { editor } from 'monaco-editor';
 import { useUserContext } from '../context/UserContext';
 
 const ASAN_REGEX =
@@ -114,17 +113,6 @@ function parseUBsanError(stderr: string) {
   return null;
 }
 
-function validateLine(
-  lineNumber: number,
-  lineContent: string,
-  model: editor.ITextModel | null | undefined
-): boolean {
-  if (model && lineNumber <= model.getLineCount()) {
-    return model.getLineContent(lineNumber) === lineContent;
-  }
-  return false;
-}
-
 export const StderrOutput = ({
   output,
   lightMode,
@@ -132,7 +120,7 @@ export const StderrOutput = ({
   output: string;
   lightMode: boolean;
 }): JSX.Element => {
-  const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
+  const mainEditorHandle = useAtomValue(mainEditorHandleAtom);
   const isLineHighlightSet = useAtomValue(isLineHighlightSetAtom);
   const savedEditorValue = useAtomValue(savedEditorValueAtom);
   const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
@@ -185,12 +173,12 @@ export const StderrOutput = ({
   useEffect(() => {
     if (isLineHighlightSet || !errorLineNumber) return;
 
-    mainMonacoEditor?.setLineHighlight(errorLineNumber);
+    mainEditorHandle?.setLineHighlight(errorLineNumber);
     setIsLineHighlightSet(true);
   }, [
     errorLineNumber,
     isLineHighlightSet,
-    mainMonacoEditor,
+    mainEditorHandle,
     setIsLineHighlightSet,
   ]);
 
@@ -201,15 +189,12 @@ export const StderrOutput = ({
       }}
       onMouseOver={() =>
         errorLineNumber &&
-        validateLine(
-          errorLineNumber,
-          errorLineContent,
-          mainMonacoEditor?.getModel()
-        ) &&
-        mainMonacoEditor?.setLineHighlight(errorLineNumber)
+        mainEditorHandle?.getLineContent(errorLineNumber) ===
+          errorLineContent &&
+        mainEditorHandle.setLineHighlight(errorLineNumber)
       }
       onMouseLeave={() =>
-        errorLineNumber && mainMonacoEditor?.clearLineHighlight()
+        errorLineNumber && mainEditorHandle?.clearLineHighlight()
       }
     >
       <CodeEditor
