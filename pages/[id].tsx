@@ -35,7 +35,7 @@ import useUserFileConnection from '../src/hooks/useUserFileConnection';
 import useUpdateUserDashboard from '../src/hooks/useUpdateUserDashboard';
 import ConfirmOverrideModal from '../src/components/ConfirmOverrideModal';
 import Link from 'next/link';
-import ProfileSettings from '../src/components/settings/ProfileSettings';
+import LazyProfileSettings from '../src/components/settings/LazyProfileSettings';
 import WithRegistration from '../src/components/WithRegistration';
 import { beginCodeRun, endCodeRun } from '../src/scripts/codeRun';
 import useCodeRunActive from '../src/hooks/useCodeRunActive';
@@ -78,7 +78,7 @@ function EditorPage() {
   const [isWorkspaceSettingsModalOpen, setIsWorkspaceSettingsModalOpen] =
     useState(false);
   const [isProfileSettingsModalOpen, setIsProfileSettingsModalOpen] =
-    useState(false);
+    useState<boolean>();
   const [layoutResetKey, setLayoutResetKey] = useState(0);
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
   const [mobileActiveTab, setMobileActiveTab] = useAtom(mobileActiveTabAtom);
@@ -278,10 +278,12 @@ function EditorPage() {
         onClose={() => setIsWorkspaceSettingsModalOpen(false)}
         onResetLayout={() => setLayoutResetKey(key => key + 1)}
       />
-      <ProfileSettings
-        isOpen={isProfileSettingsModalOpen}
-        onClose={() => setIsProfileSettingsModalOpen(false)}
-      />
+      {isProfileSettingsModalOpen !== undefined && (
+        <LazyProfileSettings
+          isOpen={isProfileSettingsModalOpen}
+          onClose={() => setIsProfileSettingsModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
