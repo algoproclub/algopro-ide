@@ -5,7 +5,7 @@ import {
   mainCodemirrorEditorAtom,
   mainMonacoEditorAtom,
 } from '../../atoms/workspace';
-import { LazyRealtimeEditor } from '../RealtimeEditor/LazyRealtimeEditor';
+import RealtimeEditor from '../RealtimeEditor/RealtimeEditor';
 import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
@@ -65,7 +65,7 @@ export const CodeInterface = ({
       )}
     >
       <div className="flex-1 overflow-hidden">
-        <LazyRealtimeEditor
+        <RealtimeEditor
           theme={lightMode ? 'light' : 'dark'}
           rainbowIndent={rainbowIndent}
           language={{ cpp: 'cpp', java: 'java', py: 'python' }[lang]}

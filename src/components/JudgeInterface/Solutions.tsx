@@ -1,5 +1,5 @@
 import Dropdown from '../Dropdown';
-import { CodeEditor } from '../editor/CodeEditor';
+import CodeEditor from '../editor/CodeEditor';
 import React, { Suspense } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { ProblemData } from '../../types/problem';

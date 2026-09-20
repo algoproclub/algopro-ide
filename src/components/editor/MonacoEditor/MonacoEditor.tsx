@@ -23,6 +23,8 @@ import {
 } from './monacoServices';
 import { DEFAULT_FONT_SIZE_EDITOR } from '../../../constants/editorConstants';
 
+export { ensureMonacoServices as initialize } from './monacoServices';
+
 const viewStates = new Map<string, monaco.editor.ICodeEditorViewState | null>();
 
 // @ts-expect-error todo find a better way to do this
