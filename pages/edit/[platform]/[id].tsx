@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePopper } from 'react-popper';
-import { CodeEditor } from '../../../src/components/editor/CodeEditor';
+import CodeEditor from '../../../src/components/editor/CodeEditor';
 import { useRouter } from 'next/router';
 import {
   doc,

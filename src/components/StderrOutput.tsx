@@ -5,7 +5,7 @@ import {
   savedEditorValue as savedEditorValueAtom,
 } from '../atoms/workspace';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { CodeEditor } from './editor/CodeEditor';
+import CodeEditor from './editor/CodeEditor';
 import { editor } from 'monaco-editor';
 import { useUserContext } from '../context/UserContext';
 
