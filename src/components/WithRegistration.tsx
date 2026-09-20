@@ -20,15 +20,15 @@ export default function WithRegistration({
       />
     );
 
-  if (logged === null || registered === null || (waitForUserData && !userData))
-    return <MessagePage message="Loading…" showHomeButton={false} />;
-
-  if (!registered)
+  if (registered === false)
     return (
       <div className="max-w-3xl mx-auto pt-3 sm:pt-6 px-2 sm:px-4">
         <NoRegistrationMessage />
       </div>
     );
+
+  if (logged === null || (waitForUserData && (!userData || !registered)))
+    return <MessagePage message="Loading…" showHomeButton={false} />;
 
   return <>{children}</>;
 }
