@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import classNames from 'classnames';
-import { useAtom } from 'jotai';
-import {
-  mainCodemirrorEditorAtom,
-  mainMonacoEditorAtom,
-} from '../../atoms/workspace';
+import { useAtom, useSetAtom } from 'jotai';
+import { mainEditorHandleAtom } from '../../atoms/workspace';
 import RealtimeEditor from '../RealtimeEditor/RealtimeEditor';
 import { useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { useUserContext } from '../../context/UserContext';
 import { problemAtom } from '../../atoms/workspaceUI';
-import { EditorHandle, isMonacoEditorHandle } from '../editor/editor-types';
+import { EditorHandle } from '../editor/editor-types';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 export const CodeInterface = ({
   className,
@@ -27,30 +25,17 @@ export const CodeInterface = ({
   const permission = useUserPermission();
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
   const [editorHandle, setEditorHandle] = useState<EditorHandle | null>(null);
-  const [, setMainMonacoEditor] = useAtom(mainMonacoEditorAtom);
-  const [, setMainCodemirrorEditor] = useAtom(mainCodemirrorEditorAtom);
+  const setMainEditorHandle = useSetAtom(mainEditorHandleAtom);
+  const isTouchDevice = useMediaQuery('(pointer: coarse)');
 
-  // I think we need these useEffect()s here because otherwise when the component
-  // is unmounted, the mainMonacoEditorAtom/mainCodemirrorEditorAtom will still
-  // be set
   useEffect(() => {
-    if (!editorHandle) {
-      return;
-    }
+    if (!editorHandle) return;
 
-    if (isMonacoEditorHandle(editorHandle)) {
-      setMainMonacoEditor(editorHandle.raw);
-      return () => {
-        setMainMonacoEditor(null);
-      };
-    }
-
-    setMainCodemirrorEditor(editorHandle.raw);
-
+    setMainEditorHandle(editorHandle);
     return () => {
-      setMainCodemirrorEditor(null);
+      setMainEditorHandle(null);
     };
-  }, [editorHandle, setMainCodemirrorEditor, setMainMonacoEditor]);
+  }, [editorHandle, setMainEditorHandle]);
 
   const {
     userData: { tabSize, fontSize, lightMode, rainbowIndent },
@@ -78,9 +63,7 @@ export const CodeInterface = ({
           }}
           onReady={handle => {
             setEditorHandle(handle);
-            if (isMonacoEditorHandle(handle)) {
-              handle.focus();
-            }
+            if (!isTouchDevice) handle.focus();
           }}
           defaultValue={
             problemDataIsReady
