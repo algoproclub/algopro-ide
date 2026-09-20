@@ -22,7 +22,7 @@ import colorFromUserId, {
 } from '../../scripts/colorFromUserId';
 import { useUserContext } from '../../context/UserContext';
 import { useEditorContext } from '../../context/EditorContext';
-import { CodeEditor } from '../editor/CodeEditor';
+import CodeEditor from '../editor/CodeEditor';
 
 const AUTHENTICATION_FAILURE_WINDOW_MS = 30_000;
 

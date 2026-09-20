@@ -5,7 +5,7 @@ import JudgeResult from '../types/judge';
 import USACOResults from './JudgeInterface/USACOResults';
 import { StatusData } from '../types/problem';
 import { useUserContext } from '../context/UserContext';
-import { CodeEditor } from './editor/CodeEditor';
+import CodeEditor from './editor/CodeEditor';
 import { CompilerOutput } from './CompilerOutput';
 import { mainMonacoEditorAtom } from '../atoms/workspace';
 import { StderrOutput } from './StderrOutput';

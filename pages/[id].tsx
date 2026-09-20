@@ -49,6 +49,9 @@ import {
 } from '../src/scripts/getTaskRef';
 import { WorkspaceLaunchProvider } from '../src/context/WorkspaceLaunchContext';
 import ProblemDataLoader from '../src/components/Workspace/ProblemDataLoader';
+import { preloadCodeEditor } from '../src/components/editor/CodeEditor';
+
+preloadCodeEditor();
 
 function runCodeErrorToResult(error: unknown): JudgeResult {
   const runCodeError = error instanceof RunCodeError ? error : undefined;

@@ -33,7 +33,7 @@ import {
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { Chat } from '../Chat';
 import { CodeInterface } from '../CodeInterface/CodeInterface';
-import { LazyRealtimeEditor } from '../RealtimeEditor/LazyRealtimeEditor';
+import RealtimeEditor from '../RealtimeEditor/RealtimeEditor';
 import { Output } from '../Output';
 import { TabBar } from '../TabBar';
 import { UserList } from '../UserList/UserList';
@@ -201,7 +201,7 @@ function WorkspaceInputPanel(): JSX.Element {
 
   return (
     <div className="h-full overflow-hidden">
-      <LazyRealtimeEditor
+      <RealtimeEditor
         theme={lightMode ? 'light' : 'dark'}
         language="plaintext"
         saveViewState={false}
