@@ -9,8 +9,8 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
   inputEditorValueAtom,
   loadingAtom,
+  mainEditorHandleAtom,
   mainEditorValueAtom,
-  mainMonacoEditorAtom,
   isLineHighlightSetAtom,
   savedEditorValue,
 } from '../src/atoms/workspace';
@@ -94,7 +94,7 @@ function EditorPage() {
   } = useJudgeResults();
   const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
   const setSavedEditorValue = useSetAtom(savedEditorValue);
-  const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
+  const mainEditorHandle = useAtomValue(mainEditorHandleAtom);
   const loadedProblem = useAtomValue(problemAtom);
   const problemDataIsStale = fileData.problem
     ? loadedProblem?.platform !== fileData.problem.platform ||
@@ -222,7 +222,7 @@ function EditorPage() {
       }
     }
     setIsLineHighlightSet(false);
-    mainMonacoEditor?.clearLineHighlight();
+    mainEditorHandle?.clearLineHighlight();
   };
 
   const handleKeydown = (event: KeyboardEvent) => {
