@@ -248,7 +248,7 @@ const EditHintModal = ({
 
   const checked = typeof hint != 'string';
 
-  const editor = (
+  return (
     <EditModal<Hint>
       isOpen={isOpen}
       title="Edit hint"
@@ -302,11 +302,7 @@ const EditHintModal = ({
           </div>
         );
       }}
-    />
-  );
-
-  return (
-    <>
+    >
       <ConfirmationModal
         isOpen={isTypeChangeConfirmationOpen}
         title="Change hint type?"
@@ -318,8 +314,7 @@ const EditHintModal = ({
         }}
         onClose={() => setIsTypeChangeConfirmationOpen(false)}
       />
-      {editor}
-    </>
+    </EditModal>
   );
 };
 
