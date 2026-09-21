@@ -19,6 +19,7 @@ export function EditModal<T>({
   onSave,
   onClose,
   renderEditor,
+  children,
   saveLabel = 'Save',
   cancelLabel = 'Cancel',
 }: {
@@ -28,6 +29,7 @@ export function EditModal<T>({
   onSave: (value: T) => void | Promise<void>;
   onClose: () => void;
   renderEditor: RenderEditor<T>;
+  children?: React.ReactNode;
   saveLabel?: string;
   cancelLabel?: string;
 }) {
@@ -138,6 +140,7 @@ export function EditModal<T>({
                   <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                 </button>
               </div>
+              {children}
             </div>
           </Transition.Child>
         </div>
