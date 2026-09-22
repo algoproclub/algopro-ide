@@ -5,7 +5,6 @@ import firebaseApp from '../../src/firebaseAdmin';
 import type { StudentAccount } from '../../src/data/userProfile';
 
 type RequestData = {
-  idToken?: string;
   userID?: string;
 };
 
@@ -29,14 +28,15 @@ export default async function getStudentAccount(
 
   if (!req.body || typeof req.body !== 'object')
     return res.status(400).json({ message: 'Invalid request data' });
-  const { idToken, userID } = req.body as RequestData;
-  if (
-    typeof idToken !== 'string' ||
-    typeof userID !== 'string' ||
-    userID.length === 0 ||
-    userID.includes('/')
-  )
+  const { userID } = req.body as RequestData;
+  if (typeof userID !== 'string' || userID.length === 0 || userID.includes('/'))
     return res.status(400).json({ message: 'Missing required data' });
+
+  const idToken = req.headers.authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!idToken)
+    return res
+      .status(401)
+      .json({ message: 'Missing or invalid Authorization header.' });
 
   let caller: DecodedIdToken;
   try {

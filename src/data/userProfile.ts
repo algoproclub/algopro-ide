@@ -78,11 +78,11 @@ const fetchStudentAccount = async (userID: string): Promise<StudentAccount> => {
   if (!currentUser) throw new Error('You must be signed in.');
   const response = await fetch('/api/getStudentAccount', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      idToken: await currentUser.getIdToken(),
-      userID,
-    }),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${await currentUser.getIdToken()}`,
+    },
+    body: JSON.stringify({ userID }),
   });
   if (!response.ok) throw new Error('Could not load the account.');
   return response.json();
