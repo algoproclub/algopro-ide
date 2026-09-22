@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { getDefaultStore } from 'jotai/vanilla';
-import type { URLProblem } from '../../types/problem';
+import type { Platform, ProblemData, URLProblem } from '../../types/problem';
 import { EditTextAreaModal } from '../EditTextModal';
+import ManualProblemDataModal from '../ManualProblemDataModal';
 import Tooltip from '../Tooltip';
 import {
   ArrowTopRightOnSquareIcon,
@@ -43,7 +44,9 @@ const extractTaskUrls = (text: string) =>
     )
   );
 
-const resolveTaskLinks = async (text: string) => {
+const resolveTaskLinks = async (
+  text: string
+): Promise<{ ok: boolean; task: URLProblem }[]> => {
   const taskUrls = extractTaskUrls(text);
   const parsedTasks = taskUrls.map(parseProblem);
   const library = await getDefaultStore()
@@ -53,37 +56,29 @@ const resolveTaskLinks = async (text: string) => {
     library.map(problem => [`${problem.platform}:${problem.id}`, problem])
   );
 
-  const resolvedTasks = await Promise.allSettled(
-    parsedTasks.map(task =>
-      (async () => {
-        if (!task.platform || !task.id) return null;
+  return Promise.all(
+    parsedTasks.map(
+      async (task): Promise<{ ok: boolean; task: URLProblem }> => {
+        if (!task.platform || !task.id) return { ok: false, task };
         const libraryTask = libraryByKey.get(`${task.platform}:${task.id}`);
-        if (libraryTask) return { ...task, title: libraryTask.title };
+        if (libraryTask)
+          return { ok: true, task: { ...task, title: libraryTask.title } };
 
-        const response = await fetch('/api/fetchProblemData', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ platform: task.platform, id: task.id }),
-        });
-        if (!response.ok) throw new Error('Problem data request failed.');
-        const problem = (await response.json()) as { title?: unknown } | null;
-        if (typeof problem?.title !== 'string')
-          throw new Error('Problem data is unavailable.');
-        return { ...task, title: problem.title };
-      })().catch(() => {
-        throw new Error(task.url);
-      })
+        try {
+          const response = await fetch('/api/fetchProblemData', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ platform: task.platform, id: task.id }),
+          });
+          if (!response.ok) return { ok: false, task };
+          const problem = (await response.json()) as { title?: unknown } | null;
+          if (typeof problem?.title !== 'string') return { ok: false, task };
+          return { ok: true, task: { ...task, title: problem.title } };
+        } catch {
+          return { ok: false, task };
+        }
+      }
     )
-  );
-  const unfetchedUrls = resolvedTasks.flatMap(result =>
-    result.status === 'rejected' ? [result.reason.message] : []
-  );
-  if (unfetchedUrls.length)
-    throw new Error(
-      `Could not fetch problem data for:\n${unfetchedUrls.join('\n')}`
-    );
-  return resolvedTasks.flatMap(result =>
-    result.status === 'fulfilled' && result.value ? [result.value] : []
   );
 };
 
@@ -97,6 +92,11 @@ const TaskAdder = ({
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isPasteModalOpen, setIsPasteModalOpen] = useState(false);
   const [pastedText, setPastedText] = useState('');
+  const [pendingManualEntry, setPendingManualEntry] = useState<{
+    platform: Platform;
+    id: string;
+    resolve: (problem: ProblemData | null) => void;
+  } | null>(null);
   const pasteRequestID = useRef(0);
 
   useEffect(
@@ -109,14 +109,54 @@ const TaskAdder = ({
     if (disabled) pasteRequestID.current += 1;
   }, [disabled]);
 
+  const promptManualEntry = (platform: Platform, id: string) =>
+    new Promise<ProblemData | null>(resolve => {
+      setPendingManualEntry({ platform, id, resolve });
+    });
+
   const addPastedTasks = async (text: string) => {
     if (disabled) return;
     const requestID = ++pasteRequestID.current;
-    const tasks = await resolveTaskLinks(text);
+    const results = await resolveTaskLinks(text);
     if (requestID !== pasteRequestID.current) return;
+
+    // Ask about each task we couldn't fetch automatically, one at a time,
+    // so the user can paste its page HTML manually or skip it. Close this
+    // modal first: two Headless UI dialogs open at once (this one and the
+    // manual-entry one) confuses their focus traps and swallows clicks.
+    if (
+      results.some(
+        result => !result.ok && result.task.platform && result.task.id
+      )
+    ) {
+      setIsPasteModalOpen(false);
+    }
+    // Keep the original link order: automatically resolved and manually
+    // resolved tasks are interleaved here rather than appended separately.
+    const tasks: URLProblem[] = [];
+    const skippedUrls: string[] = [];
+    for (const result of results) {
+      if (result.ok) {
+        tasks.push(result.task);
+        continue;
+      }
+      const { task } = result;
+      if (!task.platform || !task.id) {
+        skippedUrls.push(task.url);
+        continue;
+      }
+      const problem = await promptManualEntry(task.platform, task.id);
+      if (requestID !== pasteRequestID.current) return;
+      if (problem) tasks.push({ ...task, title: problem.title });
+      else skippedUrls.push(task.url);
+    }
+
     if (!tasks.length) {
       alert('No supported task links were found in the pasted text.');
       return;
+    }
+    if (skippedUrls.length) {
+      alert(`Skipped these links:\n${skippedUrls.join('\n')}`);
     }
     onAddTasks(tasks);
     setPastedText('');
@@ -134,6 +174,19 @@ const TaskAdder = ({
         onClose={() => {
           pasteRequestID.current += 1;
           setIsPasteModalOpen(false);
+        }}
+      />
+      <ManualProblemDataModal
+        isOpen={pendingManualEntry !== null}
+        platform={pendingManualEntry?.platform ?? 'codeforces'}
+        problemID={pendingManualEntry?.id ?? ''}
+        onSuccess={problem => {
+          pendingManualEntry?.resolve(problem);
+          setPendingManualEntry(null);
+        }}
+        onClose={() => {
+          pendingManualEntry?.resolve(null);
+          setPendingManualEntry(null);
         }}
       />
       <div className="flex flex-wrap gap-2">

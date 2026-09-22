@@ -32,6 +32,7 @@ import {
   handleKeyDown,
 } from '../../../src/components/EditTextModal';
 import WithAdminLogin from '../../../src/components/WithAdminLogin';
+import ManualProblemDataModal from '../../../src/components/ManualProblemDataModal';
 import Dropdown, {
   LanguageSelectorDropdown,
   Language as TextLanguage,
@@ -481,6 +482,7 @@ const PageContent = () => {
   const [initTranslated, setInitTranslated] = useState('');
   const [platform, setPlatform] = useState<string | null>(null);
   const [problemID, setProblemID] = useState<string | null>(null);
+  const [isManualEntryOpen, setIsManualEntryOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [hints, setHints] = useState<Hint[]>([]);
   const [initSolution, setInitSolution] = useState<string>('');
@@ -571,6 +573,14 @@ const PageContent = () => {
     }
   }, [router]);
 
+  const applyProblemData = async (problemData: ProblemData) => {
+    setProblemTitle(problemData.title);
+    setOriginal(problemData.statement ?? '');
+    setSamples(normalizeSamples(problemData.samples));
+    setInitSolution(await getSolution(problemData.platform, problemData.id));
+    updateTranslated();
+  };
+
   useEffect(() => {
     const getOriginal = async (
       platform: string,
@@ -598,13 +608,10 @@ const PageContent = () => {
     (async () => {
       try {
         const problemData = await getOriginal(platform, problemID);
-        setProblemTitle(problemData.title);
-        setOriginal(problemData.statement ?? '');
-        setSamples(normalizeSamples(problemData.samples));
-        setInitSolution(await getSolution(platform, problemID));
-        updateTranslated();
+        await applyProblemData(problemData);
       } catch (error) {
         console.error(error);
+        setIsManualEntryOpen(true);
       }
     })();
   }, [platform, problemID]);
@@ -784,6 +791,18 @@ const PageContent = () => {
         }}
         onClose={() => setPendingConfirmation(null)}
       />
+      {platform && problemID && (
+        <ManualProblemDataModal
+          isOpen={isManualEntryOpen}
+          platform={platform as Platform}
+          problemID={problemID}
+          onSuccess={problemData => {
+            setIsManualEntryOpen(false);
+            void applyProblemData(problemData);
+          }}
+          onClose={() => setIsManualEntryOpen(false)}
+        />
+      )}
       <div className="relative z-30 mb-2">
         <LanguageSelectorDropdown
           languages={['-', 'hu', 'en', 'es']}

@@ -78,6 +78,37 @@ export async function fetchProblemData({
   }
 }
 
+// Parses problem data from an already-retrieved page (e.g. manually pasted
+// by a teacher/admin when the live scrape fails), reusing the same
+// per-platform parsing logic as the network-fetching functions below.
+// Platforms without a scrapable page (planets, usaco) are unsupported here.
+export async function parseProblemDataFromHtml({
+  platform,
+  id,
+  html,
+}: PlatformProblem & { html: string }): Promise<ProblemData | null> {
+  switch (platform) {
+    case 'codeforces': {
+      const url = buildCodeforcesUrl(id);
+      return url ? parseCodeforcesProblemData(html, id, url) : null;
+    }
+    case 'atcoder': {
+      const url = buildAtCoderUrl(id);
+      return url ? parseAtCoderProblemData(html, id, url) : null;
+    }
+    case 'cses':
+      return parseCsesProblemData(html, id, buildCsesUrl(id));
+    case 'spoj':
+      return parseSpojProblemData(html, id, buildSpojUrl(id));
+    case 'ojuz':
+      return parseOjuzProblemData(html, id, buildOjuzUrl(id));
+    case 'njudge':
+      return parseNjudgeProblemData(html, id, buildNjudgeUrl(id));
+    default:
+      return null;
+  }
+}
+
 const db = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
   ? getFirestore(firebaseApp, 'planets')
   : getFirestore(firebaseApp);
@@ -102,24 +133,17 @@ function delimitedMathToVar(
     .replaceAll(/\${3}(.*?)\${3}/g, '<var>$1</var>');
 }
 
-async function fetchProblemDataCodeforces(
-  problemID: string
-): Promise<ProblemData | null> {
-  const url = buildCodeforcesUrl(problemID);
-  if (!url) return null;
+function parseCodeforcesProblemData(
+  html: string,
+  problemID: string,
+  url: string
+): ProblemData | null {
+  const document = cheerio.load(html);
 
-  const problemPage = await fetchWithProxy(url, {
-    headers: {
-      'User-Agent':
-        // same as login-bot
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-    },
-  });
-  if (problemPage.status !== 200) {
-    return null;
-  }
-
-  const document = cheerio.load(await problemPage.text());
+  const titleMatch = document('.header > .title')
+    .text()
+    .match(CODEFORCES_TITLE_REGEX);
+  if (!titleMatch) return null;
 
   const samples: Sample[] = [];
   const inputsAndOutputs = Array.from(document('.sample-test pre')).map(
@@ -141,9 +165,7 @@ async function fetchProblemDataCodeforces(
     submittable: true,
     platform: 'codeforces',
     url,
-    title: document('.header > .title')
-      .text()
-      .match(CODEFORCES_TITLE_REGEX)![1],
+    title: titleMatch[1],
     statement: document('.problem-statement > :not(.header)')
       .map((_, el) => delimitedMathToVar(document(el)))
       .toArray()
@@ -158,17 +180,32 @@ async function fetchProblemDataCodeforces(
   };
 }
 
-async function fetchProblemDataAtCoder(
+async function fetchProblemDataCodeforces(
   problemID: string
 ): Promise<ProblemData | null> {
-  const url = buildAtCoderUrl(problemID);
+  const url = buildCodeforcesUrl(problemID);
   if (!url) return null;
-  const problemPage = await fetch(url);
+
+  const problemPage = await fetchWithProxy(url, {
+    headers: {
+      'User-Agent':
+        // same as login-bot
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    },
+  });
   if (problemPage.status !== 200) {
     return null;
   }
 
-  const document = cheerio.load(await problemPage.text());
+  return parseCodeforcesProblemData(await problemPage.text(), problemID, url);
+}
+
+function parseAtCoderProblemData(
+  html: string,
+  problemID: string,
+  url: string
+): ProblemData | null {
+  const document = cheerio.load(html);
 
   document().remove('span.btn');
 
@@ -185,6 +222,7 @@ async function fetchProblemDataAtCoder(
     });
 
   const title = getTextNode(document('span.h2'));
+  if (!title) return null;
 
   const statement = document('#task-statement .lang-en > div')
     .map((_, el) => document(el).html())
@@ -211,16 +249,25 @@ async function fetchProblemDataAtCoder(
   };
 }
 
-async function fetchProblemDataCSES(
+async function fetchProblemDataAtCoder(
   problemID: string
 ): Promise<ProblemData | null> {
-  const url = buildCsesUrl(problemID);
+  const url = buildAtCoderUrl(problemID);
+  if (!url) return null;
   const problemPage = await fetch(url);
   if (problemPage.status !== 200) {
     return null;
   }
 
-  const document = cheerio.load(await problemPage.text());
+  return parseAtCoderProblemData(await problemPage.text(), problemID, url);
+}
+
+function parseCsesProblemData(
+  html: string,
+  problemID: string,
+  url: string
+): ProblemData | null {
+  const document = cheerio.load(html);
 
   // CSES returns 200 OK for non-existent problem IDs
   if (document('.title-block').length === 0) {
@@ -283,16 +330,24 @@ async function fetchProblemDataCSES(
   };
 }
 
-async function fetchProblemDataSPOJ(
+async function fetchProblemDataCSES(
   problemID: string
 ): Promise<ProblemData | null> {
-  const url = buildSpojUrl(problemID);
+  const url = buildCsesUrl(problemID);
   const problemPage = await fetch(url);
   if (problemPage.status !== 200) {
     return null;
   }
 
-  const document = cheerio.load(await problemPage.text());
+  return parseCsesProblemData(await problemPage.text(), problemID, url);
+}
+
+function parseSpojProblemData(
+  html: string,
+  problemID: string,
+  url: string
+): ProblemData | null {
+  const document = cheerio.load(html);
 
   // SPOJ responds with a 200 (and a JS-based redirect) to invalid
   // problem IDs. Detect this by the lack of a problem name element.
@@ -399,16 +454,24 @@ async function fetchProblemDataSPOJ(
   };
 }
 
-async function fetchProblemDataOjuz(
+async function fetchProblemDataSPOJ(
   problemID: string
 ): Promise<ProblemData | null> {
-  const url = buildOjuzUrl(problemID);
+  const url = buildSpojUrl(problemID);
   const problemPage = await fetch(url);
   if (problemPage.status !== 200) {
     return null;
   }
 
-  const document = cheerio.load(await problemPage.text());
+  return parseSpojProblemData(await problemPage.text(), problemID, url);
+}
+
+function parseOjuzProblemData(
+  html: string,
+  problemID: string,
+  url: string
+): ProblemData | null {
+  const document = cheerio.load(html);
 
   const title = getTextNode(document('.problem-title h1'));
 
@@ -433,6 +496,18 @@ async function fetchProblemDataOjuz(
     output: 'stdout',
     source: `Oj.uz ${problemID}`,
   };
+}
+
+async function fetchProblemDataOjuz(
+  problemID: string
+): Promise<ProblemData | null> {
+  const url = buildOjuzUrl(problemID);
+  const problemPage = await fetch(url);
+  if (problemPage.status !== 200) {
+    return null;
+  }
+
+  return parseOjuzProblemData(await problemPage.text(), problemID, url);
 }
 
 const MAX_TOTAL_SAMPLE_SIZE = 768 * 1024; // 768 KiB, as total Firestore doc max size is 1 MiB.
@@ -467,18 +542,12 @@ const compareFilenames = (a: string, b: string): number => {
 };
 
 // TODO: Add an API endpoint in njudge instead of scraping the HTML.
-async function fetchProblemDataNjudge(
-  problemID: string
+async function parseNjudgeProblemData(
+  html: string,
+  problemID: string,
+  url: string
 ): Promise<ProblemData | null> {
-  const url = buildNjudgeUrl(problemID);
-  const problemPage = await fetch(url, {
-    headers: { 'Accept-Language': 'hu' },
-  });
-  if (problemPage.status !== 200) {
-    return null;
-  }
-
-  const document = cheerio.load(await problemPage.text());
+  const document = cheerio.load(html);
 
   const titleHeading = document('div:contains("Cím:")');
   const title = titleHeading.next().text().trim();
@@ -630,4 +699,18 @@ async function fetchProblemDataNjudge(
     output: 'stdout',
     source: `njudge ${problemID}`,
   };
+}
+
+async function fetchProblemDataNjudge(
+  problemID: string
+): Promise<ProblemData | null> {
+  const url = buildNjudgeUrl(problemID);
+  const problemPage = await fetch(url, {
+    headers: { 'Accept-Language': 'hu' },
+  });
+  if (problemPage.status !== 200) {
+    return null;
+  }
+
+  return parseNjudgeProblemData(await problemPage.text(), problemID, url);
 }
