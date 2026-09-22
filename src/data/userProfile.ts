@@ -108,18 +108,21 @@ const getEmailFields = (
   return fields;
 };
 
-const fetchSchools = async (schoolIDs: string[]): Promise<School[]> =>
-  Promise.all(
-    schoolIDs.map(async id => {
-      // A student may belong to schools the viewing teacher does not manage,
-      // where the school document is unreadable. The ID still identifies it.
-      const name = await getDoc(doc(firestore, 'schools', id)).then(
-        snapshot => snapshot.data()?.name as string | undefined,
-        () => undefined
-      );
-      return { id, name: name || id };
-    })
+const fetchSchools = async (schoolIDs: string[]): Promise<School[]> => {
+  if (schoolIDs.length === 0) return [];
+  const schoolDocs = await fetchDocumentsWhereIn(
+    'schools',
+    documentId(),
+    schoolIDs
   );
+  const schoolByID = new Map(
+    schoolDocs.map(schoolDoc => [schoolDoc.id, schoolDoc])
+  );
+  return schoolIDs.map(id => ({
+    id,
+    name: (schoolByID.get(id)?.data()?.name as string | undefined) || id,
+  }));
+};
 
 const fetchGroups = async (
   groupIDs: string[],
