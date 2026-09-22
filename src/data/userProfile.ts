@@ -50,12 +50,12 @@ export class ProfileAccessError extends Error {}
 // Database. Platform handles are currently duplicated across both; the
 // Firestore copy wins so that a Discord-side correction is what teachers see.
 const firestoreFields = [
-  ['first_seen', 'First seen'],
-  ['atcoder_handle', 'AtCoder handle'],
-  ['codeforces_handle', 'Codeforces handle'],
-  ['user_discord_id', 'Discord ID'],
-  ['user_discord_name', 'Discord name'],
-  ['user_full_name', 'Full name'],
+  ['first_seen', 'First seen', true],
+  ['atcoder_handle', 'AtCoder handle', false],
+  ['codeforces_handle', 'Codeforces handle', false],
+  ['user_discord_id', 'Discord ID', false],
+  ['user_discord_name', 'Discord name', false],
+  ['user_full_name', 'Full name', false],
 ] as const;
 
 const handleFallbacks: Partial<Record<string, Platform>> = {
@@ -66,9 +66,13 @@ const handleFallbacks: Partial<Record<string, Platform>> = {
 export const formatLanguage = (language: unknown) =>
   LANGUAGES.find(option => option.value === language)?.label ?? null;
 
-const formatFieldValue = (value: unknown): string | null => {
+// `isDate` disambiguates a raw epoch-ms number (only `first_seen` is one) from
+// a plain numeric field like the Discord snowflake ID, which isn't a date.
+const formatFieldValue = (value: unknown, isDate = false): string | null => {
   if (value instanceof Timestamp) return value.toDate().toLocaleString('en');
-  if (typeof value === 'number') return new Date(value).toLocaleString('en');
+  if (isDate && typeof value === 'number')
+    return new Date(value).toLocaleString('en');
+  if (typeof value === 'number') return String(value);
   if (typeof value === 'string') return value.trim() || null;
   return null;
 };
@@ -185,12 +189,12 @@ export const fetchStudentProfile = async (
     formatFieldValue(data.student_email)
   );
   fields.push(
-    ...firestoreFields.flatMap(([key, label]) => {
+    ...firestoreFields.flatMap(([key, label, isDate]) => {
       const fallbackPlatform = handleFallbacks[key];
       const value =
-        formatFieldValue(data[key]) ??
+        formatFieldValue(data[key], isDate) ??
         (fallbackPlatform
-          ? formatFieldValue(settings.usernames?.[fallbackPlatform])
+          ? formatFieldValue(settings.usernames?.[fallbackPlatform], isDate)
           : null);
       return value === null ? [] : [{ key, label, value }];
     })
