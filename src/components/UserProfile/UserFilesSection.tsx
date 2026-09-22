@@ -1,14 +1,11 @@
-import {
-  ArrowTopRightOnSquareIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from '@heroicons/react/20/solid';
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import {
   fetchOwnedFilesPage,
   type UserFilesPage,
 } from '../../data/userProfile';
+import Pagination from '../Pagination';
 import CodeSizeLabel from '../TaskStatus/CodeSizeLabel';
 import TaskStatusIndicator from '../TaskStatus/TaskStatusIndicator';
 import TimeAgoLabel from '../TimeStamp';
@@ -158,27 +155,13 @@ export default function UserFilesSection({
           </tbody>
         </table>
       </div>
-      <div className="flex items-center gap-2 border-t border-line-muted px-3 py-2 text-sm">
-        <button
-          type="button"
-          className="ui-button-secondary"
-          disabled={pageIndex === 0}
-          onClick={() => setPageIndex(index => Math.max(0, index - 1))}
-        >
-          <ChevronLeftIcon className="h-4 w-4" />
-          Previous
-        </button>
-        <span className="px-2 text-content-muted">Page {pageIndex + 1}</span>
-        <button
-          type="button"
-          className="ui-button-secondary"
-          disabled={!hasNextPage}
-          onClick={() => setPageIndex(index => index + 1)}
-        >
-          Next
-          <ChevronRightIcon className="h-4 w-4" />
-        </button>
-      </div>
+      <Pagination
+        page={pageIndex}
+        setPage={setPageIndex}
+        minPage={0}
+        maxPage={hasNextPage ? pageIndex + 1 : pageIndex}
+        label={`Page ${pageIndex + 1}`}
+      />
     </>
   );
 }
