@@ -2,23 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { EditModal, handleKeyDown } from './EditTextModal';
 import { getPlatformName } from '../scripts/getPlatformName';
 import { buildProblemUrl } from '../scripts/problemUtils';
+import { useUserContext } from '../context/UserContext';
 import type { Platform, ProblemData } from '../types/problem';
 
 export default function ManualProblemDataModal({
   isOpen,
   platform,
   problemID,
-  getIdToken,
   onSuccess,
   onClose,
 }: {
   isOpen: boolean;
   platform: Platform;
   problemID: string;
-  getIdToken: () => Promise<string>;
   onSuccess: (problem: ProblemData) => void;
   onClose: () => void;
 }) {
+  const { firebaseUser } = useUserContext();
   const [html, setHtml] = useState('');
   const url = buildProblemUrl(platform, problemID);
 
@@ -34,7 +34,7 @@ export default function ManualProblemDataModal({
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${await getIdToken()}`,
+        Authorization: `Bearer ${await firebaseUser.getIdToken()}`,
       },
       body: JSON.stringify({ platform, id: problemID, html: pastedHtml }),
     });

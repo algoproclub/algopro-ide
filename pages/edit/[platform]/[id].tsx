@@ -476,7 +476,6 @@ const PageContent = () => {
       </>
     );
   };
-  const { firebaseUser } = useUserContext();
   const [original, setOriginal] = useState('');
   const [problemTitle, setProblemTitle] = useState<string | null>(null);
   const [translated, setTranslated] = useState('');
@@ -578,9 +577,7 @@ const PageContent = () => {
     setProblemTitle(problemData.title);
     setOriginal(problemData.statement ?? '');
     setSamples(normalizeSamples(problemData.samples));
-    if (platform && problemID) {
-      setInitSolution(await getSolution(platform, problemID));
-    }
+    setInitSolution(await getSolution(problemData.platform, problemData.id));
     updateTranslated();
   };
 
@@ -799,7 +796,6 @@ const PageContent = () => {
           isOpen={isManualEntryOpen}
           platform={platform as Platform}
           problemID={problemID}
-          getIdToken={() => firebaseUser.getIdToken()}
           onSuccess={problemData => {
             setIsManualEntryOpen(false);
             void applyProblemData(problemData);

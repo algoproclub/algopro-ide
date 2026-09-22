@@ -46,7 +46,7 @@ const extractTaskUrls = (text: string) =>
 
 const resolveTaskLinks = async (
   text: string
-): Promise<{ resolved: URLProblem[]; failed: URLProblem[] }> => {
+): Promise<{ ok: boolean; task: URLProblem }[]> => {
   const taskUrls = extractTaskUrls(text);
   const parsedTasks = taskUrls.map(parseProblem);
   const library = await getDefaultStore()
@@ -56,7 +56,7 @@ const resolveTaskLinks = async (
     library.map(problem => [`${problem.platform}:${problem.id}`, problem])
   );
 
-  const results = await Promise.all(
+  return Promise.all(
     parsedTasks.map(
       async (task): Promise<{ ok: boolean; task: URLProblem }> => {
         if (!task.platform || !task.id) return { ok: false, task };
@@ -80,21 +80,14 @@ const resolveTaskLinks = async (
       }
     )
   );
-
-  return {
-    resolved: results.filter(result => result.ok).map(result => result.task),
-    failed: results.filter(result => !result.ok).map(result => result.task),
-  };
 };
 
 const TaskAdder = ({
   onAddTasks,
   disabled,
-  getIdToken,
 }: {
   onAddTasks: (tasks: URLProblem[]) => void;
   disabled: boolean;
-  getIdToken: () => Promise<string>;
 }) => {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isPasteModalOpen, setIsPasteModalOpen] = useState(false);
@@ -124,30 +117,40 @@ const TaskAdder = ({
   const addPastedTasks = async (text: string) => {
     if (disabled) return;
     const requestID = ++pasteRequestID.current;
-    const { resolved, failed } = await resolveTaskLinks(text);
+    const results = await resolveTaskLinks(text);
     if (requestID !== pasteRequestID.current) return;
 
     // Ask about each task we couldn't fetch automatically, one at a time,
     // so the user can paste its page HTML manually or skip it. Close this
     // modal first: two Headless UI dialogs open at once (this one and the
     // manual-entry one) confuses their focus traps and swallows clicks.
-    if (failed.some(task => task.platform && task.id)) {
+    if (
+      results.some(
+        result => !result.ok && result.task.platform && result.task.id
+      )
+    ) {
       setIsPasteModalOpen(false);
     }
-    const manuallyResolved: URLProblem[] = [];
+    // Keep the original link order: automatically resolved and manually
+    // resolved tasks are interleaved here rather than appended separately.
+    const tasks: URLProblem[] = [];
     const skippedUrls: string[] = [];
-    for (const task of failed) {
+    for (const result of results) {
+      if (result.ok) {
+        tasks.push(result.task);
+        continue;
+      }
+      const { task } = result;
       if (!task.platform || !task.id) {
         skippedUrls.push(task.url);
         continue;
       }
       const problem = await promptManualEntry(task.platform, task.id);
       if (requestID !== pasteRequestID.current) return;
-      if (problem) manuallyResolved.push({ ...task, title: problem.title });
+      if (problem) tasks.push({ ...task, title: problem.title });
       else skippedUrls.push(task.url);
     }
 
-    const tasks = [...resolved, ...manuallyResolved];
     if (!tasks.length) {
       alert('No supported task links were found in the pasted text.');
       return;
@@ -177,7 +180,6 @@ const TaskAdder = ({
         isOpen={pendingManualEntry !== null}
         platform={pendingManualEntry?.platform ?? 'codeforces'}
         problemID={pendingManualEntry?.id ?? ''}
-        getIdToken={getIdToken}
         onSuccess={problem => {
           pendingManualEntry?.resolve(problem);
           setPendingManualEntry(null);
@@ -334,7 +336,6 @@ const ClassEditor = ({
   isAdmin,
   disabled,
   isMutating,
-  getIdToken,
 }: {
   classID: string;
   group: string;
@@ -347,7 +348,6 @@ const ClassEditor = ({
   isAdmin: boolean;
   disabled: boolean;
   isMutating: boolean;
-  getIdToken: () => Promise<string>;
 }) => {
   const taskIDCounts = new Map<string, number>();
   const taskRows = data.tasks.map(task => {
@@ -408,7 +408,6 @@ const ClassEditor = ({
           </button>
           <TaskAdder
             disabled={disabled}
-            getIdToken={getIdToken}
             onAddTasks={tasks =>
               onUpdate(current => {
                 const keyOf = (t: URLProblem) => 
@@ -517,7 +516,6 @@ export default function GroupClassEditor({
   mutatingClassID,
   hasUnsavedChanges,
   onRefresh,
-  getIdToken,
 }: {
   group: string;
   selectedClassID: string | null;
@@ -535,7 +533,6 @@ export default function GroupClassEditor({
   mutatingClassID: string | null;
   hasUnsavedChanges: boolean;
   onRefresh: () => void;
-  getIdToken: () => Promise<string>;
 }) {
   const selectedClass = selectedClassID ? classes[selectedClassID] : undefined;
   const isEditingDisabled = isRefreshing || mutatingClassID !== null;
@@ -611,7 +608,6 @@ export default function GroupClassEditor({
           isAdmin={isAdmin}
           disabled={isEditingDisabled}
           isMutating={mutatingClassID === selectedClassID}
-          getIdToken={getIdToken}
         />
       ) : (
         <div className="rounded-lg border border-dashed border-line px-4 py-12 text-center text-sm text-content-muted">

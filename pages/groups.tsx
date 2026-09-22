@@ -383,7 +383,7 @@ function useUnsavedChangesWarning(
 }
 
 const PageContent = () => {
-  const { userRole, firebaseUser } = useUserContext();
+  const { userRole } = useUserContext();
   const router = useRouter();
   const selectedGroupID =
     typeof router.query.group === 'string' ? router.query.group : null;
@@ -699,7 +699,6 @@ const PageContent = () => {
                     setClassDialog({ type: 'deleteClass', classID })
                   }
                   isAdmin={userRole?.admin === true}
-                  getIdToken={() => firebaseUser.getIdToken()}
                   isReady={groupClasses.isReady}
                   onNewClass={() => requestClassAction({ type: 'new' })}
                   status={groupClasses.status}
