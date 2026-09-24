@@ -356,10 +356,34 @@ const ClassEditor = ({
           <TaskAdder
             disabled={disabled}
             onAddTasks={tasks =>
-              onUpdate(current => ({
-                ...current,
-                tasks: [...current.tasks, ...tasks],
-              }))
+              onUpdate(current => {
+                const keyOf = (t: URLProblem) => 
+                    t.platform && t.id ? `${t.platform}:${t.id}`:t.url;
+                const existingKeys = new Set(current.tasks.map(keyOf));
+                const newTasks: URLProblem[] = [];
+                const duplicates: URLProblem[] = [];
+
+                for(const task of tasks){
+                    const key=keyOf(task);
+                    if(existingKeys.has(key)){
+                        duplicates.push(task);
+                    }else{
+                        existingKeys.add(key);
+                        newTasks.push(task);
+                    }
+                }
+
+                if(duplicates.length){
+                    const list = duplicates
+                        .map(t=> t.title ?? t.id ?? t.url)
+                        .join('\n');
+                    alert(`A következő feladatok már szerepeltek a listában, ezért nem lettek újra hozzáadva:\n\n${list}`);
+                }
+                return{
+                    ...current,
+                tasks: [...current.tasks, ...newTasks],
+                };
+              })
             }
           />
         </div>
