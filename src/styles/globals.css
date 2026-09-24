@@ -20,6 +20,10 @@
   --color-accent: theme('colors.indigo.600');
   --color-accent-hover: theme('colors.indigo.400');
   --color-accent-strong: theme('colors.indigo.700');
+  --color-action-danger: theme('colors.red.600');
+  --color-action-danger-hover: theme('colors.red.700');
+  --color-action-success: theme('colors.green.700');
+  --color-action-success-hover: theme('colors.green.800');
   --color-focus: theme('colors.zinc.400');
   --color-control: theme('colors.zinc.800');
   --color-input: theme('colors.zinc.900');
@@ -76,6 +80,10 @@
   --color-accent: theme('colors.indigo.600');
   --color-accent-hover: theme('colors.indigo.700');
   --color-accent-strong: theme('colors.indigo.700');
+  --color-action-danger: theme('colors.red.600');
+  --color-action-danger-hover: theme('colors.red.700');
+  --color-action-success: theme('colors.green.700');
+  --color-action-success-hover: theme('colors.green.800');
   --color-focus: theme('colors.zinc.600');
   --color-control: theme('colors.white');
   --color-input: theme('colors.white');
