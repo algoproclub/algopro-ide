@@ -22,9 +22,9 @@ import {
   Platform,
   ProblemData,
   ProblemTag,
-  problemTags,
   Sample,
 } from '../../../src/types/problem';
+import { searchProblemTags } from '../../../src/scripts/searchProblemTags';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import {
@@ -764,11 +764,7 @@ const PageContent = () => {
     }
   };
 
-  const filteredOptions = problemTags.filter(
-    option =>
-      option.toLowerCase().includes(addedTag.toLowerCase()) &&
-      !tags.includes(option.toLowerCase())
-  );
+  const filteredOptions = searchProblemTags(addedTag, { exclude: tags });
 
   return (
     <div className="p-3 theme-page max-w-[1440px] mx-auto">
@@ -1083,10 +1079,10 @@ const PageContent = () => {
                   {addedTag.trim() && (
                     <ul className="border theme-border rounded-md theme-surface absolute m-0.5">
                       {filteredOptions.length > 0 &&
-                        filteredOptions.map((option, index) => (
+                        filteredOptions.map(option => (
                           <li
                             className="px-3 py-2 hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]"
-                            key={index}
+                            key={option}
                             onClick={() => {
                               if (tags.includes(option.trim())) {
                                 alert(`Problem already has "${option}" tag.`);
