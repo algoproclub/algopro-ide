@@ -6,6 +6,7 @@ import React, {
 } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { Button } from './Button';
 
 export type RenderEditor<T> = (
   value: T,
@@ -111,34 +112,29 @@ export function EditModal<T>({
                 <div>{renderEditor(draft, setDraft)}</div>
 
                 <div className="flex items-center space-x-2.5">
-                  <button
+                  <Button
                     type="button"
-                    className="ui-button-secondary px-4 py-2 text-[0.92rem]"
                     onClick={closeModal}
                     disabled={isSaving}
                   >
                     {cancelLabel}
-                  </button>
-                  <button
-                    type="submit"
-                    className="ui-button-primary px-4 py-2"
-                    disabled={isSaving}
-                  >
+                  </Button>
+                  <Button type="submit" variant="primary" disabled={isSaving}>
                     {isSaving ? 'Saving…' : saveLabel}
-                  </button>
+                  </Button>
                 </div>
               </form>
 
               <div className="absolute top-0 right-0 pt-4 pr-4">
-                <button
+                <Button
                   type="button"
-                  className="ui-icon-button text-content-muted hover:text-content"
+                  variant="ghost"
+                  size="sm"
+                  icon={XMarkIcon}
+                  aria-label="Close"
                   onClick={closeModal}
                   disabled={isSaving}
-                >
-                  <span className="sr-only">Close</span>
-                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                </button>
+                />
               </div>
               {children}
             </div>
