@@ -7,6 +7,7 @@ import useUserPermission from '../hooks/useUserPermission';
 import { useEditorContext } from '../context/EditorContext';
 import { useUserContext } from '../context/UserContext';
 import { PaperAirplaneIcon } from '@heroicons/react/20/solid';
+import { Button } from './Button';
 
 export interface ChatMessage {
   timestamp: number;
@@ -92,9 +93,15 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
             onKeyDown={handleKeyDown}
             ref={chatInputRef}
           />
-          <button className="flex items-center justify-center rounded-b-md block w-full py-2.5 text-sm font-bold border border-transparent theme-button-primary active:bg-[color:var(--surface-active)] focus:outline-none">
-            Send <PaperAirplaneIcon className="ml-2 inline h-4 w-4" />
-          </button>
+          <Button
+            variant="primary"
+            size="lg"
+            icon={PaperAirplaneIcon}
+            iconPosition="end"
+            className="w-full rounded-t-none font-bold"
+          >
+            Send
+          </Button>
         </form>
       )}
     </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button } from '../Button';
 
 export default function JoinLink({ link }: { link: string }) {
   const [copied, setCopied] = useState(false);
@@ -23,12 +24,14 @@ export default function JoinLink({ link }: { link: string }) {
           {window.location.origin}
           {link}
         </span>
-        <button
-          className="theme-text-muted hover:text-[color:var(--text-primary)] hover:bg-[color:var(--surface-hover)] bg-[color:var(--surface-bg-muted)] px-2 text-sm font-medium"
+        <Button
+          variant="secondary"
+          size="sm"
+          className="shrink-0 rounded-l-none"
           onClick={handleCopy}
         >
           {copied ? 'Copied!' : 'Copy'}
-        </button>
+        </Button>
       </div>
     </div>
   );
