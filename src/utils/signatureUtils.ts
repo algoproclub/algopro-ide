@@ -4,7 +4,7 @@ import { generateNonce, sign } from 'web-bot-auth';
 import { signerFromJWK } from 'web-bot-auth/crypto';
 import {
   createSignature,
-  RequestDescriptor,
+  ResponseDescriptor,
   SignatureFields,
   webcrypto,
 } from 'http-message-sig';
@@ -47,22 +47,23 @@ async function generateKey(): Promise<CryptoKeyPair> {
 }
 
 /**
- * Generate a new signing keypair regardless of age.
+ * Generate a new signing keypair.
+ * @returns the freshly generated request signing keypair
  */
-export async function rotateKey(): Promise<BotSignKeyPair> {
+async function rotateKey() {
   const keysRef = db.ref('bot-signatures/key-directory');
   const keyPair = await generateKey();
   const privKey = await subtle.exportKey('jwk', keyPair.privateKey);
   const pubKey = await subtle.exportKey('jwk', keyPair.publicKey);
-  pubKey.alg = privKey.alg = 'EdDSA';
+  pubKey.alg = privKey.alg = 'EdDSA'; // for some reason this is required by signerFromJWK, even though the standard tag is Ed25519
   const signer = await signerFromJWK(privKey);
   const now = Date.now();
   const key: BotSignKeyPair = {
     privKey,
     pubKey,
     kid: signer.keyid,
-    nbf: now - 60 * 1000, // clock desync (not sure if CF is using this field though)
-    exp: now + 30 * 24 * 60 * 60 * 1000,
+    nbf: now - 60 * 1000, // avoid clock desync (not sure if CF is using this field though)
+    exp: now + 30 * 24 * 60 * 60 * 1000, // demo signature directory is using millis here
   };
   keysRef.push(key);
   return key;
@@ -70,9 +71,11 @@ export async function rotateKey(): Promise<BotSignKeyPair> {
 
 /**
  * Rotate old keys, remove expired ones.
+ * @returns the earliest valid request signing keypair
  */
-export async function rotateKeyIfNeeded() {
-  let rotate = true;
+async function rotateAndGetFreshKeyPair(): Promise<BotSignKeyPair> {
+  const now = Date.now();
+  let earliestValidKeyPair: BotSignKeyPair | undefined = undefined;
   const keys = await db
     .ref('bot-signatures/key-directory')
     .orderByChild('exp')
@@ -80,18 +83,15 @@ export async function rotateKeyIfNeeded() {
 
   keys.forEach(child => {
     const keyPair = child.val() as BotSignKeyPair;
-    const now = Date.now();
-    if (keyPair.exp > now + 7 * 24 * 60 * 60 * 1000) {
-      rotate = false;
-      return true;
+    if (!earliestValidKeyPair && keyPair.exp > now + 7 * 24 * 60 * 60 * 1000) {
+      earliestValidKeyPair ??= keyPair;
     } else if (keyPair.exp < now - 60 * 1000) {
       child.ref.remove();
     }
   });
 
-  if (rotate) {
-    rotateKey();
-  }
+  earliestValidKeyPair ??= await rotateKey();
+  return earliestValidKeyPair;
 }
 
 /**
@@ -101,6 +101,7 @@ export async function rotateKeyIfNeeded() {
 export async function getSignedKeyDirectory(
   authority: string
 ): Promise<SignedBotSignDirectory> {
+  await rotateAndGetFreshKeyPair(); // this should be a cronjob, probably
   const keys = await db
     .ref('bot-signatures/key-directory')
     .orderByChild('exp')
@@ -110,12 +111,18 @@ export async function getSignedKeyDirectory(
     const keyPair = child.val() as BotSignKeyPair;
     directory.push(keyPair);
   });
-  const request: RequestDescriptor = {
-    kind: 'request',
-    method: 'GET',
-    targetUri: `https://${authority}/.well-known/http-message-signatures-directory`,
-    fields: [{ name: 'req', value: 'true' }],
+  const request: ResponseDescriptor = {
+    kind: 'response',
+    status: 200,
+    fields: [],
+    request: {
+      kind: 'request',
+      method: 'GET',
+      targetUri: `https://${authority}/.well-known/http-message-signatures-directory`,
+      fields: [],
+    },
   };
+  const now = Math.floor(Date.now() / 1000);
   return {
     directory: {
       keys: directory.map(key => ({
@@ -140,10 +147,10 @@ export async function getSignedKeyDirectory(
         );
         return await createSignature(request, {
           label: `sig${idx + 1}`,
-          components: ['@authority', 'req'],
+          components: [{ name: '@authority', parameters: { req: true } }],
           parameters: {
-            created: Date.now(),
-            expires: Date.now() + 300_000,
+            created: now, // request signatures are apparently expected in seconds
+            expires: now + 300,
             alg: signer.algorithm,
             keyid: key.kid,
             tag: 'http-message-signatures-directory',
@@ -160,19 +167,7 @@ export async function signedFetch(
   init?: RequestInit
 ): Promise<Response> {
   const now = new Date();
-  const keys = await db
-    .ref('bot-signatures/key-directory')
-    .orderByChild('exp')
-    .startAt(now.getTime())
-    .limitToLast(1)
-    .get();
-  let keyPair: BotSignKeyPair | undefined = undefined;
-  keys.forEach(child => {
-    keyPair = child.val() as BotSignKeyPair;
-  });
-  if (!keyPair) {
-    keyPair = await rotateKey();
-  }
+  const keyPair = await rotateAndGetFreshKeyPair();
 
   const originalRequest = new Request(input, init);
   const headers = originalRequest.headers;
@@ -181,7 +176,8 @@ export async function signedFetch(
   const fields = await sign(unsignedRequest, {
     signer: await signerFromJWK(keyPair.privKey),
     created: now,
-    expires: new Date(now.getTime() + 300 * 1000),
+    expires: new Date(Math.floor(now.getTime() / 1000) + 60),
+    // TODO check this, CF might want millis here, but keys were in millis
     nonce: generateNonce(),
   });
   headers.append('Signature', fields.signature);

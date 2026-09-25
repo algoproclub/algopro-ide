@@ -1,8 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import {
-  getSignedKeyDirectory,
-  rotateKeyIfNeeded,
-} from '../../../src/utils/signatureUtils';
+import { getSignedKeyDirectory } from '../../../src/utils/signatureUtils';
 import { appendSignature } from 'http-message-sig';
 
 export default async function handler(
@@ -16,7 +13,9 @@ export default async function handler(
   );
 
   if (method === 'GET') {
-    const signedDirectory = await getSignedKeyDirectory(req.headers.host ?? '');
+    const signedDirectory = await getSignedKeyDirectory(
+      req.headers.host ?? 'localhost'
+    );
     let headers = new Headers();
     signedDirectory.signatureData.forEach(
       fields => (headers = appendSignature(headers, fields))
@@ -26,9 +25,6 @@ export default async function handler(
       // .json() ruins Content-Type
       JSON.stringify(signedDirectory.directory)
     );
-  } else if (method === 'PATCH') {
-    await rotateKeyIfNeeded();
-    res.status(200).end();
   } else {
     // Handle any other HTTP method
     res.setHeader('Allow', ['GET']);
