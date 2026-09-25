@@ -10,6 +10,7 @@ import {
   type Student,
 } from '../../data/classroomMetadata';
 import RefreshButton from '../RefreshButton';
+import { Button } from '../Button';
 
 type MembershipState = {
   students: Student[];
@@ -288,12 +289,9 @@ export default function GroupMemberEditor({
                 </Combobox.Options>
               )}
             </div>
-            <button
-              className="ui-button-secondary whitespace-nowrap py-2.5"
-              onClick={() => setShowAllStudents(prev => !prev)}
-            >
+            <Button onClick={() => setShowAllStudents(prev => !prev)}>
               {showAllStudents ? 'List all members' : 'List all students'}
-            </button>
+            </Button>
           </div>
         </div>
       </Combobox>
@@ -314,22 +312,15 @@ export default function GroupMemberEditor({
               )}
             </div>
             <div className="px-4 py-2.5">
-              <button
+              <Button
                 onClick={() => toggleMembership(data.id)}
-                className={`ui-button border-transparent text-content-inverted ${
-                  data.isInGroup
-                    ? 'bg-danger enabled:hover:bg-status-danger'
-                    : 'bg-success enabled:hover:bg-status-success'
-                }`}
+                variant={data.isInGroup ? 'danger' : 'success'}
+                icon={data.isInGroup ? MinusIcon : PlusIcon}
+                iconPosition="end"
                 disabled={isLoading || isSaving || isUnavailable}
               >
                 {data.isInGroup ? 'Remove' : 'Add'}
-                {data.isInGroup ? (
-                  <MinusIcon className="h-4 w-4" />
-                ) : (
-                  <PlusIcon className="h-4 w-4" />
-                )}
-              </button>
+              </Button>
             </div>
           </div>
         ))}
@@ -342,22 +333,21 @@ export default function GroupMemberEditor({
         )}
       </div>
       <footer className="flex justify-end gap-2 border-t border-line px-3 py-2.5">
-        <button
+        <Button
           type="button"
-          className="ui-button-secondary py-2"
           onClick={discardMembershipChanges}
           disabled={!pendingChangeCount || isSaving}
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="ui-button-primary px-4 py-2"
+          variant="primary"
           onClick={saveMemberships}
           disabled={!pendingChangeCount || isSaving}
         >
           {isSaving ? 'Saving…' : 'Save changes'}
-        </button>
+        </Button>
       </footer>
     </section>
   );

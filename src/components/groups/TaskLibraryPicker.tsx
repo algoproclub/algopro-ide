@@ -7,6 +7,7 @@ import { getPlatformName } from '../../scripts/getPlatformName';
 import type { URLProblem } from '../../types/problem';
 import Tooltip from '../Tooltip';
 import ProblemLibraryRefreshButton from '../ProblemLibraryRefreshButton';
+import { Button } from '../Button';
 
 const TaskLibraryResults = ({
   queryText,
@@ -99,13 +100,9 @@ export default function TaskLibraryPicker({
           placeholder="Search task name, ID, platform, or tag…"
           className="min-w-0 flex-1 rounded-md border border-line bg-input px-3 py-2 text-sm text-content shadow-sm outline-none transition-colors hover:border-line-strong focus-visible:border-line-strong focus-visible:ring-2 focus-visible:ring-focus"
         />
-        <button
-          type="button"
-          className="ui-focus rounded-md px-2 py-2 text-sm text-content-muted hover:bg-surface-hover hover:text-content"
-          onClick={onClose}
-        >
+        <Button type="button" variant="ghost" onClick={onClose}>
           Close
-        </button>
+        </Button>
         <ProblemLibraryRefreshButton />
       </div>
       {queryText.trim() ? (
