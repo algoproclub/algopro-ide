@@ -13,6 +13,7 @@ export default async function handler(
   );
 
   if (method === 'GET') {
+    // if there is no Host header, the request fails with 400 Bad Request before it reaches this function
     const signedDirectory = await getSignedKeyDirectory(
       req.headers.host ?? 'localhost'
     );

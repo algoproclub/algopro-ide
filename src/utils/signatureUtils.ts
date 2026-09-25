@@ -65,7 +65,7 @@ async function rotateKey() {
     nbf: now - 60 * 1000, // avoid clock desync (not sure if CF is using this field though)
     exp: now + 30 * 24 * 60 * 60 * 1000, // demo signature directory is using millis here
   };
-  keysRef.push(key);
+  await keysRef.push(key);
   return key;
 }
 
@@ -95,6 +95,53 @@ async function rotateAndGetFreshKeyPair(): Promise<BotSignKeyPair> {
 }
 
 /**
+ * Create the Signature-Input and Signature headers for the key directory. Note that
+ * these fields can't be simply dropped into the headers, unless there is only a
+ * single one. (Use the {@link sign} function to get the final response headers.)
+ *
+ * @param now signing time in seconds
+ * @param authority signing authority, generally the hostname
+ * @param key request signing keypair
+ * @param label signature label, must be different for every key
+ * @returns signature header fields for the given key
+ */
+async function signDirectoryEntry(
+  now: number,
+  authority: string,
+  key: BotSignKeyPair,
+  label: string
+): Promise<SignatureFields> {
+  const request: ResponseDescriptor = {
+    kind: 'response',
+    status: 200,
+    fields: [],
+    request: {
+      kind: 'request',
+      method: 'GET',
+      targetUri: `https://${authority}/.well-known/http-message-signatures-directory`,
+      fields: [],
+    },
+  };
+  const signer = webcrypto.signer(
+    await subtle.importKey('jwk', key.privKey, { name: 'Ed25519' }, false, [
+      'sign',
+    ])
+  );
+  return await createSignature(request, {
+    label,
+    signer,
+    components: [{ name: '@authority', parameters: { req: true } }],
+    parameters: {
+      created: now, // request signatures are apparently expected in seconds
+      expires: now + 300,
+      alg: signer.algorithm,
+      keyid: key.kid,
+      tag: 'http-message-signatures-directory',
+    },
+  });
+}
+
+/**
  * Directory of public keys as JWK with expiry data that may or may not get used by Cloudflare but their API returns it.
  * @returns A Promise that resolves to the active key directory
  */
@@ -111,17 +158,6 @@ export async function getSignedKeyDirectory(
     const keyPair = child.val() as BotSignKeyPair;
     directory.push(keyPair);
   });
-  const request: ResponseDescriptor = {
-    kind: 'response',
-    status: 200,
-    fields: [],
-    request: {
-      kind: 'request',
-      method: 'GET',
-      targetUri: `https://${authority}/.well-known/http-message-signatures-directory`,
-      fields: [],
-    },
-  };
   const now = Math.floor(Date.now() / 1000);
   return {
     directory: {
@@ -135,33 +171,21 @@ export async function getSignedKeyDirectory(
       })),
     },
     signatureData: await Promise.all(
-      directory.map(async (key, idx) => {
-        const signer = webcrypto.signer(
-          await subtle.importKey(
-            'jwk',
-            key.privKey,
-            { name: 'Ed25519' },
-            false,
-            ['sign']
-          )
-        );
-        return await createSignature(request, {
-          label: `sig${idx + 1}`,
-          components: [{ name: '@authority', parameters: { req: true } }],
-          parameters: {
-            created: now, // request signatures are apparently expected in seconds
-            expires: now + 300,
-            alg: signer.algorithm,
-            keyid: key.kid,
-            tag: 'http-message-signatures-directory',
-          },
-          signer,
-        });
-      })
+      directory.map((key, idx) =>
+        signDirectoryEntry(now, authority, key, `binding${idx + 1}`)
+      )
     ),
   };
 }
 
+/**
+ * Like regular {@link fetch}, but signs the request. Note that this
+ * function resets the UA to a Cloudflare-approved value.
+ *
+ * @param input See {@link fetch}
+ * @param init See {@link fetch}
+ * @returns See {@link fetch}
+ */
 export async function signedFetch(
   input: string | URL | Request,
   init?: RequestInit
@@ -171,13 +195,13 @@ export async function signedFetch(
 
   const originalRequest = new Request(input, init);
   const headers = originalRequest.headers;
+  headers.set('User-Agent', signingConfig.userAgent); // CF does not like signed requests with fake UAs
   headers.append('Signature-Agent', signingConfig.signatureAgent);
   const unsignedRequest = new Request(originalRequest, { headers });
   const fields = await sign(unsignedRequest, {
     signer: await signerFromJWK(keyPair.privKey),
     created: now,
-    expires: new Date(Math.floor(now.getTime() / 1000) + 60),
-    // TODO check this, CF might want millis here, but keys were in millis
+    expires: new Date(now.getTime() + 60_000),
     nonce: generateNonce(),
   });
   headers.append('Signature', fields.signature);
