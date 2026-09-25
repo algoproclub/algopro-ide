@@ -296,7 +296,6 @@ body,
   @apply outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-canvas;
 }
 
-.ui-button,
 .ui-button-primary,
 .ui-button-secondary {
   @apply inline-flex items-center justify-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium shadow-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50;
