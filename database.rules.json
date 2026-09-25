@@ -96,6 +96,8 @@
       }
     },
     "bot-signatures": {
+      ".read": false,
+      ".write": false,
       "key-directory": {
         ".indexOn": ["exp"]
       }
