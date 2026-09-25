@@ -403,8 +403,7 @@ const PageContent = () => {
   const schools = schoolsResource.data;
   const [listedSchoolID, setSchoolID] = useScopedSelection(
     'group-editor-schools',
-    schools.map(school => school.id),
-    schools[0]?.id ?? null
+    schools.map(school => school.id)
   );
   const routeSchoolID = selectedGroupID?.split('~', 1)[0] ?? null;
   const selectedSchoolID = schools.some(school => school.id === routeSchoolID)
