@@ -227,7 +227,7 @@ const ClassesTab = () => {
     }));
 
   return (
-    <div className="overflow-hidden rounded-b-lg border-x border-b border-line bg-panel-muted text-content">
+    <div className="rounded-b-lg border-x border-b border-line bg-panel-muted text-content">
       <div className="flex items-end gap-3 border-b border-line bg-panel-muted px-4 py-3">
         <Dropdown
           items={groupOptions}
@@ -288,6 +288,20 @@ const ClassesTab = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-line-muted bg-canvas text-content">
+            {(!groupID || !classID) && (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="px-4 py-12 text-center text-sm text-content-muted"
+                >
+                  {groupsResource.status === 'loading'
+                    ? 'Loading groups…'
+                    : classesResource.status === 'loading'
+                      ? 'Loading classes…'
+                      : 'Select a class to view tasks.'}
+                </td>
+              </tr>
+            )}
             {tasks.map((task, index) => {
               if (!classContext) return null;
               const solutionState = solutions[task.key] ?? {
@@ -408,19 +422,21 @@ const ClassesTab = () => {
           </tbody>
         </table>
       </div>
-      <Pagination
-        page={Math.max(0, classes.indexOf(classID ?? ''))}
-        setPage={(val: number) => {
-          const nextClassID = classes[val];
-          if (nextClassID) {
-            selectClass(nextClassID);
-          }
-        }}
-        minPage={0}
-        maxPage={Math.max(0, classes.length - 1)}
-        label={`Class: ${classID ?? '-'}`}
-        pageDirection={-1}
-      />
+      {classID && (
+        <Pagination
+          page={Math.max(0, classes.indexOf(classID))}
+          setPage={(val: number) => {
+            const nextClassID = classes[val];
+            if (nextClassID) {
+              selectClass(nextClassID);
+            }
+          }}
+          minPage={0}
+          maxPage={Math.max(0, classes.length - 1)}
+          label={`Class: ${classID}`}
+          pageDirection={-1}
+        />
+      )}
     </div>
   );
 };
