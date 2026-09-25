@@ -718,6 +718,7 @@ const PageContent = () => {
           ) : (
             <GroupList
               school={selectedSchool}
+              hasSchools={schools.length > 0}
               groups={filteredGroups}
               searchQuery={groupSearchQuery}
               onSelectGroup={selectGroup}
