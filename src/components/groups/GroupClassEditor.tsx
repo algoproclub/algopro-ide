@@ -22,6 +22,7 @@ import type { GroupClassData } from '../../data/classroomMetadata';
 import RefreshButton from '../RefreshButton';
 import { problemLibraryAtom } from '../../atoms/problemLibrary';
 import type { ClassroomResourceStatus } from '../../hooks/useClassroomMetadata';
+import { Button } from '../Button';
 
 export type GroupClassUpdate =
   | GroupClassData
@@ -190,20 +191,16 @@ const TaskAdder = ({
         }}
       />
       <div className="flex flex-wrap gap-2">
-        <button
-          className="ui-button-secondary"
-          onClick={() => setIsPasteModalOpen(true)}
-          disabled={disabled}
-        >
+        <Button onClick={() => setIsPasteModalOpen(true)} disabled={disabled}>
           Add tasks with links
-        </button>
-        <button
-          className="ui-button border-transparent bg-success text-content-inverted enabled:hover:bg-status-success"
+        </Button>
+        <Button
+          variant="success"
           onClick={() => setIsLibraryOpen(open => !open)}
           disabled={disabled}
         >
           Add from library
-        </button>
+        </Button>
       </div>
       {isLibraryOpen && !disabled && (
         <div className="absolute right-0 top-full z-20 mt-2 w-[min(32rem,calc(100vw-2rem))] overflow-hidden rounded-md border border-line shadow-xl">
@@ -310,14 +307,14 @@ const SortableTaskRow = ({
           </>
         )}
         <Tooltip label="Delete task">
-          <button
+          <Button
             type="button"
-            className="ui-icon-button"
+            variant="ghost"
+            size="sm"
+            icon={TrashIcon}
             onClick={onDelete}
             disabled={disabled}
-          >
-            <TrashIcon className="h-4 w-4" />
-          </button>
+          />
         </Tooltip>
       </div>
     </div>
@@ -403,9 +400,7 @@ const ClassEditor = ({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button className="ui-button-secondary" onClick={copyContent}>
-            Copy list
-          </button>
+          <Button onClick={copyContent}>Copy list</Button>
           <TaskAdder
             disabled={disabled}
             onAddTasks={tasks =>
@@ -446,29 +441,24 @@ const ClassEditor = ({
         )}
       </div>
       <footer className="flex items-center justify-between border-t border-line px-3 py-2.5">
-        <button
-          className="ui-button border-transparent bg-danger text-content-inverted enabled:hover:bg-status-danger"
-          onClick={onDelete}
-          disabled={disabled}
-        >
+        <Button variant="danger" onClick={onDelete} disabled={disabled}>
           Delete class
-        </button>
+        </Button>
         <div className="flex gap-2">
-          <button
+          <Button
             type="button"
-            className="ui-button-secondary py-2"
             onClick={onCancel}
             disabled={!unsaved || disabled}
           >
             Cancel
-          </button>
-          <button
-            className="ui-button-primary px-4 py-2"
+          </Button>
+          <Button
+            variant="primary"
             onClick={onSave}
             disabled={!unsaved || disabled}
           >
             {isMutating ? 'Working…' : 'Save changes'}
-          </button>
+          </Button>
         </div>
       </footer>
     </article>
@@ -536,15 +526,15 @@ export default function GroupClassEditor({
             disabled={hasUnsavedChanges || mutatingClassID !== null}
             isLoading={isRefreshing || (!isReady && !hasError)}
           />
-          <button
+          <Button
             type="button"
-            className="ui-button-primary py-2"
+            variant="primary"
+            icon={PlusIcon}
             onClick={onNewClass}
             disabled={!isReady || isEditingDisabled}
           >
-            <PlusIcon className="h-4 w-4" />
             New class
-          </button>
+          </Button>
         </div>
       </header>
       {hasError && (
