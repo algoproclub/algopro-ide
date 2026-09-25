@@ -41,6 +41,7 @@ import Checkbox from '../../../src/components/Checkbox';
 import { useUserContext } from '../../../src/context/UserContext';
 import PageTitle from '../../../src/components/PageTitle';
 import ConfirmationModal from '../../../src/components/ConfirmationModal';
+import { Button } from '../../../src/components/Button';
 
 const translate = httpsCallable<
   {
@@ -62,8 +63,6 @@ const iconButtonClass =
   'px-2 py-1 rounded-md hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]';
 const textareaClass =
   'font-mono theme-input border w-full min-h-[10rem] text-sm';
-const secondaryButtonClass =
-  'theme-button-secondary border rounded-md active:bg-[color:var(--surface-active)]';
 
 function normalizeSamples(samples: unknown): Sample[] {
   if (!Array.isArray(samples)) return [];
@@ -817,24 +816,15 @@ const PageContent = () => {
         />
       </div>
       <div className="mb-4 space-x-2 text-[0.95rem]">
-        <button
-          className={`${secondaryButtonClass} px-4 py-2`}
-          onClick={handleAutoTranslateDeepl}
-        >
+        <Button onClick={handleAutoTranslateDeepl}>
           Auto translate (Deepl)
-        </button>
-        <button
-          className={`${secondaryButtonClass} px-4 py-2`}
-          onClick={handleAutoTranslateOpenAI}
-        >
+        </Button>
+        <Button onClick={handleAutoTranslateOpenAI}>
           Auto translate (OpenAI)
-        </button>
-        <button
-          className="px-4 py-2 rounded-md theme-button-primary"
-          onClick={handleSave}
-        >
+        </Button>
+        <Button variant="primary" onClick={handleSave}>
           Save
-        </button>
+        </Button>
       </div>
       <EditHintModal
         isOpen={isOpen}
@@ -862,13 +852,9 @@ const PageContent = () => {
       <div className="theme-surface-raised mt-2 flex flex-col">
         <div className="border theme-border flex items-center justify-between theme-surface-raised px-3 py-2 border-b text-sm space-x-2">
           <span className="font-bold">Hints</span>
-          <button
-            className={`${secondaryButtonClass} px-2 py-1 flex items-center`}
-            onClick={handleAddNewHint}
-          >
-            <PlusIcon className="mr-2 inline h-4 w-4" />
+          <Button size="sm" icon={PlusIcon} onClick={handleAddNewHint}>
             New
-          </button>
+          </Button>
         </div>
         <div className="max-h-[16rem] border-b theme-border overflow-auto">
           <table className="text-sm theme-table border-collapse w-full">
@@ -913,13 +899,9 @@ const PageContent = () => {
         <div className="theme-surface-raised mt-2 flex flex-col">
           <div className="border theme-border flex items-center justify-between theme-surface-raised px-3 py-2 border-b text-sm space-x-2">
             <span className="font-bold">Samples</span>
-            <button
-              className={`${secondaryButtonClass} px-2 py-1 flex items-center`}
-              onClick={handleAddNewSample}
-            >
-              <PlusIcon className="mr-2 inline h-4 w-4" />
+            <Button size="sm" icon={PlusIcon} onClick={handleAddNewSample}>
               New
-            </button>
+            </Button>
           </div>
           <div className="max-h-[16rem] border-b theme-border overflow-auto">
             <table className="text-sm theme-table border-collapse w-full">
