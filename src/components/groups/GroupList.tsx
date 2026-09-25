@@ -7,6 +7,7 @@ import {
 import type { GroupInfo, School } from '../../data/classroomMetadata';
 import type { ClassroomResourceStatus } from '../../hooks/useClassroomMetadata';
 import Tooltip from '../Tooltip';
+import { Button } from '../Button';
 
 export default function GroupList({
   school,
@@ -36,15 +37,15 @@ export default function GroupList({
             {groups.length} group{groups.length === 1 ? '' : 's'}
           </p>
         </div>
-        <button
+        <Button
           type="button"
-          className="ui-button-primary py-2"
+          variant="primary"
+          icon={PlusIcon}
           onClick={onNewGroup}
           disabled={!school || status !== 'ready'}
         >
-          <PlusIcon className="h-4 w-4" />
           New group
-        </button>
+        </Button>
       </header>
       {status === 'error' && (
         <p className="border-b border-danger px-4 py-3 text-sm text-danger">
@@ -83,13 +84,13 @@ export default function GroupList({
                 <ArrowRightIcon className="h-4 w-4" />
               </button>
               <Tooltip label="Delete group">
-                <button
+                <Button
                   type="button"
-                  className="ui-icon-button"
+                  variant="ghost"
+                  size="sm"
+                  icon={TrashIcon}
                   onClick={() => onDeleteGroup(group.id)}
-                >
-                  <TrashIcon className="h-4 w-4" />
-                </button>
+                />
               </Tooltip>
             </div>
           </article>
