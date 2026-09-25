@@ -3,6 +3,7 @@ import { Language, LANGUAGES } from '../../context/UserContext';
 import LazyCodeMirrorEditor from '../editor/CodemirrorEditor/LazyCodemirrorEditor';
 import defaultCode from '../../scripts/defaultCode';
 import Dropdown from '../Dropdown';
+import { Button } from '../Button';
 
 export default function TemplateCodeSettings({
   templateCode,
@@ -27,9 +28,10 @@ export default function TemplateCodeSettings({
             selected={language}
             setSelected={onLanguageChange}
           />
-          <button
+          <Button
             type="button"
-            className="ui-button flex-shrink-0 border-transparent bg-danger px-4 py-2 text-white hover:brightness-90"
+            variant="danger"
+            className="flex-shrink-0"
             onClick={() => {
               onTemplateCodeChange({
                 ...templateCode,
@@ -38,7 +40,7 @@ export default function TemplateCodeSettings({
             }}
           >
             Reset to default
-          </button>
+          </Button>
         </div>
       </div>
       {/* FIXME: This here is a huge hack:

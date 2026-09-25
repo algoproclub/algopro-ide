@@ -17,6 +17,7 @@ import { FileSettings, useEditorContext } from '../../context/EditorContext';
 import useUserPermission from '../../hooks/useUserPermission';
 import { updateUserSettings } from '../../scripts/updateSettings';
 import { DEFAULT_FONT_SIZE_EDITOR } from '../../constants/editorConstants';
+import { Button } from '../Button';
 
 export interface SettingsDialogProps {
   isOpen: boolean;
@@ -207,40 +208,32 @@ export const WorkspaceSettingsModal = ({
                   userPermission={userPermission || 'READ'}
                 />
                 <div className="border-t border-line pt-4">
-                  <button
-                    type="button"
-                    className="ui-button-secondary px-4 py-2 text-[0.92rem]"
-                    onClick={onResetLayout}
-                  >
+                  <Button type="button" onClick={onResetLayout}>
                     Reset workspace layout
-                  </button>
+                  </Button>
                 </div>
                 <div className="flex items-center justify-end space-x-2.5">
-                  <button
-                    type="button"
-                    className="ui-button-secondary px-4 py-2 text-[0.92rem]"
-                    onClick={closeWithoutSaving}
-                  >
+                  <Button type="button" onClick={closeWithoutSaving}>
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className="ui-button-primary px-4 py-2"
+                    variant="primary"
                     onClick={saveAndClose}
                   >
                     Save
-                  </button>
+                  </Button>
                 </div>
               </div>
               <div className="absolute top-0 right-0 pt-4 pr-4">
-                <button
+                <Button
                   type="button"
-                  className="ui-icon-button"
+                  variant="ghost"
+                  size="sm"
+                  icon={XMarkIcon}
+                  aria-label="Close"
                   onClick={closeWithoutSaving}
-                >
-                  <span className="sr-only">Close</span>
-                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                </button>
+                />
               </div>
             </div>
           </Transition.Child>

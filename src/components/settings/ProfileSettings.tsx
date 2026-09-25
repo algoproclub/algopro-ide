@@ -8,6 +8,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Dialog, Transition } from '@headlessui/react';
 import defaultCode from '../../scripts/defaultCode';
 import { DEFAULT_FONT_SIZE_EDITOR } from '../../constants/editorConstants';
+import { Button } from '../Button';
 
 const ProfileSettings = ({
   isOpen,
@@ -251,20 +252,16 @@ const ProfileSettings = ({
                       onLanguageChange={setTemplateLanguage}
                     />
                     <div className="flex justify-end space-x-3 mt-6">
-                      <button
-                        type="button"
-                        className="ui-button-secondary px-4 py-2"
-                        onClick={closeWithoutSaving}
-                      >
+                      <Button type="button" onClick={closeWithoutSaving}>
                         Cancel
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
-                        className="ui-button-primary px-4 py-2"
+                        variant="primary"
                         onClick={saveAndClose}
                       >
                         Save
-                      </button>
+                      </Button>
                     </div>
                   </div>
 
@@ -275,14 +272,14 @@ const ProfileSettings = ({
                 </div>
               </div>
               <div className="absolute top-0 right-0 pt-4 pr-4">
-                <button
+                <Button
                   type="button"
-                  className="ui-icon-button"
+                  variant="ghost"
+                  size="sm"
+                  icon={XMarkIcon}
+                  aria-label="Close"
                   onClick={closeWithoutSaving}
-                >
-                  <span className="sr-only">Close</span>
-                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                </button>
+                />
               </div>
             </div>
           </Transition.Child>
