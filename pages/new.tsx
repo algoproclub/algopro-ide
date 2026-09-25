@@ -10,6 +10,7 @@ import va from '@vercel/analytics';
 import { RadioGroupContents } from '../src/components/settings/RadioGroupContents';
 import WithRegistration from '../src/components/WithRegistration';
 import PageTitle from '../src/components/PageTitle';
+import { Button } from '../src/components/Button';
 
 export const DEFAULT_COMPILER_OPTIONS = {
   cpp: '-std=c++20 -O2 -Wall -Wextra -Wshadow -Wfloat-equal -Wduplicated-cond -Wlogical-op -Wno-sign-compare -Wno-vla-cxx-extension',
@@ -149,13 +150,13 @@ function PageContent() {
             </div>
           </div>
           <div className="flex justify-end gap-2.5 border-t border-line pt-5">
-            <button
+            <Button
               type="submit"
               disabled={isPageLoading || isSubmitting}
-              className="inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--app-bg)] focus:ring-[color:var(--accent)]"
+              variant="primary"
             >
               {isSubmitting ? 'Creating\u2026' : 'Create File'}
-            </button>
+            </Button>
             <Link
               href="/"
               className="inline-flex items-center px-4 py-2 border shadow-sm text-[0.92rem] font-medium rounded-md theme-button-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
