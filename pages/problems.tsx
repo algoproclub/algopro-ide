@@ -23,6 +23,7 @@ import {
 import { useAtomValue } from 'jotai';
 import { problemLibraryAtom } from '../src/atoms/problemLibrary';
 import ProblemLibraryRefreshButton from '../src/components/ProblemLibraryRefreshButton';
+import { Button } from '../src/components/Button';
 
 const cellBorderClass = 'border-x border-[color:var(--border-muted)]';
 const iconButtonClass =
@@ -41,13 +42,13 @@ const Tag = ({
     <div className="rounded-md border theme-border theme-surface px-2 py-1 m-1 whitespace-nowrap inline-block">
       {tag}
       {tagToggle && (
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={TrashIcon}
           aria-label={`Remove ${tag} filter`}
-          className={iconButtonClass}
           onClick={() => tagToggle(tag)}
-        >
-          <TrashIcon className="inline h-4 w-4" />
-        </button>
+        />
       )}
     </div>
   );
