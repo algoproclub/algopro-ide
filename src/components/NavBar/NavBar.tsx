@@ -21,6 +21,7 @@ import { EditorNavigationMenu } from './EditorNavigationMenu';
 import Logo from '../Logo';
 import Tooltip from '../Tooltip';
 import { WorkspaceTitleNavigation } from './WorkspaceTitleNavigation';
+import { Button } from '../Button';
 
 export interface DesktopNavBarProps {
   fileMenu: JSX.Element;
@@ -44,14 +45,15 @@ const SimpleButton = ({
   ...buttonProps
 }: SimpleButtonProps): JSX.Element => {
   return (
-    <button
+    <Button
+      variant="secondary"
+      size="sm"
+      icon={Icon}
       disabled={disabled}
-      className={`workspace-toolbar-button relative px-2 text-sm font-medium ${className ?? ''}`}
+      className={`relative ${className ?? ''}`}
       onClick={onClick}
       {...buttonProps}
-    >
-      <Icon className="h-4 w-4" />
-    </button>
+    />
   );
 };
 
@@ -116,6 +118,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
           <Tooltip label="Undo">
             <SimpleButton
               className="rounded-r-none shadow-none focus-visible:z-10"
+              aria-label="Undo"
               onClick={handleUndo}
               Icon={ArrowUturnLeftIcon}
               disabled={props.showViewOnly}
@@ -124,6 +127,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
           <Tooltip label="Redo">
             <SimpleButton
               className="-ml-px rounded-l-none shadow-none focus-visible:z-10"
+              aria-label="Redo"
               onClick={handleRedo}
               Icon={ArrowUturnRightIcon}
               disabled={props.showViewOnly}

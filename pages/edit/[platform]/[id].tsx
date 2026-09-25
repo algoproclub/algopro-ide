@@ -152,16 +152,14 @@ const HTMLEditor = ({
     >
       <div className="flex items-center justify-between w-full px-3 py-2.5 theme-surface-raised border-b theme-border">
         <div className="flex space-x-2 items-center">
-          <button
-            className="flex items-center justify-center px-2.5 py-2 rounded-md mr-0.5 hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)] border theme-border"
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={fullscreen ? ArrowsPointingInIcon : ArrowsPointingOutIcon}
+            aria-label={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            className="mr-0.5"
             onClick={() => setFullscreen(value => !value)}
-          >
-            {fullscreen ? (
-              <ArrowsPointingInIcon className="inline h-4 w-4" />
-            ) : (
-              <ArrowsPointingOutIcon className="inline h-4 w-4" />
-            )}
-          </button>
+          />
           <ModeButton
             text="Code"
             active={mode === 'code'}
