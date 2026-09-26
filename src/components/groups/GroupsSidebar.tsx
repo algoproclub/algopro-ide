@@ -14,7 +14,7 @@ const searchOptions = { threshold: 0.35, ignoreLocation: true };
 
 export default function GroupsSidebar({ children }: { children: ReactNode }) {
   return (
-    <aside className="h-fit rounded-lg border border-line bg-surface-raised text-content lg:sticky lg:top-4">
+    <aside className="h-fit rounded-lg border border-line bg-surface-raised text-content lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
       {children}
     </aside>
   );
