@@ -39,7 +39,6 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { randomUUID } from 'crypto';
 import {
   AtCoderSubmitter,
-  CFSubmitter,
   CSESSubmitter,
   NjudgeSubmitter,
   OjuzSubmitter,
@@ -66,7 +65,7 @@ export const submitproblemsolution = onCall<
   ProblemSolution,
   Promise<ClientSubmissionData>
 >(
-  { region: 'europe-west1', maxInstances: 1, concurrency: 1 },
+  { region: 'europe-west1', cpu: 1, concurrency: 10, maxInstances: 5 },
   async request => {
     const problemSolution = request.data;
     const userID = request.auth?.uid;
@@ -91,8 +90,16 @@ export const submitproblemsolution = onCall<
     let submitter: Submitter;
     switch (platform) {
       case 'codeforces':
-        submitter = new CFSubmitter();
-        break;
+        // Codeforces does not return the submission ID, so CFSubmitter looks
+        // for the UUID in the account's newest submission. With concurrent
+        // requests on the same account, a newer submission hides the older one
+        // and its lookup times out. Before re-enabling automatic submission,
+        // make CFSubmitter check the UUID in the account's recent submissions
+        // of the same problem instead of only the newest one.
+        throw new HttpsError(
+          'failed-precondition',
+          'Automatic submission is not supported for Codeforces.'
+        );
       case 'atcoder':
         submitter = new AtCoderSubmitter();
         break;
