@@ -3,9 +3,8 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions';
 import { initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
-import { getDatabase, ServerValue } from 'firebase-admin/database';
+import { getDatabase } from 'firebase-admin/database';
 import {
-  FileSubmission,
   Platform,
   ProblemData,
   ProblemSolution,
@@ -25,6 +24,7 @@ import {
 } from './getResult';
 import {
   AccountData,
+  PendingSubmission,
   PendingSubmissions,
   SubmissionData,
   TournamentResult,
@@ -35,6 +35,7 @@ import {
   onValueUpdated,
 } from 'firebase-functions/v2/database';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 
 import { randomUUID } from 'crypto';
 import {
@@ -61,6 +62,19 @@ export const loginBotUrl = defineString('LOGIN_BOT_URL');
 
 const PENDING_TIME_LIMIT_MS = 300000;
 const INCORRECT_DATA_RETRY_LIMIT_MS = 20000;
+const STATUS_UPDATE_TIMEOUT_SECONDS = 60;
+const STATUS_UPDATE_LEASE_MS = 90000;
+
+type StatusUpdateLease = {
+  owner: string;
+  expiresAt: number;
+};
+
+const isStatusUpdateLease = (value: unknown): value is StatusUpdateLease => {
+  if (!value || typeof value !== 'object') return false;
+  const lease = value as Partial<StatusUpdateLease>;
+  return typeof lease.owner === 'string' && typeof lease.expiresAt === 'number';
+};
 
 export const submitproblemsolution = onCall<
   ProblemSolution,
@@ -371,41 +385,34 @@ const getFileOwner = async (fileID: string): Promise<string | undefined> => {
 
 const updateStatusData = async (
   id: string,
+  submission: PendingSubmission,
   statusData: Partial<StatusData>
 ) => {
-  const updates: { [key: string]: Partial<StatusData> | null | boolean } = {};
+  const updates: { [key: string]: Partial<StatusData> | boolean | null } = {};
   updates[`submissions/${id}/statusData`] = statusData;
 
   if (['error', 'resolved'].includes(statusData.statusCode!)) {
-    updates[`submissions/pending/${id}`] = null;
-    const submissionTime = (
-      await db.ref(`submissions/${id}/submissionTime`).get()
-    ).val();
-    const ref = db.ref(`submissions/${id}/statusDataHistory`);
-    const snapshot = await ref.get();
-
-    if (!snapshot.exists()) {
-      await ref.set([{ ...statusData, submissionTime: submissionTime }]);
-    } else {
-      await ref.set([
-        ...snapshot.val(),
-        { ...statusData, submissionTime: submissionTime },
-      ]);
-    }
+    updates[`submissionQueue/pending/${id}`] = null;
+    const { submissionTime } = submission;
+    // The same final status can be reported more than once, e.g. by a status
+    // update round resuming after its lease was taken over, so record each
+    // submission only once.
+    await db
+      .ref(`submissions/${id}/statusDataHistory`)
+      .transaction((history: { submissionTime?: number }[] | null) => {
+        if (history?.at(-1)?.submissionTime === submissionTime) {
+          return undefined;
+        }
+        return [...(history ?? []), { ...statusData, submissionTime }];
+      });
   }
   if (statusData.message === 'correct answer') {
     updates[`files/${id}/solvedStatus/solved`] = true;
     try {
-      const [ownerID, problem] = await Promise.all([
-        getFileOwner(id),
-        db
-          .ref(`files/${id}/problem`)
-          .get()
-          .then(s => s.val() as { platform: string; id: string } | null),
-      ]);
-      if (ownerID && problem?.platform && problem?.id) {
+      const ownerID = await getFileOwner(id);
+      if (ownerID) {
         updates[
-          `users/${ownerID}/platform-${problem.platform}/solved/${problem.id}`
+          `users/${ownerID}/platform-${submission.platform}/solved/${submission.problemID}`
         ] = true;
       }
     } catch (e) {
@@ -414,9 +421,8 @@ const updateStatusData = async (
   }
   await db.ref().update(updates);
 
-  const tournamentID = (await db.ref(`files/${id}/tournamentID`).get()).val();
-  if (tournamentID) {
-    await updateTournamentResult(tournamentID, id, {
+  if (submission.tournamentID) {
+    await updateTournamentResult(submission.tournamentID, id, {
       statusCode: statusData.statusCode,
       message: statusData.message,
     });
@@ -426,12 +432,12 @@ const updateStatusData = async (
 const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
   try {
     const data = await fetcher.getResults();
-    await updateStatusData(fileID, data);
+    await updateStatusData(fileID, fetcher.submissionData, data);
   } catch (error) {
     let message = Errors.UNKNOWN_ERROR;
     if (error instanceof IncorrectDataError) {
       if (
-        fetcher.submissionData.creationTime >
+        fetcher.submissionData.submissionTime >
         Date.now() - INCORRECT_DATA_RETRY_LIMIT_MS
       ) {
         return;
@@ -439,7 +445,7 @@ const getAndUpdate = async (fetcher: ResultFetcher, fileID: string) => {
       message = Errors.NO_SUCH_SUBMISSION;
     }
     logger.log(error);
-    await updateStatusData(fileID, {
+    await updateStatusData(fileID, fetcher.submissionData, {
       statusCode: 'error',
       statusText: 'status-done',
       message: message,
@@ -479,7 +485,7 @@ const updateResultsCF = async (
     return;
   }
   const sorted = submissionDataList.sort(
-    (a, b) => a.creationTime - b.creationTime
+    (a, b) => a.submissionTime - b.submissionTime
   );
   const first = sorted[0];
   const contestId = getContestId(first.problemID);
@@ -500,7 +506,7 @@ const updateResultsCF = async (
     );
     submissionDataList.forEach(submissionData => {
       promises.push(
-        updateStatusData(submissionData.fileID, {
+        updateStatusData(submissionData.fileID, submissionData, {
           statusCode: 'error',
           statusText: 'status-done',
           message:
@@ -524,45 +530,23 @@ const updateResultsCF = async (
   await Promise.all(promises);
 };
 
-const updateResults = async (pending: PendingSubmissions | null) => {
-  const readSubmissionData = async (pending: PendingSubmissions) => {
-    const submissionData: SubmissionData[] = [];
-    for (const fileID of Object.keys(pending)) {
-      try {
-        const creationTime = pending[fileID].creationTime;
-        const fileData: { problem: ProblemData; submission: FileSubmission } = (
-          await db.ref(`files/${fileID}`).get()
-        ).val();
-        const platform = fileData.problem.platform;
-        const problemID = fileData.problem.id;
-        const submissionID = fileData.submission.id;
-        const username = fileData.submission.username ?? null;
-
-        submissionData.push({
-          fileID: fileID,
-          platform: platform,
-          username: username,
-          sessionCookie:
-            (await accountData[platform].sessionCookie?.()) ?? null,
-          problemID: problemID,
-          submissionID: submissionID,
-          creationTime: creationTime,
-        });
-      } catch (error) {
-        await updateStatusData(fileID, {
-          statusCode: 'error',
-          statusText: 'status-done',
-          message: Errors.NO_SUCH_SUBMISSION,
-        });
-        logger.log(error);
+const updateResults = async (pending: PendingSubmissions) => {
+  const sessionCookies: { [platform: string]: Promise<string | null> } = {};
+  const pendingData = await Promise.all(
+    Object.entries(pending).map(
+      async ([fileID, submission]): Promise<SubmissionData> => {
+        const { platform } = submission;
+        sessionCookies[platform] ??= Promise.resolve(
+          accountData[platform].sessionCookie?.() ?? null
+        );
+        return {
+          ...submission,
+          fileID,
+          sessionCookie: await sessionCookies[platform],
+        };
       }
-    }
-    return submissionData;
-  };
-  if (!pending) {
-    return;
-  }
-  const pendingData = await readSubmissionData(pending);
+    )
+  );
   const pendingByPlatform = pendingData.reduce(
     (accumulator: { [key: string]: SubmissionData[] }, data) => {
       const platform = data.platform;
@@ -623,32 +607,37 @@ const registerSubmission = async (
     testCases: null,
   };
   const submissionTime = Date.now();
-
-  await Promise.all([
-    db.ref(`files/${fileID}/submission`).set({ id: submissionID, username }),
-    db.ref(`submissions/${fileID}`).update({
-      statusData: defaultStatusData,
-      submissionTime,
-    }),
+  const [problem, tournamentID] = await Promise.all([
+    db
+      .ref(`files/${fileID}/problem`)
+      .get()
+      .then(snapshot => snapshot.val() as ProblemData),
+    db
+      .ref(`files/${fileID}/tournamentID`)
+      .get()
+      .then(snapshot => snapshot.val() as string | null),
   ]);
-
-  await db.ref('submissions/pending').update({
-    [fileID]: {
-      creationTime: ServerValue.TIMESTAMP,
-    },
+  const submission: PendingSubmission = {
+    submissionID,
+    platform: problem.platform,
+    problemID: problem.id,
+    submissionTime,
+    username,
+    tournamentID,
+  };
+  await db.ref().update({
+    [`submissions/${fileID}/statusData`]: defaultStatusData,
+    [`submissions/${fileID}/submissionTime`]: submissionTime,
+    [`submissionQueue/pending/${fileID}`]: submission,
   });
 
-  void (async () => {
-    const tournamentID = (
-      await db.ref(`files/${fileID}/tournamentID`).get()
-    ).val();
-    if (!tournamentID) return;
-    await updateTournamentResult(tournamentID, fileID, {
+  if (tournamentID) {
+    void updateTournamentResult(tournamentID, fileID, {
       message: defaultStatusData.message,
       statusCode: defaultStatusData.statusCode,
       submissionTime: submissionTime,
     });
-  })();
+  }
 };
 
 exports.registersubmission = onCall(
@@ -669,44 +658,50 @@ exports.registersubmission = onCall(
 );
 
 const updateStatus = async () => {
-  const pending = (await db.ref('submissions/pending').get()).val();
-  if (!pending) {
+  const hasPending = (
+    await db.ref('submissionQueue/pending').limitToFirst(1).get()
+  ).exists();
+  if (!hasPending) {
     return;
   }
-  let startNewUpdate = false;
-  await db.ref('submissions/lock').transaction((lock?: boolean) => {
-    startNewUpdate = !lock;
-    return true;
+  const lockRef = db.ref('submissionQueue/lock');
+  const owner = randomUUID();
+  const now = Date.now();
+  const lease: StatusUpdateLease = {
+    owner,
+    expiresAt: now + STATUS_UPDATE_LEASE_MS,
+  };
+  const lockTransaction = await lockRef.transaction((lock: unknown) => {
+    // Anything but an unexpired lease is stale.
+    if (isStatusUpdateLease(lock) && lock.expiresAt > now) return undefined;
+    return lease;
   });
-  if (!startNewUpdate) {
+  // Only our own lease is ever written, so committing means we hold it.
+  if (!lockTransaction.committed) {
     return;
   }
   try {
     await new Promise(r => setTimeout(r, 2000));
-    const pending: PendingSubmissions = (
-      await db.ref('submissions/pending').get()
-    ).val();
+    const pending = (
+      await db.ref('submissionQueue/pending').get()
+    ).val() as PendingSubmissions | null;
+    if (!pending) return;
     const cutoff = Date.now() - PENDING_TIME_LIMIT_MS;
 
     const filtered: PendingSubmissions = {};
     const promises: Promise<void>[] = [];
 
-    Object.entries(pending).forEach(entry => {
-      const fileID = entry[0];
-      const creationTime = entry[1].creationTime;
-
-      if (creationTime <= cutoff) {
+    Object.entries(pending).forEach(([fileID, submission]) => {
+      if (submission.submissionTime <= cutoff) {
         promises.push(
-          updateStatusData(fileID, {
+          updateStatusData(fileID, submission, {
             statusCode: 'error',
             statusText: 'status-done',
             message: Errors.PENDING_TIMEOUT,
           })
         );
       } else {
-        filtered[fileID] = {
-          creationTime,
-        };
+        filtered[fileID] = submission;
       }
     });
     await Promise.all(promises);
@@ -714,21 +709,46 @@ const updateStatus = async () => {
   } catch (error) {
     logger.log(error);
   } finally {
-    await db.ref('submissions/lock').set(null);
+    await lockRef.transaction((lock: unknown) => {
+      if (lock === null) return null;
+      if (isStatusUpdateLease(lock) && lock.owner === owner) return null;
+      return undefined;
+    });
   }
 };
 
 const region = process.env.FUNCTIONS_EMULATOR ? 'us-central1' : 'europe-west1';
 
 exports.onlockdeleted = onValueDeleted(
-  { ref: 'submissions/lock', region },
+  {
+    ref: 'submissionQueue/lock',
+    region,
+    timeoutSeconds: STATUS_UPDATE_TIMEOUT_SECONDS,
+  },
   updateStatus
 );
 exports.onpendingcreated = onValueCreated(
-  { ref: 'submissions/pending', region },
+  {
+    ref: 'submissionQueue/pending/{fileID}',
+    region,
+    timeoutSeconds: STATUS_UPDATE_TIMEOUT_SECONDS,
+  },
   updateStatus
 );
 exports.onpendingupdated = onValueUpdated(
-  { ref: 'submissions/pending', region },
+  {
+    ref: 'submissionQueue/pending/{fileID}',
+    region,
+    timeoutSeconds: STATUS_UPDATE_TIMEOUT_SECONDS,
+  },
+  updateStatus
+);
+// Restarts status updates if a run died while holding the lease.
+exports.statusupdatewakeup = onSchedule(
+  {
+    schedule: 'every 5 minutes',
+    region,
+    timeoutSeconds: STATUS_UPDATE_TIMEOUT_SECONDS,
+  },
   updateStatus
 );
