@@ -18,7 +18,8 @@ import {
   getCFRequestURL,
   NJudgeResultFetcher,
   OjuzResultFetcher,
-  PlanetsResultFetcher,
+  PlanetsSubmission,
+  planetsSubmissionToStatusData,
   ResultFetcher,
   SPOJResultFetcher,
 } from './getResult';
@@ -34,7 +35,10 @@ import {
   onValueDeleted,
   onValueUpdated,
 } from 'firebase-functions/v2/database';
-import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import {
+  onDocumentUpdated,
+  onDocumentWritten,
+} from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 
 import { randomUUID } from 'crypto';
@@ -44,7 +48,6 @@ import {
   CSESSubmitter,
   NjudgeSubmitter,
   OjuzSubmitter,
-  PlanetsSubmitter,
   SPOJSubmitter,
   Submitter,
 } from './submit';
@@ -117,10 +120,7 @@ export const submitproblemsolution = onCall<
         submitter = new SPOJSubmitter();
         break;
       case 'planets':
-        submitter = new PlanetsSubmitter(
-          request.rawRequest.headers.authorization ?? ''
-        );
-        break;
+        return submitToPlanets(problemSolution, uuid, userID!);
       case 'ojuz':
         submitter = new OjuzSubmitter();
         break;
@@ -141,6 +141,44 @@ export const submitproblemsolution = onCall<
       submissionData.username
     );
     return submissionData;
+  }
+);
+
+export const onplanetsubmissionupdated = onDocumentUpdated(
+  {
+    document: 'submissions/{submissionID}',
+    database: 'planets',
+    region: 'europe-west1',
+    retry: false,
+  },
+  async event => {
+    const change = event.data;
+    if (!change) return;
+
+    const after = change.after.data() as PlanetsSubmission;
+    if (!after.ide) return;
+    if (after.verdict === 'Starting evaluation') return;
+
+    const submissionTime = after.timestamp.toMillis();
+    const currentSubmissionTime = (
+      await db.ref(`submissions/${after.ide.file_id}/submissionTime`).get()
+    ).val();
+    // A newer submission has been made for this file.
+    if (currentSubmissionTime !== submissionTime) return;
+
+    await updateStatusData(
+      after.ide.file_id,
+      {
+        submissionID: event.params.submissionID,
+        platform: 'planets',
+        problemID: after.problem_id,
+        submissionTime,
+        tournamentID: after.ide.tournament_id,
+      },
+      planetsSubmissionToStatusData(after),
+      // Updates can arrive out of order.
+      { keepFinalStatus: true }
+    );
   }
 );
 
@@ -302,6 +340,43 @@ const app = initializeApp(
 );
 const db = getDatabase(app);
 const firestore = getFirestore(app);
+const planetsFirestore = getFirestore(app, 'planets');
+
+const submitToPlanets = async (
+  { fileID, problemID, sourceCode, language }: ProblemSolution,
+  submissionID: string,
+  userID: string
+): Promise<ClientSubmissionData> => {
+  const submission = await registerSubmission(fileID, submissionID, null, {
+    poll: false,
+  });
+  try {
+    const problem = await planetsFirestore.doc(`problems/${problemID}`).get();
+    if (!problem.exists) {
+      throw new Error(`no such Planets problem: ${problemID}`);
+    }
+    await planetsFirestore.doc(`submissions/${submissionID}`).create({
+      user_id: userID,
+      problem_id: problemID,
+      topic_id: problem.data()!.topicID,
+      timestamp: new Date(submission.submissionTime),
+      language: { cpp: 'cpp17', java: 'java', py: 'python3' }[language],
+      solution: sourceCode,
+      verdict: 'Starting evaluation',
+      state: 'queued',
+      ide: { file_id: fileID, tournament_id: submission.tournamentID ?? null },
+    });
+  } catch (error) {
+    logger.error('Failed to create Planets submission', error);
+    await updateStatusData(fileID, submission, {
+      statusCode: 'error',
+      statusText: 'status-done',
+      message: Errors.UNKNOWN_ERROR,
+    });
+    throw new HttpsError('internal', 'Failed to create the submission.');
+  }
+  return { id: submissionID, username: null, platform: 'planets' };
+};
 
 export const updateProblemLibraryRevision = onDocumentWritten(
   {
@@ -383,43 +458,67 @@ const getFileOwner = async (fileID: string): Promise<string | undefined> => {
   )?.[0];
 };
 
+const isFinalStatus = (statusData: Partial<StatusData>) =>
+  statusData.statusCode === 'error' || statusData.statusCode === 'resolved';
+
+type StatusHistoryEntry = Partial<StatusData> & { submissionTime: number };
+
+// The same submission can be reported final more than once, e.g. by a status
+// update round resuming after its lease was taken over, or by a result arriving
+// after a timeout, so keep only its latest final status.
+const withFinalStatus = (
+  history: StatusHistoryEntry[] | null,
+  entry: StatusHistoryEntry
+) =>
+  history?.at(-1)?.submissionTime === entry.submissionTime
+    ? [...history.slice(0, -1), entry]
+    : [...(history ?? []), entry];
+
 const updateStatusData = async (
   id: string,
   submission: PendingSubmission,
-  statusData: Partial<StatusData>
+  statusData: Partial<StatusData>,
+  { keepFinalStatus = false } = {}
 ) => {
-  const updates: { [key: string]: Partial<StatusData> | boolean | null } = {};
-  updates[`submissions/${id}/statusData`] = statusData;
-
-  if (['error', 'resolved'].includes(statusData.statusCode!)) {
-    updates[`submissionQueue/pending/${id}`] = null;
-    const { submissionTime } = submission;
-    // The same final status can be reported more than once, e.g. by a status
-    // update round resuming after its lease was taken over, so record each
-    // submission only once.
+  if (isFinalStatus(statusData)) {
     await db
       .ref(`submissions/${id}/statusDataHistory`)
-      .transaction((history: { submissionTime?: number }[] | null) => {
-        if (history?.at(-1)?.submissionTime === submissionTime) {
-          return undefined;
+      .transaction((history: StatusHistoryEntry[] | null) =>
+        withFinalStatus(history, {
+          ...statusData,
+          submissionTime: submission.submissionTime,
+        })
+      );
+
+    const updates: { [key: string]: Partial<StatusData> | boolean | null } = {
+      [`submissions/${id}/statusData`]: statusData,
+      [`submissionQueue/pending/${id}`]: null,
+      [`submissionQueue/unpolled/${id}/${submission.submissionID}`]: null,
+    };
+    if (statusData.message === 'correct answer') {
+      updates[`files/${id}/solvedStatus/solved`] = true;
+      try {
+        const ownerID = await getFileOwner(id);
+        if (ownerID) {
+          updates[
+            `users/${ownerID}/platform-${submission.platform}/solved/${submission.problemID}`
+          ] = true;
         }
-        return [...(history ?? []), { ...statusData, submissionTime }];
-      });
-  }
-  if (statusData.message === 'correct answer') {
-    updates[`files/${id}/solvedStatus/solved`] = true;
-    try {
-      const ownerID = await getFileOwner(id);
-      if (ownerID) {
-        updates[
-          `users/${ownerID}/platform-${submission.platform}/solved/${submission.problemID}`
-        ] = true;
+      } catch (e) {
+        console.error('Failed to denormalize solved status for file', id, e);
       }
-    } catch (e) {
-      console.error('Failed to denormalize solved status for file', id, e);
     }
+    await db.ref().update(updates);
+  } else if (keepFinalStatus) {
+    const { committed } = await db
+      .ref(`submissions/${id}/statusData`)
+      .transaction((current: Partial<StatusData> | null) =>
+        current && isFinalStatus(current) ? undefined : statusData
+      );
+    if (!committed) return;
+  } else {
+    await db.ref(`submissions/${id}/statusData`).set(statusData);
   }
-  await db.ref().update(updates);
 
   if (submission.tournamentID) {
     await updateTournamentResult(submission.tournamentID, id, {
@@ -461,8 +560,6 @@ const updateResultNonCF = async (submissionData: SubmissionData) => {
     fetcher = new AtCoderResultFetcher(submissionData);
   } else if (submissionData.platform === 'spoj') {
     fetcher = new SPOJResultFetcher(submissionData);
-  } else if (submissionData.platform === 'planets') {
-    fetcher = new PlanetsResultFetcher(submissionData);
   } else if (submissionData.platform === 'ojuz') {
     fetcher = new OjuzResultFetcher(submissionData);
   } else if (submissionData.platform === 'njudge') {
@@ -559,14 +656,7 @@ const updateResults = async (pending: PendingSubmissions) => {
     {}
   );
   const promises: Promise<void>[] = [];
-  for (const platform of [
-    'cses',
-    'atcoder',
-    'spoj',
-    'planets',
-    'ojuz',
-    'njudge',
-  ]) {
+  for (const platform of ['cses', 'atcoder', 'spoj', 'ojuz', 'njudge']) {
     pendingByPlatform[platform]?.forEach(obj => {
       promises.push(updateResultNonCF(obj));
     });
@@ -594,7 +684,8 @@ const canRegisterSubmissionForFile = async (
 const registerSubmission = async (
   fileID: string,
   submissionID: string,
-  username: string | null
+  username: string | null,
+  { poll = true } = {}
 ) => {
   const defaultStatusData: StatusData = {
     statusCode: 'starting',
@@ -628,7 +719,11 @@ const registerSubmission = async (
   await db.ref().update({
     [`submissions/${fileID}/statusData`]: defaultStatusData,
     [`submissions/${fileID}/submissionTime`]: submissionTime,
-    [`submissionQueue/pending/${fileID}`]: submission,
+    [`submissionQueue/pending/${fileID}`]: poll ? submission : null,
+    // Not polled, but timed out by `expireUnpolledSubmissions`.
+    [`submissionQueue/unpolled/${fileID}`]: poll
+      ? null
+      : { [submissionID]: submission },
   });
 
   if (tournamentID) {
@@ -638,6 +733,7 @@ const registerSubmission = async (
       submissionTime: submissionTime,
     });
   }
+  return submission;
 };
 
 exports.registersubmission = onCall(
@@ -656,6 +752,67 @@ exports.registersubmission = onCall(
     return { success: true };
   }
 );
+
+const expireUnpolledSubmission = async (
+  fileID: string,
+  submission: PendingSubmission
+) => {
+  const statusData: Partial<StatusData> = {
+    statusCode: 'error',
+    statusText: 'status-done',
+    message: Errors.PENDING_TIMEOUT,
+  };
+  const { committed, snapshot } = await db
+    .ref(`submissions/${fileID}`)
+    .transaction(
+      (
+        current: {
+          submissionTime?: number;
+          statusData?: Partial<StatusData>;
+          statusDataHistory?: StatusHistoryEntry[];
+        } | null
+      ) => {
+        if (current === null) return null;
+        if (
+          current.submissionTime !== submission.submissionTime ||
+          (current.statusData && isFinalStatus(current.statusData))
+        ) {
+          return undefined;
+        }
+        return {
+          ...current,
+          statusData,
+          statusDataHistory: withFinalStatus(
+            current.statusDataHistory ?? null,
+            { ...statusData, submissionTime: submission.submissionTime }
+          ),
+        };
+      }
+    );
+  await db
+    .ref(`submissionQueue/unpolled/${fileID}/${submission.submissionID}`)
+    .remove();
+  if (committed && snapshot.exists() && submission.tournamentID) {
+    await updateTournamentResult(submission.tournamentID, fileID, {
+      statusCode: statusData.statusCode,
+      message: statusData.message,
+    });
+  }
+};
+
+const expireUnpolledSubmissions = async () => {
+  const unpolled = (await db.ref('submissionQueue/unpolled').get()).val() as {
+    [fileID: string]: { [submissionID: string]: PendingSubmission };
+  } | null;
+  const cutoff = Date.now() - PENDING_TIME_LIMIT_MS;
+  await Promise.all(
+    Object.entries(unpolled ?? {}).flatMap(([fileID, submissions]) =>
+      Object.values(submissions)
+        .filter(submission => submission.submissionTime <= cutoff)
+        .map(submission => expireUnpolledSubmission(fileID, submission))
+    )
+  );
+};
 
 const updateStatus = async () => {
   const hasPending = (
@@ -743,12 +900,15 @@ exports.onpendingupdated = onValueUpdated(
   },
   updateStatus
 );
-// Restarts status updates if a run died while holding the lease.
+// Restarts status updates if a run died while holding the lease, and times out
+// submissions whose results should have been pushed by now.
 exports.statusupdatewakeup = onSchedule(
   {
     schedule: 'every 5 minutes',
     region,
     timeoutSeconds: STATUS_UPDATE_TIMEOUT_SECONDS,
   },
-  updateStatus
+  async () => {
+    await Promise.all([updateStatus(), expireUnpolledSubmissions()]);
+  }
 );
