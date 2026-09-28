@@ -334,7 +334,10 @@ const accountData: { [key in Platform]: AccountData } = {
     sessionCookie: async () =>
       (await db.ref('credentials/spoj/0/cookie').get()).val(),
   },
-  ojuz: {},
+  ojuz: {
+    sessionCookie: async () =>
+      (await db.ref('credentials/ojuz/0/cookie').get()).val(),
+  },
   njudge: {},
 };
 

@@ -565,9 +565,15 @@ export class OjuzSubmitter extends Submitter {
       }
     );
 
-    const id = (await response.json()).submissionId;
+    const text = await response.text();
+    let id;
+    try {
+      id = JSON.parse(text).submissionId;
+    } catch {}
     if (!id) {
-      throw new Error('submission failed, id not found');
+      throw new Error(
+        `submission failed, id not found (${response.status} ${response.url}): ${text.slice(0, 500)}`
+      );
     }
 
     return {
