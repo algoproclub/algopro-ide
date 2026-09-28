@@ -16,7 +16,7 @@ import React, {
   useState,
 } from 'react';
 import { ChatMessage } from '../components/Chat';
-import { FileSubmission, PlatformProblem, ProblemData } from '../types/problem';
+import { PlatformProblem, ProblemData } from '../types/problem';
 import type { CodeRun } from '../scripts/codeRun';
 import type JudgeResult from '../types/judge';
 
@@ -44,7 +44,6 @@ export type FileData = {
   tournamentID: string;
   settings: FileSettings;
   codeRun?: CodeRun | null;
-  submission: FileSubmission;
   state: {
     input_judge_result?: JudgeResult | null;
     sample_judge_results?: Array<JudgeResult | null>;

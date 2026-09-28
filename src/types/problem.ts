@@ -166,11 +166,6 @@ export interface Sample {
   output: string;
 }
 
-export type FileSubmission = {
-  id: string;
-  username: string | null;
-};
-
 export type StatusCode = 'starting' | 'working' | 'error' | 'resolved';
 
 export interface StatusData {
