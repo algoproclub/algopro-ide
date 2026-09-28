@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { usePopper } from 'react-popper';
 import { CodeEditor } from '../../../src/components/editor/CodeEditor';
 import { useRouter } from 'next/router';
 import {
@@ -22,9 +24,9 @@ import {
   Platform,
   ProblemData,
   ProblemTag,
-  problemTags,
   Sample,
 } from '../../../src/types/problem';
+import { searchProblemTags } from '../../../src/scripts/searchProblemTags';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import {
@@ -490,6 +492,10 @@ const PageContent = () => {
   const [tags, setTags] = useState<ProblemTag[]>([]);
   const [samples, setSamples] = useState<Sample[]>([]);
   const [addedTag, setAddedTag] = useState<string>('');
+  const [tagInput, setTagInput] = useState<HTMLInputElement | null>(null);
+  const [tagSuggestions, setTagSuggestions] = useState<HTMLElement | null>(
+    null
+  );
   const [onSaveHint, setOnSaveHint] = useState<() => (h: Hint) => void>(
     () => _ => {}
   );
@@ -751,24 +757,25 @@ const PageContent = () => {
   ) => {
     if (event.key === 'Enter') {
       if (addedTag.trim() !== '' && filteredOptions.length > 0) {
-        if (tags.includes(filteredOptions[0].trim())) {
-          alert(`Problem already has "${filteredOptions[0].trim()}" tag.`);
-        } else {
-          setTags([...tags, filteredOptions[0].trim()]);
-          setAddedTag('');
-          setUnsaved(true);
-        }
+        setTags([...tags, filteredOptions[0]]);
+        setAddedTag('');
+        setUnsaved(true);
       } else {
         alert(`Invalid problem tag "${addedTag}".`);
       }
     }
   };
 
-  const filteredOptions = problemTags.filter(
-    option =>
-      option.toLowerCase().includes(addedTag.toLowerCase()) &&
-      !tags.includes(option.toLowerCase())
-  );
+  const filteredOptions = searchProblemTags(addedTag, { exclude: tags });
+
+  // The tag row is the last thing on the page and sits in a scrolling box,
+  // so an in-flow suggestion list would either be clipped or stretch the page
+  // down. Anchoring it to the input lets Popper flip it above when there is no
+  // room below.
+  const tagSuggestionPopper = usePopper(tagInput, tagSuggestions, {
+    placement: 'bottom-start',
+    modifiers: [{ name: 'offset', options: { offset: [0, 4] } }],
+  });
 
   return (
     <div className="p-3 theme-page max-w-[1440px] mx-auto">
@@ -1076,32 +1083,36 @@ const PageContent = () => {
                     type="text"
                     placeholder="New tag"
                     className="font-mono theme-input border h-8 resize-none p-2 rounded text-sm"
+                    ref={setTagInput}
                     value={addedTag}
                     onChange={e => setAddedTag(e.target.value)}
                     onKeyDown={handleKeyDownTagInput}
                   />
-                  {addedTag.trim() && (
-                    <ul className="border theme-border rounded-md theme-surface absolute m-0.5">
-                      {filteredOptions.length > 0 &&
-                        filteredOptions.map((option, index) => (
+                  {addedTag.trim() &&
+                    filteredOptions.length > 0 &&
+                    createPortal(
+                      <ul
+                        className="border theme-border rounded-md theme-surface z-50 max-h-64 overflow-y-auto"
+                        ref={setTagSuggestions}
+                        style={tagSuggestionPopper.styles.popper}
+                        {...tagSuggestionPopper.attributes.popper}
+                      >
+                        {filteredOptions.map(option => (
                           <li
                             className="px-3 py-2 hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]"
-                            key={index}
+                            key={option}
                             onClick={() => {
-                              if (tags.includes(option.trim())) {
-                                alert(`Problem already has "${option}" tag.`);
-                              } else {
-                                setTags([...tags, option.trim()]);
-                                setUnsaved(true);
-                                setAddedTag('');
-                              }
+                              setTags([...tags, option]);
+                              setUnsaved(true);
+                              setAddedTag('');
                             }}
                           >
                             {option}
                           </li>
                         ))}
-                    </ul>
-                  )}
+                      </ul>,
+                      document.body
+                    )}
                 </td>
               </tr>
             </tbody>
