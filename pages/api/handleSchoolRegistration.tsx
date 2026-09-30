@@ -1,16 +1,16 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getFirestore } from 'firebase-admin/firestore';
-import firebaseApp from '../../src/firebaseAdmin';
 import { compactDecrypt } from 'jose';
-import { registerToSchool } from './registerToSchool';
+import {
+  addUserToSchool,
+  ensureUserdata,
+  markUserRegistered,
+} from './registrationUtils';
 
 type RequestData = {
   token: string;
   userID: string;
   name: string | null;
 };
-
-const firestore = getFirestore(firebaseApp);
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const data: RequestData = req.body;
@@ -38,17 +38,13 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
       res.status(400).send('Token expired');
       return;
     }
-    await registerToSchool(userID, schoolID);
-    const userDocRef = firestore.doc(`userdata/${userID}`);
-    if (name) {
-      await firestore.runTransaction(async tx => {
-        const snap = await tx.get(userDocRef);
-        const current = snap.exists ? snap.get('user_full_name') : null;
-        if (!current) {
-          tx.set(userDocRef, { user_full_name: name }, { merge: true });
-        }
-      });
-    }
+
+    ensureUserdata(userID, name);
+
+    addUserToSchool(userID, schoolID);
+
+    markUserRegistered(userID);
+
     res.status(200).end();
   } catch (e) {
     console.error('Registration error:', e);
