@@ -141,6 +141,7 @@ function NewFileForm({
                 type="text"
                 name="compilerOptions"
                 id="compilerOptions"
+                readOnly
                 value={compilerOptions}
                 onChange={e => setCompilerOptions(e.target.value)}
                 className="theme-input w-full rounded-md border px-3 py-2 font-mono text-sm"
