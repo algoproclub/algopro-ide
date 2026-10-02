@@ -84,7 +84,7 @@ services:
       - YJS_SECURITY_KEY=example-yjs-security-key
       - LOGIN_BOT_URL=http://login-bot:3100
       - NEXT_PUBLIC_LSP_URL=${NEXT_PUBLIC_LSP_URL}
-      - BOT_AUTH_SIGNATURE_AGENT=sig1="https://ide.algopro.hu";type=directory
+      - BOT_AUTH_SIGNATURE_AGENT="https://ide.algopro.hu"
       - BOT_AUTH_USER_AGENT=AlgoProBot
     ports:
       - '3000:3000'
