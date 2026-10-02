@@ -434,7 +434,6 @@ const ClassEditor = ({
                 task => !existingUrls.has(task.url)
               );
 
-              // Már a listában lévők + többször beillesztettek, URL szerint egyszer.
               const duplicates = new Map<string, URLProblem>();
               for (const task of [
                 ...tasks.filter(task => existingUrls.has(task.url)),
