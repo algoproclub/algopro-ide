@@ -81,16 +81,21 @@ async function rotateAndGetFreshKeyPair(): Promise<BotSignKeyPair> {
     .orderByChild('exp')
     .get();
 
+  const removePromises: Promise<void>[] = [];
   keys.forEach(child => {
     const keyPair = child.val() as BotSignKeyPair;
-    if (!earliestValidKeyPair && keyPair.exp > now + 7 * 24 * 60 * 60 * 1000) {
+    if (!earliestValidKeyPair && keyPair.exp > now) {
       earliestValidKeyPair ??= keyPair;
     } else if (keyPair.exp < now - 60 * 1000) {
-      child.ref.remove();
+      removePromises.push(child.ref.remove());
     }
   });
+  await Promise.allSettled(removePromises);
 
   earliestValidKeyPair ??= await rotateKey();
+  if (earliestValidKeyPair.exp > now + 7 * 24 * 60 * 60 * 1000) {
+    await rotateKey();
+  }
   return earliestValidKeyPair;
 }
 
@@ -195,7 +200,8 @@ export async function signedFetch(
 
   const originalRequest = new Request(input, init);
   const headers = originalRequest.headers;
-  headers.set('User-Agent', signingConfig.userAgent); // CF does not like signed requests with fake UAs
+  // CF does not like signed requests with fake UAs
+  headers.set('User-Agent', signingConfig.userAgent);
   headers.append('Signature-Agent', signingConfig.signatureAgent);
   const unsignedRequest = new Request(originalRequest, { headers });
   const fields = await sign(unsignedRequest, {
@@ -206,6 +212,6 @@ export async function signedFetch(
   });
   headers.append('Signature', fields.signature);
   headers.append('Signature-Input', fields.signatureInput);
-  const signedRequest = new Request(originalRequest, { headers });
+  const signedRequest = new Request(unsignedRequest, { headers });
   return fetch(signedRequest);
 }
