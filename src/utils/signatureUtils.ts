@@ -82,20 +82,25 @@ async function rotateAndGetFreshKeyPair(): Promise<BotSignKeyPair> {
     .get();
 
   const removePromises: Promise<void>[] = [];
+  let noNewKeyAvailable = true;
   keys.forEach(child => {
     const keyPair = child.val() as BotSignKeyPair;
     if (!earliestValidKeyPair && keyPair.exp > now) {
       earliestValidKeyPair ??= keyPair;
+    }
+    if (keyPair.exp > now + 7 * 24 * 60 * 60 * 1000) {
+      noNewKeyAvailable = false;
     } else if (keyPair.exp < now - 60 * 1000) {
       removePromises.push(child.ref.remove());
     }
   });
   await Promise.allSettled(removePromises);
 
-  earliestValidKeyPair ??= await rotateKey();
-  if (earliestValidKeyPair.exp > now + 7 * 24 * 60 * 60 * 1000) {
+  if (noNewKeyAvailable && earliestValidKeyPair) {
     await rotateKey();
   }
+  earliestValidKeyPair ??= await rotateKey();
+
   return earliestValidKeyPair;
 }
 
