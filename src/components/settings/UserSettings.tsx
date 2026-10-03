@@ -1,3 +1,4 @@
+import { isClangdWasmSupported } from '@algoproclub/clangd-wasm/support';
 import React, { useState } from 'react';
 import { EditorMode, Language, LANGUAGES } from '../../context/UserContext';
 import { RadioGroupContents } from './RadioGroupContents';
@@ -309,6 +310,12 @@ export default function UserSettings({
                         { label: 'This device', value: 'local' },
                       ]}
                     />
+                    {language === 'cpp' && !isClangdWasmSupported() && (
+                      <p className="mt-1 text-sm text-content-secondary">
+                        This browser can&apos;t run C++ language services
+                        locally.
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

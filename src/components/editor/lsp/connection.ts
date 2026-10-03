@@ -1,3 +1,4 @@
+import { isClangdWasmSupported } from '@algoproclub/clangd-wasm/support';
 import type { MessageReader, MessageWriter } from 'vscode-jsonrpc';
 import { openRemoteConnection } from './remote';
 import {
@@ -31,6 +32,15 @@ export async function openLspConnection(options: {
     const { openPythonConnection } = await import('./python');
     options.signal.throwIfAborted();
     return openPythonConnection(options.documentUri);
+  }
+
+  if (mode === 'local' && options.language === 'cpp') {
+    if (!isClangdWasmSupported()) {
+      throw new Error('Local C++ language services are not supported here');
+    }
+    const { openClangdConnection } = await import('./clangd');
+    options.signal.throwIfAborted();
+    return openClangdConnection(options);
   }
 
   return openRemoteConnection(options);

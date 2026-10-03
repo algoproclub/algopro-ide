@@ -16,6 +16,7 @@
     "node": ">=22"
   },
   "dependencies": {
+    "@algoproclub/clangd-wasm": "0.1.1",
     "@codemirror/autocomplete": "^6",
     "@codemirror/commands": "^6",
     "@codemirror/lang-cpp": "^6.0.3",

@@ -156,6 +156,13 @@
     "@algolia/logger-common" "4.23.2"
     "@algolia/requester-common" "4.23.2"
 
+"@algoproclub/clangd-wasm@0.1.1":
+  version "0.1.1"
+  resolved "https://registry.npmjs.org/@algoproclub/clangd-wasm/-/clangd-wasm-0.1.1.tgz#0ae54570dbc4df3e339b302f5344e58354256ef4"
+  integrity sha512-i6CmLYqZ3Hwzi4jzpjKotkKHgFD0gO0fsH0xmy/YyFPaeJk9tQPSMKoDNzu8hfz1KolBvcYatNJ5Axiheo3/Kw==
+  dependencies:
+    vscode-jsonrpc "8.2.0"
+
 "@alloc/quick-lru@^5.2.0":
   version "5.2.0"
   resolved "https://registry.npmjs.org/@alloc/quick-lru/-/quick-lru-5.2.0.tgz"
