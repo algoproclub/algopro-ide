@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import {
   LanguageClientWrapper,
+  LcWebSocket,
   type LanguageClientConfig,
 } from 'monaco-languageclient/lcwrapper';
 import { notifyLsp } from '../lspNotifications';
@@ -33,8 +34,11 @@ function createLanguageClientConfig(
     },
     connection: {
       options: {
-        $type: 'WebSocketUrl',
-        url: url.toString(),
+        $family: 'WebSocket',
+        webSocketUrl: url.toString(),
+        realization: () => new LcWebSocket(),
+        // LcWebSocket keeps its socket open on dispose unless asked not to.
+        disposeResources: true,
       },
     },
   };
