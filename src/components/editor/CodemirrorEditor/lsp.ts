@@ -1,229 +1,111 @@
 import {
   LSPClient,
-  Transport,
+  type Transport,
   languageServerExtensions,
 } from '@codemirror/lsp-client';
+import type { Disposable } from 'vscode-jsonrpc';
 import { useEffect, useState } from 'react';
-import { EditorProps } from '../editor-types';
-import { notifyLsp, notifyLspClosed } from '../lspNotifications';
+import type { EditorProps } from '../editor-types';
+import { openLspConnection, type LspConnection } from '../lsp/connection';
+import { isLspLanguage } from '../lsp/preferences';
+import { notifyLsp } from '../lspNotifications';
 
-const LSP_CONNECT_TIMEOUT_MS = 10000;
-
-function createLspUrl(
-  language: 'cpp' | 'python',
-  compilerOptions: string | null
-) {
-  const url = new URL(
-    `${process.env.NEXT_PUBLIC_LSP_URL}/${
-      language === 'cpp' ? 'clangd' : 'pyright'
-    }`
-  );
-
-  if (language === 'cpp' && compilerOptions) {
-    url.searchParams.set('compiler_options', compilerOptions);
-  }
-
-  return url.toString();
-}
-
-function simpleWebSocketTransport(
-  uri: string,
-  onSocketCreated: (socket: WebSocket) => void,
-  timeoutMs = LSP_CONNECT_TIMEOUT_MS
-): Promise<Transport> {
-  let handlers: ((value: string) => void)[] = [];
-  let settled = false;
-  const socket = new WebSocket(uri);
-
-  onSocketCreated(socket);
-
-  socket.onmessage = event => {
-    const value =
-      typeof event.data === 'string' ? event.data : event.data.toString();
-
-    for (const handler of handlers) {
-      handler(value);
-    }
-  };
-
-  return new Promise((resolve, reject) => {
-    const cleanup = () => {
-      window.clearTimeout(timeoutId);
-      socket.onopen = null;
-      socket.onerror = null;
-      socket.onclose = null;
-    };
-
-    const settle = (callback: () => void) => {
-      if (settled) {
-        return;
+function clientTransport(
+  connection: LspConnection,
+  failed: (error: unknown) => void
+): Transport {
+  const handlers = new Set<(value: string) => void>();
+  let listener: Disposable | undefined;
+  return {
+    send(message) {
+      void connection.writer.write(JSON.parse(message)).catch(failed);
+    },
+    subscribe(handler) {
+      handlers.add(handler);
+      listener ??= connection.reader.listen(message => {
+        const value = JSON.stringify(message);
+        for (const receive of handlers) receive(value);
+      });
+    },
+    unsubscribe(handler) {
+      handlers.delete(handler);
+      if (!handlers.size) {
+        listener?.dispose();
+        listener = undefined;
       }
-
-      settled = true;
-      cleanup();
-      callback();
-    };
-
-    const timeoutId = window.setTimeout(() => {
-      settle(() => {
-        if (
-          socket.readyState === WebSocket.OPEN ||
-          socket.readyState === WebSocket.CONNECTING
-        ) {
-          socket.close();
-        }
-
-        reject(new Error('LSP connection timed out'));
-      });
-    }, timeoutMs);
-
-    socket.onopen = () => {
-      settle(() => {
-        resolve({
-          send(message: string) {
-            if (socket.readyState !== WebSocket.OPEN) {
-              throw new Error('LSP transport is not connected');
-            }
-
-            socket.send(message);
-          },
-          subscribe(handler: (value: string) => void) {
-            handlers.push(handler);
-          },
-          unsubscribe(handler: (value: string) => void) {
-            handlers = handlers.filter(current => current !== handler);
-          },
-        });
-      });
-    };
-
-    socket.onerror = () => {
-      settle(() => {
-        reject(new Error('Failed to connect to LSP server'));
-      });
-    };
-
-    socket.onclose = event => {
-      settle(() => {
-        reject(
-          new Error(
-            `LSP connection closed before opening${
-              event.reason ? `: ${event.reason}` : ''
-            }`
-          )
-        );
-      });
-    };
-  });
+    },
+  };
 }
 
 export default function useLspClient(
   language: EditorProps['language'],
-  lspOptions: EditorProps['lspOptions']
+  lspOptions: EditorProps['lspOptions'],
+  documentUri: string
 ) {
-  const [lspClient, setLspClient] = useState<LSPClient | null>(null);
+  const [client, setClient] = useState<LSPClient | null>(null);
+  const enabled = !!lspOptions;
+  const serviceLanguage = isLspLanguage(language) ? language : null;
+  const compilerOptions =
+    language === 'cpp' ? (lspOptions?.compilerOptions ?? null) : null;
 
   useEffect(() => {
-    if ((language !== 'cpp' && language !== 'python') || !lspOptions) {
-      setLspClient(null);
-      return;
-    }
+    setClient(null);
+    if (!enabled || !serviceLanguage) return;
 
-    const languageId: 'cpp' | 'python' = language;
-    const compilerOptions = lspOptions.compilerOptions;
-
-    setLspClient(null);
-
-    let cancelled = false;
-    let socket: WebSocket | null = null;
-    let client: LSPClient | null = null;
-    let sawSocketClose = false;
-
+    const controller = new AbortController();
+    const { signal } = controller;
+    let activeClient: LSPClient | undefined;
+    let connection: LspConnection | undefined;
     const cleanup = () => {
-      if (socket) {
-        socket.removeEventListener('close', handleClose);
-      }
-
-      client?.disconnect();
-      client = null;
-
-      if (
-        socket &&
-        (socket.readyState === WebSocket.OPEN ||
-          socket.readyState === WebSocket.CONNECTING)
-      ) {
-        socket.close();
-      }
-
-      socket = null;
+      controller.abort();
+      activeClient?.disconnect();
+      activeClient = undefined;
+      connection?.dispose();
+    };
+    const failed = (error: unknown) => {
+      if (signal.aborted) return;
+      console.error('CodeMirror language service failed:', error);
+      notifyLsp(
+        `Connection failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+      setClient(null);
+      cleanup();
     };
 
-    function handleClose(event: CloseEvent) {
-      sawSocketClose = true;
-      cleanup();
+    void (async () => {
+      notifyLsp('Connecting to language service…');
 
-      if (cancelled) {
+      connection = await openLspConnection({
+        language: serviceLanguage,
+        compilerOptions,
+        documentUri,
+        signal,
+      });
+
+      if (signal.aborted) {
+        connection.dispose();
         return;
       }
 
-      notifyLspClosed(event);
-      setLspClient(null);
-    }
+      connection.reader.onClose(() =>
+        failed(new Error('Language service disconnected'))
+      );
+      connection.reader.onError(failed);
 
-    async function connect() {
-      notifyLsp('Connecting to server…');
+      activeClient = new LSPClient({
+        extensions: languageServerExtensions(),
+        initializationOptions: connection.initializationOptions,
+        rootUri: connection.rootUri,
+        timeout: 15_000,
+      }).connect(clientTransport(connection, failed));
+      await activeClient.initializing;
 
-      try {
-        const transport = await simpleWebSocketTransport(
-          createLspUrl(languageId, compilerOptions),
-          createdSocket => {
-            socket = createdSocket;
-            socket.addEventListener('close', handleClose);
-          }
-        );
+      if (signal.aborted) return;
 
-        if (cancelled || sawSocketClose) {
-          cleanup();
-          return;
-        }
-
-        const activeClient = new LSPClient({
-          extensions: languageServerExtensions(),
-        }).connect(transport);
-        client = activeClient;
-
-        await activeClient.initializing;
-
-        if (cancelled || sawSocketClose) {
-          cleanup();
-          return;
-        }
-
-        setLspClient(activeClient);
-        notifyLsp('Connected');
-      } catch (error) {
-        cleanup();
-
-        if (cancelled || sawSocketClose) {
-          return;
-        }
-
-        console.error('Failed to initialize CodeMirror LSP connection:', error);
-        notifyLsp(
-          'Connection failed: ' +
-            (error instanceof Error ? error.message : 'Unknown error')
-        );
-        setLspClient(null);
-      }
-    }
-
-    void connect();
-
-    return () => {
-      cancelled = true;
-      cleanup();
-    };
-  }, [language, lspOptions?.compilerOptions]);
-
-  return lspClient;
+      setClient(activeClient);
+      notifyLsp('Connected');
+    })().catch(failed);
+    return cleanup;
+  }, [compilerOptions, documentUri, enabled, serviceLanguage]);
+  return client;
 }

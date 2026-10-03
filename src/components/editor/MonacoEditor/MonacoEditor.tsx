@@ -444,7 +444,12 @@ export default function MonacoEditor({
     };
   }, [editor, path, yjsInfo]);
 
-  useLSP(language ?? null, lspOptions ?? null, editor !== null);
+  useLSP(
+    language ?? null,
+    lspOptions ?? null,
+    editor !== null,
+    toModelPath(path)
+  );
 
   useEffect(() => {
     if (!vim || !editor) {

@@ -19,6 +19,11 @@ import {
   SparklesIcon as OutlineSparklesIcon,
   UserIcon as OutlineUserIcon,
 } from '@heroicons/react/24/outline';
+import {
+  DEFAULT_LSP_MODES,
+  LSP_LANGUAGES,
+  type LspPreferences,
+} from '../editor/lsp/preferences';
 
 const EDITOR_MODES = ['Normal', 'Vim' /*'Emacs'*/];
 
@@ -158,6 +163,8 @@ export default function UserSettings({
   onLightModeChange,
   rainbowIndent,
   onRainbowIndentChange,
+  lspPreferences,
+  onLspPreferencesChange,
   manualSubmission,
   onManualSubmissionChange,
   templateCode,
@@ -185,6 +192,8 @@ export default function UserSettings({
   onLightModeChange: (lightMode: boolean) => void;
   rainbowIndent: boolean;
   onRainbowIndentChange: (rainbowIndent: boolean) => void;
+  lspPreferences: LspPreferences;
+  onLspPreferencesChange: (lspPreferences: LspPreferences) => void;
   manualSubmission: boolean;
   onManualSubmissionChange: (manualSubmission: boolean) => void;
   templateCode: Partial<Record<Language, string>>;
@@ -274,6 +283,39 @@ export default function UserSettings({
                 { label: 'Automatic', value: false },
               ]}
             />
+            <div>
+              <div className="text-content-secondary text-sm">
+                Language services
+              </div>
+              <div className="mt-2 space-y-3">
+                {LSP_LANGUAGES.map(language => (
+                  <div key={language}>
+                    <RadioGroupContents<'default' | 'local' | 'remote'>
+                      title={language === 'cpp' ? 'C++' : 'Python'}
+                      value={lspPreferences[language] ?? 'default'}
+                      horizontal
+                      onChange={value =>
+                        onLspPreferencesChange({
+                          ...lspPreferences,
+                          [language]: value === 'default' ? null : value,
+                        })
+                      }
+                      options={[
+                        {
+                          label: `Default (${DEFAULT_LSP_MODES[language] === 'local' ? 'Local' : 'Remote'})`,
+                          value: 'default',
+                        },
+                        { label: 'Remote', value: 'remote' },
+                        { label: 'This device', value: 'local' },
+                      ]}
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-sm text-content-secondary">
+                Reload the editor page to apply changes.
+              </p>
+            </div>
           </div>
         )}
         <button
