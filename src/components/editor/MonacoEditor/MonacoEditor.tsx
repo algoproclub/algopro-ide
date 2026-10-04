@@ -19,7 +19,7 @@ import {
   ensureMonacoServices,
   MONACO_VSCODE_DARK_THEME,
   MONACO_VSCODE_LIGHT_THEME,
-  MONACO_WORKSPACE_URI,
+  MONACO_WORKSPACE_ROOT,
 } from './monacoServices';
 import { DEFAULT_FONT_SIZE_EDITOR } from '../../../constants/editorConstants';
 
@@ -124,15 +124,7 @@ const rebindAction = (
 };
 
 function toModelPath(path?: string) {
-  if (!path) {
-    return `${MONACO_WORKSPACE_URI.toString()}/default`;
-  }
-
-  if (/^[a-zA-Z][\w+.-]*:/.test(path)) {
-    return path;
-  }
-
-  return `${MONACO_WORKSPACE_URI.toString()}/${path.replace(/^\/+/, '')}`;
+  return `${MONACO_WORKSPACE_ROOT}/${path?.replace(/^\/+/, '') || 'default'}`;
 }
 
 function createEditorAppConfig(
@@ -521,7 +513,7 @@ export default function MonacoEditor({
     })().catch(error => {
       console.error('Failed to update Monaco code resources:', error);
     });
-  }, [editor, path, previousPath]);
+  }, [editor, path]);
 
   useUpdate(() => {
     if (!editor || !editorRef.current) {
