@@ -119,6 +119,14 @@ export default async (
     for (let attempt = 0; attempt < FILE_INIT_WAIT_ATTEMPTS; attempt++) {
       const fileSnap = await mappedFileRef.get();
       if (fileSnap.exists()) {
+        // Reopen the workspace in the user's current default language. Code
+        // in each language lives in its own Yjs document, so nothing is lost.
+        if (fileSnap.child('settings/language').val() !== data.language) {
+          await mappedFileRef
+            .child('settings')
+            .child('language')
+            .set(data.language);
+        }
         res.status(200).json({
           fileID: mappedFileID,
         });
