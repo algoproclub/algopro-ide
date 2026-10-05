@@ -235,7 +235,9 @@ export class OjuzResultFetcher extends ResultFetcher {
     const { submissionID } = this.submissionData;
 
     const url = `https://oj.uz/submission/${submissionID}`;
-    const resp = await fetch(url);
+    const resp = await fetch(url, {
+      headers: { Cookie: this.submissionData.sessionCookie ?? '' },
+    });
     if (resp.status !== 200) {
       const errorMessage = `Oj.uz: response status is not 200; url: ${url}; response status: ${resp.status}`;
       throw resp.status === 404
@@ -264,7 +266,9 @@ export class OjuzResultFetcher extends ResultFetcher {
   async fetchSubtaskInfo(subtask: number): Promise<string[][]> {
     const url = `https://oj.uz/submission/${this.submissionData.submissionID}/subtask-result/${subtask}`;
 
-    const resp = await fetch(url);
+    const resp = await fetch(url, {
+      headers: { Cookie: this.submissionData.sessionCookie ?? '' },
+    });
     if (resp.status !== 200) {
       const errorMessage = `Oj.uz: subtask result response status is not 200; url: ${url}; response status: ${resp.status}`;
       throw resp.status === 404
