@@ -454,71 +454,6 @@ export class SPOJSubmitter extends Submitter {
   }
 }
 
-export class PlanetsSubmitter extends Submitter {
-  platformName = 'planets';
-  authorization: string;
-
-  constructor(authorization: string) {
-    super();
-    if (!authorization)
-      throw new Error('attempt to submit to planets without logging in');
-    this.authorization = authorization;
-  }
-
-  // We do not store any credentials for planets, so login is a no-op.
-  async login(_: object): Promise<void> {
-    return;
-  }
-
-  async loginWith(_: object): Promise<boolean> {
-    return true;
-  }
-
-  async submit({ problemID, sourceCode, language }: ProblemSolution) {
-    const res = await fetch(
-      `https://europe-west1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net/planetssubmit`,
-      {
-        headers: {
-          'content-type': 'application/json',
-          authorization: this.authorization,
-        },
-        body: JSON.stringify({
-          data: {
-            problem_id: problemID,
-            language: {
-              cpp: 'cpp17',
-              java: 'java',
-              py: 'python3',
-            }[language],
-            solution: sourceCode,
-          },
-        }),
-        method: 'POST',
-      }
-    );
-    if (res.status !== 200) {
-      let errorMessage: string;
-
-      const response = await res.text();
-      try {
-        errorMessage = JSON.parse(response).error.message;
-      } catch (e) {
-        errorMessage = response;
-      }
-
-      throw new Error(
-        'planets submission failed, status: ' + res.status + ' ' + errorMessage
-      );
-    }
-    const data = await res.json();
-    return {
-      id: data.result.id,
-      username: null,
-      platform: 'planets',
-    } as const;
-  }
-}
-
 export class OjuzSubmitter extends Submitter {
   platformName = 'ojuz';
   username: string = '';
@@ -565,9 +500,15 @@ export class OjuzSubmitter extends Submitter {
       }
     );
 
-    const id = (await response.json()).submissionId;
+    const text = await response.text();
+    let id;
+    try {
+      id = JSON.parse(text).submissionId;
+    } catch {}
     if (!id) {
-      throw new Error('submission failed, id not found');
+      throw new Error(
+        `submission failed, id not found (${response.status} ${response.url}): ${text.slice(0, 500)}`
+      );
     }
 
     return {

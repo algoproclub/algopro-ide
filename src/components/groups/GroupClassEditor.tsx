@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { getDefaultStore } from 'jotai/vanilla';
-import type { URLProblem } from '../../types/problem';
+import type { Platform, ProblemData, URLProblem } from '../../types/problem';
 import { EditTextAreaModal } from '../EditTextModal';
+import ManualProblemDataModal from '../ManualProblemDataModal';
 import Tooltip from '../Tooltip';
 import {
   ArrowTopRightOnSquareIcon,
@@ -26,25 +27,35 @@ export type GroupClassUpdate =
   | GroupClassData
   | ((current: GroupClassData) => GroupClassData);
 
-const extractTaskUrls = (text: string) =>
-  Array.from(
-    new Set(
-      (text.match(/https?:\/\/[^\s<>"']+|\/solve\/[^\s<>"']+/g) ?? []).map(
-        match => {
-          const url = match.replace(/[),.;:]+$/, '');
-          return url.startsWith('/solve/')
-            ? new URL(
-                url,
-                process.env.NEXT_PUBLIC_BASE_URL ?? window.location.origin
-              ).toString()
-            : url;
-        }
-      )
-    )
-  );
+const extractTaskUrls = (text: string) => {
+  const urls = (
+    text.match(/https?:\/\/[^\s<>"']+|\/solve\/[^\s<>"']+/g) ?? []
+  ).map(match => {
+    const url = match.replace(/[),.;:]+$/, '');
+    return url.startsWith('/solve/')
+      ? new URL(
+          url,
+          process.env.NEXT_PUBLIC_BASE_URL ?? window.location.origin
+        ).toString()
+      : url;
+  });
 
-const resolveTaskLinks = async (text: string) => {
-  const taskUrls = extractTaskUrls(text);
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+  for (const url of urls) {
+    if (seen.has(url)) duplicates.add(url);
+    else seen.add(url);
+  }
+  return { urls: Array.from(seen), duplicates: Array.from(duplicates) };
+};
+
+const resolveTaskLinks = async (
+  text: string
+): Promise<{
+  results: { ok: boolean; task: URLProblem }[];
+  duplicateUrls: string[];
+}> => {
+  const { urls: taskUrls, duplicates: duplicateUrls } = extractTaskUrls(text);
   const parsedTasks = taskUrls.map(parseProblem);
   const library = await getDefaultStore()
     .get(problemLibraryAtom)
@@ -53,29 +64,49 @@ const resolveTaskLinks = async (text: string) => {
     library.map(problem => [`${problem.platform}:${problem.id}`, problem])
   );
 
-  return {
-    tasks: parsedTasks.flatMap(task => {
-      if (!task.platform || !task.id) return [];
-      return [
-        {
-          ...task,
-          title: libraryByKey.get(`${task.platform}:${task.id}`)?.title ?? null,
-        },
-      ];
-    }),
-  };
+  const results = await Promise.all(
+    parsedTasks.map(
+      async (task): Promise<{ ok: boolean; task: URLProblem }> => {
+        if (!task.platform || !task.id) return { ok: false, task };
+        const libraryTask = libraryByKey.get(`${task.platform}:${task.id}`);
+        if (libraryTask)
+          return { ok: true, task: { ...task, title: libraryTask.title } };
+
+        try {
+          const response = await fetch('/api/fetchProblemData', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ platform: task.platform, id: task.id }),
+          });
+          if (!response.ok) return { ok: false, task };
+          const problem = (await response.json()) as { title?: unknown } | null;
+          if (typeof problem?.title !== 'string') return { ok: false, task };
+          return { ok: true, task: { ...task, title: problem.title } };
+        } catch {
+          return { ok: false, task };
+        }
+      }
+    )
+  );
+
+  return { results, duplicateUrls };
 };
 
 const TaskAdder = ({
   onAddTasks,
   disabled,
 }: {
-  onAddTasks: (tasks: URLProblem[]) => void;
+  onAddTasks: (tasks: URLProblem[], pastedDuplicates?: URLProblem[]) => void;
   disabled: boolean;
 }) => {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isPasteModalOpen, setIsPasteModalOpen] = useState(false);
   const [pastedText, setPastedText] = useState('');
+  const [pendingManualEntry, setPendingManualEntry] = useState<{
+    platform: Platform;
+    id: string;
+    resolve: (problem: ProblemData | null) => void;
+  } | null>(null);
   const pasteRequestID = useRef(0);
 
   useEffect(
@@ -88,16 +119,60 @@ const TaskAdder = ({
     if (disabled) pasteRequestID.current += 1;
   }, [disabled]);
 
+  const promptManualEntry = (platform: Platform, id: string) =>
+    new Promise<ProblemData | null>(resolve => {
+      setPendingManualEntry({ platform, id, resolve });
+    });
+
   const addPastedTasks = async (text: string) => {
     if (disabled) return;
     const requestID = ++pasteRequestID.current;
-    const { tasks } = await resolveTaskLinks(text);
+    const { results, duplicateUrls } = await resolveTaskLinks(text);
     if (requestID !== pasteRequestID.current) return;
+
+    // Ask about each task we couldn't fetch automatically, one at a time,
+    // so the user can paste its page HTML manually or skip it. Close this
+    // modal first: two Headless UI dialogs open at once (this one and the
+    // manual-entry one) confuses their focus traps and swallows clicks.
+    if (
+      results.some(
+        result => !result.ok && result.task.platform && result.task.id
+      )
+    ) {
+      setIsPasteModalOpen(false);
+    }
+    // Keep the original link order: automatically resolved and manually
+    // resolved tasks are interleaved here rather than appended separately.
+    const tasks: URLProblem[] = [];
+    const skippedUrls: string[] = [];
+    for (const result of results) {
+      if (result.ok) {
+        tasks.push(result.task);
+        continue;
+      }
+      const { task } = result;
+      if (!task.platform || !task.id) {
+        skippedUrls.push(task.url);
+        continue;
+      }
+      const problem = await promptManualEntry(task.platform, task.id);
+      if (requestID !== pasteRequestID.current) return;
+      if (problem) tasks.push({ ...task, title: problem.title });
+      else skippedUrls.push(task.url);
+    }
+
     if (!tasks.length) {
       alert('No supported task links were found in the pasted text.');
       return;
     }
-    onAddTasks(tasks);
+    if (skippedUrls.length) {
+      alert(`Skipped these links:\n${skippedUrls.join('\n')}`);
+    }
+
+    const pastedDuplicates = tasks.filter(task =>
+      duplicateUrls.includes(task.url)
+    );
+    onAddTasks(tasks, pastedDuplicates);
     setPastedText('');
     setIsPasteModalOpen(false);
   };
@@ -109,10 +184,23 @@ const TaskAdder = ({
         text={pastedText}
         title="Add tasks from pasted links"
         setText={setPastedText}
-        onSave={text => void addPastedTasks(text)}
+        onSave={addPastedTasks}
         onClose={() => {
           pasteRequestID.current += 1;
           setIsPasteModalOpen(false);
+        }}
+      />
+      <ManualProblemDataModal
+        isOpen={pendingManualEntry !== null}
+        platform={pendingManualEntry?.platform ?? 'codeforces'}
+        problemID={pendingManualEntry?.id ?? ''}
+        onSuccess={problem => {
+          pendingManualEntry?.resolve(problem);
+          setPendingManualEntry(null);
+        }}
+        onClose={() => {
+          pendingManualEntry?.resolve(null);
+          setPendingManualEntry(null);
         }}
       />
       <div className="flex flex-wrap gap-2">
@@ -323,10 +411,16 @@ const ClassEditor = ({
       <header className="relative z-10 flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-2.5">
         <div>
           <h1 className="font-semibold">Class {classID}</h1>
-          <p className="text-sm text-content-muted">
-            {data.tasks.length} task{data.tasks.length === 1 ? '' : 's'}
-            {unsaved ? ' · unsaved changes' : ''}
-          </p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <p className="text-sm text-content-muted">
+              {data.tasks.length} task{data.tasks.length === 1 ? '' : 's'}
+            </p>
+            {unsaved && (
+              <span className="inline-flex rounded-full bg-status-warning-surface px-2 py-0.5 text-xs font-medium text-status-warning-content">
+                Unsaved changes
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button className="ui-button-secondary" onClick={copyContent}>
@@ -334,13 +428,45 @@ const ClassEditor = ({
           </button>
           <TaskAdder
             disabled={disabled}
-            onAddTasks={tasks =>
-              onUpdate(current => ({
-                ...current,
-                tasks: [...current.tasks, ...tasks],
-              }))
-            }
+            onAddTasks={(tasks, pastedDuplicates = []) => {
+              const existingUrls = new Set(data.tasks.map(task => task.url));
+              const newTasks = tasks.filter(
+                task => !existingUrls.has(task.url)
+              );
+
+              const duplicates = new Map<string, URLProblem>();
+              for (const task of [
+                ...tasks.filter(task => existingUrls.has(task.url)),
+                ...pastedDuplicates,
+              ]) {
+                duplicates.set(task.url, task);
+              }
+
+              if (duplicates.size) {
+                const list = Array.from(duplicates.values())
+                  .map(task => task.title ?? task.id ?? task.url)
+                  .join('\n');
+                alert(
+                  `The following tasks were not added again (already in the list or pasted more than once):\n\n${list}`
+                );
+              }
+
+              if (newTasks.length) {
+                onUpdate(current => ({
+                  ...current,
+                  tasks: [...current.tasks, ...newTasks],
+                }));
+              }
+            }}
           />
+          <button
+            type="button"
+            className="ui-button-primary px-4 py-2"
+            onClick={onSave}
+            disabled={!unsaved || disabled}
+          >
+            {isMutating ? 'Saving…' : 'Save changes'}
+          </button>
         </div>
       </header>
       <div className="divide-y divide-line-muted bg-surface text-content">
@@ -393,7 +519,7 @@ const ClassEditor = ({
             onClick={onSave}
             disabled={!unsaved || disabled}
           >
-            {isMutating ? 'Working…' : 'Save changes'}
+            {isMutating ? 'Saving…' : 'Save changes'}
           </button>
         </div>
       </footer>

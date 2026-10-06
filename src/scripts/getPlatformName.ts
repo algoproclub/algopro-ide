@@ -18,6 +18,8 @@ export const getPlatformName = (platform: Platform) => {
       return 'NJudge';
     case 'yosupo':
       return 'Yosupo Library Checker';
+    case 'usaco':
+      return 'USACO';
   }
   return 'Unknown';
 };

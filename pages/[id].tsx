@@ -9,8 +9,8 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
   inputEditorValueAtom,
   loadingAtom,
+  mainEditorHandleAtom,
   mainEditorValueAtom,
-  mainMonacoEditorAtom,
   isLineHighlightSetAtom,
   savedEditorValue,
 } from '../src/atoms/workspace';
@@ -29,13 +29,13 @@ import useUserPermission from '../src/hooks/useUserPermission';
 import { WorkspaceSettingsModal } from '../src/components/settings/WorkspaceSettingsModal';
 import { getSampleIndex } from '../src/components/JudgeInterface/Samples';
 import useJudgeResults from '../src/hooks/useJudgeResults';
-import { cleanJudgeResult } from '../src/editorUtils';
+import { cleanJudgeResult } from '../src/utils/editorUtils';
 import JudgeResult from '../src/types/judge';
 import useUserFileConnection from '../src/hooks/useUserFileConnection';
 import useUpdateUserDashboard from '../src/hooks/useUpdateUserDashboard';
 import ConfirmOverrideModal from '../src/components/ConfirmOverrideModal';
 import Link from 'next/link';
-import ProfileSettings from '../src/components/settings/ProfileSettings';
+import LazyProfileSettings from '../src/components/settings/LazyProfileSettings';
 import WithRegistration from '../src/components/WithRegistration';
 import { beginCodeRun, endCodeRun } from '../src/scripts/codeRun';
 import useCodeRunActive from '../src/hooks/useCodeRunActive';
@@ -48,6 +48,10 @@ import {
   type ClassContext,
 } from '../src/scripts/getTaskRef';
 import { WorkspaceLaunchProvider } from '../src/context/WorkspaceLaunchContext';
+import ProblemDataLoader from '../src/components/Workspace/ProblemDataLoader';
+import { preloadCodeEditor } from '../src/components/editor/CodeEditor';
+
+preloadCodeEditor();
 
 function runCodeErrorToResult(error: unknown): JudgeResult {
   const runCodeError = error instanceof RunCodeError ? error : undefined;
@@ -77,7 +81,7 @@ function EditorPage() {
   const [isWorkspaceSettingsModalOpen, setIsWorkspaceSettingsModalOpen] =
     useState(false);
   const [isProfileSettingsModalOpen, setIsProfileSettingsModalOpen] =
-    useState(false);
+    useState<boolean>();
   const [layoutResetKey, setLayoutResetKey] = useState(0);
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
   const [mobileActiveTab, setMobileActiveTab] = useAtom(mobileActiveTabAtom);
@@ -90,7 +94,7 @@ function EditorPage() {
   } = useJudgeResults();
   const setIsLineHighlightSet = useSetAtom(isLineHighlightSetAtom);
   const setSavedEditorValue = useSetAtom(savedEditorValue);
-  const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
+  const mainEditorHandle = useAtomValue(mainEditorHandleAtom);
   const loadedProblem = useAtomValue(problemAtom);
   const problemDataIsStale = fileData.problem
     ? loadedProblem?.platform !== fileData.problem.platform ||
@@ -218,7 +222,7 @@ function EditorPage() {
       }
     }
     setIsLineHighlightSet(false);
-    mainMonacoEditor?.clearLineHighlight();
+    mainEditorHandle?.clearLineHighlight();
   };
 
   const handleKeydown = (event: KeyboardEvent) => {
@@ -277,10 +281,12 @@ function EditorPage() {
         onClose={() => setIsWorkspaceSettingsModalOpen(false)}
         onResetLayout={() => setLayoutResetKey(key => key + 1)}
       />
-      <ProfileSettings
-        isOpen={isProfileSettingsModalOpen}
-        onClose={() => setIsProfileSettingsModalOpen(false)}
-      />
+      {isProfileSettingsModalOpen !== undefined && (
+        <LazyProfileSettings
+          isOpen={isProfileSettingsModalOpen}
+          onClose={() => setIsProfileSettingsModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -319,17 +325,11 @@ function PageContent() {
   const router = useRouter();
   const queryId = router.query.id;
   const firebaseFileID = '-' + (queryId as string);
-  const { userData, logged } = useNullableUserContext();
+  const { firebaseUser, userData, registered } = useNullableUserContext();
   const classContext = router.isReady
     ? getClassContext(router.query.group, router.query.class)
     : null;
 
-  const loginUI = (
-    <MessagePage
-      message="Please login to view this file."
-      showHomeButton={true}
-    />
-  );
   const loadingUI = <MessagePage message="Loading…" showHomeButton={false} />;
   const fileNotFoundUI = (
     <div className="p-8 sm:p-16">
@@ -352,8 +352,6 @@ function PageContent() {
   const permissionDeniedUI = <MessagePage message="This file is private." />;
 
   if (!queryId) return null;
-  if (logged === false) return loginUI;
-  if (!userData) return loadingUI;
 
   return (
     <EditorProvider
@@ -365,9 +363,11 @@ function PageContent() {
       <WorkspaceLaunchBoundary
         classContext={classContext}
         fileID={queryId as string}
-        userID={userData.id}
+        userID={firebaseUser!.uid}
       >
-        <EditorPage />
+        <ProblemDataLoader>
+          {userData && registered ? <EditorPage /> : loadingUI}
+        </ProblemDataLoader>
         <ConfirmOverrideModal />
       </WorkspaceLaunchBoundary>
     </EditorProvider>

@@ -14,20 +14,38 @@ import * as Y from 'yjs';
 import useLspClient from './lsp';
 
 import { useEffect, useMemo, useState } from 'react';
-import { yCollab } from 'y-codemirror.next';
+import { yCollab, yUndoManagerKeymap } from 'y-codemirror.next';
 import { DEFAULT_FONT_SIZE_EDITOR } from '../../../constants/editorConstants';
 
 function createEditorHandle(view: EditorView): CodemirrorEditorHandle {
   return {
+    clearLineHighlight() {},
     focus() {
       view.focus();
     },
     getValue() {
       return view.state.doc.toString();
     },
+    getLineContent(lineNumber) {
+      return lineNumber > 0 && lineNumber <= view.state.doc.lines
+        ? view.state.doc.line(lineNumber).text
+        : undefined;
+    },
     kind: 'codemirror',
     layout() {},
     raw: view,
+    redo() {
+      yUndoManagerKeymap.find(mapping => mapping.key === 'Mod-y')?.run?.(view);
+    },
+    setLineHighlight() {},
+    setValue(value: string) {
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: value },
+      });
+    },
+    undo() {
+      yUndoManagerKeymap.find(mapping => mapping.key === 'Mod-z')?.run?.(view);
+    },
   };
 }
 
