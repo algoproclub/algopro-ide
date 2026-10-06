@@ -3,7 +3,7 @@ import * as jsdom from 'jsdom';
 import { cfAPIKey, cfAPISecret, IncorrectDataError } from './index';
 import { SubmissionData } from './types';
 import { StatusCode, StatusData, TestCase } from '../../src/types/problem';
-import { getFirestore } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 
 const { JSDOM } = jsdom;
 
@@ -63,6 +63,151 @@ export abstract class ResultFetcher {
       link: this.getLink(),
       testCases: this.getTestCases(),
     };
+  }
+}
+
+export class YosupoResultFetcher extends ResultFetcher {
+  private static codeToVerdict = {
+    CE: 'compile error',
+    AC: 'correct answer',
+    WA: 'wrong answer',
+    RE: 'runtime error',
+    TLE: 'time limit exceeded',
+    IE: 'internal error',
+    ICE: 'internal compile error',
+    Fail: 'Wrong author solution',
+    PE: 'presentation error',
+    WJ: 'running',
+  };
+
+  private submissionInfo: {
+    overview: {
+      problem_name: string;
+      status: string;
+      time: number;
+      memory: number;
+    };
+    compile_error?: string;
+    case_results?: { status: string; time: number; memory: number }[];
+  } | null = null;
+
+  constructor(readonly submissionData: SubmissionData) {
+    super(submissionData);
+  }
+
+  async initialize(): Promise<void> {
+    const { submissionID } = this.submissionData;
+    const response = await fetch(
+      `https://v3.api.judge.yosupo.jp/submissions/${encodeURIComponent(submissionID)}`
+    );
+    if (!response.ok) {
+      const message = `Yosupo: submission info could not be retrieved (${response.status}).`;
+      throw response.status === 404
+        ? new IncorrectDataError(message)
+        : new Error(message);
+    }
+    this.submissionInfo = await response.json();
+    if (
+      this.submissionInfo?.overview.problem_name !==
+      this.submissionData.problemID
+    ) {
+      throw new IncorrectDataError(
+        'Yosupo: submission problem does not match.'
+      );
+    }
+  }
+
+  private static isValidVerdict(
+    key: string
+  ): key is keyof typeof YosupoResultFetcher.codeToVerdict {
+    return Object.prototype.hasOwnProperty.call(
+      YosupoResultFetcher.codeToVerdict,
+      key
+    );
+  }
+
+  formatMemory(mem: number): string {
+    return `${(mem / 1048576).toFixed(2)} MiB`;
+  }
+
+  getLink(): string | null {
+    return `https://judge.yosupo.jp/submission/${this.submissionData.submissionID}`;
+  }
+
+  getMemory(): string | null {
+    const mem = this.submissionInfo?.overview?.memory;
+    return mem != undefined && mem >= 0 ? this.formatMemory(mem) : null;
+  }
+
+  getMessage(): string {
+    const code = this.submissionInfo?.overview?.status;
+    if (!code || !YosupoResultFetcher.isValidVerdict(code)) {
+      return 'running';
+    }
+    return YosupoResultFetcher.codeToVerdict[code];
+  }
+
+  getOutput(): string | null {
+    const error = this.submissionInfo?.compile_error;
+    if (!error) {
+      return null;
+    }
+    return Buffer.from(error, 'base64').toString('utf8');
+  }
+
+  getStatusCode(): StatusCode {
+    if (this.getMessage() === 'running') {
+      return 'working';
+    }
+    return 'resolved';
+  }
+
+  getStatusText(): string | null {
+    return this.getStatusCode() === 'working'
+      ? 'status-working'
+      : 'status-done';
+  }
+
+  getTime(): string | null {
+    const time = this.submissionInfo?.overview?.time;
+    return time != undefined && time >= 0
+      ? Math.round(time * 1000) + ' ms'
+      : null;
+  }
+
+  getTestCaseNum(): number {
+    return this.submissionInfo?.case_results?.length ?? 0;
+  }
+
+  getTestCaseTitle(n: number): string {
+    const code = this.submissionInfo?.case_results?.[n]?.status;
+    if (code === '-') {
+      return 'did not run';
+    }
+    if (!code || !YosupoResultFetcher.isValidVerdict(code)) {
+      return 'running';
+    }
+    return YosupoResultFetcher.codeToVerdict[code];
+  }
+  getTestCaseSymbol(n: number): string {
+    const verdict = this.getTestCaseTitle(n);
+    if (verdict === 'correct answer') return '✓';
+    if (verdict === 'did not run') return '?';
+    return 'x';
+  }
+  getTestCaseTime(n: number): string | null {
+    const result = this.submissionInfo?.case_results?.[n];
+    if (result?.status === '-') return null;
+    const time = result?.time;
+    return time != undefined && time >= 0
+      ? Math.round(time * 1000) + ' ms'
+      : null;
+  }
+  getTestCaseMemory(n: number): string | null {
+    const result = this.submissionInfo?.case_results?.[n];
+    if (result?.status === '-') return null;
+    const mem = result?.memory;
+    return mem != undefined && mem >= 0 ? this.formatMemory(mem) : null;
   }
 }
 
@@ -235,7 +380,9 @@ export class OjuzResultFetcher extends ResultFetcher {
     const { submissionID } = this.submissionData;
 
     const url = `https://oj.uz/submission/${submissionID}`;
-    const resp = await fetch(url);
+    const resp = await fetch(url, {
+      headers: { Cookie: this.submissionData.sessionCookie ?? '' },
+    });
     if (resp.status !== 200) {
       const errorMessage = `Oj.uz: response status is not 200; url: ${url}; response status: ${resp.status}`;
       throw resp.status === 404
@@ -264,7 +411,9 @@ export class OjuzResultFetcher extends ResultFetcher {
   async fetchSubtaskInfo(subtask: number): Promise<string[][]> {
     const url = `https://oj.uz/submission/${this.submissionData.submissionID}/subtask-result/${subtask}`;
 
-    const resp = await fetch(url);
+    const resp = await fetch(url, {
+      headers: { Cookie: this.submissionData.sessionCookie ?? '' },
+    });
     if (resp.status !== 200) {
       const errorMessage = `Oj.uz: subtask result response status is not 200; url: ${url}; response status: ${resp.status}`;
       throw resp.status === 404
@@ -374,135 +523,79 @@ export class OjuzResultFetcher extends ResultFetcher {
   }
 }
 
-type PlanetsSubmission = {
-  compiler_output: string;
+export type PlanetsSubmission = {
+  compiler_output?: string;
   language: string;
   problem_id: string;
   solution: string;
-  test_results: {
+  test_results?: {
     checker_output: string;
     index: number;
-    memory: string;
+    memory: number;
     output: string;
     time: number;
     verdict: string;
   }[];
-  timestamp: Date;
-  user_id: string;
+  timestamp: Timestamp;
+  user_id?: string;
   verdict: string;
+  state?: 'queued' | 'running' | 'complete' | 'failed';
+  // Only set on submissions made from the IDE.
+  ide?: { file_id: string; tournament_id: string | null };
 };
 
-export class PlanetsResultFetcher extends ResultFetcher {
-  private resultData?: StatusData;
+const getPlanetsStatusCode = (
+  state: PlanetsSubmission['state']
+): StatusCode => {
+  if (state === 'failed') return 'error';
+  if (state === 'complete') return 'resolved';
+  return 'working';
+};
 
-  constructor(submissionData: SubmissionData) {
-    super(submissionData);
-  }
+const getPlanetsVerdictTitle = (verdict: string): string => {
+  if (verdict === 'Accepted') return 'correct answer';
+  if (verdict === 'Wrong answer') return 'incorrect answer';
+  return verdict;
+};
 
-  private mapVerdictToSymbol(verdict: string): string {
-    if (verdict === 'Accepted') return '✓';
-    if (verdict === 'Did not run') return '?';
-    return 'x';
-  }
+const getPlanetsVerdictSymbol = (verdict: string): string => {
+  if (verdict === 'Accepted') return '✓';
+  if (verdict === 'Did not run') return '?';
+  return 'x';
+};
 
-  private mapVerdictToTitle(verdict: string): string {
-    if (verdict === 'Accepted') return 'correct answer';
-    if (verdict === 'Wrong answer') return 'incorrect answer';
-    return verdict;
-  }
+const formatPlanetsTime = (nanoseconds: number) =>
+  Math.round(nanoseconds / 1000000) + ' ms';
 
-  private mapVerdictToStatusCode(verdict: string): StatusCode {
-    if (verdict.startsWith('Starting') || verdict.startsWith('Running'))
-      return 'working';
-    return 'resolved';
-  }
-  async initialize(): Promise<void> {
-    const firestore = process.env.FUNCTIONS_EMULATOR
-      ? getFirestore()
-      : getFirestore('planets');
-    const snapshot = await firestore
-      .doc(`submissions/${this.submissionData.submissionID}`)
-      .get();
-    if (!snapshot.exists) {
-      throw new IncorrectDataError('Planets: submission ID not found');
-    }
-    const parseMemory = (x: string) => parseInt(x.slice(0, x.length - 1));
-    const result = snapshot.data()! as PlanetsSubmission;
-    const statusCode = this.mapVerdictToStatusCode(result.verdict);
-    const memory = Math.max(
-      ...(result.test_results ?? []).map(t => parseMemory(t.memory))
-    );
-    const time = Math.max(...(result.test_results ?? []).map(t => t.time));
-    const output = result.compiler_output;
+const formatPlanetsMemory = (bytes: number) =>
+  Math.round(bytes / 10000) / 100 + ' MB';
 
-    this.resultData = {
-      link: null,
-      memory: Number.isFinite(memory)
-        ? Math.round(memory / 10000) / 100 + ' MB'
-        : null,
-      time: Number.isFinite(time) ? Math.round(time / 1000000) + ' ms' : null,
-      statusText: statusCode === 'working' ? 'status-working' : 'status-done',
-      message: this.mapVerdictToTitle(result.verdict),
-      statusCode: statusCode,
-      output: statusCode === 'resolved' ? (output ?? '') : '',
-      testCases:
-        result.test_results == undefined
-          ? []
-          : result.test_results.map(t => ({
-              title: this.mapVerdictToTitle(t.verdict),
-              trialNum: t.index,
-              symbol: this.mapVerdictToSymbol(t.verdict),
-              memory: Math.round(parseMemory(t.memory) / 10000) / 100 + ' MB',
-              time: Math.round(t.time / 1000000) + ' ms',
-            })),
-    };
-  }
-
-  getTestCaseNum(): number {
-    return this.resultData!.testCases!.length;
-  }
-
-  getTestCaseTitle(n: number): string {
-    return this.resultData!.testCases![n].title;
-  }
-  getTestCaseSymbol(n: number): string {
-    return this.resultData!.testCases![n].symbol;
-  }
-  getTestCaseTime(n: number): string | null {
-    return this.resultData!.testCases![n].time;
-  }
-  getTestCaseMemory(n: number): string | null {
-    return this.resultData!.testCases![n].memory;
-  }
-
-  getLink(): string | null {
-    return this.resultData!.link;
-  }
-
-  getMemory(): string | null {
-    return this.resultData!.memory;
-  }
-
-  getMessage(): string {
-    return this.resultData!.message!;
-  }
-
-  getOutput(): string | null {
-    return this.resultData!.output;
-  }
-
-  getStatusCode(): StatusCode {
-    return this.resultData!.statusCode;
-  }
-
-  getStatusText(): string | null {
-    return this.resultData!.statusText;
-  }
-
-  getTime(): string | null {
-    return this.resultData!.time;
-  }
-}
+export const planetsSubmissionToStatusData = (
+  submission: PlanetsSubmission
+): StatusData => {
+  const statusCode = getPlanetsStatusCode(submission.state);
+  const tests = submission.test_results ?? [];
+  return {
+    statusCode,
+    statusText: statusCode === 'working' ? 'status-working' : 'status-done',
+    message: getPlanetsVerdictTitle(submission.verdict),
+    link: null,
+    time: tests.length
+      ? formatPlanetsTime(Math.max(...tests.map(test => test.time)))
+      : null,
+    memory: tests.length
+      ? formatPlanetsMemory(Math.max(...tests.map(test => test.memory)))
+      : null,
+    output: statusCode === 'working' ? '' : (submission.compiler_output ?? ''),
+    testCases: tests.map(test => ({
+      trialNum: test.index,
+      title: getPlanetsVerdictTitle(test.verdict),
+      symbol: getPlanetsVerdictSymbol(test.verdict),
+      time: formatPlanetsTime(test.time),
+      memory: formatPlanetsMemory(test.memory),
+    })),
+  };
+};
 
 export class SPOJResultFetcher extends ResultFetcher {
   private summary?: Element;
@@ -816,6 +909,9 @@ export class AtCoderResultFetcher extends ResultFetcher {
     super(submissionData);
     this.headers = {
       Cookie: submissionData.sessionCookie ?? '',
+      // AtCoder started rejecting requests without a browser-like User-Agent (403).
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     };
   }
 

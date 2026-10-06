@@ -1,4 +1,4 @@
-import JudgeResult, { JudgeResultStatuses } from './types/judge';
+import JudgeResult, { JudgeResultStatuses } from '../types/judge';
 
 const statusDescriptions: Record<JudgeResultStatuses, string> = {
   success: 'Successful',

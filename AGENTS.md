@@ -39,7 +39,8 @@ There is no automated test suite. For user-visible changes, interact with the ru
 - React 18 with Jotai for state management
 - Firebase for authentication, data storage, and serverless functions
 - Hocuspocus/Yjs for real-time collaboration
-- [Monaco editor with VSCode extensions](https://github.com/typefox/monaco-languageclient) for code editing and completion (through a WebSocket LSP service)
+- [Monaco editor with VSCode extensions](https://github.com/typefox/monaco-languageclient) on desktop and CodeMirror 6 on mobile for code editing
+- LSP language services through a remote WebSocket service, or in the browser through BasedPyright (Python) and [clangd-wasm](https://github.com/algoproclub/clangd-wasm) (C++)
 
 Do NOT attempt to migrate Pages Router code to the App Router unless explicitly instructed.
 
@@ -68,6 +69,7 @@ Do NOT attempt to migrate Pages Router code to the App Router unless explicitly 
 - When touched code reveals unclear state ownership or a monolithic component, note the possible refactor separately. Include it only when necessary for the requested change.
 - Do not introduce wrappers solely to silence React or ESLint warnings when they reduce clarity without improving correctness.
 - Preserve distinct loading, empty, and error states. Avoid remounting stable layout or table shells while their data changes.
+- Language server backends implement `LspConnection` in `src/components/editor/lsp/` and must work with both the Monaco and the CodeMirror client. Keep editor-specific behavior in the editor adapters.
 
 ## UI conventions
 

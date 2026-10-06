@@ -1,6 +1,6 @@
 import React from 'react';
 import { Language, LANGUAGES } from '../../context/UserContext';
-import LazyCodeMirrorEditor from '../editor/CodemirrorEditor/LazyCodemirrorEditor';
+import CodemirrorEditor from '../editor/CodemirrorEditor/CodemirrorEditor';
 import defaultCode from '../../scripts/defaultCode';
 import Dropdown from '../Dropdown';
 
@@ -41,18 +41,9 @@ export default function TemplateCodeSettings({
           </button>
         </div>
       </div>
-      {/* FIXME: This here is a huge hack:
-       *
-       * - The monaco component uses a bunch of global state (LSP, color scheme),
-       *   so creating this editor would mess with the main editor.
-       * - We can't add a *different* model to the editor when changing languages,
-       *   only replace `value`, so undo/redo history is shared between languages.
-       * - We could create a new editor instance when changing languages, but that
-       *   still wouldn't solve the undo/redo issue, and the UI would flash when
-       *   a new editor is rendered.
-       */}
+      {/* We use Codemirror here as it's lightweight and doesn't mess with global state like Monaco does. */}
       <div className="h-[18em] border border-line focus-within:border-line-strong sm:h-50vh">
-        <LazyCodeMirrorEditor
+        <CodemirrorEditor
           theme={lightMode ? 'light' : 'dark'}
           language={{ cpp: 'cpp', java: 'java', py: 'python' }[language]}
           onChange={value =>

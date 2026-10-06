@@ -1,6 +1,6 @@
 :root,
 [data-theme='dark'] {
-  /* Matches Monaco's configured Default Dark+ editor background. */
+  /* Matches Monaco's configured Dark+ editor background. */
   --color-canvas: #1e1e1e;
   --color-panel: theme('colors.zinc.900');
   --color-panel-muted: theme('colors.zinc.800');
@@ -56,7 +56,7 @@
 }
 
 [data-theme='light'] {
-  /* Matches Monaco's configured Default Light+ editor background. */
+  /* Matches Monaco's configured Light+ editor background. */
   --color-canvas: theme('colors.white');
   --color-panel: theme('colors.white');
   --color-panel-muted: theme('colors.zinc.50');

@@ -460,7 +460,13 @@ export default function TeacherDashboardTable({
                             'bg-[color:var(--surface-hover)]'
                         )}
                       >
-                        <span className="block truncate">{student.name}</span>
+                        <Link
+                          href={`/user/${student.id}`}
+                          prefetch={false}
+                          className="block truncate hover:text-accent-hover hover:underline"
+                        >
+                          {student.name}
+                        </Link>
                       </th>
                       {tasks.map((task, column) => {
                         const state = summary
