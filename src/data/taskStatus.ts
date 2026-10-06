@@ -86,6 +86,16 @@ const createTaskStatus = (
   };
 };
 
+export const fetchTaskStatusForFile = async (
+  fileID: string
+): Promise<TaskStatus | null> => {
+  const [fileData, submissionData] = await Promise.all([
+    get(ref(database, `files/${fileID}/teacher`)),
+    get(ref(database, `submissions/${fileID}/statusData`)),
+  ]);
+  return createTaskStatus(fileID, fileData.val(), submissionData.val());
+};
+
 const subscribeToTaskStatusForFile = (
   fileID: string,
   onChange: (status: TaskStatus | null) => void,

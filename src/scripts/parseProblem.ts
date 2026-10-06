@@ -1,13 +1,5 @@
 import { Platform, URLProblem } from '../types/problem';
-import {
-  buildCodeforcesUrl,
-  buildAtCoderUrl,
-  buildCsesUrl,
-  buildSpojUrl,
-  buildPlanetsUrl,
-  buildOjuzUrl,
-  buildNjudgeUrl,
-} from './problemUtils';
+import { buildProblemUrl } from './problemUtils';
 
 const IDE_HOST = new URL(process.env.NEXT_PUBLIC_BASE_URL!).host;
 
@@ -27,36 +19,9 @@ export const parseProblem = (url: string): URLProblem => {
     const platform = ideMatch[1] as Platform;
     const id = ideMatch[2];
 
-    let constructedUrl: string;
-    switch (platform) {
-      case 'planets':
-        constructedUrl = buildPlanetsUrl(id);
-        break;
-      case 'cses':
-        constructedUrl = buildCsesUrl(id);
-        break;
-      case 'spoj':
-        constructedUrl = buildSpojUrl(id);
-        break;
-      case 'ojuz':
-        constructedUrl = buildOjuzUrl(id);
-        break;
-      case 'njudge':
-        constructedUrl = buildNjudgeUrl(id);
-        break;
-      case 'codeforces':
-        constructedUrl = buildCodeforcesUrl(id) ?? url;
-        break;
-      case 'atcoder':
-        constructedUrl = buildAtCoderUrl(id) ?? url;
-        break;
-      default:
-        constructedUrl = url;
-    }
-
     return {
       title: null,
-      url: constructedUrl,
+      url: buildProblemUrl(platform, id) ?? url,
       platform,
       id,
     };
