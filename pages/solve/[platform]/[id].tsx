@@ -10,15 +10,9 @@ import { getClassContext, getTaskRef } from '../../../src/scripts/getTaskRef';
 function PageContent(): JSX.Element {
   const router = useRouter();
 
-  const { firebaseUser, userData, logged } = useNullableUserContext();
+  const { firebaseUser, userData } = useNullableUserContext();
   const [error, setError] = useState<string | null>(null);
 
-  const loginUI = (
-    <MessagePage
-      message="Please login to solve this task."
-      showHomeButton={true}
-    />
-  );
   const loadingUI = <MessagePage message="Loading…" showHomeButton={false} />;
 
   const createdRef = useRef<boolean>(false);
@@ -70,19 +64,18 @@ function PageContent(): JSX.Element {
         }
       }
     })();
-  }, [router.isReady, firebaseUser, userData]);
+  }, [router, firebaseUser, userData]);
 
   if (error) {
     return <MessagePage message={'Error: ' + error} />;
   }
 
-  if (logged === false) return loginUI;
   return loadingUI;
 }
 
 export default function CreatePlatformFile() {
   return (
-    <WithRegistration>
+    <WithRegistration waitForUserData>
       <PageContent />
     </WithRegistration>
   );

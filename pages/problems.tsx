@@ -7,7 +7,8 @@ import {
   PlusIcon,
   TrashIcon,
 } from '@heroicons/react/20/solid';
-import { platforms, type ProblemTag, problemTags } from '../src/types/problem';
+import { platforms, type ProblemTag } from '../src/types/problem';
+import { searchProblemTags } from '../src/scripts/searchProblemTags';
 import Checkbox from '../src/components/Checkbox';
 import { useUserContext } from '../src/context/UserContext';
 import PageTitle from '../src/components/PageTitle';
@@ -118,9 +119,7 @@ const PageContent = () => {
     }));
   };
 
-  const tagFilterInputOptions = problemTags.filter(option =>
-    option.toLowerCase().includes(tagFilterInput.toLowerCase())
-  );
+  const tagFilterInputOptions = searchProblemTags(tagFilterInput);
 
   const toggleTag = (tag: ProblemTag) => {
     if (tagFilters.includes(tag)) {
@@ -195,10 +194,10 @@ const PageContent = () => {
                 {tagFilterFocus && (
                   <ul className="border theme-border rounded-md theme-surface absolute m-0.5 max-h-[30rem] overflow-auto">
                     {tagFilterInputOptions.length > 0 &&
-                      tagFilterInputOptions.map((option, index) => (
+                      tagFilterInputOptions.map(option => (
                         <li
                           className="px-3 py-2 hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)] flex justify-between items-center min-w-[10rem]"
-                          key={index}
+                          key={option}
                           onMouseDown={() => {
                             toggleTag(option);
                             setTagFilterInput('');

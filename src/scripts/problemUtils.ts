@@ -1,5 +1,4 @@
 // Central place for platform-specific regexes and URL builders
-
 import type { Platform } from '../types/problem';
 
 export const CODEFORCES_PROBLEM_REGEX = /^(\d+)([A-Z].*)$/;
@@ -69,7 +68,7 @@ export function buildProblemUrl(
       return buildOjuzUrl(problemID);
     case 'njudge':
       return buildNjudgeUrl(problemID);
-    case 'usaco':
+    default:
       return null;
   }
 }
