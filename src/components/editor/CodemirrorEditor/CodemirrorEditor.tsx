@@ -12,8 +12,9 @@ import { vim } from '@replit/codemirror-vim';
 import { CodemirrorEditorHandle, EditorProps } from '../editor-types';
 import * as Y from 'yjs';
 import useLspClient from './lsp';
+import { isLspLanguage } from '../lsp/preferences';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { yCollab, yUndoManagerKeymap } from 'y-codemirror.next';
 import { DEFAULT_FONT_SIZE_EDITOR } from '../../../constants/editorConstants';
 
@@ -50,45 +51,30 @@ function createEditorHandle(view: EditorView): CodemirrorEditorHandle {
 }
 
 const CodemirrorEditor = (props: EditorProps): JSX.Element => {
-  const [yCollabExtension, setYCollabExtension] = useState<Extension | null>(
-    null
-  );
-  const lspClient = useLspClient(props.language, props.lspOptions);
+  const documentUri = `file:///root/${props.path ?? 'default'}`;
+  const lspClient = useLspClient(props.language, props.lspOptions, documentUri);
+
+  const { yjsText, yjsAwareness } = props.yjsInfo ?? {};
+  const yCollabBinding = useMemo(() => {
+    if (!yjsText) return null;
+    const undoManager = new Y.UndoManager(yjsText);
+    return {
+      undoManager,
+      extension: yCollab(yjsText, yjsAwareness, { undoManager }),
+    };
+  }, [yjsText, yjsAwareness]);
 
   useEffect(() => {
-    if (!props.yjsInfo) return;
-
-    const undoManager = new Y.UndoManager(props.yjsInfo.yjsText);
-    const yCollabPlugins = yCollab(
-      props.yjsInfo.yjsText,
-      props.yjsInfo.yjsAwareness,
-      {
-        undoManager,
-      }
-    ) as Extension[];
-    setYCollabExtension(yCollabPlugins);
-
-    return () => {
-      // some of the codemirror yjs plugins need to be destroyed
-      // so that it stops listening to yjs updates; otherwise
-      // we may end up with a bug where the codemirror editor
-      // has a bunch of duplicated text.
-      // normally this shouldn't ever happen, since this effect should only be run once,
-      // but I think react in development mode may run effects more than once
-      // and this effect isn't "pure" unless these plugins are destroyed.
-      yCollabPlugins.forEach(plugin => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((plugin as any).destroy) (plugin as any).destroy();
-      });
-    };
-  }, [props.yjsInfo]);
+    if (!yCollabBinding) return;
+    return () => yCollabBinding.undoManager.destroy();
+  }, [yCollabBinding]);
 
   const extensions = useMemo(() => {
     const extensions: Extension[] = [];
     const tabSize = props.editorOptions?.tabSize || 4;
     extensions.push(indentUnit.of(' '.repeat(tabSize)));
-    if (yCollabExtension) {
-      extensions.push(yCollabExtension);
+    if (yCollabBinding) {
+      extensions.push(yCollabBinding.extension);
     }
     if (props.vim) {
       extensions.push(vim());
@@ -107,20 +93,18 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
     if (lspClient) {
       extensions.push(
         lspClient.plugin(
-          'file:///root/' + (props.path ?? 'default'),
-          props.language === 'cpp' || props.language === 'python'
-            ? props.language
-            : undefined
+          documentUri,
+          isLspLanguage(props.language) ? props.language : undefined
         )
       );
     }
     return extensions;
   }, [
     props.language,
-    yCollabExtension,
+    yCollabBinding,
     props.editorOptions?.tabSize,
     props.vim,
-    props.path,
+    documentUri,
     lspClient,
   ]);
 
@@ -129,11 +113,9 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
     <ReactCodeMirror
       // force entire component to re-mount (and re-initialize codemirror) when yjs document ID changes
       key={props.yjsInfo?.yjsText.doc?.guid}
-      // we need to pass in props.yjsInfo.yjsText as a possible value here, since
-      // the yCollab() extension expects the value to be initialized to yText.toString()
-      // I don't think this needs to be re-computed every time though (only when extensions changes), but whatever
+      // yCollab() expects the editor to start with the content of the Y.Text
       // eslint-disable-next-line @typescript-eslint/no-base-to-string -- False positive:Y.Text overrides toString().
-      value={props.value || props.yjsInfo?.yjsText.toString() || undefined}
+      value={yjsText ? yjsText.toString() : props.value}
       theme={props.theme === 'light' ? githubLight : vscodeDark}
       onChange={(val: string, _) => props.onChange?.(val)}
       height="100%"

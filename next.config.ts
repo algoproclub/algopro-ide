@@ -4,6 +4,9 @@ import createMDX from '@next/mdx';
 const nextConfig: NextConfig = {
   reactCompiler: true,
   bundlePagesRouterDependencies: true,
+  // The editor is client-only, and vscode-languageclient only exports its
+  // browser entry under the `browser` condition, which SSR does not resolve.
+  serverExternalPackages: ['monaco-languageclient'],
   turbopack: {
     resolveAlias: {
       'react/compiler-runtime': 'react-compiler-runtime',
