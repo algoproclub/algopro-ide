@@ -31,11 +31,19 @@ const nextConfig: NextConfig = {
               source: '/apple-touch-icon.png',
               destination: '/logo-matfin.png',
             },
+            {
+              source: '/.well-known/:route',
+              destination: '/api/well-known/:route',
+            },
           ]
         : [
             {
               source: '/apple-touch-icon.png',
               destination: '/logo.png',
+            },
+            {
+              source: '/.well-known/:route',
+              destination: '/api/well-known/:route',
             },
           ];
     return {
