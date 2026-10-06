@@ -17,6 +17,7 @@ import {
   CSESResultFetcher,
   getCFRequestURL,
   NJudgeResultFetcher,
+  YosupoResultFetcher,
   OjuzResultFetcher,
   PlanetsSubmission,
   planetsSubmissionToStatusData,
@@ -48,6 +49,7 @@ import {
   NjudgeSubmitter,
   OjuzSubmitter,
   SPOJSubmitter,
+  YosupoSubmitter,
   Submitter,
 } from './submit';
 import { JSDOM } from 'jsdom';
@@ -133,6 +135,9 @@ export const submitproblemsolution = onCall<
         break;
       case 'njudge':
         submitter = new NjudgeSubmitter();
+        break;
+      case 'yosupo':
+        submitter = new YosupoSubmitter();
         break;
       default:
         throw new HttpsError(
@@ -435,6 +440,7 @@ const accountData: { [key in Platform]: AccountData } = {
       (await db.ref('credentials/ojuz/0/cookie').get()).val(),
   },
   njudge: {},
+  yosupo: {},
 };
 
 const updateTournamentResult = async (
@@ -574,6 +580,8 @@ const updateResultNonCF = async (submissionData: SubmissionData) => {
     fetcher = new OjuzResultFetcher(submissionData);
   } else if (submissionData.platform === 'njudge') {
     fetcher = new NJudgeResultFetcher(submissionData);
+  } else if (submissionData.platform === 'yosupo') {
+    fetcher = new YosupoResultFetcher(submissionData);
   } else {
     throw new Error(`invalid platform name (${submissionData.platform})`);
   }
@@ -666,7 +674,14 @@ const updateResults = async (pending: PendingSubmissions) => {
     {}
   );
   const promises: Promise<void>[] = [];
-  for (const platform of ['cses', 'atcoder', 'spoj', 'ojuz', 'njudge']) {
+  for (const platform of [
+    'cses',
+    'atcoder',
+    'spoj',
+    'ojuz',
+    'njudge',
+    'yosupo',
+  ]) {
     pendingByPlatform[platform]?.forEach(obj => {
       promises.push(updateResultNonCF(obj));
     });
