@@ -27,6 +27,7 @@ export const platforms = [
   'planets',
   'ojuz',
   'njudge',
+  'yosupo',
 ] as const;
 
 export type Platform = (typeof platforms)[number];

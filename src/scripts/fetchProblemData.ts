@@ -15,6 +15,7 @@ import {
   buildNjudgeUrl,
 } from './problemUtils';
 import AdmZip from 'adm-zip';
+import { fetchProblemDataYosupo } from './fetchProblemDataYosupo';
 
 async function fetchWithProxy(
   url: string,
@@ -73,6 +74,8 @@ export async function fetchProblemData({
       return fetchProblemDataOjuz(id);
     case 'njudge':
       return fetchProblemDataNjudge(id);
+    case 'yosupo':
+      return fetchProblemDataYosupo(id);
     default:
       throw new Error(`platform '${platform}' is unimplemented`);
   }
@@ -475,7 +478,13 @@ function parseOjuzProblemData(
 
   const title = getTextNode(document('.problem-title h1'));
 
-  const statementURL = document('#problem-statement-pdf > a').attr('href');
+  // The statement is embedded through a PDF.js viewer, whose `file` query
+  // parameter holds the direct PDF URL.
+  const viewerURL = document('#problem-statement-pdf > iframe').attr('src');
+  const statementURL =
+    viewerURL === undefined
+      ? undefined
+      : (new URL(viewerURL, url).searchParams.get('file') ?? undefined);
 
   if (statementURL === undefined) {
     console.error(`No PDF statement found for Oj.uz ${problemID}`);

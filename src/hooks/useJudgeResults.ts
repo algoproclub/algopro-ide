@@ -1,6 +1,6 @@
 import { useEditorContext } from '../context/EditorContext';
 import JudgeResult, { JudgeResultStatuses } from '../types/judge';
-import { getJudgeStatusDescription } from '../editorUtils';
+import { getJudgeStatusDescription } from '../utils/editorUtils';
 
 export type SampleJudgeResults = Array<JudgeResult | null>;
 

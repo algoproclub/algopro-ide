@@ -66,6 +66,151 @@ export abstract class ResultFetcher {
   }
 }
 
+export class YosupoResultFetcher extends ResultFetcher {
+  private static codeToVerdict = {
+    CE: 'compile error',
+    AC: 'correct answer',
+    WA: 'wrong answer',
+    RE: 'runtime error',
+    TLE: 'time limit exceeded',
+    IE: 'internal error',
+    ICE: 'internal compile error',
+    Fail: 'Wrong author solution',
+    PE: 'presentation error',
+    WJ: 'running',
+  };
+
+  private submissionInfo: {
+    overview: {
+      problem_name: string;
+      status: string;
+      time: number;
+      memory: number;
+    };
+    compile_error?: string;
+    case_results?: { status: string; time: number; memory: number }[];
+  } | null = null;
+
+  constructor(readonly submissionData: SubmissionData) {
+    super(submissionData);
+  }
+
+  async initialize(): Promise<void> {
+    const { submissionID } = this.submissionData;
+    const response = await fetch(
+      `https://v3.api.judge.yosupo.jp/submissions/${encodeURIComponent(submissionID)}`
+    );
+    if (!response.ok) {
+      const message = `Yosupo: submission info could not be retrieved (${response.status}).`;
+      throw response.status === 404
+        ? new IncorrectDataError(message)
+        : new Error(message);
+    }
+    this.submissionInfo = await response.json();
+    if (
+      this.submissionInfo?.overview.problem_name !==
+      this.submissionData.problemID
+    ) {
+      throw new IncorrectDataError(
+        'Yosupo: submission problem does not match.'
+      );
+    }
+  }
+
+  private static isValidVerdict(
+    key: string
+  ): key is keyof typeof YosupoResultFetcher.codeToVerdict {
+    return Object.prototype.hasOwnProperty.call(
+      YosupoResultFetcher.codeToVerdict,
+      key
+    );
+  }
+
+  formatMemory(mem: number): string {
+    return `${(mem / 1048576).toFixed(2)} MiB`;
+  }
+
+  getLink(): string | null {
+    return `https://judge.yosupo.jp/submission/${this.submissionData.submissionID}`;
+  }
+
+  getMemory(): string | null {
+    const mem = this.submissionInfo?.overview?.memory;
+    return mem != undefined && mem >= 0 ? this.formatMemory(mem) : null;
+  }
+
+  getMessage(): string {
+    const code = this.submissionInfo?.overview?.status;
+    if (!code || !YosupoResultFetcher.isValidVerdict(code)) {
+      return 'running';
+    }
+    return YosupoResultFetcher.codeToVerdict[code];
+  }
+
+  getOutput(): string | null {
+    const error = this.submissionInfo?.compile_error;
+    if (!error) {
+      return null;
+    }
+    return Buffer.from(error, 'base64').toString('utf8');
+  }
+
+  getStatusCode(): StatusCode {
+    if (this.getMessage() === 'running') {
+      return 'working';
+    }
+    return 'resolved';
+  }
+
+  getStatusText(): string | null {
+    return this.getStatusCode() === 'working'
+      ? 'status-working'
+      : 'status-done';
+  }
+
+  getTime(): string | null {
+    const time = this.submissionInfo?.overview?.time;
+    return time != undefined && time >= 0
+      ? Math.round(time * 1000) + ' ms'
+      : null;
+  }
+
+  getTestCaseNum(): number {
+    return this.submissionInfo?.case_results?.length ?? 0;
+  }
+
+  getTestCaseTitle(n: number): string {
+    const code = this.submissionInfo?.case_results?.[n]?.status;
+    if (code === '-') {
+      return 'did not run';
+    }
+    if (!code || !YosupoResultFetcher.isValidVerdict(code)) {
+      return 'running';
+    }
+    return YosupoResultFetcher.codeToVerdict[code];
+  }
+  getTestCaseSymbol(n: number): string {
+    const verdict = this.getTestCaseTitle(n);
+    if (verdict === 'correct answer') return '✓';
+    if (verdict === 'did not run') return '?';
+    return 'x';
+  }
+  getTestCaseTime(n: number): string | null {
+    const result = this.submissionInfo?.case_results?.[n];
+    if (result?.status === '-') return null;
+    const time = result?.time;
+    return time != undefined && time >= 0
+      ? Math.round(time * 1000) + ' ms'
+      : null;
+  }
+  getTestCaseMemory(n: number): string | null {
+    const result = this.submissionInfo?.case_results?.[n];
+    if (result?.status === '-') return null;
+    const mem = result?.memory;
+    return mem != undefined && mem >= 0 ? this.formatMemory(mem) : null;
+  }
+}
+
 export class NJudgeResultFetcher extends ResultFetcher {
   private document?: Document;
   private summary: Element | null = null;
@@ -235,7 +380,9 @@ export class OjuzResultFetcher extends ResultFetcher {
     const { submissionID } = this.submissionData;
 
     const url = `https://oj.uz/submission/${submissionID}`;
-    const resp = await fetch(url);
+    const resp = await fetch(url, {
+      headers: { Cookie: this.submissionData.sessionCookie ?? '' },
+    });
     if (resp.status !== 200) {
       const errorMessage = `Oj.uz: response status is not 200; url: ${url}; response status: ${resp.status}`;
       throw resp.status === 404
@@ -264,7 +411,9 @@ export class OjuzResultFetcher extends ResultFetcher {
   async fetchSubtaskInfo(subtask: number): Promise<string[][]> {
     const url = `https://oj.uz/submission/${this.submissionData.submissionID}/subtask-result/${subtask}`;
 
-    const resp = await fetch(url);
+    const resp = await fetch(url, {
+      headers: { Cookie: this.submissionData.sessionCookie ?? '' },
+    });
     if (resp.status !== 200) {
       const errorMessage = `Oj.uz: subtask result response status is not 200; url: ${url}; response status: ${resp.status}`;
       throw resp.status === 404

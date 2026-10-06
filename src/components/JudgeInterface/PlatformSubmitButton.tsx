@@ -9,6 +9,7 @@ import { ProblemSolution, SubmissionData } from '../../types/problem';
 import { useUserContext } from '../../context/UserContext';
 import LoadResultsModal from './LoadResultsModal';
 import { problemAtom } from '../../atoms/workspaceUI';
+import { buildYosupoUrl } from '../../scripts/problemUtils';
 
 const submitProblemSolution = httpsCallable<ProblemSolution, SubmissionData>(
   getFunctions(undefined, 'europe-west1'),
@@ -53,6 +54,9 @@ export const GenericSubmitButton = ({
       }
       if (platform === 'cses') {
         submitLink = `https://cses.fi/problemset/submit/${problemID}/`;
+      }
+      if (platform === 'yosupo') {
+        submitLink = buildYosupoUrl(problemID);
       }
       return submitLink;
     };

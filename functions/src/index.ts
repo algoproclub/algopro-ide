@@ -17,6 +17,7 @@ import {
   CSESResultFetcher,
   getCFRequestURL,
   NJudgeResultFetcher,
+  YosupoResultFetcher,
   OjuzResultFetcher,
   PlanetsSubmission,
   planetsSubmissionToStatusData,
@@ -44,11 +45,11 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { randomUUID } from 'crypto';
 import {
   AtCoderSubmitter,
-  CFSubmitter,
   CSESSubmitter,
   NjudgeSubmitter,
   OjuzSubmitter,
   SPOJSubmitter,
+  YosupoSubmitter,
   Submitter,
 } from './submit';
 import { JSDOM } from 'jsdom';
@@ -83,7 +84,7 @@ export const submitproblemsolution = onCall<
   ProblemSolution,
   Promise<ClientSubmissionData>
 >(
-  { region: 'europe-west1', maxInstances: 1, concurrency: 1 },
+  { region: 'europe-west1', cpu: 1, concurrency: 10, maxInstances: 5 },
   async request => {
     const problemSolution = request.data;
     const userID = request.auth?.uid;
@@ -108,8 +109,16 @@ export const submitproblemsolution = onCall<
     let submitter: Submitter;
     switch (platform) {
       case 'codeforces':
-        submitter = new CFSubmitter();
-        break;
+        // Codeforces does not return the submission ID, so CFSubmitter looks
+        // for the UUID in the account's newest submission. With concurrent
+        // requests on the same account, a newer submission hides the older one
+        // and its lookup times out. Before re-enabling automatic submission,
+        // make CFSubmitter check the UUID in the account's recent submissions
+        // of the same problem instead of only the newest one.
+        throw new HttpsError(
+          'failed-precondition',
+          'Automatic submission is not supported for Codeforces.'
+        );
       case 'atcoder':
         submitter = new AtCoderSubmitter();
         break;
@@ -126,6 +135,9 @@ export const submitproblemsolution = onCall<
         break;
       case 'njudge':
         submitter = new NjudgeSubmitter();
+        break;
+      case 'yosupo':
+        submitter = new YosupoSubmitter();
         break;
       default:
         throw new HttpsError(
@@ -423,8 +435,12 @@ const accountData: { [key in Platform]: AccountData } = {
     sessionCookie: async () =>
       (await db.ref('credentials/spoj/0/cookie').get()).val(),
   },
-  ojuz: {},
+  ojuz: {
+    sessionCookie: async () =>
+      (await db.ref('credentials/ojuz/0/cookie').get()).val(),
+  },
   njudge: {},
+  yosupo: {},
 };
 
 const updateTournamentResult = async (
@@ -564,6 +580,8 @@ const updateResultNonCF = async (submissionData: SubmissionData) => {
     fetcher = new OjuzResultFetcher(submissionData);
   } else if (submissionData.platform === 'njudge') {
     fetcher = new NJudgeResultFetcher(submissionData);
+  } else if (submissionData.platform === 'yosupo') {
+    fetcher = new YosupoResultFetcher(submissionData);
   } else {
     throw new Error(`invalid platform name (${submissionData.platform})`);
   }
@@ -656,7 +674,14 @@ const updateResults = async (pending: PendingSubmissions) => {
     {}
   );
   const promises: Promise<void>[] = [];
-  for (const platform of ['cses', 'atcoder', 'spoj', 'ojuz', 'njudge']) {
+  for (const platform of [
+    'cses',
+    'atcoder',
+    'spoj',
+    'ojuz',
+    'njudge',
+    'yosupo',
+  ]) {
     pendingByPlatform[platform]?.forEach(obj => {
       promises.push(updateResultNonCF(obj));
     });

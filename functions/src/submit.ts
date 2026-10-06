@@ -500,9 +500,15 @@ export class OjuzSubmitter extends Submitter {
       }
     );
 
-    const id = (await response.json()).submissionId;
+    const text = await response.text();
+    let id;
+    try {
+      id = JSON.parse(text).submissionId;
+    } catch {}
     if (!id) {
-      throw new Error('submission failed, id not found');
+      throw new Error(
+        `submission failed, id not found (${response.status} ${response.url}): ${text.slice(0, 500)}`
+      );
     }
 
     return {
@@ -582,6 +588,47 @@ export class NjudgeSubmitter extends Submitter {
       id,
       username: this.username,
       platform: 'njudge',
+    } as const;
+  }
+}
+
+export class YosupoSubmitter extends Submitter {
+  platformName = 'yosupo';
+
+  async login(_db: Database): Promise<void> {
+    // Anonymous submissions do not need stored platform credentials.
+  }
+
+  async loginWith(_account: unknown): Promise<boolean> {
+    // Yosupo does not require login
+    return true;
+  }
+
+  async submit({ problemID, sourceCode, language }: ProblemSolution) {
+    const response = await fetch('https://v3.api.judge.yosupo.jp/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lang: {
+          cpp: 'cpp', // C++23
+          py: 'python3',
+          java: 'java',
+        }[language],
+        source: sourceCode,
+        problem: problemID,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`Yosupo: submission failed (${response.status}).`);
+    }
+    const { id } = (await response.json()) as { id: number };
+    if (!Number.isSafeInteger(id) || id < 0) {
+      throw new Error('Yosupo: submission ID is missing or invalid.');
+    }
+    return {
+      id: id.toString(),
+      username: null,
+      platform: 'yosupo',
     } as const;
   }
 }
