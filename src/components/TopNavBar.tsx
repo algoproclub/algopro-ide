@@ -8,7 +8,7 @@ import {
 import * as SolidIcons from '@heroicons/react/24/solid';
 import * as OutlineIcons from '@heroicons/react/24/outline';
 import { SettingsMenu } from './NavBar/SettingsMenu';
-import ProfileSettings from './settings/ProfileSettings';
+import LazyProfileSettings from './settings/LazyProfileSettings';
 import React, { useState } from 'react';
 import Logo from './Logo';
 
@@ -157,7 +157,7 @@ const NavLinks = ({
 export const TopNavBar = (): JSX.Element => {
   const router = useRouter();
   const { userRole, userData, registered } = useNullableUserContext();
-  const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false);
+  const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState<boolean>();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Don't show on editor pages (they have their own NavBar)
@@ -243,10 +243,12 @@ export const TopNavBar = (): JSX.Element => {
         </div>
       )}
 
-      <ProfileSettings
-        isOpen={isProfileSettingsOpen}
-        onClose={() => setIsProfileSettingsOpen(false)}
-      />
+      {isProfileSettingsOpen !== undefined && (
+        <LazyProfileSettings
+          isOpen={isProfileSettingsOpen}
+          onClose={() => setIsProfileSettingsOpen(false)}
+        />
+      )}
     </nav>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MinusIcon, PlusIcon } from '@heroicons/react/20/solid';
 import { Combobox } from '@headlessui/react';
+import Link from 'next/link';
 import Fuse from 'fuse.js';
 import { useNullableUserContext } from '../../context/UserContext';
 import {
@@ -205,13 +206,29 @@ export default function GroupMemberEditor({
       <header className="flex items-center justify-between border-b border-line px-3 py-2.5">
         <div>
           <h1 className="font-semibold">Members</h1>
-          <p className="text-sm text-content-muted">
-            {pendingChangeCount
-              ? `${pendingChangeCount} unsaved change${pendingChangeCount === 1 ? '' : 's'}`
-              : 'Manage this group’s students.'}
-          </p>
+          <div className="flex min-h-5 items-center gap-1.5">
+            <p className="text-sm text-content-muted">
+              Manage this group’s students.
+            </p>
+            <span
+              className={`inline-flex min-w-28 justify-center rounded-full bg-status-warning-surface px-2 py-0.5 text-xs font-medium text-status-warning-content ${
+                pendingChangeCount ? '' : 'invisible'
+              }`}
+            >
+              {pendingChangeCount} unsaved change
+              {pendingChangeCount === 1 ? '' : 's'}
+            </span>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
+          <button
+            type="button"
+            className="ui-button-primary px-4 py-2"
+            onClick={saveMemberships}
+            disabled={!pendingChangeCount || isSaving}
+          >
+            {isSaving ? 'Saving…' : 'Save changes'}
+          </button>
           <RefreshButton
             title={
               pendingChangeCount
@@ -306,7 +323,12 @@ export default function GroupMemberEditor({
         {listStudents.map(data => (
           <div key={data.id} className="flex items-center justify-between">
             <div className="min-w-0 p-4">
-              <div className="truncate">{data.name}</div>
+              <Link
+                href={`/user/${data.id}`}
+                className="block truncate hover:text-accent-hover hover:underline"
+              >
+                {data.name}
+              </Link>
               {data.email && (
                 <div className="truncate text-sm text-content-muted">
                   {data.email}
