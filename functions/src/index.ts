@@ -360,7 +360,7 @@ const submitToPlanets = async (
   userID: string
 ): Promise<ClientSubmissionData> => {
   const submission = await registerSubmission(fileID, submissionID, null, {
-    poll: false,
+    polled: false,
   });
   try {
     const problem = await planetsFirestore.doc(`problems/${problemID}`).get();
@@ -380,11 +380,16 @@ const submitToPlanets = async (
     });
   } catch (error) {
     logger.error('Failed to create Planets submission', error);
-    await updateStatusData(fileID, submission, {
-      statusCode: 'error',
-      statusText: 'status-done',
-      message: Errors.UNKNOWN_ERROR,
-    });
+    await updateStatusData(
+      fileID,
+      submission,
+      {
+        statusCode: 'error',
+        statusText: 'status-done',
+        message: Errors.UNKNOWN_ERROR,
+      },
+      { polled: false }
+    );
     throw new HttpsError('internal', 'Failed to create the submission.');
   }
   return { id: submissionID, username: null, platform: 'planets' };
@@ -494,7 +499,7 @@ const updateStatusData = async (
   id: string,
   submission: PendingSubmission,
   statusData: Partial<StatusData>,
-  { keepFinalStatus = false } = {}
+  { keepFinalStatus = false, polled = true } = {}
 ) => {
   if (isFinalStatus(statusData)) {
     await db
@@ -506,10 +511,12 @@ const updateStatusData = async (
         })
       );
 
+    const queueEntry = polled
+      ? `submissionQueue/pending/${id}`
+      : `submissionQueue/unpolled/${id}/${submission.submissionID}`;
     const updates: { [key: string]: Partial<StatusData> | boolean | null } = {
       [`submissions/${id}/statusData`]: statusData,
-      [`submissionQueue/pending/${id}`]: null,
-      [`submissionQueue/unpolled/${id}/${submission.submissionID}`]: null,
+      [queueEntry]: null,
     };
     if (statusData.message === 'correct answer') {
       updates[`files/${id}/solvedStatus/solved`] = true;
@@ -710,7 +717,7 @@ const registerSubmission = async (
   fileID: string,
   submissionID: string,
   username: string | null,
-  { poll = true } = {}
+  { polled = true } = {}
 ) => {
   const defaultStatusData: StatusData = {
     statusCode: 'starting',
@@ -741,14 +748,13 @@ const registerSubmission = async (
     username,
     tournamentID,
   };
+  const queueEntry = polled
+    ? `submissionQueue/pending/${fileID}`
+    : `submissionQueue/unpolled/${fileID}/${submissionID}`;
   await db.ref().update({
     [`submissions/${fileID}/statusData`]: defaultStatusData,
     [`submissions/${fileID}/submissionTime`]: submissionTime,
-    [`submissionQueue/pending/${fileID}`]: poll ? submission : null,
-    // Not polled, but timed out by `expireUnpolledSubmissions`.
-    [`submissionQueue/unpolled/${fileID}`]: poll
-      ? null
-      : { [submissionID]: submission },
+    [queueEntry]: submission,
   });
 
   if (tournamentID) {
