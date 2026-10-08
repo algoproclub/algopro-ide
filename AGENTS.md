@@ -2,7 +2,7 @@
 
 This file applies to the entire repository. More specific AGENTS.md files may override it within individual services.
 
-Treat this as a living document. When a task reveals a durable, non-obvious project convention, or something that contradicts these instructions, mention a focused documentation update to the developer. Do not add temporary branch details or one-off failures.
+Treat this file as a living document. Suggest updates to the developer whenever a change alters documented implementation details, resolves an instruction conflict, or establishes a durable, non-obvious convention. Exclude ephemeral branch context, temporary workarounds, and one-off errors.
 
 Read README.md for local development setup, environment variables, and architecture details.
 
@@ -70,6 +70,7 @@ Do NOT attempt to migrate Pages Router code to the App Router unless explicitly 
 - Do not introduce wrappers solely to silence React or ESLint warnings when they reduce clarity without improving correctness.
 - Preserve distinct loading, empty, and error states. Avoid remounting stable layout or table shells while their data changes.
 - Language server backends implement `LspConnection` in `src/components/editor/lsp/` and must work with both the Monaco and the CodeMirror client. Keep editor-specific behavior in the editor adapters.
+- Treat client-provided data as untrusted: never assume user identity without authentication or file access without authorization checks. Disallow unvalidated strings as document paths or database keys in Firestore and Realtime Database.
 
 ## UI conventions
 
