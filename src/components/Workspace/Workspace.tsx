@@ -49,7 +49,7 @@ import { EditorHandle, isMonacoEditorHandle } from '../editor/editor-types';
 import { Translation } from '../../types/problem';
 import Solutions from '../JudgeInterface/Solutions';
 
-const defaultDesktopPanelSizes = { code: 60, sidebar: 10 };
+const defaultDesktopPanelSizes = { code: 60, sidebar: 10, ioCollapsed: false };
 const defaultInputOutputLayout = { input: 67, output: 33 };
 const minimumInputOutputSize = 10;
 const minimumSidebarSize = 8;
@@ -95,14 +95,16 @@ function getDesktopLayout(
   showSidebar: boolean
 ): Layout {
   if (!showSidebar) {
-    return { code: sizes.code, io: 100 - sizes.code };
+    const code = sizes.ioCollapsed ? 100 : sizes.code;
+    return { code, io: 100 - code };
   }
 
+  const minimumIOSize = sizes.ioCollapsed ? 0 : minimumInputOutputSize;
   const sidebar = Math.max(
     minimumSidebarSize,
-    Math.min(sizes.sidebar, 100 - sizes.code - minimumInputOutputSize)
+    Math.min(sizes.sidebar, 100 - sizes.code - minimumIOSize)
   );
-  const code = Math.min(sizes.code, 100 - sidebar - minimumInputOutputSize);
+  const code = Math.min(sizes.code, 100 - sidebar - minimumIOSize);
 
   return { code, io: 100 - code - sidebar, sidebar };
 }
@@ -435,6 +437,7 @@ function WorkspacePanels({
         desktopPanelSizesRef.current = {
           code: sizes.code,
           sidebar: sizes.sidebar,
+          ioCollapsed: sizes.ioCollapsed === true,
         };
       }
     } catch {
@@ -484,6 +487,7 @@ function WorkspacePanels({
     desktopPanelSizesRef.current = {
       code: layout.code,
       sidebar: layout.sidebar ?? desktopPanelSizesRef.current.sidebar,
+      ioCollapsed: layout.io === 0,
     };
     layoutStorage.setItem(
       desktopLayoutStorageKey,
@@ -501,6 +505,7 @@ function WorkspacePanels({
     >
       <Panel
         id="code"
+        collapsible={isDesktop}
         minSize={isDesktop ? '10%' : 0}
         hidden={!isDesktop && mobileActiveTab !== 'code'}
         className="h-full min-h-0"
@@ -510,6 +515,7 @@ function WorkspacePanels({
       {isDesktop && <PanelResizeHandle orientation="horizontal" />}
       <Panel
         id="io"
+        collapsible={isDesktop}
         minSize={isDesktop ? '10%' : 0}
         hidden={!isDesktop && mobileActiveTab !== 'io'}
         className="h-full min-h-0"
