@@ -1,16 +1,22 @@
 import { useState } from 'react';
 
+/**
+ * Resets the selection when the scope changes and clears it if it is no longer
+ * valid. Defaults to the only valid ID, or to a valid `preferredID` when there
+ * are multiple options.
+ */
 export const useScopedSelection = (
   scopeKey: string | null,
   validIDs: string[],
-  preferredID?: string | null
+  preferredID?: string
 ) => {
   const fallbackID =
-    preferredID === null
-      ? null
+    validIDs.length === 1
+      ? validIDs[0]
       : preferredID && validIDs.includes(preferredID)
         ? preferredID
-        : (validIDs[0] ?? null);
+        : null;
+
   const [selection, setSelection] = useState(() => ({
     scopeKey,
     selectedID: fallbackID,
