@@ -48,6 +48,13 @@ import { useUserContext } from '../../context/UserContext';
 import { EditorHandle, isMonacoEditorHandle } from '../editor/editor-types';
 import { Translation } from '../../types/problem';
 import Solutions from '../JudgeInterface/Solutions';
+import dynamic from 'next/dynamic';
+import {
+  useWorkspaceLaunchContext,
+  useWorkspaceClassesResource,
+} from '../../context/WorkspaceLaunchContext';
+
+const ClassNotes = dynamic(() => import('../ClassNotes'), { ssr: false });
 
 const defaultDesktopPanelSizes = { code: 60, sidebar: 10, ioCollapsed: false };
 const defaultInputOutputLayout = { input: 67, output: 33 };
@@ -271,6 +278,11 @@ function InputPane({
   const problem =
     loadedProblem?.id === fileData.problem?.id ? loadedProblem : undefined;
   const hints = problem ? getHints(translations, language) : [];
+  const classContext = useWorkspaceLaunchContext();
+  const classesResource = useWorkspaceClassesResource();
+  const groupClass = classesResource?.data.find(
+    groupClass => groupClass.id === classContext?.class
+  );
   const hasSolutions = useAtomValue(hasSolutionsAtom);
   const showSolutions =
     solved && (hasSolutions || problem?.platform === 'planets');
@@ -289,6 +301,23 @@ function InputPane({
         {problem && (
           <TabBar.Item id="judge" label="Task Overview">
             <TaskOverviewPanel handleRunCode={handleRunCode} />
+          </TabBar.Item>
+        )}
+        {classContext && (
+          <TabBar.Item id="class-notes" label="Class Notes">
+            {groupClass ? (
+              <ClassNotes
+                groupID={classContext.group}
+                classID={classContext.class}
+                creationTime={groupClass.data.creationTime}
+              />
+            ) : (
+              <p className="p-4 text-sm text-content-muted">
+                {classesResource?.status === 'loading'
+                  ? 'Loading class notes…'
+                  : 'This class could not be loaded. Reload the page to try again.'}
+              </p>
+            )}
           </TabBar.Item>
         )}
         {hints.length > 0 && (

@@ -211,7 +211,9 @@ function EditorPage() {
 
     if (inputTab === 'input') {
       if (getInputEditorValue) runWithInput(getInputEditorValue());
-    } else if (['judge', 'hints', 'solutions'].includes(inputTab)) {
+    } else if (
+      ['judge', 'hints', 'solutions', 'class-notes'].includes(inputTab)
+    ) {
       runAllSamples();
     } else {
       const samples = problem?.samples;

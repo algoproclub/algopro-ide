@@ -221,6 +221,7 @@ function useEditableGroupClasses(groupID: string | null) {
     hasUnsavedChanges: unsavedClassIDs.size > 0,
     dirtyClassID: unsavedClassIDs.values().next().value ?? null,
     isClassDirty: (id: string) => unsavedClassIDs.has(id),
+    isClassSaved: (id: string) => activeState.savedClasses[id] !== undefined,
     isReady,
     status: loadedClasses.status,
     isRefreshing: loadedClasses.isRefreshing,
@@ -399,6 +400,7 @@ const PageContent = () => {
   const [newClassID, setNewClassID] = useState('');
   const [groupSearchQuery, setGroupSearchQuery] = useState('');
   const [hasUnsavedMemberChanges, setHasUnsavedMemberChanges] = useState(false);
+  const [hasUnsyncedNotes, setHasUnsyncedNotes] = useState(false);
   const schoolsResource = useManagedSchools(userRole, schoolsRefreshNonce);
   const schools = schoolsResource.data;
   const [listedSchoolID, setSchoolID] = useScopedSelection(
@@ -433,7 +435,9 @@ const PageContent = () => {
     : undefined;
   const groupClasses = useEditableGroupClasses(resolvedGroupID);
   const navigationGuard = useUnsavedChangesWarning(
-    groupClasses.hasUnsavedChanges || hasUnsavedMemberChanges,
+    groupClasses.hasUnsavedChanges ||
+      hasUnsavedMemberChanges ||
+      hasUnsyncedNotes,
     groupClasses.discardAllClassChanges
   );
   const [activeClassID, setActiveClassID] = useScopedSelection(
@@ -503,6 +507,10 @@ const PageContent = () => {
   const requestClassAction = (action: PendingClassAction) => {
     if (groupClasses.mutatingClassID || groupClasses.isRefreshing) return;
     if (action.type === 'select' && action.classID === activeClassID) return;
+    if (hasUnsyncedNotes) {
+      alert('Wait for class notes to finish syncing before switching classes.');
+      return;
+    }
     if (groupClasses.dirtyClassID)
       setClassDialog({ type: 'discardClassChanges', action });
     else performClassAction(action);
@@ -692,6 +700,8 @@ const PageContent = () => {
                   selectedClassID={activeClassID}
                   classes={groupClasses.classes}
                   isClassDirty={groupClasses.isClassDirty}
+                  isClassSaved={groupClasses.isClassSaved}
+                  onNotesUnsyncedChanges={setHasUnsyncedNotes}
                   onUpdateClass={groupClasses.updateClass}
                   onSaveClass={groupClasses.saveClass}
                   onDiscardClassChanges={groupClasses.discardClassChanges}
