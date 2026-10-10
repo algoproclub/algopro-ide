@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { getDefaultStore } from 'jotai/vanilla';
 import type { Platform, ProblemData, URLProblem } from '../../types/problem';
-import { EditTextAreaModal } from '../EditTextModal';
+import { EditModal, EditTextAreaModal } from '../EditTextModal';
+import { get, getDatabase, ref } from 'firebase/database';
+import { parseFileID } from '../../scripts/getTaskRef';
 import ManualProblemDataModal from '../ManualProblemDataModal';
 import Tooltip from '../Tooltip';
 import {
@@ -104,6 +106,7 @@ const TaskAdder = ({
 }) => {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isPasteModalOpen, setIsPasteModalOpen] = useState(false);
+  const [isFileModalOpen, setIsFileModalOpen] = useState(false);
   const [pastedText, setPastedText] = useState('');
   const [pendingManualEntry, setPendingManualEntry] = useState<{
     platform: Platform;
@@ -182,6 +185,58 @@ const TaskAdder = ({
 
   return (
     <div className="relative">
+      <EditModal<string>
+        isOpen={isFileModalOpen}
+        title="Add file"
+        value=""
+        saveLabel="Add file"
+        onClose={() => setIsFileModalOpen(false)}
+        onSave={async value => {
+          if (disabled) return;
+          const fileID = parseFileID(value);
+          if (!fileID)
+            throw new Error('Enter a file ID or a file URL from this IDE.');
+          const requestID = ++pasteRequestID.current;
+          const settings = await get(
+            ref(getDatabase(), `files/-${fileID}/settings`)
+          );
+          if (requestID !== pasteRequestID.current) return;
+          if (!settings.exists()) throw new Error('This file does not exist.');
+          const workspaceName: unknown = settings.child('workspaceName').val();
+          onAddTasks([
+            {
+              id: fileID,
+              platform: null,
+              url: new URL(
+                `/${fileID}`,
+                process.env.NEXT_PUBLIC_BASE_URL
+              ).toString(),
+              title:
+                typeof workspaceName === 'string' && workspaceName.trim()
+                  ? workspaceName
+                  : `File ${fileID}`,
+            },
+          ]);
+          setIsFileModalOpen(false);
+        }}
+        renderEditor={(value, setValue) => (
+          <div className="space-y-2">
+            <label className="block text-sm">
+              File ID or IDE URL
+              <input
+                className="mt-1 w-full rounded-md border border-line bg-input px-3 py-2 text-sm text-content outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                value={value}
+                onChange={event => setValue(event.target.value)}
+                required
+              />
+            </label>
+            <p className="text-sm text-content-muted">
+              Links to the original file. Sharing permissions set by the owner
+              are unchanged.
+            </p>
+          </div>
+        )}
+      />
       <EditTextAreaModal
         isOpen={isPasteModalOpen}
         text={pastedText}
@@ -220,6 +275,14 @@ const TaskAdder = ({
           disabled={disabled}
         >
           Add from library
+        </button>
+        <button
+          type="button"
+          className="ui-button-secondary"
+          onClick={() => setIsFileModalOpen(true)}
+          disabled={disabled}
+        >
+          Add file
         </button>
       </div>
       {isLibraryOpen && !disabled && (
@@ -291,7 +354,7 @@ const SortableTaskRow = ({
         </div>
       </div>
       <div className="flex shrink-0 gap-1">
-        <Tooltip label="Open original problem">
+        <Tooltip label={task.platform ? 'Open original problem' : 'Open file'}>
           <Link
             href={task.url}
             target="_blank"
@@ -326,7 +389,9 @@ const SortableTaskRow = ({
             )}
           </>
         )}
-        <Tooltip label="Delete task">
+        <Tooltip
+          label={task.platform ? 'Delete task' : 'Remove file from class'}
+        >
           <button
             type="button"
             className="ui-icon-button"
@@ -405,7 +470,7 @@ const ClassEditor = ({
     const text = data.tasks
       .map(
         (task, index) =>
-          `${prefix}.${index + 1}. ${task.title ?? '-'}\n${process.env.NEXT_PUBLIC_BASE_URL}/solve/${task.platform}/${task.id}`
+          `${prefix}.${index + 1}. ${task.title ?? '-'}\n${task.platform ? `${process.env.NEXT_PUBLIC_BASE_URL}/solve/${task.platform}/${task.id}` : task.url}`
       )
       .join('\n\n');
     navigator.clipboard

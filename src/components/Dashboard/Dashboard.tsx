@@ -32,7 +32,11 @@ import CodeSizeLabel from '../TaskStatus/CodeSizeLabel';
 import TaskStatusIndicator from '../TaskStatus/TaskStatusIndicator';
 import { useDashboardClassroom } from '../../hooks/useDashboardClassroom';
 import { useStudentTaskStatuses } from '../../hooks/useStudentTaskStatuses';
-import { getClassContext, getTaskRef } from '../../scripts/getTaskRef';
+import {
+  getClassContext,
+  getTaskRef,
+  parseFileID,
+} from '../../scripts/getTaskRef';
 
 const db = getDatabase();
 
@@ -152,6 +156,9 @@ const ClassesTab = () => {
     refresh,
   } = useDashboardClassroom({ userID, userRole });
   const selectedGroup = groups.find(group => group.id === groupID);
+  const classItems =
+    classesResource.data.find(groupClass => groupClass.id === classID)?.data
+      .tasks ?? [];
   const solutions = useStudentTaskStatuses({
     schoolID: selectedGroup?.schoolID ?? null,
     groupID,
@@ -230,7 +237,7 @@ const ClassesTab = () => {
           <thead className="border-b border-line bg-panel-muted text-content">
             <tr>
               <th className="ui-table-heading w-10 sm:w-12">#</th>
-              <th className="ui-table-heading">Problem</th>
+              <th className="ui-table-heading">Task / file</th>
               <th className="ui-table-heading hidden w-[18rem] xl:table-cell">
                 Source
               </th>
@@ -244,8 +251,50 @@ const ClassesTab = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-line-muted bg-canvas text-content">
-            {tasks.map((task, index) => {
-              if (!classContext) return null;
+            {classItems.map((item, index) => {
+              const fileID =
+                item.platform === null ? parseFileID(item.url) : null;
+              if (fileID) {
+                return (
+                  <tr
+                    key={`file:${fileID}`}
+                    className="group relative transition-colors hover:bg-panel-muted focus-within:bg-panel-muted active:bg-surface-hover"
+                  >
+                    <td className="whitespace-nowrap text-sm tabular-nums theme-text-muted">
+                      <Link
+                        href={getTaskRef({ id: fileID })}
+                        className="ui-focus absolute inset-0 z-0 focus-visible:ring-inset"
+                        target="_blank"
+                        prefetch={false}
+                      >
+                        <span className="sr-only">
+                          Open file {item.title ?? fileID}
+                        </span>
+                      </Link>
+                      {index + 1}.
+                    </td>
+                    <td className="min-w-0">
+                      <span className="block truncate font-medium theme-text">
+                        {item.title ?? `File ${fileID}`}
+                      </span>
+                      <span className="mt-1 block text-xs theme-text-muted xl:hidden">
+                        IDE file
+                      </span>
+                    </td>
+                    <td className="hidden theme-text-muted xl:table-cell">
+                      IDE file
+                    </td>
+                    <td className="theme-text-muted">—</td>
+                    <td className="hidden theme-text-muted xl:table-cell">—</td>
+                    <td className="hidden text-right theme-text-muted xl:table-cell">
+                      —
+                    </td>
+                  </tr>
+                );
+              }
+              // Task keys retain the original class-list index, including linked files.
+              const task = tasks.find(task => task.key.endsWith(`:${index}`));
+              if (!task || !classContext) return null;
               const solutionState = solutions[task.key] ?? {
                 status: 'loading',
               };
