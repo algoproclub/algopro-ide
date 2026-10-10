@@ -40,7 +40,7 @@ var (
 	BodyLimit           = 100000 * memory.Byte
 	PCHCacheDir         = "/tmp/execute-server/pch"
 	CompileCacheDir     = "/tmp/execute-server/compile-cache"
-	CompileCacheMaxSize = int64(memory.GB)
+	CompileCacheMaxSize = int64(256 * memory.MiB)
 
 	CompileArtifactLimit = int64(64 * memory.MiB)
 	CompilerOutputLimit  = int64(64 * memory.KiB)
