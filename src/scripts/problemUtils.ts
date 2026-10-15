@@ -6,6 +6,35 @@ export const CODEFORCES_TITLE_REGEX = /\w+\. (.*)/;
 
 export const ATCODER_PROBLEM_REGEX = /(\w+)_(\w+)/;
 
+type SubmissionMode = 'manual' | 'automatic';
+
+const platformSubmissionSupport: Record<Platform, SubmissionMode | 'both'> = {
+  // Automatic submission is temporarily disabled for Codeforces and AtCoder until we manage to fix it.
+  codeforces: 'manual',
+  atcoder: 'manual',
+
+  // Planets problems can only be submitted through the IDE.
+  planets: 'automatic',
+
+  cses: 'both',
+  ojuz: 'both',
+  spoj: 'both',
+  njudge: 'both',
+  yosupo: 'both',
+
+  // Not used
+  usaco: 'both',
+};
+
+export function getSubmissionMode(
+  platform: Platform,
+  preferManual: boolean
+): SubmissionMode {
+  const support = platformSubmissionSupport[platform];
+  if (support !== 'both') return support;
+  return preferManual ? 'manual' : 'automatic';
+}
+
 // ---- URL builders ----
 
 export function buildCodeforcesUrl(problemID: string): string | null {
@@ -68,6 +97,31 @@ export function buildProblemUrl(
       return buildSpojUrl(problemID);
     case 'planets':
       return buildPlanetsUrl(problemID);
+    case 'ojuz':
+      return buildOjuzUrl(problemID);
+    case 'njudge':
+      return buildNjudgeUrl(problemID);
+    case 'yosupo':
+      return buildYosupoUrl(problemID);
+    default:
+      return null;
+  }
+}
+
+// Page where a solution for the problem can be submitted manually.
+export function buildSubmitUrl(
+  platform: Platform,
+  problemID: string
+): string | null {
+  switch (platform) {
+    case 'codeforces':
+      return `https://codeforces.com/problemset/submit?submittedProblemCode=${problemID.replace(/^gym/, '')}`;
+    case 'atcoder':
+      return `https://atcoder.jp/contests/${problemID.split('_')[0]}/tasks/${problemID}`;
+    case 'cses':
+      return `https://cses.fi/problemset/submit/${problemID}/`;
+    case 'spoj':
+      return `https://www.spoj.com/problems/${problemID}/`;
     case 'ojuz':
       return buildOjuzUrl(problemID);
     case 'njudge':
