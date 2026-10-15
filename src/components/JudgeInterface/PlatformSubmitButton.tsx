@@ -9,7 +9,7 @@ import { ProblemSolution, SubmissionData } from '../../types/problem';
 import { useUserContext } from '../../context/UserContext';
 import LoadResultsModal from './LoadResultsModal';
 import { problemAtom } from '../../atoms/workspaceUI';
-import { buildYosupoUrl } from '../../scripts/problemUtils';
+import { buildSubmitUrl, getSubmissionMode } from '../../scripts/problemUtils';
 
 const submitProblemSolution = httpsCallable<ProblemSolution, SubmissionData>(
   getFunctions(undefined, 'europe-west1'),
@@ -30,50 +30,13 @@ export const GenericSubmitButton = ({
   const getMainEditorValue = useAtomValue(mainEditorValueAtom)!;
 
   const handleSubmit = async () => {
-    const getSubmitLink = () => {
-      const platform = problem.platform;
-      const problemID = problem.id;
-      let submitLink = '';
-      if (platform === 'codeforces') {
-        let cfProblemID = problemID;
-        if (cfProblemID.startsWith('gym')) {
-          cfProblemID = problemID.replace('gym', '');
-        }
-        submitLink = `https://codeforces.com/problemset/submit?submittedProblemCode=${cfProblemID}`;
-      }
-      if (platform === 'njudge') {
-        submitLink = `https://njudge.hu/problemset/main/${problemID}/`;
-      }
-      if (platform === 'spoj') {
-        submitLink = `https://www.spoj.com/problems/${problemID}/`;
-      }
-      if (platform === 'atcoder') {
-        submitLink = `https://atcoder.jp/contests/${
-          problemID.split('_')[0]
-        }/tasks/${problemID}`;
-      }
-      if (platform === 'cses') {
-        submitLink = `https://cses.fi/problemset/submit/${problemID}/`;
-      }
-      if (platform === 'yosupo') {
-        submitLink = buildYosupoUrl(problemID);
-      }
-      return submitLink;
-    };
-    // Use only manual submission for codeforces and atcoder. This is temporary, should be reverted
-    // when we manage to fix automatic submission.
     if (
-      userData.manualSubmission ||
-      problem.platform === 'codeforces' ||
-      problem.platform === 'atcoder'
+      getSubmissionMode(problem.platform, userData.manualSubmission) ===
+      'manual'
     ) {
-      if (!['cses', 'planets'].includes(problem.platform)) {
-        const link = getSubmitLink();
-        window.open(link, '_blank');
-        setIsOpen(true);
-      } else {
-        alert(`This platform does not support manual submission.`);
-      }
+      const submitUrl = buildSubmitUrl(problem.platform, problem.id);
+      if (submitUrl) window.open(submitUrl, '_blank');
+      setIsOpen(true);
     } else {
       setStatusData({
         statusCode: 'starting',
