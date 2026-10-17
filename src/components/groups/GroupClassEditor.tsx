@@ -22,7 +22,7 @@ import type { GroupClassData } from '../../data/classroomMetadata';
 import RefreshButton from '../RefreshButton';
 import { problemLibraryAtom } from '../../atoms/problemLibrary';
 import type { ClassroomResourceStatus } from '../../hooks/useClassroomMetadata';
-import { Button } from '../Button';
+import { Button, buttonClassName } from '../Button';
 
 export type GroupClassUpdate =
   | GroupClassData
@@ -276,7 +276,12 @@ const SortableTaskRow = ({
             href={task.url}
             target="_blank"
             rel="noreferrer"
-            className="ui-icon-button"
+            className={buttonClassName({
+              variant: 'ghost',
+              size: 'sm',
+              iconOnly: true,
+              className: 'hover:border-line',
+            })}
           >
             <ArrowTopRightOnSquareIcon className="h-4 w-4" />
           </Link>
@@ -287,7 +292,12 @@ const SortableTaskRow = ({
               <Link
                 href={`/solve/${task.platform}/${task.id}`}
                 target="_blank"
-                className="ui-icon-button"
+                className={buttonClassName({
+                  variant: 'ghost',
+                  size: 'sm',
+                  iconOnly: true,
+                  className: 'hover:border-line',
+                })}
               >
                 <PlayIcon className="h-4 w-4" />
               </Link>
@@ -298,7 +308,12 @@ const SortableTaskRow = ({
                   href={`/edit/${task.platform}/${task.id}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="ui-icon-button"
+                  className={buttonClassName({
+                    variant: 'ghost',
+                    size: 'sm',
+                    iconOnly: true,
+                    className: 'hover:border-line',
+                  })}
                 >
                   <PencilSquareIcon className="h-4 w-4" />
                 </Link>

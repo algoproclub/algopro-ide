@@ -34,6 +34,7 @@ import TaskStatusIndicator from '../TaskStatus/TaskStatusIndicator';
 import { useDashboardClassroom } from '../../hooks/useDashboardClassroom';
 import { useStudentTaskStatuses } from '../../hooks/useStudentTaskStatuses';
 import { getClassContext, getTaskRef } from '../../scripts/getTaskRef';
+import { buttonClassName } from '../Button';
 
 const db = getDatabase();
 
@@ -74,7 +75,7 @@ const Pagination = ({
   return (
     <div className="flex items-center gap-2 border-t border-line bg-panel-muted px-4 py-3 text-sm text-content">
       <button
-        className="ui-button-secondary"
+        className={buttonClassName({ size: 'sm' })}
         disabled={previousPage === page}
         onClick={() => setPage(previousPage)}
       >
@@ -83,7 +84,7 @@ const Pagination = ({
       </button>
       <span className="px-2 theme-text-muted">{label}</span>
       <button
-        className="ui-button-secondary"
+        className={buttonClassName({ size: 'sm' })}
         disabled={nextPage === page}
         onClick={() => setPage(nextPage)}
       >
@@ -446,7 +447,10 @@ export default function Dashboard() {
             Pick up a class task or return to a recent file.
           </p>
         </div>
-        <Link href="/new" className="ui-button-primary">
+        <Link
+          href="/new"
+          className={buttonClassName({ variant: 'primary', size: 'sm' })}
+        >
           <PlusIcon className="h-4 w-4" aria-hidden="true" />
           Create New File
         </Link>

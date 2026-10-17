@@ -296,23 +296,6 @@ body,
   @apply outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-canvas;
 }
 
-.ui-button-primary,
-.ui-button-secondary {
-  @apply inline-flex items-center justify-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium shadow-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50;
-}
-
-.ui-button-primary {
-  @apply border-transparent bg-accent text-content-inverted enabled:hover:bg-accent-strong;
-}
-
-.ui-button-secondary {
-  @apply border-line bg-control text-content enabled:hover:border-line-strong enabled:hover:bg-surface-hover enabled:active:bg-surface-active;
-}
-
-.ui-icon-button {
-  @apply inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent text-content-secondary transition-colors outline-none hover:border-line hover:bg-surface-hover hover:text-content active:bg-surface-active focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40;
-}
-
 .workspace-toolbar-button {
   @apply inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-surface-raised px-2.5 text-sm font-medium text-content shadow-sm transition-colors outline-none hover:border-line-strong hover:bg-surface-hover active:bg-surface-active focus-visible:ring-2 focus-visible:ring-focus;
 }

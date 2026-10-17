@@ -7,7 +7,7 @@ import { getPlatformName } from '../../scripts/getPlatformName';
 import type { URLProblem } from '../../types/problem';
 import Tooltip from '../Tooltip';
 import ProblemLibraryRefreshButton from '../ProblemLibraryRefreshButton';
-import { Button } from '../Button';
+import { Button, buttonClassName } from '../Button';
 
 const TaskLibraryResults = ({
   queryText,
@@ -69,7 +69,12 @@ const TaskLibraryResults = ({
               href={task.url}
               target="_blank"
               rel="noreferrer"
-              className="ui-icon-button shrink-0"
+              className={buttonClassName({
+                variant: 'ghost',
+                size: 'sm',
+                iconOnly: true,
+                className: 'shrink-0 hover:border-line',
+              })}
             >
               <ArrowTopRightOnSquareIcon className="h-4 w-4" />
             </Link>

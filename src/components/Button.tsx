@@ -15,17 +15,18 @@ export type ButtonProps = React.ComponentPropsWithoutRef<'button'> & {
 const baseClasses =
   'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-1 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-50';
 
+// Unlike :enabled, :not(:disabled) also matches links.
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'border-transparent bg-accent text-content-inverted shadow-sm enabled:hover:bg-accent-strong enabled:active:bg-accent-strong',
+    'border-transparent bg-accent text-content-inverted shadow-sm [&:not(:disabled)]:hover:bg-accent-strong [&:not(:disabled)]:active:bg-accent-strong',
   secondary:
-    'border-line bg-control text-content shadow-sm enabled:hover:border-line-strong enabled:hover:bg-surface-hover enabled:active:bg-surface-active',
+    'border-line bg-control text-content shadow-sm [&:not(:disabled)]:hover:border-line-strong [&:not(:disabled)]:hover:bg-surface-hover [&:not(:disabled)]:active:bg-surface-active',
   danger:
-    'border-transparent bg-action-danger text-content-inverted shadow-sm enabled:hover:bg-action-danger-hover enabled:active:bg-action-danger-hover',
+    'border-transparent bg-action-danger text-content-inverted shadow-sm [&:not(:disabled)]:hover:bg-action-danger-hover [&:not(:disabled)]:active:bg-action-danger-hover',
   success:
-    'border-transparent bg-action-success text-content-inverted shadow-sm enabled:hover:bg-action-success-hover enabled:active:bg-action-success-hover',
+    'border-transparent bg-action-success text-content-inverted shadow-sm [&:not(:disabled)]:hover:bg-action-success-hover [&:not(:disabled)]:active:bg-action-success-hover',
   ghost:
-    'border-transparent text-content-secondary enabled:hover:bg-surface-hover enabled:hover:text-content enabled:active:bg-surface-active',
+    'border-transparent text-content-secondary [&:not(:disabled)]:hover:bg-surface-hover [&:not(:disabled)]:hover:text-content [&:not(:disabled)]:active:bg-surface-active',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -46,6 +47,21 @@ const iconSizeClasses: Record<ButtonSize, string> = {
   lg: 'h-5 w-5 shrink-0',
 };
 
+export const buttonClassName = ({
+  variant = 'secondary',
+  size = 'md',
+  iconOnly = false,
+  className,
+}: Pick<ButtonProps, 'variant' | 'size' | 'className'> & {
+  iconOnly?: boolean;
+} = {}): string =>
+  classNames(
+    baseClasses,
+    variantClasses[variant],
+    iconOnly ? iconOnlySizeClasses[size] : sizeClasses[size],
+    className
+  );
+
 export const Button = ({
   children,
   className,
@@ -63,12 +79,12 @@ export const Button = ({
   return (
     <button
       {...buttonProps}
-      className={classNames(
-        baseClasses,
-        variantClasses[variant],
-        isIconOnly ? iconOnlySizeClasses[size] : sizeClasses[size],
-        className
-      )}
+      className={buttonClassName({
+        variant,
+        size,
+        iconOnly: isIconOnly,
+        className,
+      })}
     >
       {iconPosition === 'start' && icon}
       {children}

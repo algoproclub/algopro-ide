@@ -7,7 +7,7 @@ import {
 import type { GroupInfo, School } from '../../data/classroomMetadata';
 import type { ClassroomResourceStatus } from '../../hooks/useClassroomMetadata';
 import Tooltip from '../Tooltip';
-import { Button } from '../Button';
+import { Button, buttonClassName } from '../Button';
 
 export default function GroupList({
   school,
@@ -77,7 +77,7 @@ export default function GroupList({
             <div className="flex shrink-0 gap-2">
               <button
                 type="button"
-                className="ui-button-secondary leading-none"
+                className={buttonClassName({ size: 'sm' })}
                 onClick={() => onSelectGroup(group.id)}
               >
                 Open
