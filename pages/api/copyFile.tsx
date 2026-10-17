@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { isFirebaseId } from '../../src/editorUtils';
+import { isFirebaseId } from '../../src/utils/editorUtils';
 import colorFromUserId from '../../src/scripts/colorFromUserId';
 import { getAuth } from 'firebase-admin/auth';
 import firebaseApp from '../../src/firebaseAdmin';

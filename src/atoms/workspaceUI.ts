@@ -1,5 +1,12 @@
 import { atom } from 'jotai';
-import { ProblemData, StatusData, Translation } from '../types/problem';
+import { atomFamily } from 'jotai/utils';
+import { fetchSolutionsFromDb } from '../scripts/fetchProblemFromDb';
+import {
+  PlatformProblem,
+  ProblemData,
+  StatusData,
+  Translation,
+} from '../types/problem';
 
 export const mobileActiveTabAtom = atom<'code' | 'io' | 'users'>('code');
 export const showSidebarAtom = atom<boolean>(false);
@@ -9,8 +16,12 @@ export const statusDataAtom = atom<StatusData | null>(null);
 export const statusDataHistoryAtom = atom<StatusData[] | null>([]);
 export const solvedAtom = atom<boolean>(false);
 export const translationsAtom = atom<Record<string, Translation>>({});
-export const solutionsAtom = atom<Record<string, string>>({});
+export const hasSolutionsAtom = atom<boolean>(false);
 export const languageAtom = atom<string>('en');
+export const solutionsAtomFamily = atomFamily(
+  (problem: PlatformProblem) => atom(() => fetchSolutionsFromDb(problem)),
+  (left, right) => left.platform === right.platform && left.id === right.id
+);
 
 // // https://github.com/pmndrs/jotai#derived-async-atoms-
 // // https://docs.pmnd.rs/jotai/basics/async#suspense

@@ -38,7 +38,13 @@ flowchart LR
 
 The front-end is a Next.js Pages Router application. Most authenticated application data is loaded client-side from Firebase, while Next.js API routes handle selected privileged operations.
 
-LSP-based code completion is provided through a WebSocket service hosted by USACO, exposing `clangd` and `pyright`. Its source code and deployment are outside this repository. The editor is powered by [monaco-languageclient](https://github.com/typefox/monaco-languageclient) on desktop and CodeMirror 6 on mobile.
+The editor is powered by [monaco-languageclient](https://github.com/typefox/monaco-languageclient) on desktop and CodeMirror 6 on mobile. Code completion, diagnostics, and hover information come from LSP language servers, which both editors reach through the same connection layer in `src/components/editor/lsp/`. For each language, the server runs either remotely or in the browser:
+
+- Remote: a WebSocket service hosted by a third-party (`NEXT_PUBLIC_LSP_URL`), exposing `clangd` and `pyright`. Its source code and deployment are outside this repository.
+- Python in the browser: [BasedPyright](https://docs.basedpyright.com) (`browser-basedpyright`), running in Web Workers.
+- C++ in the browser: [clangd](https://clangd.llvm.org/) compiled to WebAssembly ([`@algoproclub/clangd-wasm`](https://github.com/algoproclub/clangd-wasm)), shared by all tabs through a SharedWorker.
+
+Both languages currently default to the remote service. Users can opt-in for each language in their settings, and this preference is stored per device.
 
 Firebase provides:
 

@@ -12,13 +12,3 @@ export function notifyLsp(message: string) {
     style: LSP_TOAST_STYLE,
   });
 }
-
-export function notifyLspClosed(event: CloseEvent) {
-  if (event.reason) {
-    notifyLsp('Connection closed: ' + event.reason);
-  } else if (event.wasClean) {
-    notifyLsp('Connection closed');
-  } else {
-    notifyLsp('Connection closed unexpectedly');
-  }
-}

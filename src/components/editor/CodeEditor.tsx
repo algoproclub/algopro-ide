@@ -1,24 +1,41 @@
 // A code editor that uses either Monaco or Codemirror 6 depending on whether the user is on mobile or not
 
-import { useEffect, useState } from 'react';
-import LazyMonacoEditor from './MonacoEditor/LazyMonacoEditor';
-import { EditorProps } from './editor-types';
-import LazyCodemirrorEditor from './CodemirrorEditor/LazyCodemirrorEditor';
+import dynamic from 'next/dynamic';
+import LoadingIndicator from '../LoadingIndicator';
+import type { EditorProps } from './editor-types';
 
-export const CodeEditor = (props: EditorProps) => {
-  const [isMobile, setIsMobile] = useState<undefined | boolean>(undefined);
-  useEffect(() => {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    setIsMobile(isMobile);
-  }, []);
+type EditorModule =
+  | typeof import('./CodemirrorEditor/CodemirrorEditor')
+  | typeof import('./MonacoEditor/MonacoEditor');
 
-  if (isMobile === undefined) {
-    return null;
+let editorPromise: Promise<EditorModule> | undefined;
+
+const loadCodeEditor = () =>
+  (editorPromise ??= window.matchMedia('(pointer: coarse)').matches
+    ? import('./CodemirrorEditor/CodemirrorEditor')
+    : import('./MonacoEditor/MonacoEditor'));
+
+export const preloadCodeEditor = () => {
+  if (typeof window !== 'undefined') {
+    void loadCodeEditor().then(editorModule => {
+      if ('initialize' in editorModule) {
+        void editorModule.initialize();
+      }
+    });
   }
-
-  if (isMobile) {
-    return <LazyCodemirrorEditor {...props} />;
-  }
-
-  return <LazyMonacoEditor {...props} />;
 };
+
+const CodeEditor = dynamic<EditorProps>(loadCodeEditor, {
+  ssr: false,
+  loading: () => (
+    <div
+      className="px-4 py-3 flex items-center justify-between"
+      data-testid="editorLoadingMessage"
+    >
+      <LoadingIndicator className="mr-2 h-4 w-4 text-content-muted" />
+      <span className="text-content-muted">Loading…</span>
+    </div>
+  ),
+});
+
+export default CodeEditor;

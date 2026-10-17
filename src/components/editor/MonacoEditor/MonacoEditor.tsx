@@ -19,9 +19,11 @@ import {
   ensureMonacoServices,
   MONACO_VSCODE_DARK_THEME,
   MONACO_VSCODE_LIGHT_THEME,
-  MONACO_WORKSPACE_URI,
+  MONACO_WORKSPACE_ROOT,
 } from './monacoServices';
 import { DEFAULT_FONT_SIZE_EDITOR } from '../../../constants/editorConstants';
+
+export { ensureMonacoServices as initialize } from './monacoServices';
 
 const viewStates = new Map<string, monaco.editor.ICodeEditorViewState | null>();
 
@@ -122,15 +124,7 @@ const rebindAction = (
 };
 
 function toModelPath(path?: string) {
-  if (!path) {
-    return `${MONACO_WORKSPACE_URI.toString()}/default`;
-  }
-
-  if (/^[a-zA-Z][\w+.-]*:/.test(path)) {
-    return path;
-  }
-
-  return `${MONACO_WORKSPACE_URI.toString()}/${path.replace(/^\/+/, '')}`;
+  return `${MONACO_WORKSPACE_ROOT}/${path?.replace(/^\/+/, '') || 'default'}`;
 }
 
 function createEditorAppConfig(
@@ -185,13 +179,28 @@ function createEditorHandle(editor: AlgoProMonacoEditor): MonacoEditorHandle {
     getValue() {
       return editor.getValue();
     },
+    getLineContent(lineNumber) {
+      const model = editor.getModel();
+      if (!model || lineNumber <= 0 || lineNumber > model.getLineCount())
+        return undefined;
+      return model.getLineContent(lineNumber);
+    },
     kind: 'monaco',
     layout() {
       editor.layout();
     },
     raw: editor,
+    redo() {
+      editor.trigger('redo', 'redo', null);
+    },
     setLineHighlight(line: number) {
       editor.setLineHighlight(line);
+    },
+    setValue(value: string) {
+      editor.setValue(value);
+    },
+    undo() {
+      editor.trigger('undo', 'undo', null);
     },
   };
 }
@@ -435,7 +444,12 @@ export default function MonacoEditor({
     };
   }, [editor, path, yjsInfo]);
 
-  useLSP(language ?? null, lspOptions ?? null, editor !== null);
+  useLSP(
+    language ?? null,
+    lspOptions ?? null,
+    editor !== null,
+    toModelPath(path)
+  );
 
   useEffect(() => {
     if (!vim || !editor) {
@@ -504,7 +518,7 @@ export default function MonacoEditor({
     })().catch(error => {
       console.error('Failed to update Monaco code resources:', error);
     });
-  }, [editor, path, previousPath]);
+  }, [editor, path]);
 
   useUpdate(() => {
     if (!editor || !editorRef.current) {

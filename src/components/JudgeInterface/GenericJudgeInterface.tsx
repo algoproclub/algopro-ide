@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { ProblemData, Translation } from '../../types/problem';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
+import renderMathInElement from 'katex/contrib/auto-render';
 import HTMLStatement from './HTMLStatement';
 import { LanguageSelectorDropdown } from '../Dropdown';
 
@@ -28,6 +29,17 @@ export default function GenericJudgeInterface({
   // FIXME: Pass down well-typed languages list.
   const languages = Object.keys(translations) as ('hu' | 'en' | 'es' | '-')[];
   const translation = translations[language];
+  const titleRef = useCallback(
+    (node: HTMLSpanElement | null) => {
+      if (node !== null && problem.platform === 'yosupo') {
+        renderMathInElement(node, {
+          delimiters: [{ left: '$', right: '$', display: false }],
+          throwOnError: false,
+        });
+      }
+    },
+    [problem.platform]
+  );
 
   return (
     <div className="relative flex h-full flex-col text-sm leading-6">
@@ -51,7 +63,9 @@ export default function GenericJudgeInterface({
               rel="noreferrer"
               className="text-lg font-semibold tracking-tight hover:underline"
             >
-              {problem.title}
+              <span key={problem.title} ref={titleRef}>
+                {problem.title}
+              </span>
               <ArrowTopRightOnSquareIcon
                 aria-hidden="true"
                 className="ml-1 h-5 w-5 inline"
@@ -60,7 +74,10 @@ export default function GenericJudgeInterface({
           </h3>
           {translation &&
             ('statement' in translation ? (
-              <HTMLStatement htmlContent={translation.statement} />
+              <HTMLStatement
+                htmlContent={translation.statement}
+                renderYosupoMath={problem.platform === 'yosupo'}
+              />
             ) : (
               <PDFDisplay url={translation.statementURL} />
             ))}

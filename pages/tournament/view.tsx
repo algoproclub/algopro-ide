@@ -4,7 +4,7 @@ import {
   useEditorContext,
 } from '../../src/context/EditorContext';
 import React, { useEffect, useState } from 'react';
-import { LazyRealtimeEditor } from '../../src/components/RealtimeEditor/LazyRealtimeEditor';
+import RealtimeEditor from '../../src/components/RealtimeEditor/RealtimeEditor';
 import {
   DataSnapshot,
   get,
@@ -30,7 +30,7 @@ const CodeView = () => {
       <div className="absolute inset-0">
         {fileData && lang && (
           // The spectator editor intentionally keeps its dark syntax theme.
-          <LazyRealtimeEditor
+          <RealtimeEditor
             theme={'dark'}
             language={{ cpp: 'cpp', java: 'java', py: 'python' }[lang]}
             path={`${fileData.id}.${lang}`}

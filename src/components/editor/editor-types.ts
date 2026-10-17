@@ -30,17 +30,21 @@ export interface EditorYjsInfo {
 }
 
 interface BaseEditorHandle {
+  clearLineHighlight: () => void;
   getValue: () => string;
+  getLineContent: (lineNumber: number) => string | undefined;
   focus: () => void;
   kind: 'codemirror' | 'monaco';
   layout: () => void;
+  redo: () => void;
+  setLineHighlight: (lineNumber: number) => void;
+  setValue: (value: string) => void;
+  undo: () => void;
 }
 
 export interface MonacoEditorHandle extends BaseEditorHandle {
-  clearLineHighlight: () => void;
   kind: 'monaco';
   raw: AlgoProMonacoEditor;
-  setLineHighlight: (line: number) => void;
 }
 
 export interface CodemirrorEditorHandle extends BaseEditorHandle {

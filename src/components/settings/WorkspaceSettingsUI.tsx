@@ -72,6 +72,7 @@ export default function WorkspaceSettingsUI({
         <div>
           <input
             type="text"
+            readOnly
             name={`compiler_options`}
             id={`compiler_options`}
             className="text-input !font-mono !text-[0.85rem]"

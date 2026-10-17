@@ -28,27 +28,35 @@ export type GroupClassUpdate =
   | GroupClassData
   | ((current: GroupClassData) => GroupClassData);
 
-const extractTaskUrls = (text: string) =>
-  Array.from(
-    new Set(
-      (text.match(/https?:\/\/[^\s<>"']+|\/solve\/[^\s<>"']+/g) ?? []).map(
-        match => {
-          const url = match.replace(/[),.;:]+$/, '');
-          return url.startsWith('/solve/')
-            ? new URL(
-                url,
-                process.env.NEXT_PUBLIC_BASE_URL ?? window.location.origin
-              ).toString()
-            : url;
-        }
-      )
-    )
-  );
+const extractTaskUrls = (text: string) => {
+  const urls = (
+    text.match(/https?:\/\/[^\s<>"']+|\/solve\/[^\s<>"']+/g) ?? []
+  ).map(match => {
+    const url = match.replace(/[),.;:]+$/, '');
+    return url.startsWith('/solve/')
+      ? new URL(
+          url,
+          process.env.NEXT_PUBLIC_BASE_URL ?? window.location.origin
+        ).toString()
+      : url;
+  });
+
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+  for (const url of urls) {
+    if (seen.has(url)) duplicates.add(url);
+    else seen.add(url);
+  }
+  return { urls: Array.from(seen), duplicates: Array.from(duplicates) };
+};
 
 const resolveTaskLinks = async (
   text: string
-): Promise<{ ok: boolean; task: URLProblem }[]> => {
-  const taskUrls = extractTaskUrls(text);
+): Promise<{
+  results: { ok: boolean; task: URLProblem }[];
+  duplicateUrls: string[];
+}> => {
+  const { urls: taskUrls, duplicates: duplicateUrls } = extractTaskUrls(text);
   const parsedTasks = taskUrls.map(parseProblem);
   const library = await getDefaultStore()
     .get(problemLibraryAtom)
@@ -57,7 +65,7 @@ const resolveTaskLinks = async (
     library.map(problem => [`${problem.platform}:${problem.id}`, problem])
   );
 
-  return Promise.all(
+  const results = await Promise.all(
     parsedTasks.map(
       async (task): Promise<{ ok: boolean; task: URLProblem }> => {
         if (!task.platform || !task.id) return { ok: false, task };
@@ -81,13 +89,15 @@ const resolveTaskLinks = async (
       }
     )
   );
+
+  return { results, duplicateUrls };
 };
 
 const TaskAdder = ({
   onAddTasks,
   disabled,
 }: {
-  onAddTasks: (tasks: URLProblem[]) => void;
+  onAddTasks: (tasks: URLProblem[], pastedDuplicates?: URLProblem[]) => void;
   disabled: boolean;
 }) => {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
@@ -118,7 +128,7 @@ const TaskAdder = ({
   const addPastedTasks = async (text: string) => {
     if (disabled) return;
     const requestID = ++pasteRequestID.current;
-    const results = await resolveTaskLinks(text);
+    const { results, duplicateUrls } = await resolveTaskLinks(text);
     if (requestID !== pasteRequestID.current) return;
 
     // Ask about each task we couldn't fetch automatically, one at a time,
@@ -159,7 +169,11 @@ const TaskAdder = ({
     if (skippedUrls.length) {
       alert(`Skipped these links:\n${skippedUrls.join('\n')}`);
     }
-    onAddTasks(tasks);
+
+    const pastedDuplicates = tasks.filter(task =>
+      duplicateUrls.includes(task.url)
+    );
+    onAddTasks(tasks, pastedDuplicates);
     setPastedText('');
     setIsPasteModalOpen(false);
   };
@@ -409,22 +423,60 @@ const ClassEditor = ({
       <header className="relative z-10 flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-2.5">
         <div>
           <h1 className="font-semibold">Class {classID}</h1>
-          <p className="text-sm text-content-muted">
-            {data.tasks.length} task{data.tasks.length === 1 ? '' : 's'}
-            {unsaved ? ' · unsaved changes' : ''}
-          </p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <p className="text-sm text-content-muted">
+              {data.tasks.length} task{data.tasks.length === 1 ? '' : 's'}
+            </p>
+            {unsaved && (
+              <span className="inline-flex rounded-full bg-status-warning-surface px-2 py-0.5 text-xs font-medium text-status-warning-content">
+                Unsaved changes
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={copyContent}>Copy list</Button>
           <TaskAdder
             disabled={disabled}
-            onAddTasks={tasks =>
-              onUpdate(current => ({
-                ...current,
-                tasks: [...current.tasks, ...tasks],
-              }))
-            }
+            onAddTasks={(tasks, pastedDuplicates = []) => {
+              const existingUrls = new Set(data.tasks.map(task => task.url));
+              const newTasks = tasks.filter(
+                task => !existingUrls.has(task.url)
+              );
+
+              const duplicates = new Map<string, URLProblem>();
+              for (const task of [
+                ...tasks.filter(task => existingUrls.has(task.url)),
+                ...pastedDuplicates,
+              ]) {
+                duplicates.set(task.url, task);
+              }
+
+              if (duplicates.size) {
+                const list = Array.from(duplicates.values())
+                  .map(task => task.title ?? task.id ?? task.url)
+                  .join('\n');
+                alert(
+                  `The following tasks were not added again (already in the list or pasted more than once):\n\n${list}`
+                );
+              }
+
+              if (newTasks.length) {
+                onUpdate(current => ({
+                  ...current,
+                  tasks: [...current.tasks, ...newTasks],
+                }));
+              }
+            }}
           />
+          <Button
+            type="button"
+            variant="primary"
+            onClick={onSave}
+            disabled={!unsaved || disabled}
+          >
+            {isMutating ? 'Saving…' : 'Save changes'}
+          </Button>
         </div>
       </header>
       <div className="divide-y divide-line-muted bg-surface text-content">
@@ -472,7 +524,7 @@ const ClassEditor = ({
             onClick={onSave}
             disabled={!unsaved || disabled}
           >
-            {isMutating ? 'Working…' : 'Save changes'}
+            {isMutating ? 'Saving…' : 'Save changes'}
           </Button>
         </div>
       </footer>

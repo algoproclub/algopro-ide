@@ -5,11 +5,11 @@ import JudgeResult from '../types/judge';
 import USACOResults from './JudgeInterface/USACOResults';
 import { StatusData } from '../types/problem';
 import { useUserContext } from '../context/UserContext';
-import { CodeEditor } from './editor/CodeEditor';
+import CodeEditor from './editor/CodeEditor';
 import { CompilerOutput } from './CompilerOutput';
-import { mainMonacoEditorAtom } from '../atoms/workspace';
+import { mainEditorHandleAtom } from '../atoms/workspace';
 import { StderrOutput } from './StderrOutput';
-import { getJudgeStatusDescription } from '../editorUtils';
+import { getJudgeStatusDescription } from '../utils/editorUtils';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/16/solid';
 import {
   getSubmissionStatusDisplay,
@@ -221,7 +221,7 @@ export const Output = ({
     hasOutput && !currentSelection.acknowledged.includes(id);
 
   const { userData } = useUserContext();
-  const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
+  const mainEditorHandle = useAtomValue(mainEditorHandleAtom);
 
   return (
     <TabBar
@@ -281,8 +281,8 @@ export const Output = ({
         <ExecutionOutputPanel result={result}>
           <CompilerOutput
             output={getOutputText(result, 'compile_output')}
-            highlightLine={line => mainMonacoEditor?.setLineHighlight(line)}
-            clearLineHighlight={() => mainMonacoEditor?.clearLineHighlight()}
+            highlightLine={line => mainEditorHandle?.setLineHighlight(line)}
+            clearLineHighlight={() => mainEditorHandle?.clearLineHighlight()}
           />
         </ExecutionOutputPanel>
       </TabBar.Item>

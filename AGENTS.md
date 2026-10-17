@@ -2,7 +2,7 @@
 
 This file applies to the entire repository. More specific AGENTS.md files may override it within individual services.
 
-Treat this as a living document. When a task reveals a durable, non-obvious project convention, or something that contradicts these instructions, mention a focused documentation update to the developer. Do not add temporary branch details or one-off failures.
+Treat this file as a living document. Suggest updates to the developer whenever a change alters documented implementation details, resolves an instruction conflict, or establishes a durable, non-obvious convention. Exclude ephemeral branch context, temporary workarounds, and one-off errors.
 
 Read README.md for local development setup, environment variables, and architecture details.
 
@@ -39,7 +39,8 @@ There is no automated test suite. For user-visible changes, interact with the ru
 - React 18 with Jotai for state management
 - Firebase for authentication, data storage, and serverless functions
 - Hocuspocus/Yjs for real-time collaboration
-- [Monaco editor with VSCode extensions](https://github.com/typefox/monaco-languageclient) for code editing and completion (through a WebSocket LSP service)
+- [Monaco editor with VSCode extensions](https://github.com/typefox/monaco-languageclient) on desktop and CodeMirror 6 on mobile for code editing
+- LSP language services through a remote WebSocket service, or in the browser through BasedPyright (Python) and [clangd-wasm](https://github.com/algoproclub/clangd-wasm) (C++)
 
 Do NOT attempt to migrate Pages Router code to the App Router unless explicitly instructed.
 
@@ -68,6 +69,8 @@ Do NOT attempt to migrate Pages Router code to the App Router unless explicitly 
 - When touched code reveals unclear state ownership or a monolithic component, note the possible refactor separately. Include it only when necessary for the requested change.
 - Do not introduce wrappers solely to silence React or ESLint warnings when they reduce clarity without improving correctness.
 - Preserve distinct loading, empty, and error states. Avoid remounting stable layout or table shells while their data changes.
+- Language server backends implement `LspConnection` in `src/components/editor/lsp/` and must work with both the Monaco and the CodeMirror client. Keep editor-specific behavior in the editor adapters.
+- Treat client-provided data as untrusted: never assume user identity without authentication or file access without authorization checks. Disallow unvalidated strings as document paths or database keys in Firestore and Realtime Database.
 
 ## UI conventions
 

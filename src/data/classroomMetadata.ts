@@ -99,7 +99,7 @@ export const fetchGroupStudents = async (groupID: string): Promise<Student[]> =>
 export const fetchSchoolStudents = (groupID: string) =>
   fetchStudentRoster(groupID, 'school');
 
-const fetchDocumentsWhereIn = async (
+export const fetchDocumentsWhereIn = async (
   collectionName: string,
   field: string | FieldPath,
   values: string[]

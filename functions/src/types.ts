@@ -1,15 +1,20 @@
-import { StatusCode } from '../../src/types/problem';
+import { Platform, StatusCode } from '../../src/types/problem';
 
 export type AccountData = {
   sessionCookie?: () => Promise<string>;
 };
 
 export type PendingSubmission = {
-  creationTime: number;
+  submissionID: string;
+  platform: Platform;
+  problemID: string;
+  submissionTime: number;
+  username?: string | null;
+  tournamentID?: string | null;
 };
 
 export type PendingSubmissions = {
-  [key: string]: PendingSubmission;
+  [fileID: string]: PendingSubmission;
 };
 
 export type TournamentResult = {
@@ -18,12 +23,7 @@ export type TournamentResult = {
   submissionTime: number;
 };
 
-export type SubmissionData = {
+export type SubmissionData = PendingSubmission & {
   fileID: string;
-  platform: string;
-  username: string | null;
   sessionCookie: string | null;
-  problemID: string;
-  submissionID: string;
-  creationTime: number;
 };

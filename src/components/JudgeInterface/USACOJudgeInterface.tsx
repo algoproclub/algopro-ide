@@ -1,9 +1,6 @@
 import { useAtomValue } from 'jotai/utils';
 import React from 'react';
-import {
-  mainEditorValueAtom,
-  mainMonacoEditorAtom,
-} from '../../atoms/workspace';
+import { mainEditorValueAtom } from '../../atoms/workspace';
 import USACOResults from './USACOResults';
 import SubmitButton from './SubmitButton';
 import { PlayCircleIcon } from '@heroicons/react/20/solid';

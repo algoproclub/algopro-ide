@@ -27,6 +27,7 @@ export const platforms = [
   'planets',
   'ojuz',
   'njudge',
+  'yosupo',
 ] as const;
 
 export type Platform = (typeof platforms)[number];
@@ -165,11 +166,6 @@ export interface Sample {
   input: string;
   output: string;
 }
-
-export type FileSubmission = {
-  id: string;
-  username: string | null;
-};
 
 export type StatusCode = 'starting' | 'working' | 'error' | 'resolved';
 

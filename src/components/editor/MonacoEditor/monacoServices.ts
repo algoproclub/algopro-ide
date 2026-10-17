@@ -7,8 +7,8 @@ import {
 } from 'monaco-languageclient/vscodeApiWrapper';
 import { Uri } from 'vscode';
 
-export const MONACO_VSCODE_DARK_THEME = 'Default Dark+';
-export const MONACO_VSCODE_LIGHT_THEME = 'Default Light+';
+export const MONACO_VSCODE_DARK_THEME = 'Dark+';
+export const MONACO_VSCODE_LIGHT_THEME = 'Light+';
 export const MONACO_WORKSPACE_ROOT = '/workspace';
 export const MONACO_WORKSPACE_URI = Uri.file(MONACO_WORKSPACE_ROOT);
 

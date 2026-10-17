@@ -10,11 +10,7 @@ import {
 } from '@heroicons/react/24/solid';
 import React, { useState } from 'react';
 
-import {
-  mainCodemirrorEditorAtom,
-  mainEditorValueAtom,
-  mainMonacoEditorAtom,
-} from '../../atoms/workspace';
+import { mainEditorHandleAtom } from '../../atoms/workspace';
 import { useAtomValue } from 'jotai';
 import { useEditorContext } from '../../context/EditorContext';
 import download from '../../scripts/download';
@@ -33,9 +29,7 @@ export const FileMenu = (props: {
 }): JSX.Element => {
   const { fileData } = useEditorContext();
   const problem = useAtomValue(problemAtom);
-  const getMainEditorValue = useAtomValue(mainEditorValueAtom);
-  const mainMonacoEditor = useAtomValue(mainMonacoEditorAtom);
-  const mainCodemirrorEditor = useAtomValue(mainCodemirrorEditorAtom);
+  const mainEditorHandle = useAtomValue(mainEditorHandleAtom);
   const permission = useUserPermission();
   const { templateCode } = useUserContext();
 
@@ -46,12 +40,12 @@ export const FileMenu = (props: {
 
   /* ======= BEGIN DROPDOWN ACTIONS ======= */
   const handleDownloadFile = () => {
-    if (!getMainEditorValue) {
+    if (!mainEditorHandle) {
       alert("Editor hasn't loaded yet. Please wait.");
       return;
     }
 
-    const code = getMainEditorValue();
+    const code = mainEditorHandle.getValue();
 
     const fileNames = {
       cpp: `${fileData.settings.workspaceName}.cpp`,
@@ -63,12 +57,12 @@ export const FileMenu = (props: {
   };
 
   const handleCopyCode = () => {
-    if (!getMainEditorValue) {
+    if (!mainEditorHandle) {
       alert("Editor hasn't loaded yet. Please wait.");
       return;
     }
 
-    const code = getMainEditorValue();
+    const code = mainEditorHandle.getValue();
     navigator.clipboard.writeText(code).catch(err => {
       console.error('Failed to copy text to clipboard:', err);
       alert('Failed to copy text to clipboard. Please try again.');
@@ -76,27 +70,14 @@ export const FileMenu = (props: {
   };
 
   const handleInsertFileTemplate = () => {
-    if (!mainMonacoEditor && !mainCodemirrorEditor) {
+    if (!mainEditorHandle) {
       alert("Editor hasn't loaded yet, please wait");
       return;
     }
     if (confirm('Reset current file? Any changes you made will be lost.')) {
       const lang = fileData.settings.language;
       const text = problem?.templateCode?.[lang] ?? templateCode[lang];
-      if (mainMonacoEditor) mainMonacoEditor.setValue(text);
-      else if (mainCodemirrorEditor) {
-        mainCodemirrorEditor.dispatch({
-          changes: {
-            from: 0,
-            to: mainCodemirrorEditor.state.doc.length,
-            insert: text,
-          },
-        });
-      } else {
-        console.error(
-          "?? shouldn't happen, both monaco and codemirror editors are not defined"
-        );
-      }
+      mainEditorHandle.setValue(text);
     }
   };
 

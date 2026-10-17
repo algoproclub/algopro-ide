@@ -9,7 +9,7 @@ export default function WithTeacherLogin({
 }): JSX.Element {
   const { userData, logged, userRole } = useNullableUserContext();
 
-  if (!logged)
+  if (logged === false)
     return (
       <MessagePage
         message="Please log in to access this page."
@@ -17,7 +17,7 @@ export default function WithTeacherLogin({
       />
     );
 
-  if (!userData)
+  if (logged === null || !userData || userRole === null)
     return <MessagePage message="Loading…" showHomeButton={false} />;
 
   if (!isTeacher(userRole)) {

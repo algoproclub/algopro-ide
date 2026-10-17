@@ -16,7 +16,6 @@ import {
   ref,
   DataSnapshot,
   onValue,
-  off,
   update,
 } from 'firebase/database';
 
@@ -82,86 +81,100 @@ export type UserContextType = {
   templateCode: Record<Language, string> | null;
 };
 
+const initialUserProviderState: Omit<UserContextType, 'updateUsername'> = {
+  firebaseUser: null,
+  userData: null,
+  userRole: null,
+  registered: null,
+  logged: null,
+  templateCode: null,
+};
+
 const UserContext = createContext<UserContextType | null>(null);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [registered, setRegistered] = useState<boolean | null>(null);
-  const [logged, setLogged] = useState<boolean | null>(null);
-  const [, triggerRerender] = useState<number>(0);
-  const [templateCode, setTemplateCode] = useState<Record<
-    Language,
-    string
-  > | null>(null);
-
-  const updateClaims = useCallback(() => {
-    user?.getIdTokenResult().then(res => {
-      setUserRole({
-        teacher: res.claims?.teacher,
-        admin: res.claims?.admin,
-      } as UserRole);
-      setRegistered(!!res.claims.registered);
-    });
-  }, [user]);
+  const [state, setState] = useState(initialUserProviderState);
+  const { firebaseUser, userData } = state;
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(getAuth(), user => {
-      if (!user) {
-        setLogged(false);
-        setUserData(null);
-        setUserRole(null);
-        setTemplateCode(null);
-        setRegistered(null);
-      } else {
-        setLogged(true);
-        updateClaims();
-        let displayName = user.displayName;
-        if (!displayName) {
-          displayName =
-            'Anonymous ' + animals[Math.floor(animals.length * Math.random())];
-          updateProfile(user, { displayName }).then(() => setUser(user));
-        } else {
-          setUser(user);
-        }
-      }
+    let authVersion = 0;
+    let unsubscribeUserData: (() => void) | undefined;
+
+    const unsubscribeAuth = onAuthStateChanged(getAuth(), currentUser => {
+      const currentAuthVersion = ++authVersion;
+
+      unsubscribeUserData?.();
+      unsubscribeUserData = undefined;
+
+      setState({
+        ...initialUserProviderState,
+        firebaseUser: currentUser,
+        logged: currentUser !== null,
+      });
+
+      if (!currentUser) return;
+
+      currentUser.getIdTokenResult().then(result => {
+        if (currentAuthVersion !== authVersion) return;
+
+        setState(state => ({
+          ...state,
+          userRole: {
+            teacher: result.claims?.teacher,
+            admin: result.claims?.admin,
+          } as UserRole,
+          registered: !!result.claims.registered,
+        }));
+      });
+
+      // firebaseUser is exposed immediately, but userData is only published
+      // once the default display name is set, so that everything gated on
+      // userData can rely on firebaseUser.displayName.
+      const displayNameReady = currentUser.displayName
+        ? Promise.resolve()
+        : updateProfile(currentUser, {
+            displayName:
+              'Anonymous ' +
+              animals[Math.floor(animals.length * Math.random())],
+          }).catch(error => {
+            console.error('Failed to set default display name.', error);
+          });
+
+      const userDataRef = ref(getDatabase(), `users/${currentUser.uid}/data`);
+      unsubscribeUserData = onValue(userDataRef, (snap: DataSnapshot) => {
+        const data = snap.val() ?? {};
+        const userData = {
+          id: currentUser.uid,
+          editorMode: data.editorMode ?? 'Normal',
+          tabSize: data.tabSize ?? 4,
+          fontSize: data.fontSize ?? DEFAULT_FONT_SIZE_EDITOR,
+          lightMode: data.lightMode ?? false,
+          rainbowIndent: data.rainbowIndent ?? false,
+          defaultPermission: data.defaultPermission ?? 'READ_WRITE',
+          defaultLanguage: data.defaultLanguage ?? 'cpp',
+          manualSubmission: data.manualSubmission ?? false,
+          discordID: data.discordID,
+          usernames: data.usernames ?? {},
+          templateCode: data.templateCode ?? {},
+        };
+        void displayNameReady.then(() => {
+          if (currentAuthVersion !== authVersion) return;
+
+          setState(state => ({
+            ...state,
+            userData,
+            templateCode: { ...defaultCode, ...data?.templateCode },
+          }));
+        });
+      });
     });
 
     return () => {
-      unsubscribe();
+      authVersion++;
+      unsubscribeAuth();
+      unsubscribeUserData?.();
     };
-  }, [updateClaims]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const handleSnapshot = (snap: DataSnapshot) => {
-      const data = snap.val() ?? {};
-      setUserData({
-        id: user.uid,
-        editorMode: data.editorMode ?? 'Normal',
-        tabSize: data.tabSize ?? 4,
-        fontSize: data.fontSize ?? DEFAULT_FONT_SIZE_EDITOR,
-        lightMode: data.lightMode ?? false,
-        rainbowIndent: data.rainbowIndent ?? false,
-        defaultPermission: data.defaultPermission ?? 'READ_WRITE',
-        defaultLanguage: data.defaultLanguage ?? 'cpp',
-        manualSubmission: data.manualSubmission ?? false,
-        discordID: data.discordID,
-        usernames: data.usernames ?? {},
-        templateCode: data.templateCode ?? {},
-      });
-      setTemplateCode({ ...defaultCode, ...data?.templateCode });
-    };
-    onValue(ref(getDatabase(), `users/${user.uid}/data`), handleSnapshot);
-    return () =>
-      off(
-        ref(getDatabase(), `users/${user.uid}/data`),
-        'value',
-        handleSnapshot
-      );
-  }, [user]);
+  }, []);
 
   const lightMode = userData?.lightMode;
 
@@ -188,28 +201,26 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const updateUsername = useCallback(
     (newName: string) => {
-      if (!user) throw new Error('Tried to update username but user is null');
-      update(ref(getDatabase(), `users/${user.uid}/data`), { name: newName });
+      if (!firebaseUser)
+        throw new Error('Tried to update username but user is null');
+      update(ref(getDatabase(), `users/${firebaseUser.uid}/data`), {
+        name: newName,
+      });
 
-      return updateProfile(user, { displayName: newName }).then(() => {
+      return updateProfile(firebaseUser, { displayName: newName }).then(() => {
         // we need to trigger a rerender because firebase user never changes
         // but some parts of the app needs to rerender when firebaseUser.displayName changes
-        triggerRerender(Date.now());
+        setState(state => ({ ...state, firebaseUser }));
       });
     },
-    [user]
+    [firebaseUser]
   );
 
   return (
     <UserContext.Provider
       value={{
-        firebaseUser: user,
-        userData,
-        userRole,
-        registered,
+        ...state,
         updateUsername,
-        logged,
-        templateCode,
       }}
     >
       {children}

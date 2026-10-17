@@ -9,6 +9,12 @@ import { Dialog, Transition } from '@headlessui/react';
 import defaultCode from '../../scripts/defaultCode';
 import { DEFAULT_FONT_SIZE_EDITOR } from '../../constants/editorConstants';
 import { Button } from '../Button';
+import {
+  defaultLspPreferences,
+  readLspPreferences,
+  writeLspPreferences,
+  type LspPreferences,
+} from '../editor/lsp/preferences';
 
 const ProfileSettings = ({
   isOpen,
@@ -27,6 +33,9 @@ const ProfileSettings = ({
   const [fontSize, setFontSize] = useState<number>(DEFAULT_FONT_SIZE_EDITOR);
   const [lightMode, setLightMode] = useState<boolean>(false);
   const [rainbowIndent, setRainbowIndent] = useState<boolean>(false);
+  const [lspPreferences, setLspPreferences] = useState<LspPreferences>(() =>
+    defaultLspPreferences()
+  );
   const [manualSubmission, setManualSubmission] = useState<boolean>(false);
   const [templateCode, setTemplateCode] = useState<
     Partial<Record<Language, string>>
@@ -54,6 +63,7 @@ const ProfileSettings = ({
       setFontSize(userData?.fontSize ?? DEFAULT_FONT_SIZE_EDITOR);
       setLightMode(userData?.lightMode ?? false);
       setRainbowIndent(userData?.rainbowIndent ?? false);
+      setLspPreferences(readLspPreferences());
       setManualSubmission(userData?.manualSubmission ?? false);
       setTemplateCode(savedTemplateCode ?? {});
       setTemplateLanguage(userData?.defaultLanguage ?? 'cpp');
@@ -136,6 +146,7 @@ const ProfileSettings = ({
       manualSubmission,
       templateCode,
     });
+    writeLspPreferences(lspPreferences);
 
     if (name !== firebaseUser.displayName) {
       await updateUsername(name);
@@ -145,7 +156,7 @@ const ProfileSettings = ({
   };
 
   return (
-    <Transition.Root show={isOpen} as={Fragment}>
+    <Transition.Root show={isOpen} as={Fragment} appear>
       <Dialog
         as="div"
         static
@@ -236,6 +247,11 @@ const ProfileSettings = ({
                       rainbowIndent={rainbowIndent}
                       onRainbowIndentChange={rainbowIndent => {
                         setRainbowIndent(rainbowIndent);
+                        dirtyRef.current = true;
+                      }}
+                      lspPreferences={lspPreferences}
+                      onLspPreferencesChange={lspPreferences => {
+                        setLspPreferences(lspPreferences);
                         dirtyRef.current = true;
                       }}
                       manualSubmission={manualSubmission}

@@ -4,6 +4,9 @@ import createMDX from '@next/mdx';
 const nextConfig: NextConfig = {
   reactCompiler: true,
   bundlePagesRouterDependencies: true,
+  // The editor is client-only, and vscode-languageclient only exports its
+  // browser entry under the `browser` condition, which SSR does not resolve.
+  serverExternalPackages: ['monaco-languageclient'],
   turbopack: {
     resolveAlias: {
       'react/compiler-runtime': 'react-compiler-runtime',
@@ -31,11 +34,19 @@ const nextConfig: NextConfig = {
               source: '/apple-touch-icon.png',
               destination: '/logo-matfin.png',
             },
+            {
+              source: '/.well-known/:route',
+              destination: '/api/well-known/:route',
+            },
           ]
         : [
             {
               source: '/apple-touch-icon.png',
               destination: '/logo.png',
+            },
+            {
+              source: '/.well-known/:route',
+              destination: '/api/well-known/:route',
             },
           ];
     return {
