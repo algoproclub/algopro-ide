@@ -9,6 +9,7 @@ import type {
 } from '../../data/classroomMetadata';
 import type { ClassroomResourceStatus } from '../../hooks/useClassroomMetadata';
 import RefreshButton from '../RefreshButton';
+import { Button } from '../Button';
 
 const searchOptions = { threshold: 0.35, ignoreLocation: true };
 
@@ -188,15 +189,16 @@ export function GroupSidebarSection({
           Refresh failed; showing the previous list.
         </p>
       )}
-      <button
+      <Button
         type="button"
-        className="ui-button-primary mt-2 w-full py-2"
+        variant="primary"
+        icon={PlusIcon}
+        className="mt-2 w-full"
         onClick={onNewGroup}
         disabled={!canCreateGroup || navigationDisabled}
       >
-        <PlusIcon className="h-4 w-4" />
         New group
-      </button>
+      </Button>
     </section>
   );
 }
@@ -303,15 +305,16 @@ export function ClassSidebarSection({
           Refresh failed; showing the previous list.
         </p>
       )}
-      <button
+      <Button
         type="button"
-        className="ui-button-primary mt-2 w-full py-2"
+        variant="primary"
+        icon={PlusIcon}
+        className="mt-2 w-full"
         onClick={onNewClass}
         disabled={!canCreateClass}
       >
-        <PlusIcon className="h-4 w-4" />
         New class
-      </button>
+      </Button>
     </nav>
   );
 }
