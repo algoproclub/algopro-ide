@@ -98,7 +98,7 @@ export const Chat = ({ className }: { className?: string }): JSX.Element => {
             size="lg"
             icon={PaperAirplaneIcon}
             iconPosition="end"
-            className="w-full rounded-t-none font-bold"
+            className="w-full rounded-t-none !font-bold"
           >
             Send
           </Button>
