@@ -1,6 +1,6 @@
 .next
 package.json
-yarn.lock
+**/pnpm-lock.yaml
 public
 node_modules
 patches

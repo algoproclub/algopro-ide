@@ -3,14 +3,15 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
-    "serve": "npm run build && firebase emulators:start --only functions",
-    "shell": "npm run build && firebase functions:shell",
-    "start": "npm run shell",
+    "serve": "pnpm run build && firebase emulators:start --only functions",
+    "shell": "pnpm run build && firebase functions:shell",
+    "start": "pnpm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log"
   },
   "engines": {
-    "node": "22"
+    "node": "22",
+    "pnpm": "12.15.0"
   },
   "main": "lib/functions/src/index.js",
   "dependencies": {
@@ -26,5 +27,6 @@
     "@types/node": "^24.5.2",
     "typescript": "^5.9.2"
   },
-  "private": true
+  "private": true,
+  "packageManager": "pnpm@12.15.0"
 }

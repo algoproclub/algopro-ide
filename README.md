@@ -63,7 +63,7 @@ The Go execution service accepts authenticated browser requests and runs submitt
 
 Collaborative editing is provided by a Hocuspocus/Yjs service. It verifies Firebase identities and permissions, persists documents in SQLite, and exposes an internal API for copying documents. Realtime Database does not store source-document contents. Its `files/{fileId}` records contain metadata and runtime state rather than source code. See [yjs/README.md](yjs/README.md).
 
-Currently, Yarn v1 is used to manage the web front-end's dependencies; other services use npm.
+The dependencies of the web front-end and the Cloud Functions and Yjs subcomponents are managed with `pnpm`.
 
 ## Repository layout
 
@@ -88,12 +88,14 @@ Local development is done through Docker Compose, which sets up a local instance
 For host-side Next.js CLI usage, linting, and build checks, install:
 
 - Node.js 22.0 or later
-- the latest Yarn v1 release
+- pnpm 12.15.0 (obtained by running `corepack enable pnpm`)
 
-Then install the web dependencies on the host:
+Then install each project’s dependencies on the host:
 
 ```bash
-yarn install -D
+pnpm install --frozen-lockfile
+pnpm --dir functions install --frozen-lockfile
+pnpm --dir yjs install --frozen-lockfile
 ```
 
 To set up and run the full local environment, use Docker Compose:
@@ -127,6 +129,6 @@ TODO: currently undocumented
 
 ## Testing
 
-Commits must pass `yarn lint:ci` and `yarn build` to be accepted. The regular `yarn lint` command is available for automatically fixing supported lint and formatting issues. Pre-commit hooks are available through [Husky](https://typicode.github.io/husky/#/) for running the configured checks automatically.
+Commits must pass `pnpm run lint:ci` and `pnpm run build` to be accepted. The regular `pnpm run lint` command is available for automatically fixing supported lint and formatting issues. Pre-commit hooks are available through [Husky](https://typicode.github.io/husky/#/) for running the configured checks automatically.
 
 There is no automated test suite. User-visible changes should be verified through the running local application; when that is not possible, document precise manual verification steps.
