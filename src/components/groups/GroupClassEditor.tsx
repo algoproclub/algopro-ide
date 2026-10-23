@@ -24,8 +24,7 @@ import { problemLibraryAtom } from '../../atoms/problemLibrary';
 import type { ClassroomResourceStatus } from '../../hooks/useClassroomMetadata';
 
 export type GroupClassUpdate =
-  | GroupClassData
-  | ((current: GroupClassData) => GroupClassData);
+  GroupClassData | ((current: GroupClassData) => GroupClassData);
 
 const extractTaskUrls = (text: string) => {
   const urls = (

@@ -246,7 +246,7 @@ export class NJudgeResultFetcher extends ResultFetcher {
       }
       return '?';
     };
-    return translatePrefix(prefix) /* + " " + rest*/;
+    return translatePrefix(prefix); /* + " " + rest*/
   }
 
   formatTime(time?: string | null): string | undefined {
