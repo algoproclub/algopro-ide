@@ -111,7 +111,7 @@ function PanelResizeHandle({
   orientation,
 }: {
   orientation: 'horizontal' | 'vertical';
-}): JSX.Element {
+}) {
   const isTouchDevice = useMediaQuery('(any-pointer: coarse)');
   const GripIcon =
     orientation === 'horizontal'
@@ -174,7 +174,7 @@ export function getHints(
   );
 }
 
-function WorkspaceInputPanel(): JSX.Element {
+function WorkspaceInputPanel() {
   const { fileData } = useEditorContext();
   const { lightMode, fontSize } = useUserContext().userData;
   const permission = useUserPermission();
@@ -222,11 +222,7 @@ function WorkspaceInputPanel(): JSX.Element {
   );
 }
 
-function TaskOverviewPanel({
-  handleRunCode,
-}: {
-  handleRunCode: () => void;
-}): JSX.Element {
+function TaskOverviewPanel({ handleRunCode }: { handleRunCode: () => void }) {
   const problem = useAtomValue(problemAtom);
   const translations = useAtomValue(translationsAtom);
   const [language, setLanguage] = useAtom(languageAtom);
@@ -255,11 +251,7 @@ function TaskOverviewPanel({
   );
 }
 
-function InputPane({
-  handleRunCode,
-}: {
-  handleRunCode: () => void;
-}): JSX.Element {
+function InputPane({ handleRunCode }: { handleRunCode: () => void }) {
   const { fileData } = useEditorContext();
   const [inputTab, setInputTab] = useAtom(inputTabAtom);
   const loadedProblem = useAtomValue(problemAtom);
@@ -321,7 +313,7 @@ function InputPane({
   );
 }
 
-function OutputPane(): JSX.Element {
+function OutputPane() {
   const { fileData } = useEditorContext();
   const inputTab = useAtomValue(inputTabAtom);
   const loadedProblem = useAtomValue(problemAtom);
@@ -347,7 +339,7 @@ function OutputPane(): JSX.Element {
   );
 }
 
-function SidebarPane(): JSX.Element {
+function SidebarPane() {
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-auto bg-canvas text-content">
       <UserList className="max-h-64 max-w-full lg:mt-3" />
@@ -362,7 +354,7 @@ function InputOutputPane({
 }: {
   handleRunCode: () => void;
   layoutResetKey: number;
-}): JSX.Element {
+}) {
   const groupRef = useGroupRef();
   const previousLayoutResetKeyRef = useRef(layoutResetKey);
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
@@ -404,7 +396,7 @@ function WorkspacePanels({
 }: {
   handleRunCode: () => void;
   layoutResetKey: number;
-}): JSX.Element {
+}) {
   const isDesktop = useMediaQuery('(min-width: 1024px)', true);
   const mobileActiveTab = useAtomValue(mobileActiveTabAtom);
   const showSidebar = useAtomValue(showSidebarAtom);
@@ -542,7 +534,7 @@ export default function Workspace({
 }: {
   handleRunCode: () => void;
   layoutResetKey: number;
-}): JSX.Element {
+}) {
   const { fileData } = useEditorContext();
   const permission = useUserPermission();
 

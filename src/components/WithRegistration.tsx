@@ -7,9 +7,9 @@ export default function WithRegistration({
   children,
   waitForUserData = false,
 }: {
-  children: JSX.Element;
+  children: React.JSX.Element;
   waitForUserData?: boolean;
-}): JSX.Element {
+}) {
   const { userData, logged, registered } = useNullableUserContext();
 
   if (logged === false)

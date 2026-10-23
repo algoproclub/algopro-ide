@@ -1,7 +1,12 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import { StatusData, TestCase } from '../../types/problem';
 import TimeAgoLabel from '../TimeStamp';
-import { Dialog, Transition } from '@headlessui/react';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPanel,
+  Transition,
+} from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useEditorContext } from '../../context/EditorContext';
 import classNames from 'classnames';
@@ -116,7 +121,7 @@ const TestCaseInfoModal = ({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-75 transition-opacity" />
+            <DialogBackdrop className="fixed inset-0 bg-black bg-opacity-75 transition-opacity" />
           </Transition.Child>
           <Transition.Child
             as={Fragment}
@@ -127,7 +132,7 @@ const TestCaseInfoModal = ({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div className="theme-surface-raised border theme-border rounded-lg shadow-xl transform transition-all w-full max-w-7xl mx-auto">
+            <DialogPanel className="theme-surface-raised border theme-border rounded-lg shadow-xl transform transition-all w-full max-w-7xl mx-auto">
               <div className="px-4 sm:px-6 pt-4 pb-2">
                 <Dialog.Title
                   as="h3"
@@ -233,7 +238,7 @@ const TestCaseInfoModal = ({
                   <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                 </button>
               </div>
-            </div>
+            </DialogPanel>
           </Transition.Child>
         </div>
       </Dialog>

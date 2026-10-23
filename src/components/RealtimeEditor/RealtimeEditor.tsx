@@ -41,7 +41,7 @@ const RealtimeEditorRoom = ({
   useEditorWithVim = false,
   dataTestId = '',
   ...props
-}: RealtimeEditorProps): JSX.Element => {
+}: RealtimeEditorProps) => {
   const provider = useHocuspocusProvider();
   const connectionStatus = useHocuspocusConnectionStatus();
   const providerSyncStatus = useHocuspocusSyncStatus();
@@ -326,10 +326,7 @@ const RealtimeEditorRoom = ({
   );
 };
 
-const RealtimeEditor = ({
-  yjsDocumentId,
-  ...props
-}: RealtimeEditorProps): JSX.Element => {
+const RealtimeEditor = ({ yjsDocumentId, ...props }: RealtimeEditorProps) => {
   const getToken = useCallback(async () => {
     const currentUser = getAuth().currentUser;
     // Let Firebase hand us a fresh ID token on demand instead of caching one in

@@ -100,11 +100,14 @@ export default function Dropdown<Value extends string | number>({
                   leaveFrom="transform scale-100 opacity-100"
                   leaveTo="transform scale-95 opacity-0"
                 >
-                  <Listbox.Options className="ui-menu absolute top-2 max-h-60 min-h-[2rem] w-full overflow-y-auto">
+                  <Listbox.Options
+                    modal={false}
+                    className="ui-menu absolute top-2 max-h-60 min-h-[2rem] w-full overflow-y-auto"
+                  >
                     {options.length === 0 ? (
-                      <li className="px-3 py-2 theme-text-muted">
+                      <div className="px-3 py-2 theme-text-muted">
                         {emptyLabel}
-                      </li>
+                      </div>
                     ) : (
                       options.map(item => (
                         <Listbox.Option
