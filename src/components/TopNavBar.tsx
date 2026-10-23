@@ -154,7 +154,7 @@ const NavLinks = ({
   </>
 );
 
-export const TopNavBar = (): JSX.Element => {
+export const TopNavBar = () => {
   const router = useRouter();
   const { userRole, userData, registered } = useNullableUserContext();
   const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState<boolean>();

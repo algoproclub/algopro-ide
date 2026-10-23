@@ -1,8 +1,5 @@
-import { Menu, Transition } from '@headlessui/react';
-import type { Placement } from '@popperjs/core';
-import React, { Fragment, type ReactNode, useEffect, useState } from 'react';
-import ReactDOM from 'react-dom';
-import { usePopper } from 'react-popper';
+import { MenuItems, type MenuItemsProps } from '@headlessui/react';
+import type { ReactNode } from 'react';
 
 export const getAnchoredMenuItemClass = (active: boolean) =>
   `ui-menu-item group py-1.5 ${
@@ -17,56 +14,18 @@ export const AnchoredMenuItems = ({
   children,
   className,
   menuClassName,
-  open,
-  placement,
 }: {
-  anchor: HTMLElement | null;
+  anchor: MenuItemsProps['anchor'];
   children: ReactNode;
   className: string;
   menuClassName?: string;
-  open: boolean;
-  placement: Placement;
-}) => {
-  const [popperElement, setPopperElement] = useState<HTMLElement | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const { styles, attributes } = usePopper(anchor, popperElement, {
-    placement,
-    modifiers: [{ name: 'offset', options: { offset: [0, 6] } }],
-  });
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  return (
-    <Transition show={open}>
-      {mounted
-        ? ReactDOM.createPortal(
-            <Menu.Items static as="div">
-              <div
-                ref={setPopperElement}
-                style={styles.popper}
-                {...attributes.popper}
-                className={`z-50 ${className}`}
-              >
-                <Transition.Child
-                  as={Fragment}
-                  enter="transition ease-out duration-100"
-                  enterFrom="transform opacity-0 scale-95"
-                  enterTo="transform opacity-100 scale-100"
-                  leave="transition ease-in duration-75"
-                  leaveFrom="transform opacity-100 scale-100"
-                  leaveTo="transform opacity-0 scale-95"
-                >
-                  <div className={`ui-menu w-full ${menuClassName ?? ''}`}>
-                    {children}
-                  </div>
-                </Transition.Child>
-              </div>
-            </Menu.Items>,
-            document.body
-          )
-        : null}
-    </Transition>
-  );
-};
+}) => (
+  <MenuItems
+    anchor={anchor}
+    modal={false}
+    transition
+    className={`ui-menu z-50 [--anchor-gap:6px] transition ease-out data-[closed]:opacity-0 data-[closed]:scale-95 data-[enter]:duration-100 data-[leave]:duration-75 ${className} ${menuClassName ?? ''}`}
+  >
+    {children}
+  </MenuItems>
+);

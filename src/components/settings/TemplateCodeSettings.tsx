@@ -16,7 +16,7 @@ export default function TemplateCodeSettings({
   language: Language;
   onLanguageChange: (language: Language) => void;
   lightMode: boolean;
-}): JSX.Element {
+}) {
   return (
     <div>
       <div className="flex flex-row items-center mb-3">

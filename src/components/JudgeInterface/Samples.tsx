@@ -63,7 +63,7 @@ export default function Samples({
   samples: Sample[];
   inputTab: string;
   handleRunCode: () => void;
-}): JSX.Element {
+}) {
   const { fileData } = useEditorContext();
   const index = getSampleIndex(inputTab);
   const sample = samples[index - 1];

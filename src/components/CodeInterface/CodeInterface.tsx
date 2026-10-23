@@ -10,11 +10,7 @@ import { problemAtom } from '../../atoms/workspaceUI';
 import { EditorHandle } from '../editor/editor-types';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 
-export const CodeInterface = ({
-  className,
-}: {
-  className?: string;
-}): JSX.Element => {
+export const CodeInterface = ({ className }: { className?: string }) => {
   const { fileData } = useEditorContext();
   const [problem] = useAtom(problemAtom);
   const problemDataIsReady = fileData.problem

@@ -36,7 +36,7 @@ export default function JudgeInterface({
   statusData: StatusData | null;
   setStatusData: React.Dispatch<React.SetStateAction<StatusData | null>>;
   handleRunCode: () => void;
-}): JSX.Element {
+}) {
   const getMainEditorValue = useAtomValue(mainEditorValueAtom);
   const lang = useEditorContext().fileData.settings.language;
 
