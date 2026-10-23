@@ -12,14 +12,14 @@ _This expands on the README.md instructions for local development._
 
 The web front-end will be available at http://localhost:3000 and should be used for interaction checks (do not run `next dev` manually!). The instance should be pre-populated with a few users and groups, so the login button should work. If there are no users, prompt the developer to run `tools/setup_local_data.py` to initialize the baseline database.
 
-The web front-end uses Yarn v1 for dependency management. Dependencies are installed in the `web` Docker image at build time but should also be installed locally for pre-commit linting and build checks. Other services use npm.
+The frontend, Functions, and Yjs projects use pnpm 12.15.0 with separate lockfiles. Run `pnpm install --frozen-lockfile` in each project directory; do not combine them into a shared workspace. Dependencies are installed in the `web` Docker image at build time but should also be installed locally for pre-commit linting and build checks. The `yjs` project is a separate Git submodule.
 
 Every commit must pass the following checks (which are also installable as Husky pre-commit hooks):
 
-- `yarn lint:ci` (ESLint, including Prettier checks)
-- `yarn build` (Next.js build)
+- `pnpm run lint:ci` (ESLint, including Prettier checks)
+- `pnpm run build` (Next.js build)
 
-The regular `yarn lint` command is also available and auto-fixes linting issues.
+The regular `pnpm run lint` command is also available and auto-fixes linting issues.
 
 The Next.js build requires at least:
 
@@ -29,7 +29,7 @@ The Next.js build requires at least:
 To check specific components:
 
 - targeted ESLint
-- `yarn tsc --noEmit`
+- `pnpm exec tsc --noEmit`
 
 There is no automated test suite. For user-visible changes, interact with the running front-end when browser tooling is available. If interaction is unavailable or blocked, provide precise manual verification steps.
 

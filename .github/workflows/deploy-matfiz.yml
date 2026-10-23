@@ -19,6 +19,9 @@ jobs:
         with:
           ref: matfiz-deployment
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Install Vercel CLI
         run: npm install -g vercel
 
@@ -39,7 +42,7 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
 
       - name: Install Cloud Functions dependencies
-        run: npm --prefix functions ci
+        run: pnpm --dir functions install --frozen-lockfile
 
       - name: Deploy Firebase Functions and Security Rules
         env:
