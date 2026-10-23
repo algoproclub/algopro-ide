@@ -17,17 +17,6 @@ function encode(str: string | null) {
   return btoa(unescape(encodeURIComponent(str || '')));
 }
 
-// e.g. http://www.usaco.org/index.php?page=viewproblem2&cpid=1140 -> 1140
-// e.g. 1140 -> 1140 (if already ID then remains unchanged)
-export function usacoProblemIdFromUrl(url: string | undefined): string | null {
-  if (!url?.match(/^[1-9]\d*$/)) {
-    url = url?.match(/cpid=([1-9]\d*)$/)?.[1];
-  }
-  if (url && url.length <= 4) return url; // must be number with length <= 4
-  // earliest submittable problem: http://www.usaco.org/index.php?page=viewproblem2&cpid=187
-  return null;
-}
-
 // https://github.com/cpinitiative/usaco-guide/blob/30f7eca4b8eee693694a801498aaf1bfd9cbb5d0/src/components/markdown/ProblemsList/ProblemsListItem.tsx#L92
 function getUSACOContestURL(contest: string): string {
   const parts = contest.split(' ');

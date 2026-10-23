@@ -30,10 +30,6 @@ export function getJudgeStatusDescription(result: JudgeResult): string {
   return statusDescriptions[result.status];
 }
 
-export function encode(str: string | null): string {
-  return btoa(unescape(encodeURIComponent(str || '')));
-}
-
 export function isFirebaseId(queryId: string): boolean {
   return (
     /^(?!\.\.?$)(?!.*__.*__)([^/]{1,1500})$/.test(queryId) &&
