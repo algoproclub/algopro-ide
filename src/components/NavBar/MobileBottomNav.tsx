@@ -46,7 +46,7 @@ export interface MobileBottomNavProps {
   onActiveTabChange: (tab: 'code' | 'io' | 'users') => void;
 }
 
-export const MobileBottomNav = (props: MobileBottomNavProps): JSX.Element => {
+export const MobileBottomNav = (props: MobileBottomNavProps) => {
   return (
     <div className="grid grid-cols-3 border-t border-line bg-panel-muted pt-2">
       <MobileBottomNavButton

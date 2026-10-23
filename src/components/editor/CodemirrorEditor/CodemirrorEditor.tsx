@@ -50,7 +50,7 @@ function createEditorHandle(view: EditorView): CodemirrorEditorHandle {
   };
 }
 
-const CodemirrorEditor = (props: EditorProps): JSX.Element => {
+const CodemirrorEditor = (props: EditorProps) => {
   const documentUri = `file:///root/${props.path ?? 'default'}`;
   const lspClient = useLspClient(props.language, props.lspOptions, documentUri);
 

@@ -9,9 +9,7 @@ interface ProfileStatusProps {
   settings: Record<string, SettingItem>;
 }
 
-export default function ProfileStatus({
-  settings,
-}: ProfileStatusProps): JSX.Element {
+export default function ProfileStatus({ settings }: ProfileStatusProps) {
   const totalSettings = Object.keys(settings).length;
   const filledSettings = Object.values(settings).filter(
     val => val.filled

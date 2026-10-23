@@ -4,7 +4,7 @@ import React from 'react';
 export default function LoadingIndicator({
   className,
   ...otherProps
-}: React.SVGProps<SVGSVGElement>): JSX.Element {
+}: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
       fill="none"

@@ -119,7 +119,7 @@ export const StderrOutput = ({
 }: {
   output: string;
   lightMode: boolean;
-}): JSX.Element => {
+}) => {
   const mainEditorHandle = useAtomValue(mainEditorHandleAtom);
   const isLineHighlightSet = useAtomValue(isLineHighlightSetAtom);
   const savedEditorValue = useAtomValue(savedEditorValueAtom);

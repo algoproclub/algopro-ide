@@ -3,7 +3,7 @@ type GuideFigureProps = {
   caption: string;
 };
 
-export function GuideFigure({ src, caption }: GuideFigureProps): JSX.Element {
+export function GuideFigure({ src, caption }: GuideFigureProps) {
   return (
     <figure className="guide-figure not-prose mb-8 mt-6 break-inside-avoid">
       <img

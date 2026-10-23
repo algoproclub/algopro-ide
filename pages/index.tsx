@@ -19,7 +19,7 @@ import { useConnectionContext } from '../src/context/ConnectionContext';
 
 const productName = process.env.NEXT_PUBLIC_PRODUCT_NAME ?? 'AlgoPro IDE';
 
-export default function DashboardPage(): JSX.Element {
+export default function DashboardPage() {
   const { userData, logged, registered } = useNullableUserContext();
   const connectionContext = useConnectionContext();
   const signInWithGoogle = useSetAtom(signInWithGoogleAtom);

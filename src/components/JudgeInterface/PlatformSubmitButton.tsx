@@ -22,7 +22,7 @@ export const GenericSubmitButton = ({
 }: {
   statusData: StatusData | null;
   setStatusData: React.Dispatch<React.SetStateAction<StatusData | null>>;
-}): JSX.Element => {
+}) => {
   const { fileData } = useEditorContext();
   const { userData } = useUserContext();
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -115,7 +115,7 @@ export const PlatformSubmitButton = ({
   platform: Platform;
   statusData: StatusData | null;
   setStatusData: React.Dispatch<React.SetStateAction<StatusData | null>>;
-}): JSX.Element => {
+}) => {
   return platform === 'usaco' ? (
     // TODO: implement UsacoSubmitButton
     <></>
