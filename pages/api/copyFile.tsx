@@ -85,7 +85,7 @@ export default async (
         creationTime: ServerValue.TIMESTAMP,
       },
     });
-  const fileID: string = ref.key!;
+  const fileID: string = ref.key;
 
   const copyYjsPromies = ['cpp', 'java', 'py', 'input', 'scribble'].map(key => {
     return fetch(`${process.env.YJS_API_URL}/copyFile`, {
