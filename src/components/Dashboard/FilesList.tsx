@@ -30,12 +30,6 @@ export interface FilesListProps {
   files: File[];
 }
 
-export const sharingPermissionLabels: Record<string, string> = {
-  READ_WRITE: 'Public Read & Write',
-  READ: 'Public View Only',
-  PRIVATE: 'Private',
-};
-
 export default function FilesList(props: FilesListProps): JSX.Element {
   const { firebaseUser } = useUserContext();
   invariant(!!firebaseUser);
