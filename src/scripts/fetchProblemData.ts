@@ -1,6 +1,5 @@
 import { PlatformProblem, ProblemData } from '../types/problem';
 import { Sample } from '../types/judge';
-import { ElementType } from 'domelementtype';
 import * as domhandler from 'domhandler';
 import * as cheerio from 'cheerio';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -31,12 +30,12 @@ async function fetchWithProxy(
 
 // FIXME: We might need to escape HTML entities (?)
 function htmlToPlaintext(node: domhandler.ChildNode): string {
-  if (node instanceof domhandler.Text) {
+  if (domhandler.isText(node)) {
     return node.data;
   }
-  if (node instanceof domhandler.Element) {
+  if (domhandler.isTag(node)) {
     const lineBreak =
-      node.type === ElementType.Tag &&
+      node.type === 'tag' &&
       (node.tagName === 'br' ||
         (node.tagName === 'div' &&
           node.attribs.class.includes('test-example-line')));
@@ -289,9 +288,9 @@ function parseCsesProblemData(
     children: (domhandler.Element | domhandler.Text)[];
   }[] = [{ heading: null, children: [] }];
   for (const el of document('.md').first().contents()) {
-    if (el.type !== ElementType.Tag && el.type !== ElementType.Text) continue;
+    if (el.type !== 'tag' && el.type !== 'text') continue;
 
-    if (el.type === ElementType.Tag && el.tagName === 'h1') {
+    if (el.type === 'tag' && el.tagName === 'h1') {
       sections.push({ heading: document(el).text(), children: [el] });
     } else {
       sections[sections.length - 1].children.push(el);
@@ -302,13 +301,13 @@ function parseCsesProblemData(
     .filter(s => s.heading?.startsWith('Example'))
     .map(s => {
       const [input, output] = s.children
-        .filter(el => el.type === ElementType.Tag && el.tagName === 'pre')
+        .filter(el => el.type === 'tag' && el.tagName === 'pre')
         .map(htmlToPlaintext);
       return { input, output };
     });
 
   const nodeContents = (c: domhandler.Element | domhandler.Text) =>
-    c.type === ElementType.Text ? c.data : document(c).prop('outerHTML');
+    c.type === 'text' ? c.data : document(c).prop('outerHTML');
 
   return {
     id: problemID,
