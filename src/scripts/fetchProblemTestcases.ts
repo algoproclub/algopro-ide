@@ -1,9 +1,8 @@
-import { getStorage } from 'firebase-admin/storage';
+import { getStorage, type Storage } from 'firebase-admin/storage';
 import { getDatabase } from 'firebase-admin/database';
 import AdmZip from 'adm-zip';
 import firebaseApp from '../../src/firebaseAdmin';
 import type { PlatformProblem } from '../types/problem';
-import type { Bucket } from '@google-cloud/storage';
 
 export async function fetchProblemTestcases({
   platform,
@@ -33,7 +32,7 @@ export async function fetchProblemTestcases({
 }
 
 async function fetchTestcasesCSES(
-  bucket: Bucket,
+  bucket: ReturnType<Storage['bucket']>,
   basePath: string,
   id: string
 ) {
