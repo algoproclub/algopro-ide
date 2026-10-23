@@ -5,7 +5,7 @@ import {
   ArrowRightStartOnRectangleIcon as ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/solid';
 import { UserCircleIcon } from '@heroicons/react/24/solid';
-import React, { useState } from 'react';
+import React from 'react';
 import { useNullableUserContext } from '../../context/UserContext';
 import { useSetAtom } from 'jotai';
 import { signOutAtom } from '../../atoms/firebaseUserAtoms';
@@ -18,14 +18,11 @@ import {
 
 export const SettingsMenu = (props: {
   setIsProfileSettingsOpen: (isOpen: boolean) => void;
-}): JSX.Element | null => {
+}) => {
   const { firebaseUser } = useNullableUserContext();
   const signOut = useSetAtom(signOutAtom);
   const connectionContext = useConnectionContext();
 
-  const [referenceElement, setReferenceElement] = useState<HTMLElement | null>(
-    null
-  );
   if (!firebaseUser) {
     return null;
   }
@@ -41,7 +38,6 @@ export const SettingsMenu = (props: {
                   ? 'border-line-strong bg-surface-active'
                   : 'border-transparent hover:border-line hover:bg-surface-hover'
               }`}
-              ref={setReferenceElement}
             >
               {firebaseUser?.photoURL ? (
                 <img
@@ -63,11 +59,9 @@ export const SettingsMenu = (props: {
           </div>
 
           <AnchoredMenuItems
-            anchor={referenceElement}
             className="w-56"
             menuClassName="origin-top-right"
-            open={open}
-            placement="bottom-end"
+            anchor="bottom end"
           >
             <div className="py-1">
               <div className="px-4 py-2 text-sm text-content">

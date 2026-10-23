@@ -4,7 +4,12 @@ import React, {
   useState,
   KeyboardEventHandler,
 } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPanel,
+  Transition,
+} from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
 export type RenderEditor<T> = (
@@ -73,7 +78,7 @@ export function EditModal<T>({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-75 transition-opacity" />
+            <DialogBackdrop className="fixed inset-0 bg-black bg-opacity-75 transition-opacity" />
           </Transition.Child>
 
           <Transition.Child
@@ -85,7 +90,7 @@ export function EditModal<T>({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div className="inline-block w-full transform overflow-hidden border border-line bg-surface-raised text-left text-content shadow-xl transition-all md:rounded-lg sm:my-8 sm:max-w-2xl">
+            <DialogPanel className="inline-block w-full transform overflow-hidden border border-line bg-surface-raised text-left text-content shadow-xl transition-all md:rounded-lg sm:my-8 sm:max-w-2xl">
               <div className="px-4 sm:px-6 pt-4 pb-2">
                 <Dialog.Title
                   as="h3"
@@ -141,7 +146,7 @@ export function EditModal<T>({
                 </button>
               </div>
               {children}
-            </div>
+            </DialogPanel>
           </Transition.Child>
         </div>
       </Dialog>
@@ -222,6 +227,7 @@ export function EditInlineTextModal({
       onClose={onClose}
       renderEditor={(val, setVal) => (
         <input
+          data-autofocus
           className="w-full rounded-md border border-line bg-input px-3 py-2 text-sm text-content shadow-sm outline-none transition-colors hover:border-line-strong focus-visible:border-line-strong focus-visible:ring-2 focus-visible:ring-focus"
           type="text"
           value={val}

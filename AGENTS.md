@@ -36,7 +36,7 @@ There is no automated test suite. For user-visible changes, interact with the ru
 ## Technology stack
 
 - Next.js 16 with Pages Router
-- React 18 with Jotai for state management
+- React 19 with Jotai for state management
 - Firebase for authentication, data storage, and serverless functions
 - Hocuspocus/Yjs for real-time collaboration
 - [Monaco editor with VSCode extensions](https://github.com/typefox/monaco-languageclient) on desktop and CodeMirror 6 on mobile for code editing

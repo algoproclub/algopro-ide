@@ -5,7 +5,7 @@ import invariant from 'tiny-invariant';
 import { useNullableUserContext } from '../../src/context/UserContext';
 import WithRegistration from '../../src/components/WithRegistration';
 
-function PageContent(): JSX.Element {
+function PageContent() {
   const router = useRouter();
 
   const { firebaseUser } = useNullableUserContext();

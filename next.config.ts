@@ -27,9 +27,6 @@ const nextConfig: NextConfig = {
         as: '*.js',
       },
     },
-    resolveAlias: {
-      'react/compiler-runtime': 'react-compiler-runtime',
-    },
   },
   async rewrites() {
     const groupEditorRewrites = [

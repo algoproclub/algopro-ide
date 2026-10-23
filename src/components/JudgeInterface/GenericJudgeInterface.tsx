@@ -25,7 +25,7 @@ export default function GenericJudgeInterface({
   translations: Record<string, Translation>;
   language: string;
   setLanguage: React.Dispatch<React.SetStateAction<string>>;
-}): JSX.Element {
+}) {
   // FIXME: Pass down well-typed languages list.
   const languages = Object.keys(translations) as ('hu' | 'en' | 'es' | '-')[];
   const translation = translations[language];

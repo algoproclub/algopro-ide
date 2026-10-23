@@ -26,7 +26,7 @@ export interface TabBarProps<Id extends string> {
 function TabBarItem<Id extends string>({
   children,
   unmount,
-}: TabBarItemProps<Id>): JSX.Element {
+}: TabBarItemProps<Id>) {
   return (
     <Tab.Panel unmount={unmount} className="h-full">
       {children}
@@ -45,7 +45,7 @@ function TabBarRoot<Id extends string>({
   inactiveTabClassName = 'border-transparent text-content-muted hover:border-line-strong hover:bg-surface-hover hover:text-content',
   highlightedTabClassName = 'border-transparent font-semibold text-warning',
   panelsClassName,
-}: TabBarProps<Id>): JSX.Element {
+}: TabBarProps<Id>) {
   const items = React.Children.toArray(children).filter(
     (child): child is React.ReactElement<TabBarItemProps<Id>> =>
       React.isValidElement(child) && child.type === TabBarItem
@@ -62,6 +62,7 @@ function TabBarRoot<Id extends string>({
 
   return (
     <Tab.Group
+      as={React.Fragment}
       selectedIndex={selectedIndex}
       onChange={index => {
         const selectedItem = items[index];

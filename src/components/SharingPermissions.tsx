@@ -31,7 +31,7 @@ export const SharingPermissions = ({
   isOwner: boolean;
   lightMode?: boolean;
   className?: string;
-}): JSX.Element => {
+}) => {
   return (
     <RadioGroupContents
       title="Sharing permissions"
