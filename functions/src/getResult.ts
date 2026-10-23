@@ -8,7 +8,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 const { JSDOM } = jsdom;
 
 export abstract class ResultFetcher {
-  abstract initialize(): Promise<void>;
+  abstract initialize(): void | Promise<void>;
   abstract getStatusCode(): StatusCode;
   abstract getStatusText(): string | null;
   abstract getMessage(): string;
@@ -699,10 +699,10 @@ export class SPOJResultFetcher extends ResultFetcher {
       const document = new JSDOM(respText).window.document;
       return document.querySelector('pre > small') ?? undefined;
     };
-    const getSummary = async (document: Document) => {
+    const getSummary = (document: Document) => {
       const submissionIDs = Array.from(
         document.querySelectorAll('td.statustext:not([id])')
-      ).map(element => element.textContent!.trim());
+      ).map(element => element.textContent.trim());
       const index = submissionIDs.findIndex(id => id === submissionID);
       if (index === -1) {
         throw new IncorrectDataError('SPOJ: submission ID not found');
@@ -726,7 +726,7 @@ export class SPOJResultFetcher extends ResultFetcher {
       const submissionIDs = Array.from(
         document.querySelectorAll('a.sourcelink.op_window')
       )
-        .map(element => element.textContent!.trim().padStart(20, '0'))
+        .map(element => element.textContent.trim().padStart(20, '0'))
         .sort();
       if (
         submissionIDs.length === 0 ||
@@ -739,7 +739,7 @@ export class SPOJResultFetcher extends ResultFetcher {
       const paddedSubmissionID = submissionID.padStart(20, '0');
 
       if (paddedSubmissionID >= minID && paddedSubmissionID <= maxID) {
-        this.summary = await getSummary(document);
+        this.summary = getSummary(document);
         break;
       }
       lastSubmissionIDs = submissionIDs;
@@ -858,7 +858,7 @@ export class CFResultFetcher extends ResultFetcher {
     return null;
   }
 
-  async initialize() {
+  initialize() {
     const { problemID, submissionID, username } = this.submissionData;
 
     if (!username) {
@@ -874,7 +874,7 @@ export class CFResultFetcher extends ResultFetcher {
     }
     const respProblemID: string =
       '' +
-      this.submission.problem!.contestId!.toString() +
+      this.submission.problem.contestId!.toString() +
       this.submission.problem.index;
 
     const normalizedProblemID = problemID.startsWith('gym')
@@ -1258,41 +1258,23 @@ export class CSESResultFetcher extends ResultFetcher {
 
 export const getCFRequestURL = (
   methodName: string,
-  params: { [key: string]: unknown }
+  params: Record<string, string>
 ) => {
-  const genRandStr = (len: number) => {
-    let result = '';
-    for (let i = 0; i < len; ++i) {
-      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-      const index = Math.floor(Math.random() * 36);
-      result += chars[index];
-    }
-    return result;
-  };
+  const query = new URLSearchParams({
+    ...params,
+    apiKey: cfAPIKey.value(),
+    time: Math.round(Date.now() / 1000).toString(),
+  });
+  query.sort();
 
-  const getQueryStr = (params: { [key: string]: unknown }) => {
-    const arr = Object.entries(params).sort((param1, param2) => {
-      const keyComparison = param1[0].localeCompare(param2[0]);
-      return keyComparison !== 0
-        ? keyComparison
-        : `${param1[1]}`.localeCompare(`${param2[1]}`);
-    });
-    return arr.map(item => `${item[0]}=${item[1]}`).join('&');
-  };
-
-  params['apiKey'] = cfAPIKey.value();
-  params['time'] = Math.round(Date.now() / 1000);
-
-  const secret = cfAPISecret.value();
-  const randStr = genRandStr(6);
-  const queryStr = methodName + '?' + getQueryStr(params);
-
-  params['apiSig'] =
+  const randStr = crypto.randomBytes(3).toString('hex');
+  const apiSig =
     randStr +
     crypto
       .createHash('sha512')
-      .update(randStr + '/' + queryStr + '#' + secret)
+      .update(`${randStr}/${methodName}?${query}#${cfAPISecret.value()}`)
       .digest('hex');
+  query.append('apiSig', apiSig);
 
-  return `https://codeforces.com/api/${methodName}?${getQueryStr(params)}`;
+  return `https://codeforces.com/api/${methodName}?${query}`;
 };

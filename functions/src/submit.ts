@@ -504,7 +504,12 @@ export class OjuzSubmitter extends Submitter {
     let id;
     try {
       id = JSON.parse(text).submissionId;
-    } catch {}
+    } catch (error) {
+      throw new Error(
+        `submission failed, invalid response (${response.status} ${response.url}): ${text.slice(0, 500)}`,
+        { cause: error }
+      );
+    }
     if (!id) {
       throw new Error(
         `submission failed, id not found (${response.status} ${response.url}): ${text.slice(0, 500)}`
@@ -599,9 +604,9 @@ export class YosupoSubmitter extends Submitter {
     // Anonymous submissions do not need stored platform credentials.
   }
 
-  async loginWith(_account: unknown): Promise<boolean> {
+  loginWith(_account: unknown): Promise<boolean> {
     // Yosupo does not require login
-    return true;
+    return Promise.resolve(true);
   }
 
   async submit({ problemID, sourceCode, language }: ProblemSolution) {

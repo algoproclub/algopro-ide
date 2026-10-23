@@ -8,8 +8,8 @@
     "build": "next build",
     "start": "next start",
     "prepare": "husky install",
-    "lint": "eslint src pages docs/components --fix",
-    "lint:ci": "eslint src pages docs/components",
+    "lint": "eslint src pages docs/components functions --fix",
+    "lint:ci": "eslint src pages docs/components functions",
     "postinstall": "patch-package"
   },
   "engines": {
