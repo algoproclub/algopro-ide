@@ -17,7 +17,7 @@ const signingConfig = {
   // needs to be set to "https://<hostname>" (incl. quotation marks)
   signatureAgent:
     process.env.BOT_AUTH_SIGNATURE_AGENT ?? 'ERROR_SIGNATURE_AGENT_UNSET',
-  // set it to something unique, though this isn't registered anymore with Web Bot Auth verification
+  // this isn't registered anymore with Web Bot Auth verification but kept as a default
   userAgent: process.env.BOT_AUTH_USER_AGENT ?? 'ERROR_BOT_USER_AGENT_UNSET',
 };
 
@@ -191,8 +191,9 @@ export async function getSignedKeyDirectory(
 }
 
 /**
- * Like regular {@link fetch}, but signs the request. Note that this
- * function resets the UA to a Cloudflare-approved value.
+ * Like regular {@link fetch}, but signs the request.
+ * Note that unlike the first version, this does <i>not</i> change the
+ * User-Agent header if it already exists.
  *
  * @param input See {@link fetch}
  * @param init See {@link fetch}
@@ -205,18 +206,20 @@ export async function signedFetch(
   const now = new Date();
   const keyPair = await rotateAndGetFreshKeyPair();
 
-  const originalRequest = new Request(input, init);
-  const headers = originalRequest.headers;
-  // CF does not like signed requests with fake UAs
-  headers.set('User-Agent', signingConfig.userAgent);
+  // CF does not really like requests with faked UAs, but probably lets
+  // them through with a signature
+  const headers = new Headers(init?.headers);
+  if (!headers.has('User-Agent')) {
+    headers.set('User-Agent', signingConfig.userAgent);
+  }
   headers.append('Signature-Agent', signingConfig.signatureAgent);
-  const unsignedRequest = new Request(originalRequest, { headers });
+  const unsignedRequest = new Request(input, { ...init, headers });
   const fields = await sign(unsignedRequest, {
     signer: await signerFromJWK(keyPair.privKey),
     created: now,
     expires: new Date(now.getTime() + 30_000),
     nonce: generateNonce(),
-    additionalComponents: ['@target-uri'],
+    additionalComponents: ['@target-uri', '@method'],
   });
   headers.append('Signature', fields.signature);
   headers.append('Signature-Input', fields.signatureInput);
