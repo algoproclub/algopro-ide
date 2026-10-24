@@ -1,4 +1,5 @@
 import { ProblemSolution } from '../../src/types/problem';
+import { signedFetch } from '../../src/utils/signatureUtils';
 import { SubmissionData as ClientSubmissionData } from '../../src/types/problem';
 import { HttpsError } from 'firebase-functions/v2/https';
 import * as cheerio from 'cheerio';
@@ -251,7 +252,7 @@ export class AtCoderSubmitter extends Submitter {
     cookie: string;
     csrf_token: string;
   }): Promise<boolean> {
-    const response = await fetch('https://atcoder.jp/settings', {
+    const response = await signedFetch('https://atcoder.jp/settings', {
       headers: {
         cookie: account.cookie,
       },
@@ -274,7 +275,7 @@ export class AtCoderSubmitter extends Submitter {
     }
     const contestId = matches[1];
 
-    const response = await fetch(
+    const response = await signedFetch(
       `https://atcoder.jp/contests/${contestId}/submit`,
       {
         headers: {

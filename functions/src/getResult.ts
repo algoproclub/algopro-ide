@@ -4,6 +4,7 @@ import { cfAPIKey, cfAPISecret, IncorrectDataError } from './index';
 import { SubmissionData } from './types';
 import { StatusCode, StatusData, TestCase } from '../../src/types/problem';
 import { Timestamp } from 'firebase-admin/firestore';
+import { signedFetch } from '../../src/utils/signatureUtils';
 
 const { JSDOM } = jsdom;
 
@@ -1060,7 +1061,7 @@ export class AtCoderResultFetcher extends ResultFetcher {
       problemID.split('_')[0]
     }/submissions/${submissionID}`;
 
-    const resp = await fetch(url, {
+    const resp = await signedFetch(url, {
       headers: this.headers,
     });
     if (resp.status !== 200) {
