@@ -1,10 +1,11 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "nodenext",
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "outDir": "lib",
     "sourceMap": true,
+    "moduleResolution": "nodenext",
     "strict": true,
     "target": "es2022",
     "typeRoots": ["./node_modules/@types"]
