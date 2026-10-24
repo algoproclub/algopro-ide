@@ -14,8 +14,10 @@ const { subtle } = globalThis.crypto;
 const db = getDatabase(firebaseApp);
 
 const signingConfig = {
+  // needs to be set to "https://<hostname>" (incl. quotation marks)
   signatureAgent:
     process.env.BOT_AUTH_SIGNATURE_AGENT ?? 'ERROR_SIGNATURE_AGENT_UNSET',
+  // set it to something unique, though this isn't registered anymore with Web Bot Auth verification
   userAgent: process.env.BOT_AUTH_USER_AGENT ?? 'ERROR_BOT_USER_AGENT_UNSET',
 };
 
@@ -212,8 +214,9 @@ export async function signedFetch(
   const fields = await sign(unsignedRequest, {
     signer: await signerFromJWK(keyPair.privKey),
     created: now,
-    expires: new Date(now.getTime() + 60_000),
+    expires: new Date(now.getTime() + 30_000),
     nonce: generateNonce(),
+    additionalComponents: ['@target-uri'],
   });
   headers.append('Signature', fields.signature);
   headers.append('Signature-Input', fields.signatureInput);
