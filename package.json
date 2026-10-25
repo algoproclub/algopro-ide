@@ -134,6 +134,7 @@
     "typescript-eslint": "^8.67.0"
   },
   "resolutions": {
-    "monaco-editor": "npm:@codingame/monaco-vscode-editor-api@^37.3.3"
+    "monaco-editor": "npm:@codingame/monaco-vscode-editor-api@^37.3.3",
+    "@types/react": "18.3.31"
   }
 }
