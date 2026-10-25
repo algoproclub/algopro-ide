@@ -49,14 +49,15 @@ const RealtimeEditorRoom = ({
   const { userData, firebaseUser } = useUserContext();
   const [, setLoading] = useAtom(loadingAtom);
   const { editorMode: mode } = userData;
-  const [yjsInfo, setYjsInfo] = useState<EditorYjsInfo | null>(null);
-  const [isRoomReady, setIsRoomReady] = useState(false);
+  const [readyDocumentId, setReadyDocumentId] = useState<string | null>(null);
   const authenticationFailureWindowStartRef = useRef<number | null>(null);
   const authenticationRetryBlockedRef = useRef(false);
   const path = props.path;
   const editorOptionsProp = props.editorOptions;
   const isProviderOnActiveDocument =
     provider.configuration.name === yjsDocumentId;
+  const isRoomReady = readyDocumentId === yjsDocumentId;
+  const awareness = provider.awareness;
 
   useEffect(() => {
     authenticationFailureWindowStartRef.current = null;
@@ -95,11 +96,11 @@ const RealtimeEditorRoom = ({
   });
 
   useHocuspocusEvent('close', () => {
-    setIsRoomReady(false);
+    setReadyDocumentId(null);
   });
 
   useHocuspocusEvent('disconnect', () => {
-    setIsRoomReady(false);
+    setReadyDocumentId(null);
   });
 
   useEffect(() => {
@@ -123,40 +124,25 @@ const RealtimeEditorRoom = ({
     awareness.setLocalStateField('firebaseUserID', firebaseUser.uid);
   }, [firebaseUser, provider.awareness]);
 
-  useEffect(() => {
-    // Clear stale bindings while switching rooms; they will be reattached once
-    // the provider points to the new document and sync completes.
-    setYjsInfo(null);
-    setIsRoomReady(false);
-  }, [yjsDocumentId]);
-
-  useEffect(() => {
-    const documentId = yjsDocumentId;
-    if (!isProviderOnActiveDocument) return;
-
-    const awareness = provider.awareness;
-    if (!awareness) return;
-
-    const monacoText = provider.document.getText('monaco');
-    setYjsInfo({
-      documentId,
+  // Bindings stay null until the provider points to the active document
+  const yjsInfo = useMemo<EditorYjsInfo | null>(
+    () =>
+      isProviderOnActiveDocument && awareness
+        ? {
+            documentId: yjsDocumentId,
+            path,
+            yjsText: provider.document.getText('monaco'),
+            yjsAwareness: awareness,
+          }
+        : null,
+    [
+      isProviderOnActiveDocument,
+      awareness,
+      provider.document,
+      yjsDocumentId,
       path,
-      yjsText: monacoText,
-      yjsAwareness: awareness,
-    });
-
-    return () => {
-      setYjsInfo(currentYjsInfo =>
-        currentYjsInfo?.documentId === documentId ? null : currentYjsInfo
-      );
-    };
-  }, [
-    isProviderOnActiveDocument,
-    path,
-    provider.awareness,
-    provider.document,
-    yjsDocumentId,
-  ]);
+    ]
+  );
 
   useEffect(() => {
     const affectsLoading =
@@ -237,7 +223,7 @@ const RealtimeEditorRoom = ({
       }
     }
 
-    setIsRoomReady(true);
+    setReadyDocumentId(documentId);
     setLoading(false);
   }, [
     defaultValue,
@@ -290,22 +276,6 @@ const RealtimeEditorRoom = ({
     return nextEditorOptions;
   }, [editorOptionsProp, isEditorReady]);
 
-  const activeYjsInfo = useMemo(() => {
-    if (!yjsInfo) {
-      return null;
-    }
-
-    if (yjsInfo.documentId !== yjsDocumentId) {
-      return null;
-    }
-
-    if (yjsInfo.path !== path) {
-      return null;
-    }
-
-    return yjsInfo;
-  }, [path, yjsDocumentId, yjsInfo]);
-
   return (
     <div
       className="tw-forms-disable tw-forms-disable-all-descendants h-full relative"
@@ -319,7 +289,7 @@ const RealtimeEditorRoom = ({
       <CodeEditor
         {...props}
         editorOptions={editorOptions}
-        yjsInfo={activeYjsInfo}
+        yjsInfo={yjsInfo}
         vim={useEditorWithVim && mode === 'Vim'}
       />
     </div>
