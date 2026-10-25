@@ -34,7 +34,7 @@ const Hint = ({ index, content }: { index: number; content: string }) => {
   );
 };
 
-export default function Hints({ hints }: { hints: Hint[] }): JSX.Element {
+export default function Hints({ hints }: { hints: Hint[] }) {
   const { fileData } = useEditorContext();
   const langHints = hints.map(hint =>
     typeof hint == 'string' ? hint : hint[fileData.settings.language]

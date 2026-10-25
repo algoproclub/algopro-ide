@@ -5,7 +5,12 @@ import { Language, EditorMode } from '../../context/UserContext';
 import UserSettings from './UserSettings';
 import ProfileStatus from './ProfileStatus';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { Dialog, Transition } from '@headlessui/react';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPanel,
+  Transition,
+} from '@headlessui/react';
 import defaultCode from '../../scripts/defaultCode';
 import { DEFAULT_FONT_SIZE_EDITOR } from '../../constants/editorConstants';
 import {
@@ -173,7 +178,7 @@ const ProfileSettings = ({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-75 transition-opacity" />
+            <DialogBackdrop className="fixed inset-0 bg-black bg-opacity-75 transition-opacity" />
           </Transition.Child>
           <Transition.Child
             as={Fragment}
@@ -184,7 +189,7 @@ const ProfileSettings = ({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div
+            <DialogPanel
               className="relative z-10 inline-block w-full overflow-hidden bg-panel text-left text-content shadow-xl transition-all md:rounded-lg sm:my-8"
               style={{ maxWidth: '1100px' }}
             >
@@ -300,7 +305,7 @@ const ProfileSettings = ({
                   <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                 </button>
               </div>
-            </div>
+            </DialogPanel>
           </Transition.Child>
         </div>
       </Dialog>

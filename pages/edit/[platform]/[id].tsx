@@ -1,6 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { usePopper } from 'react-popper';
+import {
+  autoUpdate,
+  flip,
+  limitShift,
+  offset,
+  shift,
+  useFloating,
+} from '@floating-ui/react-dom';
 import CodeEditor from '../../../src/components/editor/CodeEditor';
 import { useRouter } from 'next/router';
 import {
@@ -770,11 +777,13 @@ const PageContent = () => {
 
   // The tag row is the last thing on the page and sits in a scrolling box,
   // so an in-flow suggestion list would either be clipped or stretch the page
-  // down. Anchoring it to the input lets Popper flip it above when there is no
+  // down. Anchoring it to the input lets the list flip it above when there is no
   // room below.
-  const tagSuggestionPopper = usePopper(tagInput, tagSuggestions, {
+  const tagSuggestionPosition = useFloating({
+    elements: { reference: tagInput, floating: tagSuggestions },
+    whileElementsMounted: autoUpdate,
     placement: 'bottom-start',
-    modifiers: [{ name: 'offset', options: { offset: [0, 4] } }],
+    middleware: [offset(4), flip(), shift({ limiter: limitShift() })],
   });
 
   return (
@@ -1094,8 +1103,7 @@ const PageContent = () => {
                       <ul
                         className="border theme-border rounded-md theme-surface z-50 max-h-64 overflow-y-auto"
                         ref={setTagSuggestions}
-                        style={tagSuggestionPopper.styles.popper}
-                        {...tagSuggestionPopper.attributes.popper}
+                        style={tagSuggestionPosition.floatingStyles}
                       >
                         {filteredOptions.map(option => (
                           <li

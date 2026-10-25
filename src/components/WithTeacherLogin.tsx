@@ -5,8 +5,8 @@ import { useNullableUserContext, isTeacher } from '../context/UserContext';
 export default function WithTeacherLogin({
   children,
 }: {
-  children: JSX.Element;
-}): JSX.Element {
+  children: React.JSX.Element;
+}) {
   const { userData, logged, userRole } = useNullableUserContext();
 
   if (logged === false)

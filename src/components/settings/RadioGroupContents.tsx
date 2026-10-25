@@ -23,9 +23,15 @@ export function RadioGroupContents<T>({
   lightMode?: boolean;
   horizontal?: boolean;
   className?: string;
-}): JSX.Element {
+}) {
   return (
-    <RadioGroup value={value} onChange={onChange} disabled={disabled}>
+    <RadioGroup
+      value={value}
+      onChange={(newValue: T | null) => {
+        if (newValue !== null) onChange(newValue);
+      }}
+      disabled={disabled}
+    >
       <RadioGroup.Label
         as="div"
         className={classNames(

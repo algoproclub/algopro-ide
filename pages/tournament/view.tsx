@@ -145,7 +145,7 @@ export const SolutionView = ({
   startTime: number;
   participants: { name: string; fileID: string }[];
   onFileChange: (fileID: string) => void;
-}): JSX.Element => {
+}) => {
   return (
     <EditorProvider
       fileId={`-${fileID}`}

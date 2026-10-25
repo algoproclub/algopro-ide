@@ -8,7 +8,7 @@ import {
   TrophyIcon,
   UserPlusIcon,
 } from '@heroicons/react/24/solid';
-import React, { useState } from 'react';
+import React from 'react';
 import { useNullableUserContext, isTeacher } from '../../context/UserContext';
 import Link from 'next/link';
 import {
@@ -17,12 +17,9 @@ import {
   getAnchoredMenuItemClass,
 } from '../AnchoredMenuItems';
 
-export const EditorNavigationMenu = (): JSX.Element => {
+export const EditorNavigationMenu = () => {
   const { userRole } = useNullableUserContext();
 
-  const [referenceElement, setReferenceElement] = useState<HTMLElement | null>(
-    null
-  );
   const isAdmin = userRole?.admin === true;
   const isTeacherUser = isTeacher(userRole);
 
@@ -40,7 +37,6 @@ export const EditorNavigationMenu = (): JSX.Element => {
               className={`workspace-toolbar-button ${
                 open ? 'border-line-strong bg-surface-active' : ''
               }`}
-              ref={setReferenceElement}
             >
               Teacher
               <ChevronDownIcon
@@ -51,11 +47,9 @@ export const EditorNavigationMenu = (): JSX.Element => {
           </div>
 
           <AnchoredMenuItems
-            anchor={referenceElement}
             className="w-56"
             menuClassName="origin-top-left"
-            open={open}
-            placement="bottom-start"
+            anchor="bottom start"
           >
             <div className="py-1">
               {/* Teacher-only navigation */}

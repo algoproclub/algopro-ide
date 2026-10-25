@@ -7,7 +7,7 @@ import invariant from 'tiny-invariant';
 import va from '@vercel/analytics';
 import { getClassContext, getTaskRef } from '../../../src/scripts/getTaskRef';
 
-function PageContent(): JSX.Element {
+function PageContent() {
   const router = useRouter();
 
   const { firebaseUser, userData } = useNullableUserContext();
