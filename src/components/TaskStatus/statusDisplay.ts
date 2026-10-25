@@ -91,7 +91,7 @@ const outcomeDisplays: Record<
   untried: { label: 'Untried', Icon: CodeBracketIcon, color: 'muted' },
 };
 
-const submittingDisplay = buildStatusDisplay({
+export const submittingDisplay = buildStatusDisplay({
   label: 'Submitting…',
   Icon: Cog6ToothIcon,
   color: 'accent',
