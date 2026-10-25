@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   autoUpdate,
@@ -115,6 +115,29 @@ const SaveStatusIndicator = ({ saved }: { saved: boolean }) => {
   );
 };
 
+const ModeButton = ({
+  text,
+  active,
+  onClick,
+}: {
+  text: string;
+  active: boolean;
+  onClick: () => void;
+}) => {
+  return (
+    <button
+      className={`px-3 py-1.5 rounded-md ${
+        active
+          ? 'bg-[color:var(--surface-active)]'
+          : 'hover:bg-[color:var(--surface-hover)]'
+      } text-sm`}
+      onClick={onClick}
+    >
+      {text}
+    </button>
+  );
+};
+
 const HTMLEditor = ({
   text,
   onChange,
@@ -128,28 +151,6 @@ const HTMLEditor = ({
   unsaved?: boolean;
   onChange?: (val: string) => void;
 }) => {
-  const ModeButton = ({
-    text,
-    active,
-    onClick,
-  }: {
-    text: string;
-    active: boolean;
-    onClick: () => void;
-  }) => {
-    return (
-      <button
-        className={`px-3 py-1.5 rounded-md ${
-          active
-            ? 'bg-[color:var(--surface-active)]'
-            : 'hover:bg-[color:var(--surface-hover)]'
-        } text-sm`}
-        onClick={onClick}
-      >
-        {text}
-      </button>
-    );
-  };
   const [mode, setMode] = useState('code');
   const [fullscreen, setFullscreen] = useState(false);
   const {
@@ -484,8 +485,6 @@ const PageContent = () => {
   const [problemTitle, setProblemTitle] = useState<string | null>(null);
   const [translated, setTranslated] = useState('');
   const [initTranslated, setInitTranslated] = useState('');
-  const [platform, setPlatform] = useState<string | null>(null);
-  const [problemID, setProblemID] = useState<string | null>(null);
   const [isManualEntryOpen, setIsManualEntryOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [hints, setHints] = useState<Hint[]>([]);
@@ -510,13 +509,17 @@ const PageContent = () => {
     () => {}
   );
   const [unsaved, setUnsaved] = useState(false);
-  const [unsavedSol, setUnsavedSol] = useState(false);
   const [language, setLanguage] = useState<TextLanguage>('-');
   const [solutionLanguage, setSolutionLanguage] = useState<Language>('cpp');
   const [isSampleModalOpen, setIsSampleModalOpen] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] =
     useState<PendingConfirmation | null>(null);
   const router = useRouter();
+  const platform =
+    typeof router.query.platform === 'string' ? router.query.platform : null;
+  const problemID =
+    typeof router.query.id === 'string' ? router.query.id : null;
+  const unsavedSol = solution !== initSolution;
 
   const getTranslated = async (platform: string, id: string) => {
     if (language === '-') {
@@ -572,20 +575,16 @@ const PageContent = () => {
     return snapshot.data()?.content ?? '';
   };
 
-  useEffect(() => {
-    if (typeof router.query.platform === 'string') {
-      setPlatform(router.query.platform);
-    }
-    if (typeof router.query.id === 'string') {
-      setProblemID(router.query.id);
-    }
-  }, [router]);
-
   const applyProblemData = async (problemData: ProblemData) => {
     setProblemTitle(problemData.title);
     setOriginal(problemData.statement ?? '');
     setSamples(normalizeSamples(problemData.samples));
-    setInitSolution(await getSolution(problemData.platform, problemData.id));
+    const savedSolution = await getSolution(
+      problemData.platform,
+      problemData.id
+    );
+    setInitSolution(savedSolution);
+    setSolution(savedSolution);
     updateTranslated();
   };
 
@@ -642,31 +641,10 @@ const PageContent = () => {
     updateTranslated();
   }, [language, original]);
 
-  const handleTranslationChange = useCallback((val: string) => {
-    if (translated !== val) {
-      setTranslated(val);
-    }
-  }, []);
-
-  const handleSolutionChange = useCallback((val: string) => {
-    if (solution !== val) {
-      setSolution(val);
-    }
-  }, []);
-
-  useEffect(() => {
-    setUnsavedSol(solution !== initSolution);
-  }, [solution]);
-
-  useEffect(() => {
-    setSolution(initSolution);
-  }, [initSolution]);
-
-  useEffect(() => {
-    if (translated !== initTranslated) {
-      setUnsaved(true);
-    }
-  }, [translated]);
+  const updateTranslation = (val: string) => {
+    setTranslated(val);
+    if (val !== initTranslated) setUnsaved(true);
+  };
 
   const handleSave = async () => {
     if (!platform || !problemID) {
@@ -714,7 +692,7 @@ const PageContent = () => {
       }
     );
     setUnsaved(false);
-    setUnsavedSol(false);
+    setInitSolution(solution);
   };
 
   const handleAddNewHint = () => {
@@ -741,7 +719,7 @@ const PageContent = () => {
       lang: language,
     });
     if (response.data !== null) {
-      setTranslated(response.data);
+      updateTranslation(response.data);
     } else {
       console.error('unsuccessful translation');
     }
@@ -753,7 +731,7 @@ const PageContent = () => {
       lang: language,
     });
     if (response.data !== null) {
-      setTranslated(response.data);
+      updateTranslation(response.data);
     } else {
       console.error('unsuccessful translation');
     }
@@ -871,7 +849,9 @@ const PageContent = () => {
           path="translated"
           readonly={false}
           text={translated}
-          onChange={handleTranslationChange}
+          onChange={val => {
+            if (val !== translated) updateTranslation(val);
+          }}
           unsaved={unsaved}
         />
       </div>
@@ -1036,7 +1016,6 @@ const PageContent = () => {
           setSelected={val => {
             if (!unsavedSol) {
               setSolutionLanguage(val);
-              setUnsavedSol(false);
               return;
             }
             setPendingConfirmation({
@@ -1046,7 +1025,7 @@ const PageContent = () => {
               confirmLabel: 'Change language',
               onConfirm: () => {
                 setSolutionLanguage(val);
-                setUnsavedSol(false);
+                setSolution(initSolution);
               },
             });
           }}
@@ -1056,7 +1035,7 @@ const PageContent = () => {
           <CodeEditor
             value={solution}
             theme="dark"
-            onChange={handleSolutionChange}
+            onChange={setSolution}
             language={
               { cpp: 'cpp', py: 'python', java: 'java' }[solutionLanguage]
             }
