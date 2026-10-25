@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import * as monaco from 'monaco-editor';
 import {
@@ -6,7 +6,6 @@ import {
   type EditorAppConfig,
 } from 'monaco-languageclient/editorApp';
 import { initVimMode } from 'monaco-vim';
-import { usePrevious, useUpdate } from './utils';
 import {
   AlgoProMonacoEditor,
   EditorProps,
@@ -262,18 +261,20 @@ export default function MonacoEditor({
         ? MONACO_VSCODE_DARK_THEME
         : theme;
 
-  latestPropsRef.current = {
-    editorOptions,
-    language,
-    monacoOptions,
-    onBeforeDispose,
-    onReady,
-    path,
-    resolvedTheme,
-    saveViewState,
-    value,
-  };
-  latestYjsInfoRef.current = yjsInfo;
+  useLayoutEffect(() => {
+    latestPropsRef.current = {
+      editorOptions,
+      language,
+      monacoOptions,
+      onBeforeDispose,
+      onReady,
+      path,
+      resolvedTheme,
+      saveViewState,
+      value,
+    };
+    latestYjsInfoRef.current = yjsInfo;
+  });
 
   useEffect(() => {
     let disposed = false;
@@ -463,8 +464,11 @@ export default function MonacoEditor({
 
   /* Note: path update handler needs to run first. Otherwise, changing both path and language
      at the same time will result in the wrong language being used */
-  const previousPath = usePrevious(path);
-  useUpdate(() => {
+  const lastPathRef = useRef(path);
+  useEffect(() => {
+    const previousPath = lastPathRef.current;
+    lastPathRef.current = path;
+
     if (!editor || !editorRef.current || !editorAppRef.current) {
       return;
     }
@@ -520,7 +524,7 @@ export default function MonacoEditor({
     });
   }, [editor, path]);
 
-  useUpdate(() => {
+  useEffect(() => {
     if (!editor || !editorRef.current) {
       return;
     }
@@ -546,7 +550,7 @@ export default function MonacoEditor({
     }
   }, [editor, path, value, yjsInfo]);
 
-  useUpdate(() => {
+  useEffect(() => {
     if (!editor) {
       return;
     }
@@ -566,7 +570,7 @@ export default function MonacoEditor({
     );
   }, [editor, path, rainbowIndent, resolvedTheme]);
 
-  useUpdate(() => {
+  useEffect(() => {
     if (!editor || !editorRef.current) {
       return;
     }
@@ -600,7 +604,7 @@ export default function MonacoEditor({
     };
   }, [editor, language]);
 
-  useUpdate(() => {
+  useEffect(() => {
     if (!editor || !editorRef.current) {
       return;
     }
