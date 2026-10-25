@@ -106,38 +106,30 @@ export function EditorProvider({
   permissionDeniedUI: React.ReactNode;
   children: React.ReactNode;
 }) {
-  const [fileData, setFileData] = useState<FileData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [loadedFileId, setLoadedFileId] = useState<string | null>(null);
-  const [permissionDenied, setPermissionDenied] = useState<boolean>(false);
+  const [loaded, setLoaded] = useState<{
+    fileId: string;
+    fileData: FileData | null;
+  } | null>(null);
+  const [deniedFileId, setDeniedFileId] = useState<string | null>(null);
   const doNotInitializeTheseFileIdsRef = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
 
     const handleDataChange = (snap: DataSnapshot) => {
       if (!active) return;
 
-      setLoadedFileId(fileId);
-      setLoading(false);
-      setPermissionDenied(false);
-      setFileData(
-        snap.exists()
-          ? {
-              id: snap.key,
-              ...snap.val(),
-            }
-          : null
-      );
+      setDeniedFileId(null);
+      setLoaded({
+        fileId,
+        fileData: snap.exists() ? { id: snap.key, ...snap.val() } : null,
+      });
     };
 
     const handleNoPerms = (_err: Error) => {
       if (!active) return;
 
-      setLoadedFileId(fileId);
-      setLoading(false);
-      setPermissionDenied(true);
+      setDeniedFileId(fileId);
     };
 
     const fileRef = ref(getDatabase(), 'files/' + fileId);
@@ -149,33 +141,34 @@ export function EditorProvider({
     };
   }, [fileId]);
 
+  const fileData = loaded?.fileId === fileId ? loaded.fileData : null;
+
   const updateFileData = useCallback(
-    (firebaseUpdateData: FileUpdate) => {
-      return update(ref(getDatabase(), 'files/' + fileId), firebaseUpdateData);
-    },
+    (firebaseUpdateData: FileUpdate) =>
+      update(ref(getDatabase(), 'files/' + fileId), firebaseUpdateData),
     [fileId]
   );
 
-  const editorContextValue = useMemo(() => {
-    return { fileData, updateFileData, doNotInitializeTheseFileIdsRef };
-  }, [fileData, updateFileData, doNotInitializeTheseFileIdsRef]);
+  const contextValue = useMemo(
+    () =>
+      fileData && { fileData, updateFileData, doNotInitializeTheseFileIdsRef },
+    [fileData, updateFileData]
+  );
 
-  if (loading || loadedFileId !== fileId) {
-    return <>{loadingUI}</>;
-  }
-
-  if (permissionDenied) {
+  if (deniedFileId === fileId) {
     return <>{permissionDeniedUI}</>;
   }
 
-  if (!editorContextValue.fileData) {
+  if (loaded?.fileId !== fileId) {
+    return <>{loadingUI}</>;
+  }
+
+  if (!contextValue) {
     return <>{fileNotFoundUI}</>;
   }
 
-  // i don't know why the cast is needed. Somehow we should figure out how to
-  // assert editorContextValue.fileData is non null.
   return (
-    <EditorContext.Provider value={editorContextValue as EditorContextType}>
+    <EditorContext.Provider value={contextValue}>
       {children}
     </EditorContext.Provider>
   );
