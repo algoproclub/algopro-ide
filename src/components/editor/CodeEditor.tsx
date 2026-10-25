@@ -18,8 +18,14 @@ const loadCodeEditor = () =>
 export const preloadCodeEditor = () => {
   if (typeof window !== 'undefined') {
     void loadCodeEditor().then(editorModule => {
-      if ('initialize' in editorModule) {
-        void editorModule.initialize();
+      const initialize =
+        'initialize' in editorModule &&
+        typeof editorModule.initialize === 'function'
+          ? editorModule.initialize
+          : undefined;
+
+      if (initialize) {
+        void initialize();
       }
     });
   }
