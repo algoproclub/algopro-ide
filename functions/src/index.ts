@@ -129,7 +129,7 @@ export const submitproblemsolution = onCall<
         submitter = new SPOJSubmitter();
         break;
       case 'planets':
-        return submitToPlanets(problemSolution, uuid, userID!);
+        return submitToPlanets(problemSolution, uuid, userID);
       case 'ojuz':
         submitter = new OjuzSubmitter();
         break;
@@ -618,7 +618,7 @@ const updateResultsCF = async (
 
   const url = getCFRequestURL('contest.status', {
     contestId,
-    handle: username,
+    handle: username!,
   });
   const resp = await fetch(url);
   const promises: Promise<void>[] = [];
@@ -740,6 +740,12 @@ const registerSubmission = async (
       .get()
       .then(snapshot => snapshot.val() as string | null),
   ]);
+  if (problem.platform === 'codeforces' && !username) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Codeforces submissions require a username.'
+    );
+  }
   const submission: PendingSubmission = {
     submissionID,
     platform: problem.platform,
