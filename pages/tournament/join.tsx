@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import Router from 'next/router';
 
 const CountdownTimer = ({ deadline }: { deadline: Date }) => {
-  const [remaining, setRemaining] = useState<number>(
+  const [remaining, setRemaining] = useState(() =>
     Math.ceil((deadline.getTime() - Date.now()) / 1000)
   );
 
@@ -32,37 +32,42 @@ const CountdownTimer = ({ deadline }: { deadline: Date }) => {
 };
 
 export default function JoinTournament() {
-  const router = useRouter();
   const [start, setStart] = useState<Date | null>(null);
 
-  const fetchTournamentInfo = async () => {
-    const res = await fetch('/api/tournamentInfo');
-    const data = await res.json();
-
-    if ('start' in data) {
-      const startDate = new Date(data.start);
-      setStart(startDate);
-
-      const reloadID = setInterval(() => {
-        clearInterval(reloadID);
-        router.reload();
-      }, startDate.getTime() - Date.now());
-      return;
-    }
-
-    // FIXME: Better error handling
-    if ('error' in data) {
-      console.error(data.error);
-      return;
-    }
-
-    router.push(
-      `/solve/${data.platform}/${data.id}?tournamentID=${data.tournamentID}`
-    );
-  };
-
   useEffect(() => {
-    fetchTournamentInfo();
+    let active = true;
+    let reloadID: ReturnType<typeof setTimeout> | undefined;
+
+    fetch('/api/tournamentInfo')
+      .then(res => res.json())
+      .then(data => {
+        if (!active) return;
+
+        if ('start' in data) {
+          const startDate = new Date(data.start);
+          setStart(startDate);
+          reloadID = setTimeout(
+            () => Router.reload(),
+            startDate.getTime() - Date.now()
+          );
+          return;
+        }
+
+        // FIXME: Better error handling
+        if ('error' in data) {
+          console.error(data.error);
+          return;
+        }
+
+        void Router.push(
+          `/solve/${data.platform}/${data.id}?tournamentID=${data.tournamentID}`
+        );
+      });
+
+    return () => {
+      active = false;
+      clearTimeout(reloadID);
+    };
   }, []);
 
   return (

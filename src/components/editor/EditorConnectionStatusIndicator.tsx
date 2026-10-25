@@ -9,20 +9,17 @@ function useDelayedSyncIndicator(syncStatus: EditorSyncStatus) {
   const isSyncing = syncStatus === 'syncing';
 
   useEffect(() => {
-    if (!isSyncing) {
-      // Reset the delay for the next batch of changes. The returned value is
-      // gated below, so the sync status disappears immediately in this render.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDelayElapsed(false);
-      return;
-    }
+    if (!isSyncing) return;
 
     const timeout = window.setTimeout(() => {
       setDelayElapsed(true);
     }, SYNC_INDICATOR_DELAY_MS);
 
+    // Reset the delay for the next batch of changes. The returned value is
+    // gated below, so the sync status disappears immediately in this render.
     return () => {
       window.clearTimeout(timeout);
+      setDelayElapsed(false);
     };
   }, [isSyncing]);
 

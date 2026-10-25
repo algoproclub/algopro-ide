@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import {
   Dialog,
   DialogBackdrop,
@@ -75,18 +75,24 @@ const LoadResultsModal = ({
   setStatusData: React.Dispatch<React.SetStateAction<StatusData | null>>;
 }) => {
   const [submissionID, setSubmissionID] = useState<string>('');
-  const [username, setUsername] = useState<string | null>(null);
   const { fileData } = useEditorContext();
   const { userData } = useUserContext();
+  const platform = fileData?.problem?.platform;
+  const savedUsername = platform
+    ? (userData.usernames[platform] ?? null)
+    : null;
+  const [edit, setEdit] = useState<{
+    platform: typeof platform;
+    saved: string | null;
+    value: string;
+  } | null>(null);
+  const username =
+    edit && edit.platform === platform && edit.saved === savedUsername
+      ? edit.value
+      : savedUsername;
   const needUsername = ['codeforces', 'spoj'].includes(
     fileData?.problem?.platform ?? ''
   );
-
-  useEffect(() => {
-    if (fileData?.problem?.platform) {
-      setUsername(userData.usernames[fileData?.problem?.platform] ?? null);
-    }
-  }, [userData?.usernames, fileData?.problem?.platform]);
 
   const confirmedClose = () => {
     if (
@@ -143,7 +149,13 @@ const LoadResultsModal = ({
                     label="Username"
                     text={username ?? ''}
                     id="username"
-                    onChange={e => setUsername(e.target.value.trim())}
+                    onChange={e =>
+                      setEdit({
+                        platform,
+                        saved: savedUsername,
+                        value: e.target.value.trim(),
+                      })
+                    }
                   />
                 )}
                 <TextInput

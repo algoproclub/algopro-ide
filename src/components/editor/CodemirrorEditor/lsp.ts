@@ -42,14 +42,19 @@ export default function useLspClient(
   lspOptions: EditorProps['lspOptions'],
   documentUri: string
 ) {
-  const [client, setClient] = useState<LSPClient | null>(null);
   const enabled = !!lspOptions;
   const serviceLanguage = isLspLanguage(language) ? language : null;
   const compilerOptions =
     language === 'cpp' ? (lspOptions?.compilerOptions ?? null) : null;
 
+  const [loaded, setLoaded] = useState<{
+    client: LSPClient;
+    compilerOptions: typeof compilerOptions;
+    documentUri: string;
+    serviceLanguage: typeof serviceLanguage;
+  } | null>(null);
+
   useEffect(() => {
-    setClient(null);
     if (!enabled || !serviceLanguage) return;
 
     const controller = new AbortController();
@@ -68,7 +73,7 @@ export default function useLspClient(
       notifyLsp(
         `Connection failed: ${error instanceof Error ? error.message : String(error)}`
       );
-      setClient(null);
+      setLoaded(null);
       cleanup();
     };
 
@@ -102,10 +107,24 @@ export default function useLspClient(
 
       if (signal.aborted) return;
 
-      setClient(activeClient);
+      setLoaded({
+        client: activeClient,
+        compilerOptions,
+        documentUri,
+        serviceLanguage,
+      });
       notifyLsp('Connected');
     })().catch(failed);
-    return cleanup;
+    return () => {
+      cleanup();
+      setLoaded(null);
+    };
   }, [compilerOptions, documentUri, enabled, serviceLanguage]);
-  return client;
+  return enabled &&
+    loaded &&
+    loaded.serviceLanguage === serviceLanguage &&
+    loaded.compilerOptions === compilerOptions &&
+    loaded.documentUri === documentUri
+    ? loaded.client
+    : null;
 }
