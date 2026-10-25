@@ -8,6 +8,25 @@ const nextConfig: NextConfig = {
   // browser entry under the `browser` condition, which SSR does not resolve.
   serverExternalPackages: ['monaco-languageclient'],
   turbopack: {
+    rules: {
+      '*.css': {
+        // Monaco registers these styles itself, including in shadow roots.
+        condition: {
+          path: /node_modules\/(?:@codingame\/monaco-vscode[^/]*|monaco-editor|vscode)\//,
+        },
+        loaders: [
+          {
+            loader: './tools/monaco-css-loader.cjs',
+            options: {
+              modules: false,
+              exportType: 'string',
+              esModule: true,
+            },
+          },
+        ],
+        as: '*.js',
+      },
+    },
     resolveAlias: {
       'react/compiler-runtime': 'react-compiler-runtime',
     },

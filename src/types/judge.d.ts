@@ -16,7 +16,7 @@ export default interface JudgeResult {
   time?: number;
   memory?: number;
   signal?: number;
-  debugData?: any;
+  debugData?: Record<string, unknown>;
   fileOutput?: string;
 }
 export interface Sample {

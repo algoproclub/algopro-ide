@@ -129,7 +129,7 @@ export const submitproblemsolution = onCall<
         submitter = new SPOJSubmitter();
         break;
       case 'planets':
-        return submitToPlanets(problemSolution, uuid, userID);
+        return submitToPlanets(problemSolution, uuid, userID!);
       case 'ojuz':
         submitter = new OjuzSubmitter();
         break;
