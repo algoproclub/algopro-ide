@@ -39,11 +39,9 @@ const useVisibleStudents = (
   summary: ClassTaskSummary | null,
   timeWindow: number
 ) => {
-  const [, expireStudent] = useState(0);
-  // Time is the external input to this filter; the effect below schedules the
-  // next render at the exact point when its result will change.
-  // eslint-disable-next-line react-hooks/purity
-  const now = Date.now();
+  // Time is the external input to this filter; the effect below advances it
+  // at the exact point when the result will change.
+  const [now, setNow] = useState(Date.now);
   let nextExpiry = Infinity;
   let isFiltering = summary === null && students.length > 0 && tasks.length > 0;
   const visibleStudents = summary
@@ -74,7 +72,7 @@ const useVisibleStudents = (
   useEffect(() => {
     if (!Number.isFinite(nextExpiry)) return;
     const timeout = window.setTimeout(
-      () => expireStudent(version => version + 1),
+      () => setNow(Date.now()),
       Math.max(0, nextExpiry - Date.now() + 1)
     );
     return () => window.clearTimeout(timeout);

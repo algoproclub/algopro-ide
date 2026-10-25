@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from 'react';
+import { useEffect, useState } from 'react';
 import type { CodeRun } from '../scripts/codeRun';
 import { CODE_RUN_TIMEOUT_MS } from '../scripts/codeRun';
 import useServerTimeOffset from './useServerTimeOffset';
@@ -7,11 +7,15 @@ export default function useCodeRunActive(
   codeRun: CodeRun | null | undefined
 ): boolean {
   const serverTimeOffset = useServerTimeOffset();
-  const [, forceRefresh] = useReducer(count => count + 1, 0);
   const codeRunEndTime =
     typeof codeRun?.startedAt === 'number'
       ? codeRun.startedAt + CODE_RUN_TIMEOUT_MS
       : null;
+  const [expiredEndTime, setExpiredEndTime] = useState(() =>
+    codeRunEndTime !== null && codeRunEndTime <= Date.now() + serverTimeOffset
+      ? codeRunEndTime
+      : null
+  );
 
   useEffect(() => {
     if (codeRunEndTime === null) {
@@ -19,16 +23,13 @@ export default function useCodeRunActive(
     }
 
     const msUntilTimeout = codeRunEndTime - (Date.now() + serverTimeOffset);
-    if (msUntilTimeout <= 0) {
-      return;
-    }
-
-    const timeout = window.setTimeout(() => forceRefresh(), msUntilTimeout);
+    const timeout = window.setTimeout(
+      () => setExpiredEndTime(codeRunEndTime),
+      Math.max(0, msUntilTimeout)
+    );
 
     return () => window.clearTimeout(timeout);
-  }, [codeRunEndTime, forceRefresh, serverTimeOffset]);
+  }, [codeRunEndTime, serverTimeOffset]);
 
-  const estimatedServerNow = Date.now() + serverTimeOffset;
-
-  return codeRunEndTime !== null && estimatedServerNow < codeRunEndTime;
+  return codeRunEndTime !== null && expiredEndTime !== codeRunEndTime;
 }
