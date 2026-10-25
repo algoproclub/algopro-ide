@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from './Button';
 
 export const SignInButton = ({
   onClick,
@@ -10,12 +11,9 @@ export const SignInButton = ({
   Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 }) => {
   return (
-    <button
-      className="inline-flex items-center px-4 py-2 border shadow-sm text-[0.92rem] font-medium rounded-md theme-button-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-      onClick={onClick}
-    >
-      <Icon className="inline-block h-5 w-5 mr-3" /> Sign in with {service}
-    </button>
+    <Button icon={Icon} onClick={onClick}>
+      Sign in with {service}
+    </Button>
   );
 };
 

@@ -1,5 +1,6 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import { Button } from './Button';
 
 export default function ConfirmationModal({
   isOpen,
@@ -52,21 +53,12 @@ export default function ConfirmationModal({
               </Dialog.Title>
               <p className="mt-2 text-sm text-content-muted">{description}</p>
               <div className="mt-5 flex justify-end gap-2">
-                <button
-                  autoFocus
-                  type="button"
-                  className="ui-button-secondary py-2"
-                  onClick={onClose}
-                >
+                <Button autoFocus type="button" onClick={onClose}>
                   Cancel
-                </button>
-                <button
-                  type="button"
-                  className="ui-button border-transparent bg-danger py-2 text-content-inverted enabled:hover:bg-status-danger"
-                  onClick={onConfirm}
-                >
+                </Button>
+                <Button type="button" variant="danger" onClick={onConfirm}>
                   {confirmLabel}
-                </button>
+                </Button>
               </div>
             </div>
           </Transition.Child>

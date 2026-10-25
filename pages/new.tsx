@@ -15,6 +15,7 @@ import va from '@vercel/analytics';
 import { RadioGroupContents } from '../src/components/settings/RadioGroupContents';
 import WithRegistration from '../src/components/WithRegistration';
 import PageTitle from '../src/components/PageTitle';
+import { Button } from '../src/components/Button';
 import { MessagePage } from '../src/components/MessagePage';
 
 export const DEFAULT_COMPILER_OPTIONS = {
@@ -149,13 +150,9 @@ function NewFileForm({
             </div>
           </div>
           <div className="flex justify-end gap-2.5 border-t border-line pt-5">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--app-bg)] focus:ring-[color:var(--accent)]"
-            >
+            <Button type="submit" disabled={isSubmitting} variant="primary">
               {isSubmitting ? 'Creating\u2026' : 'Create File'}
-            </button>
+            </Button>
             <Link
               href="/"
               className="inline-flex items-center px-4 py-2 border shadow-sm text-[0.92rem] font-medium rounded-md theme-button-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
