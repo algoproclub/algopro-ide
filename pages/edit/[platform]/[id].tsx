@@ -28,6 +28,7 @@ import {
 } from '../../../src/types/problem';
 import { searchProblemTags } from '../../../src/scripts/searchProblemTags';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
+import { PDFDisplay } from '../../../src/components/JudgeInterface/GenericJudgeInterface';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import {
   EditModal,
@@ -474,6 +475,7 @@ const PageContent = () => {
     );
   };
   const [original, setOriginal] = useState('');
+  const [originalStatementURL, setOriginalStatementURL] = useState('');
   const [problemTitle, setProblemTitle] = useState<string | null>(null);
   const [translated, setTranslated] = useState('');
   const [initTranslated, setInitTranslated] = useState('');
@@ -577,6 +579,7 @@ const PageContent = () => {
   const applyProblemData = async (problemData: ProblemData) => {
     setProblemTitle(problemData.title);
     setOriginal(problemData.statement ?? '');
+    setOriginalStatementURL(problemData.statementURL ?? '');
     setSamples(normalizeSamples(problemData.samples));
     setInitSolution(await getSolution(problemData.platform, problemData.id));
     updateTranslated();
@@ -857,7 +860,15 @@ const PageContent = () => {
         onClose={() => setIsSampleModalOpen(false)}
       />
       <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
-        <HTMLEditor path="original" readonly={true} text={original} />
+        {!original && originalStatementURL ? (
+          <div className="w-full min-w-0 border theme-border">
+            <div className="h-48 md:h-96">
+              <PDFDisplay url={originalStatementURL} />
+            </div>
+          </div>
+        ) : (
+          <HTMLEditor path="original" readonly={true} text={original} />
+        )}
         <HTMLEditor
           path="translated"
           readonly={false}
