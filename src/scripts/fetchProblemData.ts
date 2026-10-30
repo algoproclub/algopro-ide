@@ -16,18 +16,7 @@ import {
 } from './problemUtils';
 import AdmZip from 'adm-zip';
 import { fetchProblemDataYosupo } from './fetchProblemDataYosupo';
-
-async function fetchWithProxy(
-  url: string,
-  init?: RequestInit
-): Promise<Response> {
-  return await fetch(
-    process.env.LOGIN_BOT_URL +
-      '/proxy?' +
-      new URLSearchParams({ url }).toString(),
-    init
-  );
-}
+import { signedFetch } from '../utils/signatureUtils';
 
 // FIXME: We might need to escape HTML entities (?)
 function htmlToPlaintext(node: domhandler.ChildNode): string {
@@ -189,13 +178,7 @@ async function fetchProblemDataCodeforces(
   const url = buildCodeforcesUrl(problemID);
   if (!url) return null;
 
-  const problemPage = await fetchWithProxy(url, {
-    headers: {
-      'User-Agent':
-        // same as login-bot
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-    },
-  });
+  const problemPage = await signedFetch(url);
   if (problemPage.status !== 200) {
     return null;
   }
