@@ -344,7 +344,19 @@ export const updateGroupClass = (
   classID: string,
   data: GroupClassData
 ) => {
-  return updateDoc(doc(firestore, 'groups', groupID, 'classes', classID), data);
+  const classRef = doc(firestore, 'groups', groupID, 'classes', classID);
+  return runTransaction(firestore, async transaction => {
+    const current = await transaction.get(classRef);
+    if (
+      !current.exists() ||
+      current.data().creationTime !== data.creationTime
+    ) {
+      throw new Error(
+        'This class was deleted or recreated. Refresh classes before saving changes.'
+      );
+    }
+    transaction.update(classRef, { tasks: data.tasks });
+  });
 };
 
 export const deleteGroupClass = (groupID: string, classID: string) =>
