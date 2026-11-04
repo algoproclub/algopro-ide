@@ -1,4 +1,5 @@
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import { buttonClassName } from './Button';
 
 export default function Pagination({
   page,
@@ -23,7 +24,7 @@ export default function Pagination({
   return (
     <div className="flex items-center gap-2 border-t border-line bg-panel-muted px-4 py-3 text-sm text-content">
       <button
-        className="ui-button-secondary"
+        className={buttonClassName({ size: 'sm' })}
         disabled={previousPage === page}
         onClick={() => setPage(previousPage)}
       >
@@ -32,7 +33,7 @@ export default function Pagination({
       </button>
       <span className="px-2 theme-text-muted">{label}</span>
       <button
-        className="ui-button-secondary"
+        className={buttonClassName({ size: 'sm' })}
         disabled={nextPage === page}
         onClick={() => setPage(nextPage)}
       >

@@ -8,6 +8,7 @@ import { registerSubmission } from '../../scripts/updateStatus';
 import { useAtomValue } from 'jotai';
 import { mainEditorValueAtom } from '../../atoms/workspace';
 import { CopyButton } from '../CopyButton';
+import { Button } from '../Button';
 
 const TextInput = ({
   text,
@@ -148,13 +149,9 @@ const LoadResultsModal = ({
                   onChange={e => setSubmissionID(e.target.value.trim())}
                 />
                 <div className="flex items-center space-x-2.5">
-                  <button
-                    type="button"
-                    className="inline-flex items-center px-4 py-2 border shadow-sm text-[0.92rem] font-medium rounded-md theme-button-secondary focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-                    onClick={confirmedClose}
-                  >
+                  <Button type="button" onClick={confirmedClose}>
                     Cancel
-                  </button>
+                  </Button>
                   <CopyCodeButton />
                   <button
                     type="button"
@@ -174,14 +171,14 @@ const LoadResultsModal = ({
                 </div>
               </div>
               <div className="absolute top-0 right-0 pt-4 pr-4">
-                <button
+                <Button
                   type="button"
-                  className="rounded-md theme-text-muted hover:text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  variant="ghost"
+                  size="sm"
+                  icon={XMarkIcon}
+                  aria-label="Close"
                   onClick={onClose}
-                >
-                  <span className="sr-only">Close</span>
-                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                </button>
+                />
               </div>
             </div>
           </Transition.Child>
