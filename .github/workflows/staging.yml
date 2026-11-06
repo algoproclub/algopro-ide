@@ -20,11 +20,14 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
       - name: Install dependencies
-        run: cd functions && npm install
+        run: pnpm --dir functions install --frozen-lockfile
 
       - name: Authenticate with Firebase
         shell: bash
