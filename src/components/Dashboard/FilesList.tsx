@@ -30,7 +30,7 @@ export interface FilesListProps {
   files: File[];
 }
 
-export default function FilesList(props: FilesListProps): JSX.Element {
+export default function FilesList(props: FilesListProps) {
   const { firebaseUser } = useUserContext();
   invariant(!!firebaseUser);
   const formatCreationTime = (creationTime: number | null): string => {

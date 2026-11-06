@@ -201,7 +201,7 @@ export default function UserSettings({
   onTemplateCodeChange: (defaults: Partial<Record<Language, string>>) => void;
   language: Language;
   onLanguageChange: (language: Language) => void;
-}): JSX.Element {
+}) {
   const [submenu, setSubmenu] = useState<Submenu>('userdata');
   const sectionButtonClass =
     'flex items-center justify-between border border-line bg-panel px-3 py-2 text-sm text-content hover:bg-surface-hover';

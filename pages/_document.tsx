@@ -17,7 +17,7 @@ const themeInitializationScript = `
   })();
 `;
 
-export default function Document(): JSX.Element {
+export default function Document() {
   return (
     <Html>
       <Head>

@@ -5,8 +5,8 @@ import { useNullableUserContext } from '../context/UserContext';
 export default function WithAdminLogin({
   children,
 }: {
-  children: JSX.Element;
-}): JSX.Element {
+  children: React.JSX.Element;
+}) {
   const { userData, logged, userRole } = useNullableUserContext();
 
   if (!logged)

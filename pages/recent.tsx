@@ -205,7 +205,7 @@ const TimeDropdown = ({
                   leaveFrom="transform scale-100 opacity-100"
                   leaveTo="transform scale-95 opacity-0"
                 >
-                  <Listbox.Options className={dropdownPanelClass}>
+                  <Listbox.Options modal={false} className={dropdownPanelClass}>
                     {editTimeList.map((val, ind) => (
                       <Listbox.Option
                         className={dropdownOptionClass}
@@ -265,6 +265,7 @@ const SubmissionStatusDropdown = ({
                   leaveTo="transform scale-95 opacity-0"
                 >
                   <Listbox.Options
+                    modal={false}
                     static
                     className={`z-20 ${dropdownPanelClass}`}
                   >
