@@ -16,7 +16,8 @@ const db = getDatabase(firebaseApp);
 const signingConfig = {
   // needs to be set to "https://<hostname>" (incl. quotation marks)
   signatureAgent:
-    process.env.BOT_AUTH_SIGNATURE_AGENT ?? 'ERROR_SIGNATURE_AGENT_UNSET',
+    process.env.BOT_AUTH_SIGNATURE_AGENT ??
+    `"${process.env.NEXT_PUBLIC_BASE_URL!}"`,
   // this isn't registered anymore with Web Bot Auth verification but kept as a default
   userAgent: process.env.BOT_AUTH_USER_AGENT ?? 'ERROR_BOT_USER_AGENT_UNSET',
 };
