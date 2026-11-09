@@ -85,7 +85,7 @@ services:
       - LOGIN_BOT_URL=http://login-bot:3100
       - NEXT_PUBLIC_LSP_URL=${NEXT_PUBLIC_LSP_URL}
       - BOT_AUTH_SIGNATURE_AGENT="https://ide.algopro.hu" # quotation marks are important
-      - BOT_AUTH_USER_AGENT=AlgoProBot # default value
+      - BOT_AUTH_USER_AGENT=AlgoProBot # optional, anything works, CloudFlare no longer cares, this is here so you can customize the default node-fetch UA
     ports:
       - '3000:3000'
       - '127.0.0.1:9229:9229'

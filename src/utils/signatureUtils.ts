@@ -19,7 +19,7 @@ const signingConfig = {
     process.env.BOT_AUTH_SIGNATURE_AGENT ??
     `"${process.env.NEXT_PUBLIC_BASE_URL!}"`,
   // this isn't registered anymore with Web Bot Auth verification but kept as a default
-  userAgent: process.env.BOT_AUTH_USER_AGENT ?? 'ERROR_BOT_USER_AGENT_UNSET',
+  userAgent: process.env.BOT_AUTH_USER_AGENT,
 };
 
 export type BotSignPublicKey = JsonWebKey & {
@@ -210,7 +210,7 @@ export async function signedFetch(
   // CF does not really like requests with faked UAs, but probably lets
   // them through with a signature
   const headers = new Headers(init?.headers);
-  if (!headers.has('User-Agent')) {
+  if (signingConfig.userAgent && !headers.has('User-Agent')) {
     headers.set('User-Agent', signingConfig.userAgent);
   }
   headers.append('Signature-Agent', signingConfig.signatureAgent);
