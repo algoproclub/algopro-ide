@@ -209,7 +209,8 @@ export async function signedFetch(
 
   // CF does not really like requests with faked UAs, but probably lets
   // them through with a signature
-  const headers = new Headers(init?.headers);
+  const originalRequest = new Request(input, init);
+  const headers = originalRequest.headers;
   if (signingConfig.userAgent && !headers.has('User-Agent')) {
     headers.set('User-Agent', signingConfig.userAgent);
   }
