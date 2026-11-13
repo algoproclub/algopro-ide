@@ -27,7 +27,9 @@ jobs:
           cache: yarn
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: |
+          yarn install --frozen-lockfile
+          npm --prefix functions ci
 
       - name: Run ESLint
         env:
@@ -63,7 +65,12 @@ jobs:
           cache: yarn
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: |
+          yarn install --frozen-lockfile
+          npm --prefix functions ci
+
+      - name: Type check functions
+        run: npm --prefix functions run build
 
       - name: Build
         run: yarn build
