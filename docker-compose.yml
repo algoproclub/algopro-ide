@@ -40,6 +40,7 @@ services:
     environment:
       - FIREBASE_STORAGE_EMULATOR_HOST=firebase:9199
       - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
+      - FIRESTORE_EMULATOR_HOST=firebase:8080
       - DATABASE_PATH=/data/db.sqlite
       - SECURITY_KEY=example-yjs-security-key
     volumes:
