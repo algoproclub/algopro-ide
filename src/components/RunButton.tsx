@@ -14,7 +14,7 @@ export const RunButton = ({
   onClick,
   showLoading,
   disabledForViewOnly,
-}: RunButtonProps): JSX.Element => (
+}: RunButtonProps) => (
   <button
     type="button"
     className="ui-focus relative m-0.5 inline-flex h-8 min-w-[7rem] items-center whitespace-nowrap rounded-md bg-accent px-3 text-sm font-semibold text-white shadow-sm transition-colors enabled:hover:bg-accent-strong enabled:active:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"

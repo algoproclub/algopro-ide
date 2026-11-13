@@ -46,7 +46,7 @@ export default function HTMLStatement({
 }: {
   htmlContent: string;
   renderYosupoMath?: boolean;
-}): JSX.Element {
+}) {
   const refCallback = useCallback(
     (node: HTMLDivElement) => {
       if (node !== null) {

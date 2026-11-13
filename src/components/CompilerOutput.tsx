@@ -23,13 +23,13 @@ const STYLES: Record<number, React.CSSProperties> = {
 };
 
 function parseOutputLine(line: string): {
-  spans: JSX.Element[];
+  spans: React.JSX.Element[];
   linkedLine: number | undefined;
 } {
   line = line.replaceAll(ERASE_LINE, '');
   const chunks = line.split(SET_COLOR_REGEX);
   let plaintext = '';
-  const spans: JSX.Element[] = [];
+  const spans: React.JSX.Element[] = [];
 
   if (chunks[0] !== '') {
     spans.push(<span key={0}>{chunks[0]}</span>);
@@ -72,11 +72,11 @@ const OutputLine = ({
   highlightLine,
   clearLineHighlight,
 }: {
-  spans: JSX.Element[];
+  spans: React.JSX.Element[];
   linkedLine: number | undefined;
   highlightLine?: (line: number) => void;
   clearLineHighlight?: () => void;
-}): JSX.Element => {
+}) => {
   if (linkedLine !== undefined && highlightLine) {
     return (
       <div
@@ -100,7 +100,7 @@ export const CompilerOutput = ({
   output: string;
   highlightLine?: (line: number) => void;
   clearLineHighlight?: () => void;
-}): JSX.Element => {
+}) => {
   const lines = output.split('\n').map(parseOutputLine);
   const {
     userData: { fontSize },

@@ -1,4 +1,9 @@
-import { Dialog, Transition } from '@headlessui/react';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPanel,
+  Transition,
+} from '@headlessui/react';
 import { Fragment } from 'react';
 
 export default function ConfirmationModal({
@@ -35,7 +40,7 @@ export default function ConfirmationModal({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-75" />
+            <DialogBackdrop className="fixed inset-0 bg-black bg-opacity-75" />
           </Transition.Child>
           <Transition.Child
             as={Fragment}
@@ -46,14 +51,14 @@ export default function ConfirmationModal({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-2 sm:scale-95"
           >
-            <div className="relative w-full max-w-md transform rounded-lg border border-line bg-surface-raised p-5 text-left text-content shadow-xl transition-all">
+            <DialogPanel className="relative w-full max-w-md transform rounded-lg border border-line bg-surface-raised p-5 text-left text-content shadow-xl transition-all">
               <Dialog.Title as="h2" className="text-base font-semibold">
                 {title}
               </Dialog.Title>
               <p className="mt-2 text-sm text-content-muted">{description}</p>
               <div className="mt-5 flex justify-end gap-2">
                 <button
-                  autoFocus
+                  data-autofocus
                   type="button"
                   className="ui-button-secondary py-2"
                   onClick={onClose}
@@ -68,7 +73,7 @@ export default function ConfirmationModal({
                   {confirmLabel}
                 </button>
               </div>
-            </div>
+            </DialogPanel>
           </Transition.Child>
         </div>
       </Dialog>
