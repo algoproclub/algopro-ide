@@ -28,6 +28,7 @@ import {
 import LoadingIndicator from '../src/components/LoadingIndicator';
 import WithTeacherLogin from '../src/components/WithTeacherLogin';
 import PageTitle from '../src/components/PageTitle';
+import { Button } from '../src/components/Button';
 
 const editTimeList = [
   'In 5 minutes',
@@ -522,12 +523,13 @@ const PageContent = () => {
                     />
                   </div>
                 </Disclosure.Button>
-                <button
-                  className={`flex items-center justify-center px-3 py-1 rounded-lg ${secondaryButtonClass}`}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={ArrowPathIcon}
+                  aria-label="Refresh file list"
                   onClick={updateFileList}
-                >
-                  <ArrowPathIcon className="inline h-4 w-4" />
-                </button>
+                />
               </div>
               <Disclosure.Panel>
                 <div className="mt-2 space-y-3 px-6 py-5 border theme-border theme-surface-raised z-10 relative">

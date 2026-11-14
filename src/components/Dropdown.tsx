@@ -6,6 +6,7 @@ import {
 } from '@heroicons/react/20/solid';
 import classNames from 'classnames';
 import React from 'react';
+import { Button } from './Button';
 import Tooltip from './Tooltip';
 
 export type DropdownItem<Value extends string | number> = {
@@ -78,16 +79,17 @@ export default function Dropdown<Value extends string | number>({
               {canClear && (
                 <div className="absolute inset-y-0 right-7 flex items-center">
                   <Tooltip label="Clear selection">
-                    <button
+                    <Button
                       type="button"
-                      className="rounded p-0.5 text-content-muted hover:bg-surface-hover hover:text-content"
+                      variant="ghost"
+                      size="sm"
+                      icon={XMarkIcon}
+                      aria-label="Clear selection"
                       onClick={event => {
                         event.stopPropagation();
                         onClear();
                       }}
-                    >
-                      <XMarkIcon className="h-4 w-4" />
-                    </button>
+                    />
                   </Tooltip>
                 </div>
               )}

@@ -48,6 +48,7 @@ import {
   type ClassContext,
 } from '../src/scripts/getTaskRef';
 import { WorkspaceLaunchProvider } from '../src/context/WorkspaceLaunchContext';
+import { buttonClassName } from '../src/components/Button';
 import ProblemDataLoader from '../src/components/Workspace/ProblemDataLoader';
 import { preloadCodeEditor } from '../src/components/editor/CodeEditor';
 
@@ -342,7 +343,11 @@ function PageContent() {
         </p>
         <Link
           href="/"
-          className="ui-button-primary mt-4 px-4 py-2 text-base sm:mt-6"
+          className={buttonClassName({
+            variant: 'primary',
+            size: 'sm',
+            className: 'mt-4 sm:mt-6',
+          })}
         >
           Go Home
         </Link>
