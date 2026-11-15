@@ -3,17 +3,8 @@ import { ProblemData, Translation } from '../../types/problem';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid';
 import renderMathInElement from 'katex/contrib/auto-render';
 import HTMLStatement from './HTMLStatement';
+import PDFDisplay from './PDFDisplay';
 import { LanguageSelectorDropdown } from '../Dropdown';
-
-export const PDFDisplay = ({ url }: { url: string }) => {
-  return (
-    <object data={url} type="application/pdf" className="w-full block h-full">
-      <a href={url} target="_blank" rel="noreferrer" className="underline">
-        Open problem statement
-      </a>
-    </object>
-  );
-};
 
 export default function GenericJudgeInterface({
   problem,
