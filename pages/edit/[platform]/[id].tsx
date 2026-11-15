@@ -44,6 +44,7 @@ import Checkbox from '../../../src/components/Checkbox';
 import { useUserContext } from '../../../src/context/UserContext';
 import PageTitle from '../../../src/components/PageTitle';
 import ConfirmationModal from '../../../src/components/ConfirmationModal';
+import Tooltip from '../../../src/components/Tooltip';
 
 const translate = httpsCallable<
   {
@@ -731,7 +732,14 @@ const PageContent = () => {
     setIsSampleModalOpen(true);
   };
 
+  const hasOriginalHTML = original.trim().length > 0;
+  const autoTranslateTooltip = hasOriginalHTML
+    ? 'Translate the original HTML statement.'
+    : 'Automatic translation requires an HTML source statement.';
+
   const handleAutoTranslateDeepl = async () => {
+    if (!hasOriginalHTML) return;
+
     const response = await translate({
       text: original,
       lang: language,
@@ -744,6 +752,8 @@ const PageContent = () => {
   };
 
   const handleAutoTranslateOpenAI = async () => {
+    if (!hasOriginalHTML) return;
+
     const response = await translateOpenAI({
       text: original,
       lang: language,
@@ -827,18 +837,28 @@ const PageContent = () => {
         />
       </div>
       <div className="mb-4 space-x-2 text-[0.95rem]">
-        <button
-          className={`${secondaryButtonClass} px-4 py-2`}
-          onClick={handleAutoTranslateDeepl}
-        >
-          Auto translate (Deepl)
-        </button>
-        <button
-          className={`${secondaryButtonClass} px-4 py-2`}
-          onClick={handleAutoTranslateOpenAI}
-        >
-          Auto translate (OpenAI)
-        </button>
+        <Tooltip label={autoTranslateTooltip}>
+          <span tabIndex={hasOriginalHTML ? undefined : 0}>
+            <button
+              className={`${secondaryButtonClass} px-4 py-2 disabled:pointer-events-none`}
+              disabled={!hasOriginalHTML}
+              onClick={handleAutoTranslateDeepl}
+            >
+              Auto translate (Deepl)
+            </button>
+          </span>
+        </Tooltip>
+        <Tooltip label={autoTranslateTooltip}>
+          <span tabIndex={hasOriginalHTML ? undefined : 0}>
+            <button
+              className={`${secondaryButtonClass} px-4 py-2 disabled:pointer-events-none`}
+              disabled={!hasOriginalHTML}
+              onClick={handleAutoTranslateOpenAI}
+            >
+              Auto translate (OpenAI)
+            </button>
+          </span>
+        </Tooltip>
         <button
           className="px-4 py-2 rounded-md theme-button-primary"
           onClick={handleSave}
