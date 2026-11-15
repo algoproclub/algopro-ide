@@ -68,6 +68,10 @@ const textareaClass =
   'font-mono theme-input border w-full min-h-[10rem] text-sm';
 const secondaryButtonClass =
   'theme-button-secondary border rounded-md active:bg-[color:var(--surface-active)]';
+const statementPanelClass =
+  'w-full min-w-0 border theme-border theme-surface-raised';
+const statementHeaderClass =
+  'flex h-14 shrink-0 items-center justify-between w-full px-3 theme-surface-raised border-b theme-border';
 
 function normalizeSamples(samples: unknown): Sample[] {
   if (!Array.isArray(samples)) return [];
@@ -153,11 +157,11 @@ const HTMLEditor = ({
 
   return (
     <div
-      className={` ${
-        fullscreen ? 'fixed flex flex-col inset-0 z-50 !m-0' : 'w-full'
-      } border theme-border theme-surface-raised`}
+      className={`${statementPanelClass} ${
+        fullscreen ? 'fixed flex flex-col inset-0 z-50 !m-0' : ''
+      }`}
     >
-      <div className="flex items-center justify-between w-full px-3 py-2.5 theme-surface-raised border-b theme-border">
+      <div className={statementHeaderClass}>
         <div className="flex space-x-2 items-center">
           <button
             className="flex items-center justify-center px-2.5 py-2 rounded-md mr-0.5 hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)] border theme-border"
@@ -880,8 +884,11 @@ const PageContent = () => {
         onClose={() => setIsSampleModalOpen(false)}
       />
       <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
-        {!original && originalStatementURL ? (
-          <div className="w-full min-w-0 border theme-border">
+        {!hasOriginalHTML && originalStatementURL ? (
+          <div className={statementPanelClass}>
+            <div className={statementHeaderClass}>
+              <span className="text-sm">Original statement (PDF)</span>
+            </div>
             <div className="h-48 md:h-96">
               <PDFDisplay url={originalStatementURL} />
             </div>
