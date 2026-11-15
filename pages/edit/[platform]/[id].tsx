@@ -152,7 +152,7 @@ const HTMLEditor = ({
   const [mode, setMode] = useState('code');
   const [fullscreen, setFullscreen] = useState(false);
   const {
-    userData: { fontSize },
+    userData: { fontSize, lightMode },
   } = useUserContext();
 
   return (
@@ -209,12 +209,11 @@ const HTMLEditor = ({
             mode === 'split' ? 'right-1/2' : 'right-0'
           }`}
         >
-          {/* The embedded editor intentionally keeps its dark syntax theme. */}
           <CodeEditor
             onChange={onChange}
             value={text}
             language="html"
-            theme="dark"
+            theme={lightMode ? 'light' : 'dark'}
             path={path}
             editorOptions={{
               readOnly: readonly,
@@ -411,6 +410,10 @@ const RemovableTag = ({
 };
 
 const PageContent = () => {
+  const {
+    userData: { lightMode },
+  } = useUserContext();
+
   const Hint = ({
     hint,
     hintNum,
@@ -1081,10 +1084,9 @@ const PageContent = () => {
           }}
         />
         <div className="mt-2 border theme-border h-48">
-          {/* The solution editor intentionally keeps its dark syntax theme. */}
           <CodeEditor
             value={solution}
-            theme="dark"
+            theme={lightMode ? 'light' : 'dark'}
             onChange={handleSolutionChange}
             language={
               { cpp: 'cpp', py: 'python', java: 'java' }[solutionLanguage]
