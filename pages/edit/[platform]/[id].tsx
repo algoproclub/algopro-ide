@@ -595,12 +595,19 @@ const PageContent = () => {
   };
 
   useEffect(() => {
+    setOriginal('');
+    setOriginalStatementURL('');
+    setOriginalFullscreen(false);
+
+    const controller = new AbortController();
+
     const getOriginal = async (
       platform: string,
       id: string
     ): Promise<ProblemData> => {
       const resp = await fetch('/api/fetchProblemData', {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -621,12 +628,18 @@ const PageContent = () => {
     (async () => {
       try {
         const problemData = await getOriginal(platform, problemID);
+        if (controller.signal.aborted) return;
+
         await applyProblemData(problemData);
       } catch (error) {
+        if (controller.signal.aborted) return;
+
         console.error(error);
         setIsManualEntryOpen(true);
       }
     })();
+
+    return () => controller.abort();
   }, [platform, problemID]);
 
   useEffect(() => {
