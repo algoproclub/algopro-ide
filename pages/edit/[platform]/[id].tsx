@@ -484,6 +484,7 @@ const PageContent = () => {
   };
   const [original, setOriginal] = useState('');
   const [originalStatementURL, setOriginalStatementURL] = useState('');
+  const [originalFullscreen, setOriginalFullscreen] = useState(false);
   const [problemTitle, setProblemTitle] = useState<string | null>(null);
   const [translated, setTranslated] = useState('');
   const [initTranslated, setInitTranslated] = useState('');
@@ -888,11 +889,31 @@ const PageContent = () => {
       />
       <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
         {!hasOriginalHTML && originalStatementURL ? (
-          <div className={statementPanelClass}>
+          <div
+            className={`${statementPanelClass} ${
+              originalFullscreen ? 'fixed flex flex-col inset-0 z-50 !m-0' : ''
+            }`}
+          >
             <div className={statementHeaderClass}>
               <span className="text-sm">Original statement (PDF)</span>
+              <button
+                type="button"
+                className="ui-focus flex items-center justify-center px-2.5 py-2 rounded-md hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)] border theme-border"
+                aria-label={
+                  originalFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'
+                }
+                onClick={() => setOriginalFullscreen(value => !value)}
+              >
+                {originalFullscreen ? (
+                  <ArrowsPointingInIcon className="h-4 w-4" />
+                ) : (
+                  <ArrowsPointingOutIcon className="h-4 w-4" />
+                )}
+              </button>
             </div>
-            <div className="h-48 md:h-96">
+            <div
+              className={originalFullscreen ? 'min-h-0 flex-1' : 'h-48 md:h-96'}
+            >
               <PDFDisplay url={originalStatementURL} />
             </div>
           </div>
