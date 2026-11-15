@@ -28,7 +28,7 @@ import {
 } from '../../../src/types/problem';
 import { searchProblemTags } from '../../../src/scripts/searchProblemTags';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
-import { PDFDisplay } from '../../../src/components/JudgeInterface/GenericJudgeInterface';
+import PDFDisplay from '../../../src/components/JudgeInterface/PDFDisplay';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import {
   EditModal,
