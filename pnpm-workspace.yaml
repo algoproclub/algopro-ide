@@ -1,0 +1,4 @@
+overrides:
+  monaco-editor: npm:@codingame/monaco-vscode-editor-api@^37.3.3
+allowBuilds:
+  protobufjs: true
