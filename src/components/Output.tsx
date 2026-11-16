@@ -82,7 +82,7 @@ function ExecutionOutputPanel({
 }: {
   children: React.ReactNode;
   result: JudgeResult | null;
-}): JSX.Element {
+}) {
   const executionTime =
     result?.status === 'time_limit_exceeded'
       ? '∞ms'
@@ -115,11 +115,7 @@ function ExecutionOutputPanel({
   );
 }
 
-function OutputHistory({
-  entries,
-}: {
-  entries: StatusHistoryEntry[];
-}): JSX.Element {
+function OutputHistory({ entries }: { entries: StatusHistoryEntry[] }) {
   return (
     <div className="h-full w-full overflow-y-auto">
       <table className="table-tasks w-full border-b border-line text-content">
@@ -195,7 +191,7 @@ export const Output = ({
   result,
   statusData,
   statusDataHistory,
-}: OutputProps): JSX.Element => {
+}: OutputProps) => {
   const [selection, setSelection] = useState<OutputSelection>(() => {
     const selectedId = statusData ? 'results' : getDefaultOutputTab(result);
     return { result, statusData, selectedId, acknowledged: [selectedId] };

@@ -105,7 +105,7 @@ export function EditorProvider({
   fileNotFoundUI: React.ReactNode;
   permissionDeniedUI: React.ReactNode;
   children: React.ReactNode;
-}): JSX.Element {
+}) {
   const [fileData, setFileData] = useState<FileData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadedFileId, setLoadedFileId] = useState<string | null>(null);

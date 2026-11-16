@@ -19,8 +19,8 @@ import Tooltip from '../Tooltip';
 import { WorkspaceTitleNavigation } from './WorkspaceTitleNavigation';
 
 export interface DesktopNavBarProps {
-  fileMenu: JSX.Element;
-  runButton: JSX.Element;
+  fileMenu: React.JSX.Element;
+  runButton: React.JSX.Element;
   showViewOnly: boolean;
   isSidebarOpen: boolean;
   onToggleSidebar: () => void;
@@ -38,7 +38,7 @@ const SimpleButton = ({
   disabled,
   onClick,
   ...buttonProps
-}: SimpleButtonProps): JSX.Element => {
+}: SimpleButtonProps) => {
   return (
     <button
       disabled={disabled}
@@ -51,11 +51,11 @@ const SimpleButton = ({
   );
 };
 
-const ToolbarSeparator = (): JSX.Element => (
+const ToolbarSeparator = () => (
   <span aria-hidden="true" className="mx-0.5 h-5 w-px shrink-0 bg-line" />
 );
 
-export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
+export const NavBar = (props: DesktopNavBarProps) => {
   const onlineUsers = useOnlineUsers();
   const onlineUserCount = onlineUsers?.filter(isUserOnline).length;
 

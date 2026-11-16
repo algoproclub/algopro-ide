@@ -3,7 +3,7 @@ import { Menu } from '@headlessui/react';
 import classNames from 'classnames';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import React, { type ReactNode, useState } from 'react';
+import React, { type ReactNode } from 'react';
 import { useAtomValue } from 'jotai';
 import { statusDataAtom } from '../../atoms/workspaceUI';
 import { useEditorContext } from '../../context/EditorContext';
@@ -96,16 +96,12 @@ const WorkspaceTaskMenu = ({
   classTasks: ReturnType<typeof useWorkspaceClassTasks>;
 }) => {
   const router = useRouter();
-  const [referenceElement, setReferenceElement] = useState<HTMLElement | null>(
-    null
-  );
 
   return (
     <Menu as="span" className="min-w-0">
       {({ open }) => (
         <>
           <Menu.Button
-            ref={setReferenceElement}
             className={`pointer-events-auto block min-w-0 max-w-full rounded px-1.5 py-0.5 text-center outline-none hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-focus ${
               open ? 'bg-surface-hover' : ''
             }`}
@@ -113,11 +109,9 @@ const WorkspaceTaskMenu = ({
             {children}
           </Menu.Button>
           <AnchoredMenuItems
-            anchor={referenceElement}
             className="w-72"
             menuClassName="max-h-96 origin-top overflow-y-auto overscroll-contain scroll-py-1"
-            open={open}
-            placement="bottom"
+            anchor="bottom"
           >
             {classTasks.tasks.map((task, index) => {
               const isCurrent = index === classTasks.currentTaskIndex;
