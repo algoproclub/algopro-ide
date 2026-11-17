@@ -444,7 +444,7 @@ async function fetchProblemDataSPOJ(
   problemID: string
 ): Promise<ProblemData | null> {
   const url = buildSpojUrl(problemID);
-  const problemPage = await fetch(url);
+  const problemPage = await signedFetch(url);
   if (problemPage.status !== 200) {
     return null;
   }
