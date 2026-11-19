@@ -4,6 +4,8 @@ import { FileMenu } from '../src/components/NavBar/FileMenu';
 import { NavBar } from '../src/components/NavBar/NavBar';
 import { EditorProvider, useEditorContext } from '../src/context/EditorContext';
 import { RunButton } from '../src/components/RunButton';
+import { LLMDebugButton } from '../src/components/LLMDebugButton';
+import { requestLLMDebug } from '../src/scripts/requestLLMDebug';
 import { RunCodeError, runCode, runCodeBatch } from '../src/scripts/runCode';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
@@ -16,6 +18,7 @@ import {
 } from '../src/atoms/workspace';
 import {
   inputTabAtom,
+  llmDebugRunAtom,
   mobileActiveTabAtom,
   problemAtom,
   showSidebarAtom,
@@ -24,7 +27,7 @@ import React, { type ReactNode, useEffect, useState } from 'react';
 import { useMediaQuery } from '../src/hooks/useMediaQuery';
 import Workspace from '../src/components/Workspace/Workspace';
 import { MobileBottomNav } from '../src/components/NavBar/MobileBottomNav';
-import { useNullableUserContext } from '../src/context/UserContext';
+import { isTeacher, useNullableUserContext } from '../src/context/UserContext';
 import useUserPermission from '../src/hooks/useUserPermission';
 import { WorkspaceSettingsModal } from '../src/components/settings/WorkspaceSettingsModal';
 import { getSampleIndex } from '../src/components/JudgeInterface/Samples';
@@ -75,6 +78,7 @@ function runCodeErrorToResult(error: unknown): JudgeResult {
 function EditorPage() {
   const { fileData } = useEditorContext();
   const permission = useUserPermission();
+  const { userRole } = useNullableUserContext();
   const loading = useAtomValue(loadingAtom);
   const [showSidebar, setShowSidebar] = useAtom(showSidebarAtom);
   const readOnly = !(permission === 'OWNER' || permission === 'READ_WRITE');
@@ -107,7 +111,8 @@ function EditorPage() {
   useUserFileConnection();
   const { pageTitle } = useUpdateUserDashboard();
 
-  const inputTab = useAtomValue(inputTabAtom);
+  const [inputTab, setInputTab] = useAtom(inputTabAtom);
+  const [llmDebugRun, setLLMDebugRun] = useAtom(llmDebugRunAtom);
 
   const handleToggleSidebar = () => {
     setShowSidebar(show => !show);
@@ -211,7 +216,7 @@ function EditorPage() {
 
     if (inputTab === 'input') {
       if (getInputEditorValue) runWithInput(getInputEditorValue());
-    } else if (['judge', 'hints', 'solutions'].includes(inputTab)) {
+    } else if (['judge', 'hints', 'solutions', 'ai-debug'].includes(inputTab)) {
       runAllSamples();
     } else {
       const samples = problem?.samples;
@@ -225,6 +230,28 @@ function EditorPage() {
     mainEditorHandle?.clearLineHighlight();
   };
 
+  const handleLLMDebug = async () => {
+    if (!mainEditorHandle) return;
+    const fileId = fileData.id;
+    const code = mainEditorHandle.getValue();
+    const pending = { fileId, code, status: 'loading' } as const;
+    setLLMDebugRun(pending);
+    setInputTab('ai-debug');
+    const response = await requestLLMDebug(
+      fileId,
+      fileData.settings.language,
+      code
+    );
+    // Keep a newer run (or another workspace's) if one replaced this one.
+    setLLMDebugRun(current =>
+      current !== pending
+        ? current
+        : response.ok
+          ? { fileId, code, status: 'done', result: response }
+          : { fileId, code, status: 'error', message: response.message }
+    );
+  };
+
   const handleKeydown = (event: KeyboardEvent) => {
     if (event.ctrlKey || event.metaKey) {
       if (event.key === 's') event.preventDefault();
@@ -236,6 +263,13 @@ function EditorPage() {
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
   });
+
+  // The AI Debug tab hands its flagged lines to the editor to track; they are
+  // dropped when the run is replaced or another workspace is opened.
+  useEffect(
+    () => () => mainEditorHandle?.setLLMBugHighlights([]),
+    [mainEditorHandle, llmDebugRun, fileData.id]
+  );
 
   return (
     <div className="h-full">
@@ -254,6 +288,18 @@ function EditorPage() {
                 showLoading={isCodeRunActive || loading || problemDataIsStale}
                 disabledForViewOnly={readOnly}
               />
+            }
+            llmDebugButton={
+              isTeacher(userRole) ? (
+                <LLMDebugButton
+                  onClick={handleLLMDebug}
+                  showLoading={
+                    llmDebugRun?.fileId === fileData.id &&
+                    llmDebugRun.status === 'loading'
+                  }
+                  disabledForNoProblem={!fileData.problem}
+                />
+              ) : undefined
             }
             showViewOnly={!loading && readOnly}
             isSidebarOpen={showSidebar}
