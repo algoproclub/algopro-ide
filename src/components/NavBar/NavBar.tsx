@@ -128,6 +128,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
       </div>
       <div className="flex-1" />
       <WorkspaceTitleNavigation />
+      <div className="flex-1" />
       {props.showSidebarButton && (
         <div>
           <button
