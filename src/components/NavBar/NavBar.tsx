@@ -21,6 +21,7 @@ import { WorkspaceTitleNavigation } from './WorkspaceTitleNavigation';
 export interface DesktopNavBarProps {
   fileMenu: JSX.Element;
   runButton: JSX.Element;
+  llmDebugButton?: JSX.Element;
   showViewOnly: boolean;
   isSidebarOpen: boolean;
   onToggleSidebar: () => void;
@@ -112,6 +113,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
         <ToolbarSeparator />
       </div>
       {props.runButton}
+      {props.llmDebugButton}
       {problem?.submittable && problem.id === fileData.problem?.id && (
         <PlatformSubmitButton
           platform={problem?.platform}
@@ -128,6 +130,7 @@ export const NavBar = (props: DesktopNavBarProps): JSX.Element => {
       </div>
       <div className="flex-1" />
       <WorkspaceTitleNavigation />
+      <div className="flex-1" />
       {props.showSidebarButton && (
         <div>
           <button

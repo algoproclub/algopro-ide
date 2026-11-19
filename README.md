@@ -59,6 +59,8 @@ The front-end authenticates with Firebase ID tokens. Custom claims determine reg
 
 Backend-to-backend requests are authenticated using shared secrets passed with each request.
 
+The teacher-only "Debug with AI" button (`pages/api/llmDebug.ts`) sends the code and the problem statement to the Anthropic API, using the key in `ANTHROPIC_API_KEY`.
+
 The Go execution service accepts authenticated browser requests and runs submitted code through [Isolate](https://github.com/ioi/isolate). See [execute/README.md](execute/README.md) for its API, limits, local requirements, and production setup.
 
 Collaborative editing is provided by a Hocuspocus/Yjs service. It verifies Firebase identities and permissions, persists documents in SQLite, and exposes an internal API for copying documents. Realtime Database does not store source-document contents. Its `files/{fileId}` records contain metadata and runtime state rather than source code. See [yjs/README.md](yjs/README.md).

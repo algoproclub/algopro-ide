@@ -6,7 +6,8 @@ const nextConfig: NextConfig = {
   bundlePagesRouterDependencies: true,
   // The editor is client-only, and vscode-languageclient only exports its
   // browser entry under the `browser` condition, which SSR does not resolve.
-  serverExternalPackages: ['monaco-languageclient'],
+  // pdf-parse (/api/llmDebug) loads the native @napi-rs/canvas binary.
+  serverExternalPackages: ['monaco-languageclient', '@napi-rs/canvas'],
   turbopack: {
     resolveAlias: {
       'react/compiler-runtime': 'react-compiler-runtime',

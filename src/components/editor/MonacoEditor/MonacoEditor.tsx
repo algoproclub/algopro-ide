@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
+import { createRoot } from 'react-dom/client';
+import Markdown from '../../JudgeInterface/Markdown';
 
 import * as monaco from 'monaco-editor';
 import {
@@ -169,6 +172,95 @@ function createEditorAppConfig(
 }
 
 function createEditorHandle(editor: AlgoProMonacoEditor): MonacoEditorHandle {
+  // A marker at the start of each flagged line, which Monaco moves with every
+  // edit, also while it is hidden. With NeverGrows, text inserted right before
+  // the marker (Enter at the line start) pushes it along with the line.
+  const llmBugHighlights = editor.createDecorationsCollection();
+  let llmBugReasons: string[] = [];
+  let llmBugsShown = false;
+  // Our own hover box, so that the whole flagged line (not only its text)
+  // shows the reason; the built-in hover only reacts to text.
+  const hoverNode = document.createElement('div');
+  hoverNode.className = 'monaco-hover';
+  hoverNode.style.maxWidth = '500px';
+  const hoverRoot = createRoot(hoverNode);
+  let hoverAt: monaco.IPosition | null = null;
+  const hoverWidget: monaco.editor.IContentWidget = {
+    allowEditorOverflow: true,
+    getId: () => 'llm-bug-hover',
+    getDomNode: () => hoverNode,
+    getPosition: () =>
+      hoverAt && {
+        position: hoverAt,
+        preference: [
+          monaco.editor.ContentWidgetPositionPreference.ABOVE,
+          monaco.editor.ContentWidgetPositionPreference.BELOW,
+        ],
+      },
+  };
+  editor.addContentWidget(hoverWidget);
+  const showLLMBugHover = (position: monaco.IPosition | null) => {
+    const index = llmBugHighlights
+      .getRanges()
+      .findIndex(range => range.startLineNumber === position?.lineNumber);
+    if (!llmBugsShown || index < 0) position = null;
+    if (position?.lineNumber === hoverAt?.lineNumber) return;
+    hoverAt = position;
+    // Like the built-in hover: the editor's font size and line height.
+    const { fontSize, lineHeight } = editor.getOption(
+      monaco.editor.EditorOption.fontInfo
+    );
+    hoverNode.style.fontSize = `${fontSize}px`;
+    hoverNode.style.lineHeight = `${lineHeight}px`;
+    // Rendered synchronously, so that Monaco places the box at its real size.
+    flushSync(() =>
+      hoverRoot.render(
+        position && (
+          <div className="monaco-hover-content">
+            <div className="hover-row markdown-hover">
+              <div className="hover-contents">
+                <Markdown disallowedElements={['img']}>
+                  {llmBugReasons[index]}
+                </Markdown>
+              </div>
+            </div>
+          </div>
+        )
+      )
+    );
+    editor.layoutContentWidget(hoverWidget);
+  };
+  editor.onMouseMove(({ target }) =>
+    showLLMBugHover(
+      target.type === monaco.editor.MouseTargetType.CONTENT_TEXT ||
+        target.type === monaco.editor.MouseTargetType.CONTENT_EMPTY
+        ? target.position
+        : null
+    )
+  );
+  editor.onMouseLeave(() => showLLMBugHover(null));
+  editor.onDidDispose(() => queueMicrotask(() => hoverRoot.unmount()));
+  const setLLMBugDecorations = (ranges: monaco.IRange[], show: boolean) => {
+    llmBugsShown = show;
+    showLLMBugHover(null);
+    llmBugHighlights.set(
+      ranges.map(range => ({
+        range,
+        options: {
+          stickiness:
+            monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+          ...(show && {
+            isWholeLine: true,
+            className: 'llm-bug-highlight',
+            overviewRuler: {
+              color: { id: 'editorOverviewRuler.errorForeground' },
+              position: monaco.editor.OverviewRulerLane.Right,
+            },
+          }),
+        },
+      }))
+    );
+  };
   return {
     clearLineHighlight() {
       editor.clearLineHighlight();
@@ -189,9 +281,35 @@ function createEditorHandle(editor: AlgoProMonacoEditor): MonacoEditorHandle {
     layout() {
       editor.layout();
     },
+    onDidChangeContent(listener) {
+      const disposable = editor.onDidChangeModelContent(listener);
+      return () => disposable.dispose();
+    },
     raw: editor,
     redo() {
       editor.trigger('redo', 'redo', null);
+    },
+    revealLine(line) {
+      const model = editor.getModel();
+      if (!model || line < 1 || line > model.getLineCount()) return;
+      editor.revealLineInCenter(line);
+      editor.setSelection(
+        new monaco.Range(line, 1, line, model.getLineMaxColumn(line))
+      );
+      editor.focus();
+    },
+    setLLMBugHighlights(highlights) {
+      llmBugReasons = highlights.map(({ reason }) => reason);
+      setLLMBugDecorations(
+        highlights.map(({ line }) => new monaco.Range(line, 1, line, 1)),
+        true
+      );
+    },
+    showLLMBugHighlights(show) {
+      setLLMBugDecorations(llmBugHighlights.getRanges(), show);
+    },
+    getLLMBugHighlightLines() {
+      return llmBugHighlights.getRanges().map(range => range.startLineNumber);
     },
     setLineHighlight(line: number) {
       editor.setLineHighlight(line);
