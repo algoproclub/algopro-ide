@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@algoproclub/clangd-wasm": "0.1.1",
+    "@anthropic-ai/sdk": "^1.4.0",
     "@codemirror/autocomplete": "^6",
     "@codemirror/commands": "^6",
     "@codemirror/lang-cpp": "^6.0.3",
@@ -76,6 +77,7 @@
     "monaco-vim": "^0.3.4",
     "next": "^16.3.0",
     "patch-package": "^6.4.7",
+    "pdf-parse": "^2.4.5",
     "postcss": "^8.4.14",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^3.4.2",
