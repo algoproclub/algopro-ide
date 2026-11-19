@@ -14,11 +14,14 @@ import * as Y from 'yjs';
 import useLspClient from './lsp';
 import { isLspLanguage } from '../lsp/preferences';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { yCollab, yUndoManagerKeymap } from 'y-codemirror.next';
 import { DEFAULT_FONT_SIZE_EDITOR } from '../../../constants/editorConstants';
 
-function createEditorHandle(view: EditorView): CodemirrorEditorHandle {
+function createEditorHandle(
+  view: EditorView,
+  changeListeners: Set<() => void>
+): CodemirrorEditorHandle {
   return {
     clearLineHighlight() {},
     focus() {
@@ -34,11 +37,29 @@ function createEditorHandle(view: EditorView): CodemirrorEditorHandle {
     },
     kind: 'codemirror',
     layout() {},
+    onDidChangeContent(listener) {
+      changeListeners.add(listener);
+      return () => changeListeners.delete(listener);
+    },
     raw: view,
     redo() {
       yUndoManagerKeymap.find(mapping => mapping.key === 'Mod-y')?.run?.(view);
     },
+    revealLine(lineNumber) {
+      if (lineNumber < 1 || lineNumber > view.state.doc.lines) return;
+      const line = view.state.doc.line(lineNumber);
+      view.dispatch({
+        selection: { anchor: line.from, head: line.to },
+        scrollIntoView: true,
+      });
+      view.focus();
+    },
     setLineHighlight() {},
+    setLLMBugHighlights() {},
+    showLLMBugHighlights() {},
+    getLLMBugHighlightLines() {
+      return [];
+    },
     setValue(value: string) {
       view.dispatch({
         changes: { from: 0, to: view.state.doc.length, insert: value },
@@ -68,6 +89,8 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
     if (!yCollabBinding) return;
     return () => yCollabBinding.undoManager.destroy();
   }, [yCollabBinding]);
+
+  const [changeListeners] = useState(() => new Set<() => void>());
 
   const extensions = useMemo(() => {
     const extensions: Extension[] = [];
@@ -117,14 +140,19 @@ const CodemirrorEditor = (props: EditorProps): JSX.Element => {
       // eslint-disable-next-line @typescript-eslint/no-base-to-string -- False positive:Y.Text overrides toString().
       value={yjsText ? yjsText.toString() : props.value}
       theme={props.theme === 'light' ? githubLight : vscodeDark}
-      onChange={(val: string, _) => props.onChange?.(val)}
+      onChange={(val: string, _) => {
+        props.onChange?.(val);
+        changeListeners.forEach(listener => listener());
+      }}
       height="100%"
       style={{
         fontSize: `${props.editorOptions?.fontSize ?? DEFAULT_FONT_SIZE_EDITOR}px`,
       }}
       readOnly={props.editorOptions?.readOnly ?? false}
       extensions={extensions}
-      onCreateEditor={view => props.onReady?.(createEditorHandle(view))}
+      onCreateEditor={view =>
+        props.onReady?.(createEditorHandle(view, changeListeners))
+      }
     />
   );
 };
