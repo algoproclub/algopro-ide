@@ -328,18 +328,20 @@ function OutputPane(): JSX.Element {
   const { getResultForTab } = useJudgeResults();
   const statusData = useAtomValue(statusDataAtom);
   const statusDataHistory = useAtomValue(statusDataHistoryAtom);
-  const sampleCount =
+  const problemIsLoaded =
     loadedProblem &&
     fileData.problem &&
     loadedProblem.platform === fileData.problem.platform &&
-    loadedProblem.id === fileData.problem.id
-      ? loadedProblem.samples.length
-      : 0;
+    loadedProblem.id === fileData.problem.id;
+  const sampleCount = problemIsLoaded ? loadedProblem.samples.length : 0;
+  const multipleSolutions = problemIsLoaded
+    ? (loadedProblem.multipleSolutions ?? false)
+    : false;
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
       <Output
-        result={getResultForTab(inputTab, sampleCount)}
+        result={getResultForTab(inputTab, sampleCount, multipleSolutions)}
         statusData={statusData}
         statusDataHistory={statusDataHistory}
       />

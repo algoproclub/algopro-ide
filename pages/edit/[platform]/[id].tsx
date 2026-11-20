@@ -491,6 +491,7 @@ const PageContent = () => {
   });
   const [tags, setTags] = useState<ProblemTag[]>([]);
   const [samples, setSamples] = useState<Sample[]>([]);
+  const [multipleSolutions, setMultipleSolutions] = useState(false);
   const [addedTag, setAddedTag] = useState<string>('');
   const [tagInput, setTagInput] = useState<HTMLInputElement | null>(null);
   const [tagSuggestions, setTagSuggestions] = useState<HTMLElement | null>(
@@ -549,6 +550,7 @@ const PageContent = () => {
         setTags(data?.tags ?? []);
         if (language === '-') {
           setSamples(normalizeSamples(data?.samples));
+          setMultipleSolutions(data?.multipleSolutions ?? false);
         }
       })
       .catch(error => {
@@ -684,6 +686,7 @@ const PageContent = () => {
         hints,
         tags,
         samples: normalizeSamples(samples),
+        multipleSolutions,
       });
     } else {
       await setDoc(problemDoc, {
@@ -920,6 +923,14 @@ const PageContent = () => {
         <div className="theme-surface-raised mt-2 flex flex-col">
           <div className="border theme-border flex items-center justify-between theme-surface-raised px-3 py-2 border-b text-sm space-x-2">
             <span className="font-bold">Samples</span>
+            <Checkbox
+              checked={multipleSolutions}
+              label="Multiple solutions"
+              toggleChecked={() => {
+                setMultipleSolutions(prev => !prev);
+                setUnsaved(true);
+              }}
+            />
             <button
               className={`${secondaryButtonClass} px-2 py-1 flex items-center`}
               onClick={handleAddNewSample}
