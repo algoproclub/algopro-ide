@@ -146,6 +146,7 @@ export type ProblemData = {
   samples: Sample[];
   hints?: Hint[];
   topicID?: string;
+  multipleSolutions?: boolean;
 };
 
 export type ProblemSolution = {
