@@ -28,6 +28,7 @@ import {
 } from '../../../src/types/problem';
 import { searchProblemTags } from '../../../src/scripts/searchProblemTags';
 import HTMLStatement from '../../../src/components/JudgeInterface/HTMLStatement';
+import PDFDisplay from '../../../src/components/JudgeInterface/PDFDisplay';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import {
   EditModal,
@@ -43,6 +44,7 @@ import Checkbox from '../../../src/components/Checkbox';
 import { useUserContext } from '../../../src/context/UserContext';
 import PageTitle from '../../../src/components/PageTitle';
 import ConfirmationModal from '../../../src/components/ConfirmationModal';
+import Tooltip from '../../../src/components/Tooltip';
 
 const translate = httpsCallable<
   {
@@ -66,6 +68,10 @@ const textareaClass =
   'font-mono theme-input border w-full min-h-[10rem] text-sm';
 const secondaryButtonClass =
   'theme-button-secondary border rounded-md active:bg-[color:var(--surface-active)]';
+const statementPanelClass =
+  'w-full min-w-0 border theme-border theme-surface-raised';
+const statementHeaderClass =
+  'flex h-14 shrink-0 items-center justify-between w-full px-3 theme-surface-raised border-b theme-border';
 
 function normalizeSamples(samples: unknown): Sample[] {
   if (!Array.isArray(samples)) return [];
@@ -146,16 +152,16 @@ const HTMLEditor = ({
   const [mode, setMode] = useState('code');
   const [fullscreen, setFullscreen] = useState(false);
   const {
-    userData: { fontSize },
+    userData: { fontSize, lightMode },
   } = useUserContext();
 
   return (
     <div
-      className={` ${
-        fullscreen ? 'fixed flex flex-col inset-0 z-50 !m-0' : 'w-full'
-      } border theme-border theme-surface-raised`}
+      className={`${statementPanelClass} ${
+        fullscreen ? 'fixed flex flex-col inset-0 z-50 !m-0' : ''
+      }`}
     >
-      <div className="flex items-center justify-between w-full px-3 py-2.5 theme-surface-raised border-b theme-border">
+      <div className={statementHeaderClass}>
         <div className="flex space-x-2 items-center">
           <button
             className="flex items-center justify-center px-2.5 py-2 rounded-md mr-0.5 hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)] border theme-border"
@@ -203,12 +209,11 @@ const HTMLEditor = ({
             mode === 'split' ? 'right-1/2' : 'right-0'
           }`}
         >
-          {/* The embedded editor intentionally keeps its dark syntax theme. */}
           <CodeEditor
             onChange={onChange}
             value={text}
             language="html"
-            theme="dark"
+            theme={lightMode ? 'light' : 'dark'}
             path={path}
             editorOptions={{
               readOnly: readonly,
@@ -405,6 +410,10 @@ const RemovableTag = ({
 };
 
 const PageContent = () => {
+  const {
+    userData: { lightMode },
+  } = useUserContext();
+
   const Hint = ({
     hint,
     hintNum,
@@ -474,6 +483,8 @@ const PageContent = () => {
     );
   };
   const [original, setOriginal] = useState('');
+  const [originalStatementURL, setOriginalStatementURL] = useState('');
+  const [originalFullscreen, setOriginalFullscreen] = useState(false);
   const [problemTitle, setProblemTitle] = useState<string | null>(null);
   const [translated, setTranslated] = useState('');
   const [initTranslated, setInitTranslated] = useState('');
@@ -577,18 +588,26 @@ const PageContent = () => {
   const applyProblemData = async (problemData: ProblemData) => {
     setProblemTitle(problemData.title);
     setOriginal(problemData.statement ?? '');
+    setOriginalStatementURL(problemData.statementURL ?? '');
     setSamples(normalizeSamples(problemData.samples));
     setInitSolution(await getSolution(problemData.platform, problemData.id));
     updateTranslated();
   };
 
   useEffect(() => {
+    setOriginal('');
+    setOriginalStatementURL('');
+    setOriginalFullscreen(false);
+
+    const controller = new AbortController();
+
     const getOriginal = async (
       platform: string,
       id: string
     ): Promise<ProblemData> => {
       const resp = await fetch('/api/fetchProblemData', {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -609,12 +628,18 @@ const PageContent = () => {
     (async () => {
       try {
         const problemData = await getOriginal(platform, problemID);
+        if (controller.signal.aborted) return;
+
         await applyProblemData(problemData);
       } catch (error) {
+        if (controller.signal.aborted) return;
+
         console.error(error);
         setIsManualEntryOpen(true);
       }
     })();
+
+    return () => controller.abort();
   }, [platform, problemID]);
 
   useEffect(() => {
@@ -728,7 +753,14 @@ const PageContent = () => {
     setIsSampleModalOpen(true);
   };
 
+  const hasOriginalHTML = original.trim().length > 0;
+  const autoTranslateTooltip = hasOriginalHTML
+    ? 'Translate the original HTML statement.'
+    : 'Automatic translation requires an HTML source statement.';
+
   const handleAutoTranslateDeepl = async () => {
+    if (!hasOriginalHTML) return;
+
     const response = await translate({
       text: original,
       lang: language,
@@ -741,6 +773,8 @@ const PageContent = () => {
   };
 
   const handleAutoTranslateOpenAI = async () => {
+    if (!hasOriginalHTML) return;
+
     const response = await translateOpenAI({
       text: original,
       lang: language,
@@ -824,18 +858,28 @@ const PageContent = () => {
         />
       </div>
       <div className="mb-4 space-x-2 text-[0.95rem]">
-        <button
-          className={`${secondaryButtonClass} px-4 py-2`}
-          onClick={handleAutoTranslateDeepl}
-        >
-          Auto translate (Deepl)
-        </button>
-        <button
-          className={`${secondaryButtonClass} px-4 py-2`}
-          onClick={handleAutoTranslateOpenAI}
-        >
-          Auto translate (OpenAI)
-        </button>
+        <Tooltip label={autoTranslateTooltip}>
+          <span tabIndex={hasOriginalHTML ? undefined : 0}>
+            <button
+              className={`${secondaryButtonClass} px-4 py-2 disabled:pointer-events-none`}
+              disabled={!hasOriginalHTML}
+              onClick={handleAutoTranslateDeepl}
+            >
+              Auto translate (Deepl)
+            </button>
+          </span>
+        </Tooltip>
+        <Tooltip label={autoTranslateTooltip}>
+          <span tabIndex={hasOriginalHTML ? undefined : 0}>
+            <button
+              className={`${secondaryButtonClass} px-4 py-2 disabled:pointer-events-none`}
+              disabled={!hasOriginalHTML}
+              onClick={handleAutoTranslateOpenAI}
+            >
+              Auto translate (OpenAI)
+            </button>
+          </span>
+        </Tooltip>
         <button
           className="px-4 py-2 rounded-md theme-button-primary"
           onClick={handleSave}
@@ -857,7 +901,38 @@ const PageContent = () => {
         onClose={() => setIsSampleModalOpen(false)}
       />
       <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
-        <HTMLEditor path="original" readonly={true} text={original} />
+        {!hasOriginalHTML && originalStatementURL ? (
+          <div
+            className={`${statementPanelClass} ${
+              originalFullscreen ? 'fixed flex flex-col inset-0 z-50 !m-0' : ''
+            }`}
+          >
+            <div className={statementHeaderClass}>
+              <span className="text-sm">Original statement (PDF)</span>
+              <button
+                type="button"
+                className="ui-focus flex items-center justify-center px-2.5 py-2 rounded-md hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)] border theme-border"
+                aria-label={
+                  originalFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'
+                }
+                onClick={() => setOriginalFullscreen(value => !value)}
+              >
+                {originalFullscreen ? (
+                  <ArrowsPointingInIcon className="h-4 w-4" />
+                ) : (
+                  <ArrowsPointingOutIcon className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+            <div
+              className={originalFullscreen ? 'min-h-0 flex-1' : 'h-48 md:h-96'}
+            >
+              <PDFDisplay url={originalStatementURL} />
+            </div>
+          </div>
+        ) : (
+          <HTMLEditor path="original" readonly={true} text={original} />
+        )}
         <HTMLEditor
           path="translated"
           readonly={false}
@@ -1043,10 +1118,9 @@ const PageContent = () => {
           }}
         />
         <div className="mt-2 border theme-border h-48">
-          {/* The solution editor intentionally keeps its dark syntax theme. */}
           <CodeEditor
             value={solution}
-            theme="dark"
+            theme={lightMode ? 'light' : 'dark'}
             onChange={handleSolutionChange}
             language={
               { cpp: 'cpp', py: 'python', java: 'java' }[solutionLanguage]
