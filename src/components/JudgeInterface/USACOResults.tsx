@@ -11,6 +11,7 @@ import {
   getSubmissionStatusDisplay,
   getTestCaseStatusDisplay,
 } from '../TaskStatus/statusDisplay';
+import { Button } from '../Button';
 
 const capitalize = (text: string): string => {
   return text[0].toUpperCase() + text.substring(1);
@@ -141,13 +142,8 @@ const TestCaseInfoModal = ({
                   <div className="flex flex-col items-start gap-4 whitespace-nowrap">
                     <USACOTestCase data={testCase} />
                     <div className="flex flex-col gap-2">
-                      <button
-                        className={classNames(
-                          'inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none',
-                          inputDownloadURL === null
-                            ? 'cursor-not-allowed'
-                            : 'focus:ring-2 focus:ring-[color:var(--accent)]'
-                        )}
+                      <Button
+                        variant="primary"
                         disabled={inputDownloadURL === null}
                         onClick={() => {
                           if (inputDownloadURL === null) return;
@@ -160,14 +156,9 @@ const TestCaseInfoModal = ({
                         {inputDownloadURL === null
                           ? 'Input unavailable'
                           : 'Download input'}
-                      </button>
-                      <button
-                        className={classNames(
-                          'inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none',
-                          outputDownloadURL === null
-                            ? 'cursor-not-allowed'
-                            : 'focus:ring-2 focus:ring-[color:var(--accent)]'
-                        )}
+                      </Button>
+                      <Button
+                        variant="primary"
                         disabled={outputDownloadURL === null}
                         onClick={() => {
                           if (outputDownloadURL === null) return;
@@ -180,14 +171,9 @@ const TestCaseInfoModal = ({
                         {outputDownloadURL === null
                           ? 'Output unavailable'
                           : 'Download output'}
-                      </button>
-                      <button
-                        className={classNames(
-                          'inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none',
-                          inputDownloadURL === null
-                            ? 'cursor-not-allowed'
-                            : 'focus:ring-2 focus:ring-[color:var(--accent)]'
-                        )}
+                      </Button>
+                      <Button
+                        variant="primary"
                         disabled={inputDownloadURL === null}
                         onClick={() => {
                           if (inputDownloadURL === null) return;
@@ -197,14 +183,9 @@ const TestCaseInfoModal = ({
                         {inputDownloadURL === null
                           ? 'Input unavailable'
                           : 'Copy input to clipboard'}
-                      </button>
-                      <button
-                        className={classNames(
-                          'inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium theme-button-primary focus:outline-none',
-                          outputDownloadURL === null
-                            ? 'cursor-not-allowed'
-                            : 'focus:ring-2 focus:ring-[color:var(--accent)]'
-                        )}
+                      </Button>
+                      <Button
+                        variant="primary"
                         disabled={outputDownloadURL === null}
                         onClick={() => {
                           if (outputDownloadURL === null) return;
@@ -214,7 +195,7 @@ const TestCaseInfoModal = ({
                         {outputDownloadURL === null
                           ? 'Output unavailable'
                           : 'Copy output to clipboard'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                   <div className="grid grow grid-rows-2 place-items-stretch gap-4">
@@ -224,14 +205,14 @@ const TestCaseInfoModal = ({
                 </div>
               </div>
               <div className="absolute top-0 right-0 pt-4 pr-4">
-                <button
+                <Button
                   type="button"
-                  className="rounded-md theme-text-muted hover:text-[color:var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  variant="ghost"
+                  size="sm"
+                  icon={XMarkIcon}
+                  aria-label="Close"
                   onClick={closeWithoutSaving}
-                >
-                  <span className="sr-only">Close</span>
-                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                </button>
+                />
               </div>
             </div>
           </Transition.Child>

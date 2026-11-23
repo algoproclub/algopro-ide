@@ -43,6 +43,7 @@ import Checkbox from '../../../src/components/Checkbox';
 import { useUserContext } from '../../../src/context/UserContext';
 import PageTitle from '../../../src/components/PageTitle';
 import ConfirmationModal from '../../../src/components/ConfirmationModal';
+import { Button } from '../../../src/components/Button';
 
 const translate = httpsCallable<
   {
@@ -60,12 +61,8 @@ const translateOpenAI = httpsCallable<
 >(getFunctions(undefined, 'europe-west1'), 'translateOpenAI');
 
 const cellBorderClass = 'border-x border-[color:var(--border-muted)]';
-const iconButtonClass =
-  'px-2 py-1 rounded-md hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)]';
 const textareaClass =
   'font-mono theme-input border w-full min-h-[10rem] text-sm';
-const secondaryButtonClass =
-  'theme-button-secondary border rounded-md active:bg-[color:var(--surface-active)]';
 
 function normalizeSamples(samples: unknown): Sample[] {
   if (!Array.isArray(samples)) return [];
@@ -157,16 +154,14 @@ const HTMLEditor = ({
     >
       <div className="flex items-center justify-between w-full px-3 py-2.5 theme-surface-raised border-b theme-border">
         <div className="flex space-x-2 items-center">
-          <button
-            className="flex items-center justify-center px-2.5 py-2 rounded-md mr-0.5 hover:bg-[color:var(--surface-hover)] active:bg-[color:var(--surface-active)] border theme-border"
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={fullscreen ? ArrowsPointingInIcon : ArrowsPointingOutIcon}
+            aria-label={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            className="mr-0.5"
             onClick={() => setFullscreen(value => !value)}
-          >
-            {fullscreen ? (
-              <ArrowsPointingInIcon className="inline h-4 w-4" />
-            ) : (
-              <ArrowsPointingOutIcon className="inline h-4 w-4" />
-            )}
-          </button>
+          />
           <ModeButton
             text="Code"
             active={mode === 'code'}
@@ -397,9 +392,13 @@ const RemovableTag = ({
   return (
     <div className="rounded-md border theme-border theme-surface px-2 py-1 m-1 whitespace-nowrap inline-block">
       {tag}
-      <button className={iconButtonClass} onClick={removeTag}>
-        <TrashIcon className="inline h-4 w-4" />
-      </button>
+      <Button
+        variant="ghost"
+        size="sm"
+        icon={TrashIcon}
+        aria-label={`Remove ${tag}`}
+        onClick={removeTag}
+      />
     </div>
   );
 };
@@ -459,12 +458,20 @@ const PageContent = () => {
                 rowSpan={rowCount}
               >
                 <div className="flex items-center">
-                  <button className={iconButtonClass} onClick={onEdit}>
-                    <PencilSquareIcon className="inline h-4 w-4" />
-                  </button>
-                  <button className={iconButtonClass} onClick={onDelete}>
-                    <TrashIcon className="inline h-4 w-4" />
-                  </button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={PencilSquareIcon}
+                    aria-label={`Edit hint ${hintNum}`}
+                    onClick={onEdit}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon={TrashIcon}
+                    aria-label={`Delete hint ${hintNum}`}
+                    onClick={onDelete}
+                  />
                 </div>
               </td>
             )}
@@ -824,24 +831,15 @@ const PageContent = () => {
         />
       </div>
       <div className="mb-4 space-x-2 text-[0.95rem]">
-        <button
-          className={`${secondaryButtonClass} px-4 py-2`}
-          onClick={handleAutoTranslateDeepl}
-        >
+        <Button onClick={handleAutoTranslateDeepl}>
           Auto translate (Deepl)
-        </button>
-        <button
-          className={`${secondaryButtonClass} px-4 py-2`}
-          onClick={handleAutoTranslateOpenAI}
-        >
+        </Button>
+        <Button onClick={handleAutoTranslateOpenAI}>
           Auto translate (OpenAI)
-        </button>
-        <button
-          className="px-4 py-2 rounded-md theme-button-primary"
-          onClick={handleSave}
-        >
+        </Button>
+        <Button variant="primary" onClick={handleSave}>
           Save
-        </button>
+        </Button>
       </div>
       <EditHintModal
         isOpen={isOpen}
@@ -869,13 +867,9 @@ const PageContent = () => {
       <div className="theme-surface-raised mt-2 flex flex-col">
         <div className="border theme-border flex items-center justify-between theme-surface-raised px-3 py-2 border-b text-sm space-x-2">
           <span className="font-bold">Hints</span>
-          <button
-            className={`${secondaryButtonClass} px-2 py-1 flex items-center`}
-            onClick={handleAddNewHint}
-          >
-            <PlusIcon className="mr-2 inline h-4 w-4" />
+          <Button size="sm" icon={PlusIcon} onClick={handleAddNewHint}>
             New
-          </button>
+          </Button>
         </div>
         <div className="max-h-[16rem] border-b theme-border overflow-auto">
           <table className="text-sm theme-table border-collapse w-full">
@@ -920,13 +914,9 @@ const PageContent = () => {
         <div className="theme-surface-raised mt-2 flex flex-col">
           <div className="border theme-border flex items-center justify-between theme-surface-raised px-3 py-2 border-b text-sm space-x-2">
             <span className="font-bold">Samples</span>
-            <button
-              className={`${secondaryButtonClass} px-2 py-1 flex items-center`}
-              onClick={handleAddNewSample}
-            >
-              <PlusIcon className="mr-2 inline h-4 w-4" />
+            <Button size="sm" icon={PlusIcon} onClick={handleAddNewSample}>
               New
-            </button>
+            </Button>
           </div>
           <div className="max-h-[16rem] border-b theme-border overflow-auto">
             <table className="text-sm theme-table border-collapse w-full">
@@ -968,8 +958,11 @@ const PageContent = () => {
                       className={`space-x-1 px-3 py-2 w-[5.5rem] ${cellBorderClass} align-top`}
                     >
                       <div className="flex items-center">
-                        <button
-                          className={iconButtonClass}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={PencilSquareIcon}
+                          aria-label={`Edit sample ${index + 1}`}
                           onClick={() => {
                             setEditedSample(sample);
                             setOnSaveSample(() => (nextSample: Sample) => {
@@ -984,11 +977,12 @@ const PageContent = () => {
                             });
                             setIsSampleModalOpen(true);
                           }}
-                        >
-                          <PencilSquareIcon className="inline h-4 w-4" />
-                        </button>
-                        <button
-                          className={iconButtonClass}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={TrashIcon}
+                          aria-label={`Delete sample ${index + 1}`}
                           onClick={() => {
                             setPendingConfirmation({
                               title: 'Delete sample?',
@@ -1004,9 +998,7 @@ const PageContent = () => {
                               },
                             });
                           }}
-                        >
-                          <TrashIcon className="inline h-4 w-4" />
-                        </button>
+                        />
                       </div>
                     </td>
                   </tr>

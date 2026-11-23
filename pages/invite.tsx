@@ -6,6 +6,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { CopyButton } from '../src/components/CopyButton';
 import PageTitle from '../src/components/PageTitle';
 import { useManagedSchools } from '../src/hooks/useClassroomMetadata';
+import { Button } from '../src/components/Button';
 
 const generateToken = httpsCallable<
   { schoolID: string; expTime: number },
@@ -74,12 +75,13 @@ const PageContent = () => {
             label="Expiration time"
           />
           <div className="sm:pt-5 w-full sm:w-48 flex-shrink-0">
-            <button
-              className="py-2 w-full sm:w-48 rounded-md text-sm theme-button-primary"
+            <Button
+              variant="primary"
+              className="w-full sm:w-48"
               onClick={generateLink}
             >
               Generate
-            </button>
+            </Button>
           </div>
         </div>
         {schoolsResource.status === 'error' && (

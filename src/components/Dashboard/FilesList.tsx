@@ -9,6 +9,7 @@ import invariant from 'tiny-invariant';
 import { useUserContext } from '../../context/UserContext';
 import { update, ref, getDatabase } from 'firebase/database';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { Button } from '../Button';
 
 export type File = {
   id: string;
@@ -140,17 +141,15 @@ export default function FilesList(props: FilesListProps): JSX.Element {
                   : 'Unknown'}
               </td>
               <td className="relative whitespace-nowrap text-right text-sm font-medium">
-                <button
-                  className="ui-focus relative z-10 inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-content-muted transition-colors hover:bg-surface-active hover:text-content active:bg-surface-active"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={file.hidden ? EyeIcon : EyeSlashIcon}
+                  className="relative z-10"
                   onClick={() => handleToggleHideFile(file)}
                 >
-                  {file.hidden ? (
-                    <EyeIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                  ) : (
-                    <EyeSlashIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                  )}
                   {file.hidden ? 'Unhide' : 'Hide'}
-                </button>
+                </Button>
               </td>
             </tr>
           ))}

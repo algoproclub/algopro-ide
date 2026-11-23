@@ -7,6 +7,7 @@ import { EllipsisVerticalIcon } from '@heroicons/react/20/solid';
 import { ArrowUpTrayIcon, NoSymbolIcon } from '@heroicons/react/20/solid';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import Checkbox from '../Checkbox';
+import { Button } from '../Button';
 
 const SolvedStatusModal = ({
   isOpen,
@@ -93,34 +94,31 @@ const SolvedStatusModal = ({
                   />
                 </div>
                 <div className="flex items-center space-x-2.5">
-                  <button
-                    type="button"
-                    className="ui-button-secondary px-4 py-2 text-[0.92rem]"
-                    onClick={onClose}
-                  >
+                  <Button type="button" size="sm" onClick={onClose}>
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className="ui-button-primary px-4 py-2"
+                    variant="primary"
+                    size="sm"
                     onClick={() => {
                       handleSave();
                       onClose();
                     }}
                   >
                     Save
-                  </button>
+                  </Button>
                 </div>
               </div>
               <div className="absolute top-0 right-0 pt-4 pr-4">
-                <button
+                <Button
                   type="button"
-                  className="ui-icon-button"
+                  variant="ghost"
+                  size="sm"
+                  icon={XMarkIcon}
+                  aria-label="Close"
                   onClick={onClose}
-                >
-                  <span className="sr-only">Close</span>
-                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                </button>
+                />
               </div>
             </div>
           </Transition.Child>

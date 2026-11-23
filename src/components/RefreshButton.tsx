@@ -1,4 +1,5 @@
 import { ArrowPathIcon } from '@heroicons/react/20/solid';
+import { Button } from './Button';
 import Tooltip from './Tooltip';
 
 export default function RefreshButton({
@@ -16,19 +17,17 @@ export default function RefreshButton({
 }) {
   return (
     <Tooltip label={title}>
-      <button
+      <Button
         type="button"
+        variant="secondary"
+        icon={ArrowPathIcon}
         aria-label={title}
         onClick={onClick}
         disabled={disabled || isLoading}
-        className="ui-icon-button border-line bg-control shadow-sm"
-      >
-        <ArrowPathIcon
-          className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''} ${
-            isAlert ? 'text-[color:var(--warning)]' : ''
-          }`}
-        />
-      </button>
+        className={`${isLoading ? '[&>svg]:animate-spin' : ''} ${
+          isAlert ? '[&>svg]:text-[color:var(--warning)]' : ''
+        }`}
+      />
     </Tooltip>
   );
 }

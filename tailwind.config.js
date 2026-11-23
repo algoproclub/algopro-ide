@@ -47,6 +47,16 @@ module.exports = {
           hover: 'var(--color-accent-hover)',
           strong: 'var(--color-accent-strong)',
         },
+        action: {
+          danger: {
+            DEFAULT: 'var(--color-action-danger)',
+            hover: 'var(--color-action-danger-hover)',
+          },
+          success: {
+            DEFAULT: 'var(--color-action-success)',
+            hover: 'var(--color-action-success-hover)',
+          },
+        },
         gutter: {
           DEFAULT: 'var(--color-gutter)',
           hover: 'var(--color-gutter-hover)',
