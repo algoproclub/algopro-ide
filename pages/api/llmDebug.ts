@@ -186,20 +186,22 @@ async function loadStatement(
     console.error('[llm-debug] PDF fetch failed:', e);
     return failed('pdf-network-error', notDownloaded, title, String(e));
   }
-  // pdf-parse's documented setup for Next.js: without this import first,
-  // pdf.js cannot find its worker file in the build.
-  await import('pdf-parse/worker');
-  const { PDFParse } = await import('pdf-parse');
-  const parser = new PDFParse({ data: new Uint8Array(pdf) });
   try {
-    const { text } = await parser.getText();
-    if (!text.trim()) return failed('pdf-no-text', unreadable, title);
-    return { title, text, source: 'pdf' } as const;
+    // pdf-parse's documented setup for Next.js: without this import first,
+    // pdf.js cannot find its worker file in the build.
+    await import('pdf-parse/worker');
+    const { PDFParse } = await import('pdf-parse');
+    const parser = new PDFParse({ data: new Uint8Array(pdf) });
+    try {
+      const { text } = await parser.getText();
+      if (!text.trim()) return failed('pdf-no-text', unreadable, title);
+      return { title, text, source: 'pdf' } as const;
+    } finally {
+      void parser.destroy();
+    }
   } catch (e) {
     console.error('[llm-debug] PDF parse failed:', e);
     return failed('pdf-parse-error', unreadable, title, String(e));
-  } finally {
-    void parser.destroy();
   }
 }
 
