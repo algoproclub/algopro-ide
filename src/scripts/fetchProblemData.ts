@@ -13,6 +13,7 @@ import {
   buildSpojUrl,
   buildOjuzUrl,
   buildNjudgeUrl,
+  buildCodeforcesFetchUrl,
 } from './problemUtils';
 import AdmZip from 'adm-zip';
 import { fetchProblemDataYosupo } from './fetchProblemDataYosupo';
@@ -175,15 +176,20 @@ function parseCodeforcesProblemData(
 async function fetchProblemDataCodeforces(
   problemID: string
 ): Promise<ProblemData | null> {
-  const url = buildCodeforcesUrl(problemID);
-  if (!url) return null;
+  const displayUrl = buildCodeforcesUrl(problemID);
+  const fetchUrl = buildCodeforcesFetchUrl(problemID);
+  if (!displayUrl || !fetchUrl) return null;
 
-  const problemPage = await signedFetch(url);
+  const problemPage = await signedFetch(fetchUrl);
   if (problemPage.status !== 200) {
     return null;
   }
 
-  return parseCodeforcesProblemData(await problemPage.text(), problemID, url);
+  return parseCodeforcesProblemData(
+    await problemPage.text(),
+    problemID,
+    displayUrl
+  );
 }
 
 function parseAtCoderProblemData(
