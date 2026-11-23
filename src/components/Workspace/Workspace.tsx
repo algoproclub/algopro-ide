@@ -22,6 +22,7 @@ import {
   hasSolutionsAtom,
   inputTabAtom,
   languageAtom,
+  llmDebugRunAtom,
   mobileActiveTabAtom,
   problemAtom,
   showSidebarAtom,
@@ -48,6 +49,7 @@ import { useUserContext } from '../../context/UserContext';
 import { EditorHandle, isMonacoEditorHandle } from '../editor/editor-types';
 import { Translation } from '../../types/problem';
 import Solutions from '../JudgeInterface/Solutions';
+import LLMDebugPanel from '../LLMDebugPanel';
 
 const defaultDesktopPanelSizes = { code: 60, sidebar: 10 };
 const defaultInputOutputLayout = { input: 67, output: 33 };
@@ -272,6 +274,7 @@ function InputPane({
   const hasSolutions = useAtomValue(hasSolutionsAtom);
   const showSolutions =
     solved && (hasSolutions || problem?.platform === 'planets');
+  const llmDebugRun = useAtomValue(llmDebugRunAtom);
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
@@ -314,6 +317,11 @@ function InputPane({
                 <Solutions problem={problem} />
               </div>
             </div>
+          </TabBar.Item>
+        )}
+        {llmDebugRun?.fileId === fileData.id && (
+          <TabBar.Item id="ai-debug" label="AI Debug">
+            <LLMDebugPanel run={llmDebugRun} />
           </TabBar.Item>
         )}
       </TabBar>

@@ -7,10 +7,12 @@ import {
   StatusData,
   Translation,
 } from '../types/problem';
+import type { LLMDebugRun } from '../types/llmDebug';
 
 export const mobileActiveTabAtom = atom<'code' | 'io' | 'users'>('code');
 export const showSidebarAtom = atom<boolean>(false);
 export const inputTabAtom = atom<string>('input');
+export const llmDebugRunAtom = atom<LLMDebugRun | null>(null);
 export const problemAtom = atom<ProblemData | undefined | null>(undefined);
 export const statusDataAtom = atom<StatusData | null>(null);
 export const statusDataHistoryAtom = atom<StatusData[] | null>([]);

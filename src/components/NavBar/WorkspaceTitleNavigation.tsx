@@ -106,7 +106,7 @@ const WorkspaceTaskMenu = ({
         <>
           <Menu.Button
             ref={setReferenceElement}
-            className={`pointer-events-auto block min-w-0 max-w-full rounded px-1.5 py-0.5 text-center outline-none hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-focus ${
+            className={`block min-w-0 max-w-full rounded px-1.5 py-0.5 text-center outline-none hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-focus ${
               open ? 'bg-surface-hover' : ''
             }`}
           >
@@ -175,7 +175,7 @@ const TaskNavigationButton = ({
 }) => {
   const Icon = direction === 'Previous' ? ChevronLeftIcon : ChevronRightIcon;
   const className =
-    'workspace-toolbar-nav-button pointer-events-auto justify-center px-0 disabled:cursor-not-allowed disabled:border-transparent disabled:text-content-disabled disabled:hover:border-transparent disabled:hover:bg-transparent disabled:hover:text-content-disabled';
+    'workspace-toolbar-nav-button justify-center px-0 disabled:cursor-not-allowed disabled:border-transparent disabled:text-content-disabled disabled:hover:border-transparent disabled:hover:bg-transparent disabled:hover:text-content-disabled';
   const title = href
     ? `${direction} task`
     : `No ${direction.toLowerCase()} task`;
@@ -223,7 +223,7 @@ export const WorkspaceTitleNavigation = () => {
   );
 
   return (
-    <div className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 grid-cols-[2.5rem_auto_2.5rem] items-center min-[1440px]:grid">
+    <div className="hidden min-w-0 grid-cols-[2.5rem_minmax(0,auto)_2.5rem] items-center min-[1440px]:grid">
       {canNavigateTasks ? (
         <TaskNavigationButton
           direction="Previous"

@@ -40,6 +40,11 @@ interface BaseEditorHandle {
   setLineHighlight: (lineNumber: number) => void;
   setValue: (value: string) => void;
   undo: () => void;
+  onDidChangeContent: (listener: () => void) => () => void;
+  revealLine: (lineNumber: number) => void;
+  setLLMBugHighlights: (highlights: { line: number; reason: string }[]) => void;
+  showLLMBugHighlights: (show: boolean) => void;
+  getLLMBugHighlightLines: () => number[];
 }
 
 export interface MonacoEditorHandle extends BaseEditorHandle {
