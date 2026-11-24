@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { usePopper } from 'react-popper';
 import CodeEditor from '../../../src/components/editor/CodeEditor';
@@ -49,7 +55,7 @@ const translate = httpsCallable<
     text: string;
     lang: string;
   },
-  string
+  string | null
 >(getFunctions(undefined, 'europe-west1'), 'translate', {
   // The default 70 s is too short for translating long statements.
   timeout: 300_000,
@@ -631,11 +637,7 @@ const PageContent = () => {
     updateTranslated();
   }, [language, original]);
 
-  const handleTranslationChange = useCallback((val: string) => {
-    if (translated !== val) {
-      setTranslated(val);
-    }
-  }, []);
+  const handleTranslationChange = setTranslated;
 
   const handleSolutionChange = useCallback((val: string) => {
     if (solution !== val) {
@@ -724,15 +726,28 @@ const PageContent = () => {
     setIsSampleModalOpen(true);
   };
 
+  const translationVersion = useRef(0);
+  const [translating, setTranslating] = useState(false);
+  useLayoutEffect(() => {
+    return () => {
+      translationVersion.current++;
+    };
+  }, [platform, problemID, language, original, translated]);
+
+  const canTranslate = !!original.trim() && language !== '-';
   const handleAutoTranslateClaude = async () => {
-    const response = await translate({
-      text: original,
-      lang: language,
-    });
-    if (response.data) {
-      setTranslated(response.data);
-    } else {
-      console.error('unsuccessful translation');
+    if (!canTranslate || translating) return;
+    const version = ++translationVersion.current;
+    setTranslating(true);
+    try {
+      const { data } = await translate({ text: original, lang: language });
+      if (version !== translationVersion.current) return;
+      if (data) setTranslated(data);
+      else console.error('Unsuccessful translation');
+    } catch (error) {
+      console.error('Translation failed', error);
+    } finally {
+      setTranslating(false);
     }
   };
 
@@ -811,7 +826,7 @@ const PageContent = () => {
         <button
           className={`${secondaryButtonClass} px-4 py-2`}
           onClick={handleAutoTranslateClaude}
-          disabled={!original || language === '-'}
+          disabled={!canTranslate || translating}
         >
           Auto translate (Claude)
         </button>
