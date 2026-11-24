@@ -50,7 +50,10 @@ const translate = httpsCallable<
     lang: string;
   },
   string
->(getFunctions(undefined, 'europe-west1'), 'translate');
+>(getFunctions(undefined, 'europe-west1'), 'translate', {
+  // The default 70 s is too short for translating long statements.
+  timeout: 300_000,
+});
 const translateOpenAI = httpsCallable<
   {
     text: string;
@@ -728,12 +731,12 @@ const PageContent = () => {
     setIsSampleModalOpen(true);
   };
 
-  const handleAutoTranslateDeepl = async () => {
+  const handleAutoTranslateClaude = async () => {
     const response = await translate({
       text: original,
       lang: language,
     });
-    if (response.data !== null) {
+    if (response.data) {
       setTranslated(response.data);
     } else {
       console.error('unsuccessful translation');
@@ -826,9 +829,10 @@ const PageContent = () => {
       <div className="mb-4 space-x-2 text-[0.95rem]">
         <button
           className={`${secondaryButtonClass} px-4 py-2`}
-          onClick={handleAutoTranslateDeepl}
+          onClick={handleAutoTranslateClaude}
+          disabled={!original || language === '-'}
         >
-          Auto translate (Deepl)
+          Auto translate (Claude)
         </button>
         <button
           className={`${secondaryButtonClass} px-4 py-2`}

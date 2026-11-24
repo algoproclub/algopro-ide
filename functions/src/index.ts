@@ -54,11 +54,12 @@ import {
 } from './submit';
 import { JSDOM } from 'jsdom';
 import { CompactEncrypt } from 'jose';
+import Anthropic from '@anthropic-ai/sdk';
 
 require('dotenv').config({ path: '.env.local' });
 
 export const cfAPIKey = defineString('CF_API_KEY');
-export const deeplAPIKey = defineString('DEEPL_API_KEY');
+export const anthropicAPIKey = defineString('ANTHROPIC_API_KEY');
 export const openaiAPIKey = defineString('OPENAI_API_KEY');
 export const cfAPISecret = defineString('CF_API_SECRET');
 
@@ -200,36 +201,55 @@ export const translate = onCall<
     lang: string;
   },
   Promise<string | null>
->({ region: 'europe-west1' }, async request => {
-  if (!request.auth?.token?.teacher) {
+>({ region: 'europe-west1', timeoutSeconds: 300 }, async request => {
+  // The edit page is admin-only, so admins must be able to translate too.
+  if (!request.auth?.token?.admin && !request.auth?.token?.teacher) {
     return null;
   }
   const { text, lang } = request.data;
+  if (!text?.trim() || !/^[a-z]{2}$/.test(lang)) {
+    return null;
+  }
 
   const document = new JSDOM(text).window.document;
   for (const el of document.getElementsByTagName('pre'))
     el.setAttribute('translate', 'no');
 
-  const resp = await fetch('https://api-free.deepl.com/v2/translate', {
-    method: 'POST',
-    headers: {
-      Authorization: `DeepL-Auth-Key ${deeplAPIKey.value()}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      text: [document.body.innerHTML],
-      tag_handling: 'html',
-      target_lang: lang,
-    }),
-  });
-  let translation: string | null = null;
   try {
-    const json = await resp.json();
-    translation = json['translations'][0].text ?? null;
+    // Param values are only available at runtime, not at module load.
+    const client = new Anthropic({ apiKey: anthropicAPIKey.value() });
+    const response = await client.beta.messages.create({
+      model: 'claude-opus-5-5',
+      max_tokens: 16000,
+      output_config: { effort: 'low' },
+      betas: ['server-side-fallback-2026-07-01'],
+      fallbacks: 'default',
+      system: `You translate competitive programming problem statements. The user message is a statement as an HTML fragment, which may contain LaTeX math.
+
+Translate the human-readable text into the language with ISO 639-1 code "${lang}". Write it the way problem statements are usually written in that language: precise, formal and concise, using standard mathematical and competitive programming terminology. Stay close to the original meaning and sentence structure, and rephrase only where a literal translation would sound unnatural.
+
+Keep these unchanged:
+- every HTML tag and attribute, and the structure of the document;
+- mathematical expressions exactly as written, including their delimiters (such as $$$...$$$, $$$$$$...$$$$$$ or $...$), and the contents of <var> elements and of elements with the class "math";
+- the contents of <pre> and <code> elements and of elements marked translate="no" (code, sample inputs and outputs).
+
+Reply with the translated HTML fragment only, without code fences or comments.`,
+      messages: [{ role: 'user', content: document.body.innerHTML }],
+    });
+    // A truncated or refused answer must not replace an existing translation.
+    if (response.stop_reason !== 'end_turn') {
+      logger.warn(`Translation stopped with reason ${response.stop_reason}`);
+      return null;
+    }
+    const translation = response.content
+      .flatMap(block => (block.type === 'text' ? [block.text] : []))
+      .join('')
+      .trim();
+    return translation || null;
   } catch (error) {
-    logger.log(error);
+    logger.error(error);
+    return null;
   }
-  return translation;
 });
 
 export const generateToken = onCall<
