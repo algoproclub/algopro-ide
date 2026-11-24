@@ -10,6 +10,7 @@ const typescriptFiles = [
   'src/**/*.{ts,tsx}',
   'pages/**/*.{ts,tsx}',
   'docs/components/**/*.{ts,tsx}',
+  'functions/src/*.ts',
 ];
 
 export default defineConfig([
@@ -23,9 +24,6 @@ export default defineConfig([
 
     // Legacy USACO code
     'src/components/JudgeInterface/USACOJudgeInterface.tsx',
-    'src/components/settings/ProblemSearchInterface.tsx',
-    'src/types/judge.d.ts',
-    'src/types/react-split-grid.d.ts',
   ]),
   {
     name: 'javascript',

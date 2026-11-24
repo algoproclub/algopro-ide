@@ -20,14 +20,23 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '22'
-          cache: yarn
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            functions/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Cloud Functions dependencies
+        run: pnpm --dir functions install --frozen-lockfile
 
       - name: Run ESLint
         env:
@@ -36,7 +45,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          yarn -s lint:ci --format json --output-file eslint-report.json
+          pnpm --silent run lint:ci --format json --output-file eslint-report.json
           eslint_status=$?
 
           if [[ ! -f eslint-report.json ]]; then
@@ -55,15 +64,36 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '22'
-          cache: yarn
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            functions/pnpm-lock.yaml
+            yjs/pnpm-lock.yaml
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Cloud Functions dependencies
+        run: pnpm --dir functions install --frozen-lockfile
+
+      - name: Install Yjs dependencies
+        run: pnpm --dir yjs install --frozen-lockfile
+
+      - name: Typecheck Cloud Functions
+        run: pnpm --dir functions exec tsc --noEmit
+
+      - name: Typecheck Yjs
+        run: pnpm --dir yjs exec tsc --noEmit
 
       - name: Build
-        run: yarn build
+        run: pnpm run build

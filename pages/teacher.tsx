@@ -177,16 +177,14 @@ const useTeacherClassroom = (userRole: UserRole | null) => {
   const schools = schoolsResource.data;
   const [schoolID, setSchoolID] = useScopedSelection(
     'teacher-schools',
-    schools.map(school => school.id),
-    schools.length === 1 ? schools[0].id : null
+    schools.map(school => school.id)
   );
 
   const groupsResource = useSchoolGroups(schoolID, { refreshVersion });
   const groups = groupsResource.data;
   const [groupID, setGroupID] = useScopedSelection(
     schoolID,
-    groups.map(group => group.id),
-    groups.length === 1 ? groups[0].id : null
+    groups.map(group => group.id)
   );
 
   const classesResource = useGroupClasses(groupID, refreshVersion);
@@ -195,7 +193,7 @@ const useTeacherClassroom = (userRole: UserRole | null) => {
   const [classID, setClassID] = useScopedSelection(
     groupID,
     classIDs,
-    classIDs[0] ?? null
+    classIDs[0]
   );
   const selectedClass = classesResource.data.find(
     groupClass => groupClass.id === classID
