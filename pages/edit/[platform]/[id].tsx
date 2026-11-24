@@ -475,7 +475,9 @@ const PageContent = () => {
       </>
     );
   };
-  const [original, setOriginal] = useState('');
+  const [originalProblem, setOriginalProblem] =
+    useState<Pick<ProblemData, 'platform' | 'id' | 'statement'>>();
+  const original = originalProblem?.statement ?? '';
   const [problemTitle, setProblemTitle] = useState<string | null>(null);
   const [translated, setTranslated] = useState('');
   const [initTranslated, setInitTranslated] = useState('');
@@ -578,7 +580,7 @@ const PageContent = () => {
 
   const applyProblemData = async (problemData: ProblemData) => {
     setProblemTitle(problemData.title);
-    setOriginal(problemData.statement ?? '');
+    setOriginalProblem(problemData);
     setSamples(normalizeSamples(problemData.samples));
     setInitSolution(await getSolution(problemData.platform, problemData.id));
     updateTranslated();
@@ -608,15 +610,20 @@ const PageContent = () => {
     if (!platform || !problemID) {
       return;
     }
+    let active = true;
     (async () => {
       try {
         const problemData = await getOriginal(platform, problemID);
-        await applyProblemData(problemData);
+        if (active) await applyProblemData(problemData);
       } catch (error) {
+        if (!active) return;
         console.error(error);
         setIsManualEntryOpen(true);
       }
     })();
+    return () => {
+      active = false;
+    };
   }, [platform, problemID]);
 
   useEffect(() => {
@@ -732,9 +739,23 @@ const PageContent = () => {
     return () => {
       translationVersion.current++;
     };
-  }, [platform, problemID, language, original, translated]);
+  }, [
+    platform,
+    problemID,
+    router.query.platform,
+    router.query.id,
+    language,
+    original,
+    translated,
+  ]);
 
-  const canTranslate = !!original.trim() && language !== '-';
+  const canTranslate =
+    !!original.trim() &&
+    language !== '-' &&
+    originalProblem?.platform === platform &&
+    originalProblem?.id === problemID &&
+    platform === router.query.platform &&
+    problemID === router.query.id;
   const handleAutoTranslateClaude = async () => {
     if (!canTranslate || translating) return;
     const version = ++translationVersion.current;
