@@ -52,6 +52,23 @@ export function buildCodeforcesUrl(problemID: string): string | null {
   return `https://codeforces.com/${isGym ? 'gym' : 'contest'}/${matches[1]}/problem/${matches[2]}`;
 }
 
+export function buildCodeforcesFetchUrl(problemID: string): string | null {
+  let isGym = false;
+  if (problemID.startsWith('gym')) {
+    isGym = true;
+    problemID = problemID.slice(3);
+  }
+  const matches = problemID.match(CODEFORCES_PROBLEM_REGEX);
+  if (!matches) {
+    return null;
+  }
+  if (isGym) {
+    return `https://codeforces.com/gym/${matches[1]}/problem/${matches[2]}`;
+  } else {
+    return `https://codeforces.com/problemset/problem/${matches[1]}/${matches[2]}`;
+  }
+}
+
 export function buildAtCoderUrl(problemID: string): string | null {
   const matches = problemID.match(ATCODER_PROBLEM_REGEX);
   if (!matches) {
