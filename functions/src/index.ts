@@ -225,8 +225,13 @@ export const translate = onCall<
   if (!request.auth?.token?.admin && !request.auth?.token?.teacher) {
     return null;
   }
-  const { text, lang } = request.data;
-  if (!text?.trim() || !/^[a-z]{2}$/.test(lang)) {
+  const { text, lang } = request.data ?? {};
+  if (
+    typeof text !== 'string' ||
+    !text.trim() ||
+    typeof lang !== 'string' ||
+    !/^[a-z]{2}$/.test(lang)
+  ) {
     return null;
   }
 
