@@ -54,13 +54,6 @@ const translate = httpsCallable<
   // The default 70 s is too short for translating long statements.
   timeout: 300_000,
 });
-const translateOpenAI = httpsCallable<
-  {
-    text: string;
-    lang: string;
-  },
-  string
->(getFunctions(undefined, 'europe-west1'), 'translateOpenAI');
 
 const cellBorderClass = 'border-x border-[color:var(--border-muted)]';
 const iconButtonClass =
@@ -743,18 +736,6 @@ const PageContent = () => {
     }
   };
 
-  const handleAutoTranslateOpenAI = async () => {
-    const response = await translateOpenAI({
-      text: original,
-      lang: language,
-    });
-    if (response.data !== null) {
-      setTranslated(response.data);
-    } else {
-      console.error('unsuccessful translation');
-    }
-  };
-
   const handleKeyDownTagInput = (
     event: React.KeyboardEvent<HTMLInputElement>
   ) => {
@@ -833,12 +814,6 @@ const PageContent = () => {
           disabled={!original || language === '-'}
         >
           Auto translate (Claude)
-        </button>
-        <button
-          className={`${secondaryButtonClass} px-4 py-2`}
-          onClick={handleAutoTranslateOpenAI}
-        >
-          Auto translate (OpenAI)
         </button>
         <button
           className="px-4 py-2 rounded-md theme-button-primary"
