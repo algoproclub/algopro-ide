@@ -52,7 +52,7 @@ import {
   YosupoSubmitter,
   Submitter,
 } from './submit';
-import { JSDOM } from 'jsdom';
+import { JSDOM, type DOMWindow } from 'jsdom';
 import { CompactEncrypt } from 'jose';
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -194,6 +194,24 @@ export const onplanetsubmissionupdated = onDocumentUpdated(
   }
 );
 
+function statementStructure({ document, NodeFilter }: DOMWindow): string {
+  const body = document.body.cloneNode(true) as HTMLElement;
+  const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+  const protectedElements =
+    'pre, code, kbd, samp, var, math, .math, .katex, mjx-container, script, style, noscript, template, svg, textarea, [translate="no"]';
+  const math =
+    /(\${6}[\s\S]*?\${6}|\${3}[\s\S]*?\${3}|\$\$[\s\S]*?\$\$|\$[^$\n]+\$|\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\\])/g;
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (node.parentElement?.closest(protectedElements)) continue;
+    // Mask prose while keeping math, markup, and protected blocks comparable.
+    node.textContent = (node.textContent ?? '')
+      .split(math)
+      .map((part, i) => (i % 2 || !part.trim() ? part : '#'))
+      .join('');
+  }
+  return body.innerHTML;
+}
+
 export const translate = onCall<
   {
     text: string;
@@ -210,8 +228,8 @@ export const translate = onCall<
     return null;
   }
 
-  const document = new JSDOM(text).window.document;
-  for (const el of document.getElementsByTagName('pre'))
+  const original = new JSDOM(text.trim()).window;
+  for (const el of original.document.getElementsByTagName('pre'))
     el.setAttribute('translate', 'no');
 
   try {
@@ -233,7 +251,7 @@ Keep these unchanged:
 - the contents of <pre> and <code> elements and of elements marked translate="no" (code, sample inputs and outputs).
 
 Reply with the translated HTML fragment only, without code fences or comments.`,
-      messages: [{ role: 'user', content: document.body.innerHTML }],
+      messages: [{ role: 'user', content: original.document.body.innerHTML }],
     });
     // A truncated or refused answer must not replace an existing translation.
     if (response.stop_reason !== 'end_turn') {
@@ -244,7 +262,13 @@ Reply with the translated HTML fragment only, without code fences or comments.`,
       .flatMap(block => (block.type === 'text' ? [block.text] : []))
       .join('')
       .trim();
-    return translation || null;
+    if (!translation) return null;
+    const translated = new JSDOM(translation).window;
+    if (statementStructure(original) !== statementStructure(translated)) {
+      logger.warn('Translation changed the statement structure.');
+      return null;
+    }
+    return translated.document.body.innerHTML;
   } catch (error) {
     logger.error(error);
     return null;
