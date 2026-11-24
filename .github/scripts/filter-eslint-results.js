@@ -85,6 +85,8 @@ async function main() {
       '--',
       'src',
       'pages',
+      'docs/components',
+      'functions/src',
     ],
     { encoding: 'utf8' }
   );
@@ -105,7 +107,10 @@ async function main() {
       if (message.severity === 2) errorCount += 1;
       if (message.severity === 1) warningCount += 1;
 
-      if (isChangedLine(changedRanges, relativePath, message.line || 1)) {
+      if (
+        message.severity === 2 ||
+        isChangedLine(changedRanges, relativePath, message.line || 1)
+      ) {
         const properties = getAnnotationProperties(relativePath, message);
 
         if (message.severity === 2) {
@@ -123,7 +128,7 @@ async function main() {
 
   const summary =
     `ESLint found ${errorCount} errors and ${warningCount} warnings; ` +
-    `${shownCount} diagnostics are in changed ranges and ${hiddenCount} are outside changed ranges.`;
+    `${shownCount} diagnostics shown and ${hiddenCount} warnings hidden outside changed ranges.`;
 
   core.info(summary);
 

@@ -1,3 +1,4 @@
+import { FirebaseError } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import React from 'react';
 import { StatusData } from '../types/problem';
@@ -23,22 +24,33 @@ export const registerSubmission = (
     output: null,
     testCases: null,
   });
+  const setError = (
+    message = 'Failed to register submission, please try again'
+  ) =>
+    setStatusData({
+      statusCode: 'error',
+      message,
+      statusText: null,
+      link: null,
+      time: null,
+      memory: null,
+      output: null,
+      testCases: null,
+    });
   registerSubmissionHttps({
     fileID: fileID,
     submissionID: submissionID,
     username: username,
-  }).then(response => {
-    if (!response.data.success) {
-      setStatusData({
-        statusCode: 'error',
-        message: 'Failed to register submission, please try again',
-        statusText: null,
-        link: null,
-        time: null,
-        memory: null,
-        output: null,
-        testCases: null,
-      });
-    }
-  });
+  })
+    .then(response => {
+      if (!response.data.success) setError();
+    })
+    .catch((error: unknown) => {
+      setError(
+        error instanceof FirebaseError &&
+          error.code === 'functions/invalid-argument'
+          ? error.message
+          : undefined
+      );
+    });
 };

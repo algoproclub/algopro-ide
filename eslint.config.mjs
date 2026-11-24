@@ -10,6 +10,7 @@ const typescriptFiles = [
   'src/**/*.{ts,tsx}',
   'pages/**/*.{ts,tsx}',
   'docs/components/**/*.{ts,tsx}',
+  'functions/src/*.ts',
 ];
 
 export default defineConfig([
