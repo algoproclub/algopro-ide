@@ -52,14 +52,14 @@ import {
   YosupoSubmitter,
   Submitter,
 } from './submit';
-import { JSDOM } from 'jsdom';
+import { JSDOM, type DOMWindow } from 'jsdom';
 import { CompactEncrypt } from 'jose';
+import Anthropic from '@anthropic-ai/sdk';
 
 require('dotenv').config({ path: '.env.local' });
 
 export const cfAPIKey = defineString('CF_API_KEY');
-export const deeplAPIKey = defineString('DEEPL_API_KEY');
-export const openaiAPIKey = defineString('OPENAI_API_KEY');
+export const anthropicAPIKey = defineString('ANTHROPIC_API_KEY');
 export const cfAPISecret = defineString('CF_API_SECRET');
 
 export const loginBotUrl = defineString('LOGIN_BOT_URL');
@@ -194,42 +194,92 @@ export const onplanetsubmissionupdated = onDocumentUpdated(
   }
 );
 
+function statementStructure({ document, NodeFilter }: DOMWindow): string {
+  const body = document.body.cloneNode(true) as HTMLElement;
+  const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+  const protectedElements =
+    'pre, code, kbd, samp, var, math, .math, .katex, mjx-container, script, style, noscript, template, svg, textarea, [translate="no"]';
+  const math =
+    /(\${6}[\s\S]*?\${6}|\${3}[\s\S]*?\${3}|\$\$[\s\S]*?\$\$|\$[^$\n]+\$|\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\\])/g;
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (node.parentElement?.closest(protectedElements)) continue;
+    const text = node.textContent ?? '';
+    if (!text.trim()) continue;
+    // Compare formulas in order and allow the prose around them to move.
+    node.textContent = JSON.stringify([
+      !!text.replace(math, '').trim(),
+      text.match(math) ?? [],
+    ]);
+  }
+  return body.innerHTML;
+}
+
 export const translate = onCall<
   {
     text: string;
     lang: string;
   },
   Promise<string | null>
->({ region: 'europe-west1' }, async request => {
-  if (!request.auth?.token?.teacher) {
+>({ region: 'europe-west1', timeoutSeconds: 300 }, async request => {
+  // The edit page is admin-only, so admins must be able to translate too.
+  if (!request.auth?.token?.admin && !request.auth?.token?.teacher) {
     return null;
   }
-  const { text, lang } = request.data;
+  const { text, lang } = request.data ?? {};
+  if (
+    typeof text !== 'string' ||
+    !text.trim() ||
+    typeof lang !== 'string' ||
+    !/^[a-z]{2}$/.test(lang)
+  ) {
+    return null;
+  }
 
-  const document = new JSDOM(text).window.document;
-  for (const el of document.getElementsByTagName('pre'))
+  const original = new JSDOM(text.trim()).window;
+  for (const el of original.document.getElementsByTagName('pre'))
     el.setAttribute('translate', 'no');
 
-  const resp = await fetch('https://api-free.deepl.com/v2/translate', {
-    method: 'POST',
-    headers: {
-      Authorization: `DeepL-Auth-Key ${deeplAPIKey.value()}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      text: [document.body.innerHTML],
-      tag_handling: 'html',
-      target_lang: lang,
-    }),
-  });
-  let translation: string | null = null;
   try {
-    const json = await resp.json();
-    translation = json['translations'][0].text ?? null;
+    // Param values are only available at runtime, not at module load.
+    const client = new Anthropic({ apiKey: anthropicAPIKey.value() });
+    const response = await client.beta.messages.create({
+      model: 'claude-opus-5-5',
+      max_tokens: 16000,
+      output_config: { effort: 'low' },
+      betas: ['server-side-fallback-2026-07-01'],
+      fallbacks: 'default',
+      system: `You translate competitive programming problem statements. The user message is a statement as an HTML fragment, which may contain LaTeX math.
+
+Translate the human-readable text into the language with ISO 639-1 code "${lang}". Write it the way problem statements are usually written in that language: precise, formal and concise, using standard mathematical and competitive programming terminology. Stay close to the original meaning and sentence structure, and rephrase only where a literal translation would sound unnatural.
+
+Keep these unchanged:
+- every HTML tag and attribute, and the structure of the document;
+- mathematical expressions exactly as written, including their delimiters (such as $$$...$$$, $$$$$$...$$$$$$ or $...$), and the contents of <var> elements and of elements with the class "math";
+- the contents of <pre> and <code> elements and of elements marked translate="no" (code, sample inputs and outputs).
+
+Reply with the translated HTML fragment only, without code fences or comments.`,
+      messages: [{ role: 'user', content: original.document.body.innerHTML }],
+    });
+    // A truncated or refused answer must not replace an existing translation.
+    if (response.stop_reason !== 'end_turn') {
+      logger.warn(`Translation stopped with reason ${response.stop_reason}`);
+      return null;
+    }
+    const translation = response.content
+      .flatMap(block => (block.type === 'text' ? [block.text] : []))
+      .join('')
+      .trim();
+    if (!translation) return null;
+    const translated = new JSDOM(translation).window;
+    if (statementStructure(original) !== statementStructure(translated)) {
+      logger.warn('Translation changed the statement structure.');
+      return null;
+    }
+    return translated.document.body.innerHTML;
   } catch (error) {
-    logger.log(error);
+    logger.error(error);
+    return null;
   }
-  return translation;
 });
 
 export const generateToken = onCall<
@@ -267,71 +317,6 @@ export const generateToken = onCall<
   )
     .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
     .encrypt(secretKey);
-});
-
-export const translateOpenAI = onCall<
-  {
-    text: string;
-    lang: string;
-  },
-  Promise<string | null>
->({ region: 'europe-west1' }, async request => {
-  if (!request.auth?.token?.teacher) {
-    return null;
-  }
-  let { text, lang } = request.data;
-
-  const document = new JSDOM(text).window.document;
-  for (const el of document.getElementsByTagName('pre'))
-    el.setAttribute('translate', 'no');
-  text = document.body.innerHTML;
-
-  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${openaiAPIKey.value()}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      temperature: 0.95,
-      top_p: 0.95,
-      presence_penalty: 0.05,
-      messages: [
-        {
-          role: 'system',
-          content: `You are a professional translator specializing in competitive programming problems.
-                You will receive an HTML code snippet containing a problem statement, which may include LaTeX formulas.
-                Your task:
-                    Translate the problem precisely and naturally while preserving its meaning, structure, and formatting.
-                    Ensure that the translation follows proper mathematical terminology and competitive programming conventions.
-                    Do not rephrase unnecessarily. Maintain the original sentence structure where possible unless required for fluency.
-                    Use clear, formal, and concise language suitable for competitive programming statements.
-                    Keep all mathematical notation and LaTeX syntax unchanged.
-                    Follow the standard way problems are written in the target language (e.g., Hungarian).
-                Specific Translation Rules:
-                    Use precise terminology: Keep technical terms correct and natural in the target language.
-                    Ensure smooth, natural phrasing: Avoid direct, awkward word-for-word translations.
-                    Use a neutral, formal style: Avoid conversational tone and overly direct instructions.
-                    Preserve list formatting and structure: Ensure that input/output constraints and explanations stay intact.
-                    Clarify conditions explicitly when needed: If something is unclear in the original, use natural wording that makes it precise.
-                Translate the problem into the following language: [${lang}]`,
-        },
-        {
-          role: 'user',
-          content: text,
-        },
-      ],
-    }),
-  });
-  let translation: string | null = null;
-  try {
-    const json = await resp.json();
-    translation = json['choices'][0].message.content ?? null;
-  } catch (error) {
-    logger.log(error);
-  }
-  return translation;
 });
 
 export const enum Errors {

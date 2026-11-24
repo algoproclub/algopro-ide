@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { usePopper } from 'react-popper';
 import CodeEditor from '../../../src/components/editor/CodeEditor';
@@ -49,15 +55,11 @@ const translate = httpsCallable<
     text: string;
     lang: string;
   },
-  string
->(getFunctions(undefined, 'europe-west1'), 'translate');
-const translateOpenAI = httpsCallable<
-  {
-    text: string;
-    lang: string;
-  },
-  string
->(getFunctions(undefined, 'europe-west1'), 'translateOpenAI');
+  string | null
+>(getFunctions(undefined, 'europe-west1'), 'translate', {
+  // The default 70 s is too short for translating long statements.
+  timeout: 300_000,
+});
 
 const cellBorderClass = 'border-x border-[color:var(--border-muted)]';
 const iconButtonClass =
@@ -473,7 +475,9 @@ const PageContent = () => {
       </>
     );
   };
-  const [original, setOriginal] = useState('');
+  const [originalProblem, setOriginalProblem] =
+    useState<Pick<ProblemData, 'platform' | 'id' | 'statement'>>();
+  const original = originalProblem?.statement ?? '';
   const [problemTitle, setProblemTitle] = useState<string | null>(null);
   const [translated, setTranslated] = useState('');
   const [initTranslated, setInitTranslated] = useState('');
@@ -576,7 +580,7 @@ const PageContent = () => {
 
   const applyProblemData = async (problemData: ProblemData) => {
     setProblemTitle(problemData.title);
-    setOriginal(problemData.statement ?? '');
+    setOriginalProblem(problemData);
     setSamples(normalizeSamples(problemData.samples));
     setInitSolution(await getSolution(problemData.platform, problemData.id));
     updateTranslated();
@@ -606,15 +610,20 @@ const PageContent = () => {
     if (!platform || !problemID) {
       return;
     }
+    let active = true;
     (async () => {
       try {
         const problemData = await getOriginal(platform, problemID);
-        await applyProblemData(problemData);
+        if (active) await applyProblemData(problemData);
       } catch (error) {
+        if (!active) return;
         console.error(error);
         setIsManualEntryOpen(true);
       }
     })();
+    return () => {
+      active = false;
+    };
   }, [platform, problemID]);
 
   useEffect(() => {
@@ -635,11 +644,7 @@ const PageContent = () => {
     updateTranslated();
   }, [language, original]);
 
-  const handleTranslationChange = useCallback((val: string) => {
-    if (translated !== val) {
-      setTranslated(val);
-    }
-  }, []);
+  const handleTranslationChange = setTranslated;
 
   const handleSolutionChange = useCallback((val: string) => {
     if (solution !== val) {
@@ -728,27 +733,42 @@ const PageContent = () => {
     setIsSampleModalOpen(true);
   };
 
-  const handleAutoTranslateDeepl = async () => {
-    const response = await translate({
-      text: original,
-      lang: language,
-    });
-    if (response.data !== null) {
-      setTranslated(response.data);
-    } else {
-      console.error('unsuccessful translation');
-    }
-  };
+  const translationVersion = useRef(0);
+  const [translating, setTranslating] = useState(false);
+  useLayoutEffect(() => {
+    return () => {
+      translationVersion.current++;
+    };
+  }, [
+    platform,
+    problemID,
+    router.query.platform,
+    router.query.id,
+    language,
+    original,
+    translated,
+  ]);
 
-  const handleAutoTranslateOpenAI = async () => {
-    const response = await translateOpenAI({
-      text: original,
-      lang: language,
-    });
-    if (response.data !== null) {
-      setTranslated(response.data);
-    } else {
-      console.error('unsuccessful translation');
+  const canTranslate =
+    !!original.trim() &&
+    language !== '-' &&
+    originalProblem?.platform === platform &&
+    originalProblem?.id === problemID &&
+    platform === router.query.platform &&
+    problemID === router.query.id;
+  const handleAutoTranslateClaude = async () => {
+    if (!canTranslate || translating) return;
+    const version = ++translationVersion.current;
+    setTranslating(true);
+    try {
+      const { data } = await translate({ text: original, lang: language });
+      if (version !== translationVersion.current) return;
+      if (data) setTranslated(data);
+      else console.error('Unsuccessful translation');
+    } catch (error) {
+      console.error('Translation failed', error);
+    } finally {
+      setTranslating(false);
     }
   };
 
@@ -826,15 +846,10 @@ const PageContent = () => {
       <div className="mb-4 space-x-2 text-[0.95rem]">
         <button
           className={`${secondaryButtonClass} px-4 py-2`}
-          onClick={handleAutoTranslateDeepl}
+          onClick={handleAutoTranslateClaude}
+          disabled={!canTranslate || translating}
         >
-          Auto translate (Deepl)
-        </button>
-        <button
-          className={`${secondaryButtonClass} px-4 py-2`}
-          onClick={handleAutoTranslateOpenAI}
-        >
-          Auto translate (OpenAI)
+          Auto translate (Claude)
         </button>
         <button
           className="px-4 py-2 rounded-md theme-button-primary"
