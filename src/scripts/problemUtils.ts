@@ -6,6 +6,37 @@ export const CODEFORCES_TITLE_REGEX = /\w+\. (.*)/;
 
 export const ATCODER_PROBLEM_REGEX = /(\w+)_(\w+)/;
 
+type SubmissionMode = 'manual' | 'automatic';
+
+const platformSubmissionSupport: Record<Platform, SubmissionMode | 'both'> = {
+  // Automatic submission is temporarily disabled for Codeforces and AtCoder until we manage to fix it.
+  codeforces: 'manual',
+  atcoder: 'manual',
+
+  // Planets problems can only be submitted through the IDE.
+  planets: 'automatic',
+
+  // The backend can only fetch results of submissions made by ourselves.
+  cses: 'automatic',
+
+  ojuz: 'both',
+  spoj: 'both',
+  njudge: 'both',
+  yosupo: 'both',
+
+  // Not used
+  usaco: 'both',
+};
+
+export function getSubmissionMode(
+  platform: Platform,
+  preferManual: boolean
+): SubmissionMode {
+  const support = platformSubmissionSupport[platform];
+  if (support !== 'both') return support;
+  return preferManual ? 'manual' : 'automatic';
+}
+
 // ---- URL builders ----
 
 export function buildCodeforcesUrl(problemID: string): string | null {
@@ -19,6 +50,23 @@ export function buildCodeforcesUrl(problemID: string): string | null {
     return null;
   }
   return `https://codeforces.com/${isGym ? 'gym' : 'contest'}/${matches[1]}/problem/${matches[2]}`;
+}
+
+export function buildCodeforcesFetchUrl(problemID: string): string | null {
+  let isGym = false;
+  if (problemID.startsWith('gym')) {
+    isGym = true;
+    problemID = problemID.slice(3);
+  }
+  const matches = problemID.match(CODEFORCES_PROBLEM_REGEX);
+  if (!matches) {
+    return null;
+  }
+  if (isGym) {
+    return `https://codeforces.com/gym/${matches[1]}/problem/${matches[2]}`;
+  } else {
+    return `https://codeforces.com/problemset/problem/${matches[1]}/${matches[2]}`;
+  }
 }
 
 export function buildAtCoderUrl(problemID: string): string | null {
@@ -68,6 +116,29 @@ export function buildProblemUrl(
       return buildSpojUrl(problemID);
     case 'planets':
       return buildPlanetsUrl(problemID);
+    case 'ojuz':
+      return buildOjuzUrl(problemID);
+    case 'njudge':
+      return buildNjudgeUrl(problemID);
+    case 'yosupo':
+      return buildYosupoUrl(problemID);
+    default:
+      return null;
+  }
+}
+
+// Page where a solution for the problem can be submitted manually.
+export function buildSubmitUrl(
+  platform: Platform,
+  problemID: string
+): string | null {
+  switch (platform) {
+    case 'codeforces':
+      return `https://codeforces.com/problemset/submit?submittedProblemCode=${problemID.replace(/^gym/, '')}`;
+    case 'atcoder':
+      return buildAtCoderUrl(problemID);
+    case 'spoj':
+      return buildSpojUrl(problemID);
     case 'ojuz':
       return buildOjuzUrl(problemID);
     case 'njudge':

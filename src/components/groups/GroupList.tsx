@@ -10,6 +10,7 @@ import Tooltip from '../Tooltip';
 
 export default function GroupList({
   school,
+  hasSchools,
   groups,
   searchQuery,
   onSelectGroup,
@@ -18,6 +19,7 @@ export default function GroupList({
   status,
 }: {
   school: School | undefined;
+  hasSchools: boolean;
   groups: GroupInfo[];
   searchQuery: string;
   onSelectGroup: (groupID: string) => void;
@@ -102,10 +104,12 @@ export default function GroupList({
                 : 'Loading schools…'
               : status === 'error'
                 ? 'The list is unavailable.'
-                : normalizedQuery
-                  ? 'No matching groups.'
-                  : school
-                    ? 'No groups in this school yet.'
+                : school
+                  ? normalizedQuery
+                    ? 'No matching groups.'
+                    : 'No groups in this school yet.'
+                  : hasSchools
+                    ? 'Select a school to view groups.'
                     : 'No schools are available.'}
           </p>
         )}

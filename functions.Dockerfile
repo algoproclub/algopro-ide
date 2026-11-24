@@ -1,9 +1,13 @@
 FROM node:22-trixie-slim
 
+ENV PNPM_HOME=/pnpm
+
+RUN corepack enable pnpm
+
 WORKDIR /app/functions
 
-COPY functions/package*.json ./
+COPY functions/package.json functions/pnpm-lock.yaml functions/pnpm-workspace.yaml ./
 
-RUN --mount=type=cache,target=/root/.npm npm install
+RUN --mount=type=cache,target=/pnpm/store pnpm install --frozen-lockfile
 
-ENTRYPOINT ["npm", "run", "build:watch", "--", "--preserveWatchOutput"]
+ENTRYPOINT ["pnpm", "run", "build:watch", "--preserveWatchOutput"]

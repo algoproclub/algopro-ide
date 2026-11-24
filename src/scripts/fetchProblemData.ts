@@ -1,6 +1,5 @@
 import { PlatformProblem, ProblemData } from '../types/problem';
 import { Sample } from '../types/judge';
-import { ElementType } from 'domelementtype';
 import * as domhandler from 'domhandler';
 import * as cheerio from 'cheerio';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -13,30 +12,20 @@ import {
   buildSpojUrl,
   buildOjuzUrl,
   buildNjudgeUrl,
+  buildCodeforcesFetchUrl,
 } from './problemUtils';
 import AdmZip from 'adm-zip';
 import { fetchProblemDataYosupo } from './fetchProblemDataYosupo';
-
-async function fetchWithProxy(
-  url: string,
-  init?: RequestInit
-): Promise<Response> {
-  return await fetch(
-    process.env.LOGIN_BOT_URL +
-      '/proxy?' +
-      new URLSearchParams({ url }).toString(),
-    init
-  );
-}
+import { signedFetch } from '../utils/signatureUtils';
 
 // FIXME: We might need to escape HTML entities (?)
 function htmlToPlaintext(node: domhandler.ChildNode): string {
-  if (node instanceof domhandler.Text) {
+  if (domhandler.isText(node)) {
     return node.data;
   }
-  if (node instanceof domhandler.Element) {
+  if (domhandler.isTag(node)) {
     const lineBreak =
-      node.type === ElementType.Tag &&
+      node.type === 'tag' &&
       (node.tagName === 'br' ||
         (node.tagName === 'div' &&
           node.attribs.class.includes('test-example-line')));
@@ -186,21 +175,20 @@ function parseCodeforcesProblemData(
 async function fetchProblemDataCodeforces(
   problemID: string
 ): Promise<ProblemData | null> {
-  const url = buildCodeforcesUrl(problemID);
-  if (!url) return null;
+  const displayUrl = buildCodeforcesUrl(problemID);
+  const fetchUrl = buildCodeforcesFetchUrl(problemID);
+  if (!displayUrl || !fetchUrl) return null;
 
-  const problemPage = await fetchWithProxy(url, {
-    headers: {
-      'User-Agent':
-        // same as login-bot
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-    },
-  });
+  const problemPage = await signedFetch(fetchUrl);
   if (problemPage.status !== 200) {
     return null;
   }
 
-  return parseCodeforcesProblemData(await problemPage.text(), problemID, url);
+  return parseCodeforcesProblemData(
+    await problemPage.text(),
+    problemID,
+    displayUrl
+  );
 }
 
 function parseAtCoderProblemData(
@@ -289,9 +277,9 @@ function parseCsesProblemData(
     children: (domhandler.Element | domhandler.Text)[];
   }[] = [{ heading: null, children: [] }];
   for (const el of document('.md').first().contents()) {
-    if (el.type !== ElementType.Tag && el.type !== ElementType.Text) continue;
+    if (el.type !== 'tag' && el.type !== 'text') continue;
 
-    if (el.type === ElementType.Tag && el.tagName === 'h1') {
+    if (el.type === 'tag' && el.tagName === 'h1') {
       sections.push({ heading: document(el).text(), children: [el] });
     } else {
       sections[sections.length - 1].children.push(el);
@@ -302,13 +290,13 @@ function parseCsesProblemData(
     .filter(s => s.heading?.startsWith('Example'))
     .map(s => {
       const [input, output] = s.children
-        .filter(el => el.type === ElementType.Tag && el.tagName === 'pre')
+        .filter(el => el.type === 'tag' && el.tagName === 'pre')
         .map(htmlToPlaintext);
       return { input, output };
     });
 
   const nodeContents = (c: domhandler.Element | domhandler.Text) =>
-    c.type === ElementType.Text ? c.data : document(c).prop('outerHTML');
+    c.type === 'text' ? c.data : document(c).prop('outerHTML');
 
   return {
     id: problemID,

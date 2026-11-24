@@ -5,7 +5,7 @@ a Firebase ID token in the `Authorization: Bearer <token>` header.
 
 Requirements:
 
-- go 1.22
+- go 1.27
 - [Isolate](https://github.com/ioi/isolate) v2.6 installed with cgroups v2
 
 ## how to run
