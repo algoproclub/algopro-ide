@@ -58,8 +58,14 @@ service cloud.firestore {
         allow read:  if request.auth.token.admin == true
                      || get(/databases/$(database)/documents/groups/$(group)).data.school in request.auth.token.teacher
                      || get(/databases/$(database)/documents/groups/$(group)).data.school in get(/databases/$(database)/documents/userdata/$(request.auth.uid)).data.schools;
-        allow write: if request.auth.token.admin == true
-                     || get(/databases/$(database)/documents/groups/$(group)).data.school in request.auth.token.teacher;
+        function canManageClass() {
+          return request.auth.token.admin == true
+                 || get(/databases/$(database)/documents/groups/$(group)).data.school in request.auth.token.teacher;
+        }
+        allow create, delete: if canManageClass();
+        // The creation time identifies a class's persisted collaborative notes.
+        allow update: if canManageClass()
+                      && request.resource.data.creationTime == resource.data.creationTime;
       }
     }
 

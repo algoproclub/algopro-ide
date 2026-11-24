@@ -22,6 +22,9 @@ import type { GroupClassData } from '../../data/classroomMetadata';
 import RefreshButton from '../RefreshButton';
 import { problemLibraryAtom } from '../../atoms/problemLibrary';
 import type { ClassroomResourceStatus } from '../../hooks/useClassroomMetadata';
+import dynamic from 'next/dynamic';
+
+const ClassNotes = dynamic(() => import('../ClassNotes'), { ssr: false });
 
 export type GroupClassUpdate =
   | GroupClassData
@@ -350,6 +353,8 @@ const ClassEditor = ({
   isAdmin,
   disabled,
   isMutating,
+  isSaved,
+  onNotesUnsyncedChanges,
 }: {
   classID: string;
   group: string;
@@ -362,6 +367,8 @@ const ClassEditor = ({
   isAdmin: boolean;
   disabled: boolean;
   isMutating: boolean;
+  isSaved: boolean;
+  onNotesUnsyncedChanges: (unsynced: boolean) => void;
 }) => {
   const taskIDCounts = new Map<string, number>();
   const taskRows = data.tasks.map(task => {
@@ -497,6 +504,25 @@ const ClassEditor = ({
           </p>
         )}
       </div>
+      <section className="border-t border-line">
+        <h2 className="m-0 px-4 py-3 text-base font-semibold">Class Notes</h2>
+        {isSaved ? (
+          <div className="h-[40rem] md:h-[28rem]">
+            <ClassNotes
+              groupID={group}
+              classID={classID}
+              creationTime={data.creationTime}
+              editable
+              disabled={disabled}
+              onUnsyncedChanges={onNotesUnsyncedChanges}
+            />
+          </div>
+        ) : (
+          <p className="px-4 pb-4 text-sm text-content-muted">
+            Save this new class before adding notes.
+          </p>
+        )}
+      </section>
       <footer className="flex items-center justify-between border-t border-line px-3 py-2.5">
         <button
           className="ui-button border-transparent bg-danger text-content-inverted enabled:hover:bg-status-danger"
@@ -532,6 +558,8 @@ export default function GroupClassEditor({
   selectedClassID,
   classes,
   isClassDirty,
+  isClassSaved,
+  onNotesUnsyncedChanges,
   onUpdateClass,
   onSaveClass,
   onDiscardClassChanges,
@@ -549,6 +577,8 @@ export default function GroupClassEditor({
   selectedClassID: string | null;
   classes: Record<string, GroupClassData>;
   isClassDirty: (id: string) => boolean;
+  isClassSaved: (id: string) => boolean;
+  onNotesUnsyncedChanges: (unsynced: boolean) => void;
   onUpdateClass: (id: string, update: GroupClassUpdate) => void;
   onSaveClass: (id: string) => Promise<boolean>;
   onDiscardClassChanges: (id: string) => void;
@@ -617,6 +647,8 @@ export default function GroupClassEditor({
           group={group}
           data={selectedClass}
           unsaved={isClassDirty(selectedClassID)}
+          isSaved={isClassSaved(selectedClassID)}
+          onNotesUnsyncedChanges={onNotesUnsyncedChanges}
           onDelete={() => onDeleteClass(selectedClassID)}
           onSave={() => {
             void onSaveClass(selectedClassID)
@@ -628,7 +660,11 @@ export default function GroupClassEditor({
               })
               .catch(error => {
                 console.error(error);
-                alert('The class could not be saved.');
+                alert(
+                  error instanceof Error
+                    ? error.message
+                    : 'The class could not be saved.'
+                );
               });
           }}
           onCancel={() => onDiscardClassChanges(selectedClassID)}

@@ -8,9 +8,12 @@ import { useAtomValue } from 'jotai';
 import { statusDataAtom } from '../../atoms/workspaceUI';
 import { useEditorContext } from '../../context/EditorContext';
 import { useUserContext } from '../../context/UserContext';
-import { useWorkspaceLaunchContext } from '../../context/WorkspaceLaunchContext';
+import {
+  useWorkspaceLaunchContext,
+  useWorkspaceClassesResource,
+} from '../../context/WorkspaceLaunchContext';
 import { getDashboardTasks } from '../../data/classroomMetadata';
-import { useGroupClasses } from '../../hooks/useClassroomMetadata';
+
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useStudentTaskStatuses } from '../../hooks/useStudentTaskStatuses';
 import useUserPermission from '../../hooks/useUserPermission';
@@ -48,11 +51,9 @@ const useWorkspaceClassTasks = () => {
   const showDesktopContext = useMediaQuery('(min-width: 1440px)');
   const groupID = classContext?.group ?? null;
   const classID = classContext?.class ?? null;
-  const classesResource = useGroupClasses(
-    showDesktopContext && groupID && classID ? groupID : null
-  );
+  const classesResource = useWorkspaceClassesResource();
   const tasks = getDashboardTasks(
-    classesResource.data.find(groupClass => groupClass.id === classID)?.data
+    classesResource?.data.find(groupClass => groupClass.id === classID)?.data
       .tasks ?? []
   );
   const currentTaskIndex = fileData.problem
