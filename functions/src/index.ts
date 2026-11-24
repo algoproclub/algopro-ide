@@ -203,11 +203,13 @@ function statementStructure({ document, NodeFilter }: DOMWindow): string {
     /(\${6}[\s\S]*?\${6}|\${3}[\s\S]*?\${3}|\$\$[\s\S]*?\$\$|\$[^$\n]+\$|\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\\])/g;
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     if (node.parentElement?.closest(protectedElements)) continue;
-    // Mask prose while keeping math, markup, and protected blocks comparable.
-    node.textContent = (node.textContent ?? '')
-      .split(math)
-      .map((part, i) => (i % 2 || !part.trim() ? part : '#'))
-      .join('');
+    const text = node.textContent ?? '';
+    if (!text.trim()) continue;
+    // Compare formulas in order and allow the prose around them to move.
+    node.textContent = JSON.stringify([
+      !!text.replace(math, '').trim(),
+      text.match(math) ?? [],
+    ]);
   }
   return body.innerHTML;
 }
