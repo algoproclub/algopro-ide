@@ -1,5 +1,13 @@
 import { cloneElement, type ReactElement, useId, useState } from 'react';
-import { usePopper } from 'react-popper';
+import {
+  autoUpdate,
+  flip,
+  limitShift,
+  offset,
+  shift,
+  useFloating,
+  arrow,
+} from '@floating-ui/react-dom';
 import { createPortal } from 'react-dom';
 
 type TooltipProps = {
@@ -14,13 +22,19 @@ export default function Tooltip({ label, children }: TooltipProps) {
   const tooltipId = useId();
   const [reference, setReference] = useState<HTMLSpanElement | null>(null);
   const [popper, setPopper] = useState<HTMLSpanElement | null>(null);
+  const [arrowElement, setArrowElement] = useState<HTMLSpanElement | null>(
+    null
+  );
   const [isOpen, setIsOpen] = useState(false);
-  const { styles, attributes } = usePopper(reference, popper, {
+  const { floatingStyles, middlewareData, placement } = useFloating({
+    elements: { reference, floating: popper },
+    whileElementsMounted: autoUpdate,
     placement: 'bottom',
-    modifiers: [
-      { name: 'offset', options: { offset: [0, 10] } },
-      { name: 'flip', options: { fallbackPlacements: ['top'] } },
-      { name: 'arrow', options: { padding: 4 } },
+    middleware: [
+      offset(10),
+      flip({ fallbackPlacements: ['top'] }),
+      shift({ limiter: limitShift() }),
+      arrow({ element: arrowElement, padding: 4 }),
     ],
   });
 
@@ -37,15 +51,14 @@ export default function Tooltip({ label, children }: TooltipProps) {
       id={tooltipId}
       role="tooltip"
       className="pointer-events-none z-[100] whitespace-nowrap rounded bg-[var(--surface-bg-raised)] px-2.5 py-1.5 text-sm text-[color:var(--text-primary)] shadow-md"
-      style={styles.popper}
-      {...attributes.popper}
+      style={floatingStyles}
+      data-placement={placement}
     >
       {label}
       <span
-        data-popper-arrow
+        ref={setArrowElement}
         className="tooltip-arrow"
-        style={styles.arrow}
-        {...attributes.arrow}
+        style={{ left: middlewareData.arrow?.x, top: middlewareData.arrow?.y }}
       />
     </span>
   );

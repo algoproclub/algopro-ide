@@ -3,11 +3,7 @@ import React, { useMemo } from 'react';
 import { UserListItem } from './UserListItem';
 import classNames from 'classnames';
 
-export const UserList = ({
-  className,
-}: {
-  className?: string;
-}): JSX.Element => {
+export const UserList = ({ className }: { className?: string }) => {
   const users = useOnlineUsers();
 
   const sortedUsers: User[] | null = useMemo(() => {

@@ -5,7 +5,7 @@ import rehypeKatex from 'rehype-katex';
 // @ts-expect-error mjs file
 import renderMathInElement from 'katex/dist/contrib/auto-render.mjs';
 
-export default function Markdown(props: ReactMarkdownOptions): JSX.Element {
+export default function Markdown(props: ReactMarkdownOptions) {
   const ref = React.useRef(null);
 
   React.useEffect(() => {

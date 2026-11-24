@@ -12,7 +12,7 @@ export default function WorkspaceSettingsUI({
   workspaceSettings: FileSettings;
   onWorkspaceSettingsChange: (settings: Partial<FileSettings>) => void;
   userPermission: string;
-}): JSX.Element {
+}) {
   return (
     <div className="space-y-6 mb-4">
       {

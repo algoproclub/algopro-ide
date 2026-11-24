@@ -5,7 +5,12 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPanel,
+  Transition,
+} from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import WorkspaceSettingsUI from './WorkspaceSettingsUI';
 import {
@@ -28,7 +33,7 @@ export const WorkspaceSettingsModal = ({
   isOpen,
   onClose,
   onResetLayout,
-}: SettingsDialogProps): JSX.Element => {
+}: SettingsDialogProps) => {
   const {
     userData,
     firebaseUser,
@@ -179,7 +184,7 @@ export const WorkspaceSettingsModal = ({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-75 transition-opacity" />
+            <DialogBackdrop className="fixed inset-0 bg-black bg-opacity-75 transition-opacity" />
           </Transition.Child>
 
           <Transition.Child
@@ -191,7 +196,7 @@ export const WorkspaceSettingsModal = ({
             leaveFrom="opacity-100 translate-y-0 sm:scale-100"
             leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div className="ui-panel relative z-10 inline-block w-full overflow-hidden border text-left shadow-xl transition-all md:rounded-lg sm:my-8 sm:max-w-2xl">
+            <DialogPanel className="ui-panel relative z-10 inline-block w-full overflow-hidden border text-left shadow-xl transition-all md:rounded-lg sm:my-8 sm:max-w-2xl">
               <div className="px-4 sm:px-6 pt-4 pb-2">
                 <Dialog.Title
                   as="h3"
@@ -242,7 +247,7 @@ export const WorkspaceSettingsModal = ({
                   <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                 </button>
               </div>
-            </div>
+            </DialogPanel>
           </Transition.Child>
         </div>
       </Dialog>

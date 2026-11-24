@@ -2,7 +2,7 @@ import Head from 'next/head';
 import GuideContent from '../docs/online-ide-users-guide.mdx';
 import { guideMdxComponents } from '../docs/components/GuideMdxComponents';
 
-export default function DocsPage(): JSX.Element {
+export default function DocsPage() {
   return (
     <>
       <Head>

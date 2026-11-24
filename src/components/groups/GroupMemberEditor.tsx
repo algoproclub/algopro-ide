@@ -248,7 +248,6 @@ export default function GroupMemberEditor({
       )}
       <Combobox
         value={null}
-        nullable
         onChange={(studentID: string | null) => {
           if (studentID) toggleMembership(studentID);
           setSearchQuery('');
@@ -272,7 +271,10 @@ export default function GroupMemberEditor({
                 }}
               />
               {normalizedQuery.length > 0 && (
-                <Combobox.Options className="absolute z-10 mt-1 max-h-72 w-full overflow-y-auto rounded-md border border-line bg-surface-raised text-content shadow-lg">
+                <Combobox.Options
+                  modal={false}
+                  className="absolute z-10 mt-1 max-h-72 w-full overflow-y-auto rounded-md border border-line bg-surface-raised text-content shadow-lg"
+                >
                   {filteredSuggestions.length === 0 ? (
                     <div className="px-3 py-2 text-sm text-content-muted">
                       No matches.

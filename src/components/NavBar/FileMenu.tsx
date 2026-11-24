@@ -8,7 +8,7 @@ import {
   ArrowPathIcon,
   DocumentDuplicateIcon,
 } from '@heroicons/react/24/solid';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { mainEditorHandleAtom } from '../../atoms/workspace';
 import { useAtomValue } from 'jotai';
@@ -24,18 +24,13 @@ import {
   getAnchoredMenuItemClass,
 } from '../AnchoredMenuItems';
 
-export const FileMenu = (props: {
-  onOpenSettings: () => void;
-}): JSX.Element => {
+export const FileMenu = (props: { onOpenSettings: () => void }) => {
   const { fileData } = useEditorContext();
   const problem = useAtomValue(problemAtom);
   const mainEditorHandle = useAtomValue(mainEditorHandleAtom);
   const permission = useUserPermission();
   const { templateCode } = useUserContext();
 
-  const [referenceElement, setReferenceElement] = useState<HTMLElement | null>(
-    null
-  );
   const canWrite = permission === 'OWNER' || permission === 'READ_WRITE';
 
   /* ======= BEGIN DROPDOWN ACTIONS ======= */
@@ -93,7 +88,6 @@ export const FileMenu = (props: {
               className={`workspace-toolbar-button ${
                 open ? 'border-line-strong bg-surface-active' : ''
               }`}
-              ref={setReferenceElement}
             >
               File
               <ChevronDownIcon
@@ -104,11 +98,9 @@ export const FileMenu = (props: {
           </div>
 
           <AnchoredMenuItems
-            anchor={referenceElement}
             className="w-56"
             menuClassName="origin-top-left"
-            open={open}
-            placement="bottom-start"
+            anchor="bottom start"
           >
             <div className="py-1">
               <Menu.Item>

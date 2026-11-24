@@ -15,7 +15,7 @@ export interface ChatMessage {
   key: string;
 }
 
-export const Chat = ({ className }: { className?: string }): JSX.Element => {
+export const Chat = ({ className }: { className?: string }) => {
   const onlineUsers = useOnlineUsers();
   const userPermission = useUserPermission();
   const chatRef = useRef<HTMLDivElement>(null);

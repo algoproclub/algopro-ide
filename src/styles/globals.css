@@ -170,12 +170,12 @@ body,
   border-left: 4px solid transparent;
 }
 
-[data-popper-placement^='top'] > .tooltip-arrow {
+[data-placement^='top'] > .tooltip-arrow {
   bottom: -4px;
   border-top: 4px solid var(--surface-bg-raised);
 }
 
-[data-popper-placement^='bottom'] > .tooltip-arrow {
+[data-placement^='bottom'] > .tooltip-arrow {
   top: -4px;
   border-bottom: 4px solid var(--surface-bg-raised);
 }

@@ -15,7 +15,7 @@ export type CodeRun = {
 
 function createCodeRunID(): string {
   // push() generates Firebase's standard unique key without writing data.
-  return push(ref(getDatabase())).key!;
+  return push(ref(getDatabase())).key;
 }
 
 export async function beginCodeRun(
