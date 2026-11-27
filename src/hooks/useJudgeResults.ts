@@ -4,6 +4,8 @@ import { getJudgeStatusDescription } from '../utils/editorUtils';
 
 export type SampleJudgeResults = Array<JudgeResult | null>;
 
+const MULTIPLE_SOLUTIONS_MESSAGE = 'Multiple correct solutions are possible';
+
 const verdictCodes: Record<JudgeResultStatuses, string> = {
   success: 'A',
   wrong_answer: 'W',
@@ -13,6 +15,17 @@ const verdictCodes: Record<JudgeResultStatuses, string> = {
   compile_error: '?',
   internal_error: '?',
 };
+
+function getDescription(
+  result: JudgeResult,
+  multipleSolutions: boolean
+): string {
+  const description = getJudgeStatusDescription(result);
+  if (multipleSolutions && result.status === 'wrong_answer') {
+    return description.replace('Wrong Answer', MULTIPLE_SOLUTIONS_MESSAGE);
+  }
+  return description;
+}
 
 function normalizeSampleResults(value: unknown): SampleJudgeResults {
   if (Array.isArray(value)) {
@@ -35,7 +48,8 @@ function normalizeSampleResults(value: unknown): SampleJudgeResults {
 
 export function summarizeSampleJudgeResults(
   results: SampleJudgeResults,
-  sampleCount: number
+  sampleCount: number,
+  multipleSolutions = false
 ): JudgeResult | null {
   const availableResults = results
     .slice(0, sampleCount)
@@ -48,7 +62,13 @@ export function summarizeSampleJudgeResults(
     availableResults.find(result => result.status !== 'success') ??
     availableResults[availableResults.length - 1];
   if (sampleCount <= 1) {
-    return representativeResult;
+    return {
+      ...representativeResult,
+      statusDescription: getDescription(
+        representativeResult,
+        multipleSolutions
+      ),
+    };
   }
 
   const verdicts = Array.from({ length: sampleCount }, (_, index) => {
@@ -58,7 +78,7 @@ export function summarizeSampleJudgeResults(
 
   return {
     ...representativeResult,
-    statusDescription: `Sample Verdicts: ${verdicts}. ${getJudgeStatusDescription(representativeResult)}`,
+    statusDescription: `Sample Verdicts: ${verdicts}. ${getDescription(representativeResult, multipleSolutions)}`,
   };
 }
 
@@ -66,7 +86,8 @@ function getJudgeResultForTab(
   tabId: string,
   inputResult: JudgeResult | null,
   sampleResults: SampleJudgeResults,
-  sampleCount: number
+  sampleCount: number,
+  multipleSolutions: boolean
 ): JudgeResult | null {
   if (tabId === 'input') {
     return inputResult;
@@ -75,10 +96,20 @@ function getJudgeResultForTab(
   if (tabId.startsWith('Sample')) {
     const sampleNumber = tabId === 'Sample' ? 1 : Number(tabId.substring(7));
     if (sampleNumber > sampleCount) return null;
-    return sampleResults[sampleNumber - 1] ?? null;
+    const result = sampleResults[sampleNumber - 1] ?? null;
+    return result
+      ? {
+          ...result,
+          statusDescription: getDescription(result, multipleSolutions),
+        }
+      : null;
   }
 
-  return summarizeSampleJudgeResults(sampleResults, sampleCount);
+  return summarizeSampleJudgeResults(
+    sampleResults,
+    sampleCount,
+    multipleSolutions
+  );
 }
 
 export default function useJudgeResults() {
@@ -89,8 +120,18 @@ export default function useJudgeResults() {
   );
 
   return {
-    getResultForTab: (tabId: string, sampleCount: number) =>
-      getJudgeResultForTab(tabId, inputResult, sampleResults, sampleCount),
+    getResultForTab: (
+      tabId: string,
+      sampleCount: number,
+      multipleSolutions = false
+    ) =>
+      getJudgeResultForTab(
+        tabId,
+        inputResult,
+        sampleResults,
+        sampleCount,
+        multipleSolutions
+      ),
     sampleResults,
     setInputResult: (result: JudgeResult | null) =>
       updateFileData({
